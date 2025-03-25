@@ -1,149 +1,104 @@
-const baseUrl = "http://localhost:8008";
+import * as Maptalks from "maptalks";
+import { BuildingInterface } from "../models/buildingInterface";
+import buildingService from "./buildingService";
+import httpService from "./httpService";
+import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
+import coordinateHelpers from "../utils/coordinateHelpers";
 
-let levels = "";
-let outline = "";
-let center = "";
-let buildingConstants = "";
+let buildingConstants: Record<string, number>;
 let buildingDescription = "";
-let geoJson = "";
-let boundingBox = "";
+let geoJson: GeoJSON.FeatureCollection;
+
+let buildingInterface: BuildingInterface;
 
 async function fetchBackendData(): Promise<void> {
-	await loadLevels();
-	await loadOutline();
-	await loadCenter();
-	await loadBuildingConstants();
-	await loadBuildingDescription();
-	await loadGeoJson();
-	await loadBoundingBox();
-}
+	await httpService.fetchOverpassData();
 
-async function loadLevels(): Promise<void> {
-	try {
-		levels = await api<string>(`${baseUrl}/levels`);
-	} catch (error) {
-		console.error('Error fetching levels:', error);
+	const currentBuilding = "APB";
+
+	buildingInterface = await buildingService.handleSearch(BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
+
+	// filter indoor elements by bounds of building
+	if (buildingInterface !== undefined) {
+		geoJson = buildingService.filterByBounds(
+			httpService.getIndoorData(),
+			buildingInterface.boundingBox
+		);
 	}
-}
-
-/*
-	Returns list of levels as strings in descending order.
-*/
-function getLevels(): string[] {
-	if (levels !== "") {
-		return JSON.parse(levels);
+	
+	// build building description
+	if (buildingInterface.feature.properties.name !== undefined) {
+		// description += lang.selectedBuildingPrefix + currentBuildingFeature.properties.name;
+		buildingDescription += buildingInterface.feature.properties.name;
+	
+		if (buildingInterface.feature.properties.loc_ref !== undefined) {
+			buildingDescription += " (" + buildingInterface.feature.properties.loc_ref + ")";
+		}
 	}
-	return [];
-}
 
-// Outline functions
-async function loadOutline(): Promise<void> {
-	try {
-		outline = await api<string>(`${baseUrl}/outline`);
-	} catch (error) {
-		console.error('Error fetching outline:', error);
+	// calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
+	// Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again.
+	const p1 = (
+		geoJson.features.find((feature) => feature.id == "node/" + BuildingConstantsDefinition[currentBuilding].BEARING_CALC_NODE1)
+		.geometry as GeoJSON.Point
+	).coordinates;
+	const p2 = (
+		geoJson.features.find((feature) => feature.id == "node/" + BuildingConstantsDefinition[currentBuilding].BEARING_CALC_NODE2)
+		.geometry as GeoJSON.Point
+	).coordinates;
+
+	const standardBearing =((
+		// angle of the line between the two points
+		Math.atan2(
+			p2[0] - p1[0],
+			// we need to use mercator projection for the latitude
+			coordinateHelpers.lat2y(p2[1]) - coordinateHelpers.lat2y(p1[1])
+		) * (180 / Math.PI) + BuildingConstantsDefinition[currentBuilding].BEARING_OFFSET
+	// angle is between 0 and 360 after calculation (might even be above 360), maptalks needs it between -180 and 180
+	+ 180) % 360) - 180;
+
+	buildingConstants = {
+		"standardZoom": BuildingConstantsDefinition[currentBuilding].STANDARD_ZOOM,
+		"maxZoom": BuildingConstantsDefinition[currentBuilding].MAX_ZOOM,
+		"minZoom": BuildingConstantsDefinition[currentBuilding].MIN_ZOOM,
+		"standardBearing": standardBearing,
+		"standardBearing3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_BEARING_3D_MODE,
+		"standardPitch3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_PITCH_3D_MODE,
+		"standardZoom3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_ZOOM_3D_MODE
 	}
 }
 
 function getOutline(): number[][] {
-	if (outline !== "") {
-		return JSON.parse(outline);
-	}
-	return [];
-}
-
-// Center functions
-async function loadCenter(): Promise<void> {
-	try {
-		center = await api<string>(`${baseUrl}/center`);
-	} catch (error) {
-		console.error('Error fetching center:', error);
-	}
-}
-
-function getCenter(): string[] {
-	if (center !== "") {
-		return JSON.parse(center);
-	}
-	return [];
-}
-
-// Building constants functions
-async function loadBuildingConstants(): Promise<void> {
-	try {
-		buildingConstants = await api<string>(`${baseUrl}/buildingConstants`);
-	} catch (error) {
-		console.error('Error fetching building constants:', error);
-	}
+	return (buildingInterface.feature.geometry as GeoJSON.Polygon).coordinates[0];
 }
 
 function getBuildingConstants(): Record<string, number> {
-	if (buildingConstants !== "") {
-		return JSON.parse(buildingConstants);
-	}
-	return {};
-}
-
-// Building description functions
-async function loadBuildingDescription(): Promise<void> {
-	try {
-		buildingDescription = await api<string>(`${baseUrl}/buildingDescription`);
-	} catch (error) {
-		console.error('Error fetching building description:', error);
-	}
+	return buildingConstants;
 }
 
 function getBuildingDescription(): string {
-	if (buildingDescription !== "") {
-		return buildingDescription;
-	}
-	return "";
+	return buildingDescription;
 }
 
 // Geo JSON functions
-async function loadGeoJson(): Promise<void> {
-	try {
-		geoJson = await api<string>(`${baseUrl}/geoJson`);
-	} catch (error) {
-		console.error('Error fetching geo json:', error);
-	}
-}
-
 function getGeoJson(): GeoJSON.FeatureCollection {
-	if (geoJson !== "") {
-		return JSON.parse(geoJson);
-	}
-	return;
+	return geoJson;
 }
 
-// Geo JSON functions
-async function loadBoundingBox(): Promise<void> {
-	try {
-		boundingBox = await api<string>(`${baseUrl}/boundingBox`);
-	} catch (error) {
-		console.error('Error fetching bounding box:', error);
-	}
-}
-
-function getBoundingBox(): number[][] {
-	if (boundingBox !== "") {
-		return JSON.parse(boundingBox);
-	}
-	return;
-}
-
-function api<T>(url: string): Promise<T> {
-	return fetch(url)
-		.then(res => res.json());
+function getBoundingBoxExtent(): Maptalks.Extent {
+	return new Maptalks.Extent(
+        buildingInterface.boundingBox[0],
+        buildingInterface.boundingBox[1],
+        buildingInterface.boundingBox[2],
+        buildingInterface.boundingBox[3]
+	);
 }
 
 export default {
-	getLevels,
 	getOutline,
-	getCenter,
 	getBuildingConstants,
 	getBuildingDescription,
 	getGeoJson,
-	getBoundingBox,
+	getBoundingBoxExtent,
 	fetchBackendData
 };

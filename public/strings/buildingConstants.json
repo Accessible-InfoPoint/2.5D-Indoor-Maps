@@ -1,0 +1,26 @@
+{
+    "APB": {
+        "SEARCH_STRING": "APB",
+        "BEARING_OFFSET": 90,
+        "BEARING_CALC_NODE1": "8109446525",
+        "BEARING_CALC_NODE2": "8109446619",
+        "STANDARD_ZOOM": 19.926,
+        "MAX_ZOOM": 21,
+        "MIN_ZOOM": 19.5,
+        "STANDARD_BEARING_3D_MODE": -130,
+        "STANDARD_PITCH_3D_MODE": 72,
+        "STANDARD_ZOOM_3D_MODE": 20.1
+    },
+    "HSZ": {
+        "SEARCH_STRING": "HSZ",
+        "BEARING_OFFSET": 90,
+        "BEARING_CALC_NODE1": "8191259603",
+        "BEARING_CALC_NODE2": "8191260219",
+        "STANDARD_ZOOM": 20.675,
+        "MAX_ZOOM": 21.2,
+        "MIN_ZOOM": 20,
+        "STANDARD_BEARING_3D_MODE": -75,
+        "STANDARD_PITCH_3D_MODE": 72,
+        "STANDARD_ZOOM_3D_MODE": 20.72
+    }
+}

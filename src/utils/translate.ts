@@ -13,8 +13,8 @@ export function translate(): void {
   document.getElementById("languageList").ariaLabel = lang.languageHeader;
   document.getElementById("switch2DLabel").title = lang.switch2DButton;
   document.getElementById("switch2DLabel").ariaLabel = lang.switch2DButton;
-  document.getElementById("switchWheelchairModeLabel").title = lang.switchWheelchairModeButton;
-  document.getElementById("switchWheelchairModeLabel").ariaLabel = lang.switchWheelchairModeButton;
+  document.getElementById("switchWheelchairMode").title = lang.switchWheelchairModeButton;
+  document.getElementById("switchWheelchairMode").ariaLabel = lang.switchWheelchairModeButton;
   // document.getElementById("indoorSearchInput").setAttribute("placeholder", lang.indoorSearchPlaceholder);
   // document.getElementById("indoorSearchInput").ariaLabel = lang.indoorSearchPlaceholder;
   // document.getElementById("indoorSearchSubmit").innerHTML = lang.indoorSearchSubmit;

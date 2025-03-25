@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /**
   MIT License
 
@@ -28,70 +29,21 @@
 
 const express = require('express');
 const path = require('path');
+const getOverpassData = require("./server/_getOverpassData");
 const createPatternFillImages = require("./server/_createPatternFillImages");
-const http = require('http');
-const socketIo = require('socket.io');
-const corsWS = require('cors');
 
 const app = express();
 const port = 3000;
 
 createPatternFillImages();
-console.log('=== Starting web server ===');
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`)
+getOverpassData().then(() => {
+  console.log('=== Starting web server ===');
+  app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`)
+  })
+  app.use(express.static(path.join(__dirname, 'public')));
+  
+  app.use(express.json());
+}).catch(reason => {
+  console.error('### Error: '+ reason + ' ###');
 })
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(express.json());
-app.post('/tactileDisplayBounds', (req, res) => {
-    const corners = req.body;
-    console.log('Received corners:', corners);
-    
-    broadcast('UPDATE_COORDINATES', corners);
-
-    res.status(200);
-});
-
-app.use(corsWS({
-  origin: 'http://localhost:3000'
-}));
-const serverWS = http.createServer(app);
-const io = socketIo(serverWS, {
-  cors: {
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
-
-const clients = new Set();
-
-io.on('connection', (socket) => {
-  clients.add(socket);
-  console.log('Client connected');
-
-  socket.emit('INIT', { data: 'Connection established' });
-
-  socket.on('message', (message) => {
-    console.log(`Received message: ${message}`);
-  });
-
-  socket.on('disconnect', () => {
-    clients.delete(socket);
-    console.log('Client disconnected');
-  });
-});
-
-function broadcast(name, data) {
-  clients.forEach((client) => {
-    if (client.connected) {
-        client.emit(name, data);
-        console.log(`Broadcasted with message: ${data}`);
-    }
-  });
-}
-
-serverWS.listen(3002, () => {
-  console.log('WebSocket server running on port 3002');
-});

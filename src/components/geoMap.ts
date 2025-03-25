@@ -7,7 +7,6 @@ import {
   CARTO_ATTRIBUTION,
   LEVEL_HEIGHT,
   OPACITY_TRANSLUCENT_LAYER,
-  SOCKET_SERVER
 } from "../../public/strings/constants.json";
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
@@ -21,11 +20,7 @@ import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import * as Maptalks from "maptalks";
-import levelService from "../services/levelService";
 import backendService from "../services/backendService";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const io = require('socket.io-client');
 
 export class GeoMap {
   mapInstance: Maptalks.Map = null;
@@ -43,14 +38,13 @@ export class GeoMap {
   standardPitch3DMode = 0;
   standardBearing3DMode = 0;
   infoPoint: GeoJSON.Feature;
-  configMode = true; // set only during configuration of building constants
+  configMode = false; // set only during configuration of building constants
 
   state = {
     connected: false,
   };
 
   constructor() {
-    console.log(backendService.getGeoJson())
     const buildingConstants = backendService.getBuildingConstants();
     this.standardZoom = buildingConstants["standardZoom"];
     this.maxZoom = buildingConstants["maxZoom"];
@@ -116,43 +110,6 @@ export class GeoMap {
 
     this.makeAccessible();
     this.applyStyleFilters();
-
-    const socket = io(SOCKET_SERVER);
-
-    socket.on("connect", () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.state.connected = true;
-    });
-
-    socket.on("disconnect", () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.state.connected = false;
-    });
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    socket.on('UPDATE_COORDINATES', (data) => {
-      const newCorners = data.corners; // Receive the new coordinates
-
-      // Update the LineString with the new coordinates
-      this.indoorLayers.forEach(
-        (layer) => {
-          if (layer.rectangleInstance && layer.level == data.level) {
-            layer.rectangleInstance.clear();
-            const rectangle = new Maptalks.Polygon(newCorners, {
-              symbol: {
-                polygonFill: "#000000",
-                polygonOpacity: 0.0,
-                lineColor: "#ff0000",
-                lineWidth: 2
-              }
-            });
-            layer.rectangleInstance.addGeometry(rectangle);
-          }
-        }
-      )
-    });
   }
 
   add(obj: Maptalks.Layer): Maptalks.Layer {
@@ -208,7 +165,7 @@ export class GeoMap {
   }
 
   centerMapToBuilding(): void {
-    const ext = new Maptalks.Polygon(backendService.getBoundingBox()).getExtent();
+    const ext = backendService.getBoundingBoxExtent();
 
     this.standardCenter = [ext.getCenter().x, ext.getCenter().y];
 
@@ -242,19 +199,19 @@ export class GeoMap {
         return;
       }
       const oldLevel = this.getCurrentLevel();
-      const oldLevelTop = levelService.getLevelNames()[0] == this.getCurrentLevel()
+      const oldLevelTop = LevelService.getLevelNames()[0] == this.getCurrentLevel()
           ? this.getCurrentLevel()
-          : levelService.getLevelNames()[levelService.getLevelNames().indexOf(this.getCurrentLevel()) - 1];
-      const oldLevelBottom = levelService.getLevelNames()[levelService.getLevelNames().length - 1] == this.getCurrentLevel()
+          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(this.getCurrentLevel()) - 1];
+      const oldLevelBottom = LevelService.getLevelNames()[LevelService.getLevelNames().length - 1] == this.getCurrentLevel()
           ? this.getCurrentLevel()
-          : levelService.getLevelNames()[levelService.getLevelNames().indexOf(this.getCurrentLevel()) + 1];
+          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(this.getCurrentLevel()) + 1];
 
-      const newLevelTop = levelService.getLevelNames()[0] == newLevel
+      const newLevelTop = LevelService.getLevelNames()[0] == newLevel
           ? newLevel
-          : levelService.getLevelNames()[levelService.getLevelNames().indexOf(newLevel) - 1];
-      const newLevelBottom = levelService.getLevelNames()[levelService.getLevelNames().length - 1] == newLevel
+          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(newLevel) - 1];
+      const newLevelBottom = LevelService.getLevelNames()[LevelService.getLevelNames().length - 1] == newLevel
           ? newLevel
-          : levelService.getLevelNames()[levelService.getLevelNames().indexOf(newLevel) + 1];
+          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(newLevel) + 1];
 
       const initialHeightOldLevel = oldLevel == oldLevelBottom ? 0 : LEVEL_HEIGHT;
       const finalHeightNewLevel = newLevel == newLevelBottom ? 0 : LEVEL_HEIGHT;
@@ -268,7 +225,7 @@ export class GeoMap {
         this.indoorLayers.get(element).show3D();
       });
       setTimeout(() => {
-        levelService.getLevelNames().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
+        LevelService.getLevelNames().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
           this.indoorLayers.get(item).hideAll();
         })
       }, animationDuration * 1000);
@@ -302,8 +259,8 @@ export class GeoMap {
   // only support whole level differences
   getLevelDifference(level1: string, level2: string): number {
     return (
-      levelService.getLevelNames().indexOf(level1) -
-      levelService.getLevelNames().indexOf(level2)
+      LevelService.getLevelNames().indexOf(level1) -
+      LevelService.getLevelNames().indexOf(level2)
     );
   }
 

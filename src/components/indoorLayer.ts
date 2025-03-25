@@ -37,7 +37,6 @@ export class IndoorLayer {
   private doorsInstance: Maptalks.VectorLayer;
   private outlineInstance: Maptalks.VectorLayer;
   private positionLayer: Maptalks.VectorLayer;
-  rectangleInstance: Maptalks.VectorLayer;
   markers: MarkerClusterLayer;
   threeLayer: ThreeLayer;
   // meshes and materials for threeJs
@@ -103,15 +102,6 @@ export class IndoorLayer {
         altitude: altitude
       }
     );
-    this.rectangleInstance = new Maptalks.VectorLayer(
-      'rectangleInstance' + level,
-      undefined,
-      {
-        enableAltitude: true,
-        altitude: altitude,
-        // zIndex: 1000
-      }
-    );
     // define options for markerClusterLayer, especially default symbol
 
     this.markers = new MarkerClusterLayer(
@@ -149,7 +139,6 @@ export class IndoorLayer {
     this.threeLayer = this.threeLayer.addTo(geoMap.mapInstance);
     this.markers = this.markers.addTo(geoMap.mapInstance);
     this.positionLayer.addTo(geoMap.mapInstance);
-    this.rectangleInstance = this.rectangleInstance.addTo(geoMap.mapInstance);
   }
 
   /**
@@ -162,7 +151,6 @@ export class IndoorLayer {
     this.markers.clear();
     this.positionLayer.clear();
     this.outlineInstance.clear();
-    this.rectangleInstance.clear();
     const tempVisibility = this.threeLayer.isVisible();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -195,7 +183,6 @@ export class IndoorLayer {
     this.markers.getLayer().hide();
     this.roomNumbersInstance.hide();
     this.roomsInstance.hide();
-    this.rectangleInstance.hide();
     this.positionLayer.hide();
     this.setAltitudeAndOpacity(0, 1);
   }
@@ -210,7 +197,6 @@ export class IndoorLayer {
     this.markers.getLayer().show();
     this.roomNumbersInstance.show();
     this.roomsInstance.show();
-    this.rectangleInstance.show();
     this.positionLayer.show();
     this.setAltitudeAndOpacity(0, 1);
   }
@@ -225,7 +211,6 @@ export class IndoorLayer {
     this.markers.getLayer().show();
     this.roomNumbersInstance.show();
     this.roomsInstance.show();
-    this.rectangleInstance.show();
     this.positionLayer.show();
     this.setAltitudeAndOpacity(0, 1);
   }
@@ -236,7 +221,6 @@ export class IndoorLayer {
   show3D(): void {
     this.threeLayer.show();
     this.outlineInstance.show();
-    this.rectangleInstance.show();
     this.doorsInstance.hide();
     this.markers.getLayer().hide();
     this.roomNumbersInstance.hide();
@@ -262,18 +246,6 @@ export class IndoorLayer {
     const outlineGeo = new Maptalks.Polygon(BackendService.getOutline());
     outlineGeo.updateSymbol({ polygonFill: "#4d4d4d", polygonOpacity : 0.8});
     this.outlineInstance.addGeometry(outlineGeo);
-
-    if (this.level == geoMap.currentLevel) {
-      const rectangle = new Maptalks.Polygon(BackendService.getBoundingBox(), {
-        symbol: {
-          polygonFill: "#000000",
-          polygonOpacity: 0.0,
-          lineColor: "#ff0000",
-          lineWidth: 2
-        }
-      });
-      this.rectangleInstance.addGeometry(rectangle);
-    }
 
     // decide for each feature whether to draw and in which layer
     geoJSON.features.forEach((feature) => {
@@ -658,7 +630,6 @@ export class IndoorLayer {
       // this.markers.getLayer(),
       this.positionLayer,
       this.outlineInstance,
-      this.rectangleInstance
     ];
     const threelayer = this.threeLayer;
     const meshes = this.meshes;
@@ -708,6 +679,6 @@ export class IndoorLayer {
    * Set altitude and opacity after animating it, it usually stays at 0 opacity and is set again with this function
    */
   setAltitudeAndOpacity(altitude: number, opacity: number): void {
-    [this.roomsInstance, this.roomNumbersInstance, this.doorsInstance, this.markers.getLayer(), this.rectangleInstance].forEach((l) => l.setOptions({ altitude, opacity }));
+    [this.roomsInstance, this.roomNumbersInstance, this.doorsInstance, this.markers.getLayer()].forEach((l) => l.setOptions({ altitude, opacity }));
   }
 }

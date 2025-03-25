@@ -79,11 +79,8 @@ function getLevelNames(): string[] {
   );
   
   // console.log(allLevelNames.sort((a, b) => -parseFloat(a) + parseFloat(b)))
-  // console.log(BackendService.getLevels())
 
-  // return allLevelNames.sort((a, b) => -parseFloat(a) + parseFloat(b)); // reverse order
-  
-  return BackendService.getLevels();
+  return allLevelNames.sort((a, b) => -parseFloat(a) + parseFloat(b)); // reverse order
 }
 
 function getCurrentLevelDescription(): string {
