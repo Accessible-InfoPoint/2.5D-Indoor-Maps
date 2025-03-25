@@ -1,0 +1,21 @@
+{
+  "theme_color": "#00695c",
+  "background_color": "#00695c",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "AccessibleMaps mobile",
+  "short_name": "AccMaps",
+  "icons": [
+    {
+      "src": "/images/icons-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/icons-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+    ]
+}

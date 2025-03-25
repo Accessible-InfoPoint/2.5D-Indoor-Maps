@@ -1,0 +1,34 @@
+{
+  "baseColor": "#FFFFFF",
+  "roomColor": "#EFEFEF",
+  "roomColorS": "#000000",
+  "wallColor": "#000000",
+  "toiletColor": "#787878",
+  "stairsColor": "#CACACA",
+  "entranceColor": "#323232",
+  "inServiceColor": "#BDBDBD",
+  "elevatorColor": "#585858",
+
+  "zoom": [{
+    "doors_primary": true,
+    "doors_secondary": false,
+    "toilets": false,
+    "staircases": false,
+    "elevators": false
+  },
+    {
+      "doors_primary": true,
+      "doors_secondary": false,
+      "toilets": true,
+      "staircases": true,
+      "elevators": true
+    },
+    {
+      "doors_primary": true,
+      "doors_secondary": true,
+      "toilets": true,
+      "staircases": true,
+      "elevators": true
+    }
+  ]
+}

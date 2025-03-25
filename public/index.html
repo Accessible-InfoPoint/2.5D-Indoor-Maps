@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AccessibleMaps Mobile</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#" id="navbarBrandText" tabindex="-1">
+            <img src="./images/icons-192.png" alt="" width="32" height="32" class="d-inline-block align-text-top">
+            Accessible Maps mobile</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-0 ms-lg-4 me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active flex-nowrap d-flex" href="javascript:void(0)" id="changeUserProfileBtn">
+                        <span class="material-icons align-text-top me-1" aria-hidden="true">people</span>
+                        <span id="changeUserProfileBtnLabel">Change user Profile</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex justify-content-end flex-column flex-sm-column flex-lg-row flex-lg-wrap" id="searchWrapper" role="search">
+                <div class="form-group row flex-nowrap" id="buildingSearchWrapper">
+                    <label class="d-flex flex-nowrap text-white align-items-center justify-content-lg-end col-4 justify-content-sm-start"
+                           for="buildingSearchInput" id="currentBuilding">Current Building:</label>
+                    <div class="input-group col-8">
+                        <input class="form-control hide-clear-icon" type="text" placeholder="Search for buildings"
+                               aria-label="Search for buildings"
+                               id="buildingSearchInput" disabled>
+                        <button class="btn btn-danger" id="clearBuildingSearch" aria-label="Clear search field">x
+                        </button>
+                        <button class="btn btn-secondary hidden" id="buildingSearchSubmit" disabled>Search</button>
+                    </div>
+                </div>
+
+                
+            </div>
+
+            <div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</nav>
+<div id="toastWrapper"></div>
+
+<div id="map" aria-disabled="true"></div>
+<div id="flatMap" aria-disabled="true"></div>
+
+<div id="uiWrapper">
+    <!--           LEGEND           -->
+    <div id="legendWrapper">
+        <ul id="legendList" aria-label="Legend">
+            <li aria-hidden="true" class="label">Legend</li>
+            <li><div class="colorBox" style="background-color: rgb(255, 209, 209);"></div><span>Room</span></li>
+            <li><div class="colorBox" style="background-color: rgb(53, 161, 107);"></div><span>Toilet</span></li>
+            <li><div class="colorBox" style="background-color: rgb(255, 153, 0);"></div><span>Stairs</span></li>
+            <li><div class="colorBox" style="background-color: rgb(102, 43, 9);"></div><span>Selected</span></li>
+        </ul>
+    </div>
+
+    <!--           BUILDING AND ROOM DESCRIPTION           -->
+    <aside class="description" id="descriptionArea" aria-label="descriptionArea">
+        <strong id="selectedBuilding"></strong>
+        <span id="description"></span>
+    </aside>
+
+    <!--           INDOOR ROOM SEARCH           -->
+    <div class="from-group row flex-nowrap" id="indoorSearchWrapper" style="height:var(--button-size)">
+        <!-- <label class="d-flex flex-nowrap text-white align-items-center justify-content-lg-end col-4 justify-content-sm-start" for="indoorSearchInput" id="currentRoom">Current Room:</label> -->
+        <div class="input-group">
+            <input class="form-control" type="text" placeholder="Search indoor"
+                   aria-label="Search indoor"
+                   id="indoorSearchInput" name="indoorSearchInput">
+            <button class="btn btn-secondary" id="indoorSearchSubmit"
+                    name="indoorSearchSubmit">
+                Search
+            </button>
+        </div>
+    </div>
+
+    <!--           LEVEL CONTROL           -->
+    <div id="levelControlWrapper">
+        <button id="levelShiftUp" class="square">
+            <span id="levelShiftUpLabel" class="material-icons"aria-hidden="true">expand_less</span>
+        </button>
+        <div id="levelControlWindow">
+            <ul id="levelControl" aria-label="Change displayed level" class="transition">
+            </ul>
+        </div>
+        <button id="levelShiftDown" class="square">
+            <span id="levelShiftDownLabel" class="material-icons"aria-hidden="true">expand_more</span>
+        </button>
+    </div>
+
+    <!--           WHEELCHAIR-MODE SWITCHER           -->
+    <div id="switchWheelchairModeWrapper">
+        <button id="switchWheelchairMode" class="square">
+            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="Icon" width="35" height="35" > <!-- alternative: man -->
+        </button>
+    </div>
+
+    <!--           ZOOM CONTROL           -->
+    <div id="zoomControlWrapper">
+        <button id="zoomControlIn" class="square">
+            <span class="material-icons" aria-label="Zoom in" title="Zoom in">add</span>
+        </button>
+        <button id="zoomControlOut" class="square">
+            <span class="material-icons" aria-label="Zoom out" title="Zoom out">remove</span>
+        </button>
+    </div>
+
+    <!--           2.5D SWITCHER           -->
+    <div id="switch2DViewWrapper">
+        <button id="switch2D" class="square">
+            <span class="material-icons" id="switch2DLabel" aria-label="Switch to 2.5D View" title="Switch to 2.5D View">3d_rotation</span> <!-- alternative: map -->
+        </button>
+    </div>
+
+    <!--           SETTINGS BUTTON           -->
+    <div id="settingsButtonWrapper">
+        <button id="settingsButton" class="square">
+            <span class="material-icons" aria-label="Open Settings" title="Open Settings">settings</span>
+        </button>
+    </div>
+
+    <!--           QUICK SETTINGS           -->
+    <div id="quickSettingsWrapper">
+        <ul id="userProfileList" aria-label="Profiles quick switch">
+        </ul>
+        <hr style="margin:0;">
+        <ul id="userSettingsList" aria-label="Settings">
+        </ul>
+        <hr style="margin:0;">
+        <ul id="languageList" aria-label="Language">
+        </ul>
+    </div>
+</div>
+
+<!--feature selection-->
+<div class="modal fade settings" id="userFeatureSelectionModal" tabindex="-1"
+     aria-labelledby="userFeatureSelectionModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
+                        aria-label="Back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                </button>
+                <h5 class="modal-title" id="userFeatureModalLabel">Select Features</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 id="featureSelectionHeader">Feature selection</h6>
+                <div class="collection" id="userFeatureList"></div>
+
+                <h6 id="accessibleFeatureSelectionHeader">Accessible feature selection</h6>
+                <div class="collection" id="userAccessibleFeatureList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light closeButton" data-bs-dismiss="modal" id="closeButtonLabel">
+                    Close
+                </button>
+                <button type="button" class="btn btn-primary saveButton" id="saveFeatureSelection">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--display settings-->
+<div class="modal fade settings" id="userVisualSettingsModal" tabindex="-1"
+     aria-labelledby="userVisualSettingsModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
+                        aria-label="Back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                </button>
+                <h5 class="modal-title" id="visualSettingsLabel">Visual Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 id="colorBlindnessHeader">Color blindness</h6>
+                <div class="collection" id="colorBlindnessList"></div>
+
+                <h6 id="contrastSettingsHeader">Contrast settings</h6>
+                <div class="collection" id="contrastSettingsList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light closeButton" data-bs-dismiss="modal" id="closeVisualSettings">
+                    Close
+                </button>
+                <button type="button" class="btn btn-primary saveButton" id="saveVisualSettings">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="./dist/main.js"></script>
+<script src="./dist/style.js"></script>
+
+</body>
+</html>

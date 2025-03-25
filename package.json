@@ -1,0 +1,54 @@
+{
+  "name": "accmaps-mobile-interaction",
+  "version": "1.0.0",
+  "description": "The project Accessible Maps aims to make indoor mobility more accessible for people with disabilities in the occupational context.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx webpack",
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .ts",
+    "build-start": "npx webpack && node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.hrz.tu-chemnitz.de:s3594077--tu-dresden.de/accmaps-mobile-interaction.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/bootstrap": "^5.1.6",
+    "@types/geojson": "^7946.0.14",
+    "@typescript-eslint/eslint-plugin": "^4.28.5",
+    "@typescript-eslint/parser": "^4.28.5",
+    "accmaps-mobile-interaction": "file:",
+    "bbox-fns": "^0.20.2",
+    "bootstrap": "^5.1.2",
+    "css-loader": "^5.2.6",
+    "eslint": "^7.31.0",
+    "express": "^4.17.1",
+    "file-loader": "^6.2.0",
+    "geojson-bounds": "^1.0.4",
+    "geojson-polygon-center": "^0.0.0",
+    "jimp": "^0.22.12",
+    "maptalks": "^1.0.0-rc.33",
+    "maptalks.three": "^0.38.3",
+    "node-localstorage": "^2.2.1",
+    "node-xml-stream": "^1.0.2",
+    "sass-embedded": "^1.80.6",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "style-loader": "^2.0.0",
+    "three": "^0.165.0",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.5",
+    "webpack-cli": "^4.7.0",
+    "xmlhttprequest": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/maptalks": "^0.49.6",
+    "@types/three": "^0.165.0",
+    "sass-loader": "^16.0.3",
+    "webpack": "^5.96.1"
+  }
+}

@@ -1,0 +1,46 @@
+// @import "../node_modules/leaflet/dist/leaflet.css";
+@import "../node_modules/maptalks/dist/maptalks.css";
+
+$mapBottom: 222px;
+
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1
+}
+#flatMap {
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1
+}
+
+.maptalks-zoom .maptalks-zoom-zoomlevel {
+  color: #000;
+  border: 1px solid #000;
+}
+
+.maptalks-zoom .maptalks-zoom-zoomlevel .maptalks-zoom-zoomlevel-text {
+  font-size: 13px;
+  transform: none;
+  -webkit-transform: none;
+  -moz-transform: none;
+  -ms-transform: none;
+  -o-transform: none;
+}
+
+.maptalks-zoom-slider a.maptalks-zoom-zoomin, .maptalks-zoom-slider a.maptalks-zoom-zoomout {
+  border: 1px solid #000;
+}
+
+.maptalks-layer-switcher {
+  position: absolute;
+  top: 40px;
+  right: 0px;
+}

@@ -1,0 +1,116 @@
+{
+  "navbarBrandText": "Accessible Maps mobile",
+  "changeUserProfileBtn": "Change user profile",
+  "buildingSearchSubmit": "Search",
+  "indoorSearchSubmit": "Search",
+  "buildingSearchPlaceholder": "Search for buildings",
+  "indoorSearchPlaceholder": "Search indoor",
+  "clearBuildingSearch": "Clear search field",
+  "centeringButton": "Set view to the focused building",
+  "currentBuilding": "Current Building",
+  "currentRoom": "Current Room",
+
+  "legendLabel": "Legend",
+
+  "userProfileModalLabel": "Change user profile",
+  "profileQuickSwitchHeader": "Profiles quick switch",
+  "profiles": "Profiles",
+  "settingsHeader": "Settings",
+  "userFeatureModalLabel": "Select Features",
+  "featureSelectionHeader": "Feature selection",
+  "accessibleFeatureSelectionHeader": "Accessible feature selection",
+  "closeButtonLabel": "Close",
+  "saveFeatureSelection": "Save changes",
+  "visualSettingsLabel": "Visual Settings",
+  "colorBlindnessHeader": "Color blindness",
+  "contrastSettingsHeader": "Contrast settings",
+  "environmentOpacity": "Environment opacity",
+  "colorStrength": "Color strength",
+  "lineThickness": "Line thickness",
+  "closeVisualSettings": "Close",
+  "saveVisualSettings": "Save changes",
+  "languageHeader": "Language",
+
+  "switch2DButton": "Switch to 2.5D View",
+  "switchWheelchairModeButton": "Switch to wheelchair mode",
+
+  "colorProfile_none": "none",
+  "colorProfile_black_white": "black-white",
+  "colorProfile_red_green": "red-green",
+  "colorProfile_blue_yellow": "blue-yellow",
+
+  "saveButton": "Save",
+  "closeButton": "Close",
+
+  "selectedMapObjectPrefix": "Selected map object: ",
+  "selectedBuildingPrefix": "Selected building: ",
+
+  "changeLevel": "Change to level ",
+  "currentLevel": "Current level: ",
+
+  "searchBuildingFound": "Building found.",
+  "searchEmpty": "Please enter a search term!",
+  "searchNotFound": "Not found!",
+
+  "buildingNotFound": "Building could not be found",
+  "buildingNotSITconform": "Building was found, but is not in the dataset of SIT-conform buildings",
+  "buildingErrorFetching": "An error occurred while fetching building data: ",
+
+  "legendRoom": "Room",
+  "legendToilet": "Toilet",
+  "legendStairs": "Stairs",
+  "legendSelected": "Selected",
+  "legendAccessible": "Wheelchair<br>Accessible",
+
+  "userProfileVisImpairments": "Users with visual impairments",
+  "userProfileNoSpecialNeeds": "Users with no special needs",
+  "userProfileWheelchair": "Wheelchair users",
+
+  "userProfileVisualSettings": "Visual settings",
+  "userProfileFeatureSelection": "Feature selection",
+
+  "userProfileEntranceExit": "entrances and exits",
+  "userProfileToilets": "toilets",
+  "userProfileElevators": "elevators",
+  "userProfileStairs": "stairs",
+  "userProfileEmergencyExit": "emergency exits",
+  "userProfileServices": "service",
+  "userProfileRamps": "ramps",
+  "userProfileTactileLines": "tactile lines",
+  "userProfileDisabledParking": "disabled parking",
+  "userProfileAccessibleToilets": "accessible toilets",
+
+  "featureAccessibilityTactileBoard": "tactile information board / tactile map",
+  "featureAccessibilitySpeech": "speech output available",
+  "featureAccessibilityAccessibleToilet": "accessible toilet",
+  "featureAccessibilityElevator": "elevator",
+
+  "featureAccessibilityToilet": "toilet",
+  "featureAccessibilityMale": "male ",
+  "featureAccessibilityFemale": "female ",
+  "featureAccessibilityUnisex": "unisex ",
+
+  "featureAccessibilityMain": "main ",
+  "featureAccessibilitySecondary": "secondary ",
+  "featureAccessibilityEntrance": "entrance",
+  "featureAccessibilityExit": "exit",
+  "featureAccessibilityInformationBoard": "information board / map",
+
+  "buildingAccessibilityWheelchairTrue": "wheelchair access possible",
+  "buildingAccessibilityWheelchairLimited": "limited wheelchair access",
+  "buildingAccessibilityWheelchairFalse": "no wheelchair access",
+  "buildingAccessibilityWheelchairUnknown": "wheelchair access unknown",
+
+  "buildingAccessibilityToiletsTrue": "accessible toilets available",
+  "buildingAccessibilityToiletsFalse": "no accessible toilets available",
+  "buildingAccessibilityTactilePavingTrue": "tactile paving available",
+  "buildingAccessibilityTactilePavingFalse": "no tactile paving available",
+  "buildingAccessibilityElevatorTrue": "accessible elevator available",
+  "buildingAccessibilityElevatorFalse": "no accessible elevator available",
+  "buildingAccessibilityTactileWritingTrue": "there are objects with tactile writing on them",
+  "buildingAccessibilityTactileWritingFalse": "there are no objects with tactile writing on them",
+  "buildingAccessibilityElevatorSpeechTrue": "there are elevators with speech output",
+  "buildingAccessibilityElevatorSpeechFalse": "there are no elevators with speech output"
+
+
+}

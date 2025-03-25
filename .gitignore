@@ -1,0 +1,9 @@
+/node_modules/
+/js/dist/
+.idea
+/dist/
+/public/dist/
+/public/overpass/*.xml
+/public/overpass/*.json
+/tmp
+package-lock.json

@@ -1,0 +1,49 @@
+{
+    "INDOOR_LEVEL": "0",
+    "FILL_OPACITY": "1",
+    "STAIRCASE_OPACITY": 0.5,
+    "STAIRCASE_OUTLINE_OPACITY": 0.85,
+    "OPACITY_TRANSLUCENT_LAYER": 0.35,
+    "WALL_WEIGHT": "1",
+    "WALL_WEIGHT_PAVING": "3",
+    "LEVEL_HEIGHT": 12,
+    "STAIRCASE_HANDRAIL_HEIGHT": 1,
+    "SOCKET_SERVER": "http://localhost:3002",
+    "OSM_TILE_SERVER": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
+    "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+    "CARTO_TILE_SUBDOMAINS": ["a", "b", "c", "d"],
+    "NOMINATIM_SERVER": "https://open.mapquestapi.com/nominatim/v1/search.php",
+    "MAPQUEST_API_KEY": "qjp4XJGBDGe98cl7QOPOgExZhNWX1lEx",
+    "OVERPASS_DATA_URLS": {
+        "INDOOR": "/overpass/indoor.json",
+        "BUILDINGS": "/overpass/buildings.json"
+    },
+    "MARKERS_IMG_DIR": "/images/",
+    "MAP_START_LAT": "51.02546115",
+    "MAP_START_LNG": "13.72293115",
+    "VISIBLE_LEVEL_CONTROLS": 4,
+    "START_LEVEL_CONTROL_POSITION": 2,
+    "DEFAULT_BUILDING_SEARCH_STRING": "APB",
+    "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
+    "CARTO_ATTRIBUTION": "&copy; <a href='http://osm.org'>OpenStreetMap</a> contributors, &copy; <a href='https://carto.com/'>CARTO</a>",
+    "COLORS": {
+        "WALL": "#000000",
+        "WALL_SELECTED": "#068288",
+        "TOILET": "#dfed64",
+        "STAIR": "#dddddd",
+        "ROOM": "#025558",
+        "ROOM_SELECTED": "#FF6F03"
+    },
+    "ICONS": {
+        "INFO": "information.svg",
+        "TOILETS_WHEELCHAIR": "toilets_wheelchair.svg",
+        "ELEVATOR": "elevator2_freepik.svg",
+        "WHEELCHAIR": "wheelchair.svg",
+        "TOILETS": "toilets.svg",
+        "ENTRANCE": "entrance.svg",
+        "EMERGENCY_EXIT": "emergency_exit.svg",
+        "STAIRS": "stairs.svg",
+        "ADDITIONAL": "additional.svg"
+    }
+}
