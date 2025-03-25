@@ -7,4 +7,4 @@
 /public/overpass/*.json
 /tmp
 package-lock.json
-/.vscode/
+.vscode

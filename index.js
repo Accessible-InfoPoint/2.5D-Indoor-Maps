@@ -4,7 +4,9 @@
 
   Copyright (c) Richard Fuchs, Danny Schober, Jacques-Maurice Walther
 
-  Copyright for portions of the project are held by 2023 AccessibleMaps Project and Julian Striegl as part of project Mapable. All other copyright for the project are held by the above mentioned.
+  Copyright for portions of the project are held by 2023 AccessibleMaps Project and
+  Julian Striegl as part of project Mapable. All other copyright for the project
+  are held by the above mentioned.
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal

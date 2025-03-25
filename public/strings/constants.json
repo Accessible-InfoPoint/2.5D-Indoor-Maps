@@ -23,7 +23,6 @@
     "MAP_START_LNG": "13.72293115",
     "VISIBLE_LEVEL_CONTROLS": 4,
     "START_LEVEL_CONTROL_POSITION": 2,
-    "DEFAULT_BUILDING_SEARCH_STRING": "APB",
     "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
     "CARTO_ATTRIBUTION": "&copy; <a href='http://osm.org'>OpenStreetMap</a> contributors, &copy; <a href='https://carto.com/'>CARTO</a>",
     "COLORS": {
