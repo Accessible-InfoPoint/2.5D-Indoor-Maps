@@ -6,5 +6,4 @@
 /public/overpass/*.xml
 /public/overpass/*.json
 /tmp
-package-lock.json
 .vscode
