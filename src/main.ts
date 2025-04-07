@@ -1,7 +1,7 @@
 /**
   MIT License
 
-  Copyright (c) Richard Fuchs, Danny Schober, Jacques-Maurice Walther
+  Copyright (c) Richard Fuchs, Danny Schober, Jacques-Maurice Walther, Jan Schmalfuß-Schwarz
 
   Copyright for portions of the project are held by 2023 AccessibleMaps Project and
   Julian Striegl as part of project Mapable. All other copyright for the project
@@ -25,7 +25,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  Developed by: Richard Fuchs, Danny Schober, Jacques-Maurice Walther
+  Developed by: Richard Fuchs, Danny Schober, Jacques-Maurice Walther, Jan Schmalfuß-Schwarz
 */
 
 import { GeoMap } from "./components/geoMap";
