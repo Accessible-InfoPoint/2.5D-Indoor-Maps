@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as Maptalks from "maptalks";
 import { BaseObject, ThreeLayer } from "maptalks.three";
-import { Prism } from "./quad";
+import { Prism } from "./prism";
 import { LEVEL_HEIGHT } from "../../../public/strings/constants.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 

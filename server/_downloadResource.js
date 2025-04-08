@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 const transformToGeoJSONAndSaveFile = require('./_transformToGeoJsonAndSaveFile');
 

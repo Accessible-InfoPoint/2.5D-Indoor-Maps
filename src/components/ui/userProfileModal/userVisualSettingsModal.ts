@@ -116,7 +116,6 @@ function handleChange() {
 }
 
 function onSave() {
-  //featureService.setCurrentFeatures(checkboxState);
   UserProfileModal.hideAll();
 
   ColorService.setCurrentProfile(state.selectedColorProfile);

@@ -1,5 +1,5 @@
 import { UserGroupEnum } from "../../models/userGroupEnum";
-import userService from "../../services/userService";
+import UserService from "../../services/userService";
 import LevelControl from "./levelControl";
 
 const wheelchairModeKey = "wheelchairMode";
@@ -11,8 +11,8 @@ function setup(): void {
     document.getElementById("uiWrapper").classList.toggle("wheelchairMode");
     localStorage.setItem(wheelchairModeKey, document.getElementById("uiWrapper").classList.contains("wheelchairMode").toString());
     if (document.getElementById("uiWrapper").classList.contains("wheelchairMode")) {
-      if (userService.getCurrentProfile() != UserGroupEnum.wheelchairUsers) {
-        userService.setProfile(UserGroupEnum.wheelchairUsers);
+      if (UserService.getCurrentProfile() != UserGroupEnum.wheelchairUsers) {
+        UserService.setProfile(UserGroupEnum.wheelchairUsers);
       }
     }
     replaceIcons();

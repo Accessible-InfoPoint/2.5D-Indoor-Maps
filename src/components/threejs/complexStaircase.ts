@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import { BaseObject, ThreeLayer } from "maptalks.three";
-import { Prism } from "./quad";
+import { Prism } from "./prism";
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/constants.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 
 const defaultStaircaseWidth = 1;
 
-export function complexStaircase(feature: GeoJSON.Feature, lineStrings: [GeoJSON.Position[], number][], allNodes: GeoJSON.Feature[], altitude: number, material: THREE.MeshBasicMaterial, layer: ThreeLayer, onclick: () => void): BaseObject[] {
+export function complexStaircase(lineStrings: [GeoJSON.Position[], number][], allNodes: GeoJSON.Feature[], altitude: number, material: THREE.MeshBasicMaterial, layer: ThreeLayer, onclick: () => void): BaseObject[] {
     const thickness = 0.05;
 
     // stairs might consist of multiple parts, therefore we need to loop over all line strings
@@ -156,9 +156,9 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
 function pathwayToCoords(feature: GeoJSON.Feature): GeoJSON.Position[] {
     // pathways might be lineString or polygon geometry, we need a list of positions instead
     if (feature.geometry.type == "LineString") {
-        return (feature.geometry as GeoJSON.LineString).coordinates;
+        return feature.geometry.coordinates;
     }
     if (feature.geometry.type == "Polygon") {
-        return (feature.geometry as GeoJSON.Polygon).coordinates[0];
+        return feature.geometry.coordinates[0];
     }
 }

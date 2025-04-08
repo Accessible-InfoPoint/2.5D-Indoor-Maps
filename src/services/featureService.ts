@@ -127,8 +127,8 @@ function getWallWeight(feature: GeoJSON.Feature<any>): number {
   return UserService.getCurrentProfile() == UserGroupEnum.blindPeople &&
     feature.geometry.type === "LineString" &&
     feature.properties.tactile_paving === "yes"
-    ? +WALL_WEIGHT_PAVING
-    : +WALL_WEIGHT;
+    ? WALL_WEIGHT_PAVING
+    : WALL_WEIGHT;
 }
 
 export function getCurrentFeatures(): Map<UserFeatureEnum, boolean> {
@@ -151,9 +151,7 @@ export function getCurrentFeatures(): Map<UserFeatureEnum, boolean> {
   return currentlySelectedFeatures;
 }
 
-export function setCurrentFeatures(
-  checkboxState: Map<UserFeatureEnum, boolean>
-): void {
+export function setCurrentFeatures(checkboxState: Map<UserFeatureEnum, boolean>): void {
   localStorage.currentlySelectedFeatures = JSON.stringify([
     ...checkboxState.entries(),
   ]);

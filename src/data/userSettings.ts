@@ -1,7 +1,7 @@
 import { UserSettingsEnum } from "../models/userSettingsEnum";
 import { lang } from "../services/languageService";
 
-const UserSettings: Map<UserSettingsEnum, any> = new Map<UserSettingsEnum, any>();
+const UserSettings = new Map<UserSettingsEnum, any>();
 UserSettings.set(UserSettingsEnum.visualSettings, {
   name: lang.userProfileVisualSettings,
   linkedModal: "#userVisualSettingsModal",

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 const jimp = require("jimp");
 const path = require('path');
 const fs = require('fs');

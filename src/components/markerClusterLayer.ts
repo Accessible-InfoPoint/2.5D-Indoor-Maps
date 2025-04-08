@@ -1,6 +1,6 @@
 import * as Maptalks from "maptalks";
 import { geoMap } from "../main";
-import {MARKERS_IMG_DIR, ICONS} from "../../public/strings/constants.json";
+import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
 import { IndoorLayer } from "./indoorLayer";
 
 export interface MarkerClusterLayerOptions {
@@ -26,9 +26,9 @@ export interface FeatureMarker {
 
 export class MarkerClusterLayer {
     private markers: FeatureMarker[];
-    private layerInstance: Maptalks.VectorLayer;
-    private options = defaultOptions;
-    private indoorLayer: IndoorLayer;
+    private readonly layerInstance: Maptalks.VectorLayer;
+    private readonly options = defaultOptions;
+    private readonly indoorLayer: IndoorLayer;
 
     constructor(id: string, indoorLayer: IndoorLayer, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: Maptalks.VectorLayerOptionsType) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
@@ -148,5 +148,8 @@ export class MarkerClusterLayer {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 function centerOfCluster(cluster: { center: Maptalks.Coordinate; id: string | number; symbol: object; }[]) : Maptalks.Coordinate {
-    return new Maptalks.Coordinate(cluster.map((marker) => marker.center.x).reduce((prev, val) => prev + val) / cluster.length, cluster.map((marker) => marker.center.y).reduce((prev, val) => prev + val) / cluster.length)
+    return new Maptalks.Coordinate(
+        cluster.map((marker) => marker.center.x).reduce((prev, val) => prev + val, 0) / cluster.length,
+        cluster.map((marker) => marker.center.y).reduce((prev, val) => prev + val, 0) / cluster.length
+    )
 }

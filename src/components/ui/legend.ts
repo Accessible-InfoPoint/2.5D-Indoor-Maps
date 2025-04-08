@@ -1,7 +1,7 @@
 import { colors } from "../../services/colorService";
 import { lang } from "../../services/languageService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
-import userService from "../../services/userService";
+import UserService from "../../services/userService";
 
 function create(): void {
   const legendList = document.getElementById("legendList");
@@ -20,7 +20,7 @@ function create(): void {
   addLegendRecord(legendList, colors.roomColorS, lang.legendSelected);
 
   // add wheelchair accessible to legend
-  if (userService.getCurrentProfile() == UserGroupEnum.wheelchairUsers) {
+  if (UserService.getCurrentProfile() == UserGroupEnum.wheelchairUsers) {
     const li = document.createElement("li");
     li.style.alignItems = "center";
 
@@ -52,17 +52,6 @@ function addLegendRecord(ref: HTMLElement, color: string, text: string): void {
   li.appendChild(span);
 
   ref.appendChild(li);
-
-  // const row = ref.insertRow();
-  // let cell = row.insertCell();
-  // const colorBox = document.createElement("td");
-  // colorBox.setAttribute("height", "20");
-  // colorBox.setAttribute("width", "20");
-  // colorBox.style.backgroundColor = color;
-  // cell.appendChild(colorBox);
-  // cell = row.insertCell();
-  // const textNode = document.createTextNode("\u00A0" + text);
-  // cell.appendChild(textNode);
 }
 
 export default {

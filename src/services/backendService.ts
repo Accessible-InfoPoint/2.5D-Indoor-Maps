@@ -1,9 +1,9 @@
 import * as Maptalks from "maptalks";
 import { BuildingInterface } from "../models/buildingInterface";
-import buildingService from "./buildingService";
-import httpService from "./httpService";
+import BuildingService from "./buildingService";
+import HttpService from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
-import coordinateHelpers from "../utils/coordinateHelpers";
+import CoordinateHelpers from "../utils/coordinateHelpers";
 
 let buildingConstants: Record<string, number>;
 let buildingDescription = "";
@@ -12,23 +12,22 @@ let geoJson: GeoJSON.FeatureCollection;
 let buildingInterface: BuildingInterface;
 
 async function fetchBackendData(): Promise<void> {
-	await httpService.fetchOverpassData();
+	await HttpService.fetchOverpassData();
 
-	const currentBuilding = "APB";
+	const currentBuilding = "HSZ";
 
-	buildingInterface = await buildingService.handleSearch(BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
+	buildingInterface = await BuildingService.handleSearch(BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
 
 	// filter indoor elements by bounds of building
 	if (buildingInterface !== undefined) {
-		geoJson = buildingService.filterByBounds(
-			httpService.getIndoorData(),
+		geoJson = BuildingService.filterByBounds(
+			HttpService.getIndoorData(),
 			buildingInterface.boundingBox
 		);
 	}
 	
 	// build building description
 	if (buildingInterface.feature.properties.name !== undefined) {
-		// description += lang.selectedBuildingPrefix + currentBuildingFeature.properties.name;
 		buildingDescription += buildingInterface.feature.properties.name;
 	
 		if (buildingInterface.feature.properties.loc_ref !== undefined) {
@@ -52,7 +51,7 @@ async function fetchBackendData(): Promise<void> {
 		Math.atan2(
 			p2[0] - p1[0],
 			// we need to use mercator projection for the latitude
-			coordinateHelpers.lat2y(p2[1]) - coordinateHelpers.lat2y(p1[1])
+			CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
 		) * (180 / Math.PI) + BuildingConstantsDefinition[currentBuilding].BEARING_OFFSET
 	// angle is between 0 and 360 after calculation (might even be above 360), maptalks needs it between -180 and 180
 	+ 180) % 360) - 180;

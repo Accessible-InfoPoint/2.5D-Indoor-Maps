@@ -1,6 +1,6 @@
 import { LanguageSettingsEnum } from "../models/languageSettingsEnum";
 
-const LanguageSettings: Map<LanguageSettingsEnum, any> = new Map<LanguageSettingsEnum, any>();
+const LanguageSettings = new Map<LanguageSettingsEnum, any>();
 LanguageSettings.set(LanguageSettingsEnum.english, {
   name: "English",
   acronym: "en",

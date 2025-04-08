@@ -1,7 +1,7 @@
 import DescriptionArea from "./ui/descriptionArea";
 import FeatureService from "../services/featureService";
 import LevelService from "../services/levelService";
-import coordinateHelpers from "../utils/coordinateHelpers";
+import CoordinateHelpers from "../utils/coordinateHelpers";
 import { geoMap } from "../main";
 import ColorService, { colors } from "../services/colorService";
 import {
@@ -27,18 +27,17 @@ import { MeshBasicMaterial, Plane, Vector3 } from "three";
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import { UserGroupEnum } from "../models/userGroupEnum";
-import levelService from "../services/levelService";
 
 
 export class IndoorLayer {
   // Layers
-  private roomsInstance: Maptalks.VectorLayer;
-  private roomNumbersInstance: Maptalks.VectorLayer;
-  private doorsInstance: Maptalks.VectorLayer;
-  private outlineInstance: Maptalks.VectorLayer;
-  private positionLayer: Maptalks.VectorLayer;
-  markers: MarkerClusterLayer;
-  threeLayer: ThreeLayer;
+  private readonly roomsInstance: Maptalks.VectorLayer;
+  private readonly roomNumbersInstance: Maptalks.VectorLayer;
+  private readonly doorsInstance: Maptalks.VectorLayer;
+  private readonly outlineInstance: Maptalks.VectorLayer;
+  private readonly positionLayer: Maptalks.VectorLayer;
+  private readonly markers: MarkerClusterLayer;
+  private threeLayer: ThreeLayer;
   // meshes and materials for threeJs
   meshes: BaseObject[] = [];
   levelDiff: string;
@@ -63,6 +62,7 @@ export class IndoorLayer {
     opacity: STAIRCASE_OUTLINE_OPACITY,
     transparent: true,
   });
+
   altitude: number;
   level: string;
 
@@ -70,6 +70,7 @@ export class IndoorLayer {
     // initialize level (as ID) and altitude
     this.altitude = altitude;
     this.level = level;
+
     this.roomsInstance = new Maptalks.VectorLayer("indoor" + level, undefined, {
       enableAltitude: true /* cssFilter: "grayscale(50%)"*/,
     });
@@ -79,15 +80,15 @@ export class IndoorLayer {
       {
         enableAltitude: true,
         altitude: altitude,
-        minZoom: 20.5 /* cssFilter: "grayscale(50%)" */,
+        minZoom: 20.5,
       }
     );
     this.doorsInstance = new Maptalks.VectorLayer("doors" + level, undefined, {
       enableAltitude: true,
-      altitude: altitude /* cssFilter: "grayscale(50%)"*/,
+      altitude: altitude,
     });
     this.positionLayer = new Maptalks.VectorLayer(
-      "positionlayer" + level,
+      "positionLayer" + level,
       undefined,
       {
         enableAltitude: true,
@@ -102,8 +103,8 @@ export class IndoorLayer {
         altitude: altitude
       }
     );
-    // define options for markerClusterLayer, especially default symbol
 
+    // define options for markerClusterLayer, especially default symbol
     this.markers = new MarkerClusterLayer(
       "markerCluster" + level,
       this,
@@ -122,6 +123,7 @@ export class IndoorLayer {
         altitude: altitude,
       }
     );
+
     this.threeLayer = new ThreeLayer("stairs" + level, {
       forceRenderOnMoving: true,
       forceRenderOnRotating: true,
@@ -131,9 +133,7 @@ export class IndoorLayer {
     this.drawIndoorLayerByGeoJSON(geoJSON);
     // add layers to map instance
     this.roomsInstance = this.roomsInstance.addTo(geoMap.mapInstance);
-    this.roomNumbersInstance = this.roomNumbersInstance.addTo(
-      geoMap.mapInstance
-    );
+    this.roomNumbersInstance = this.roomNumbersInstance.addTo(geoMap.mapInstance);
     this.doorsInstance = this.doorsInstance.addTo(geoMap.mapInstance);
     this.outlineInstance = this.outlineInstance.addTo(geoMap.mapInstance);
     this.threeLayer = this.threeLayer.addTo(geoMap.mapInstance);
@@ -233,7 +233,6 @@ export class IndoorLayer {
    * Draws on all layers
    */
   private drawIndoorLayerByGeoJSON(geoJSON: GeoJSON.FeatureCollection) {
-    // console.log(geoJSON);
     this.markers.clear();
 
     // filter out all positions of doors
@@ -242,7 +241,6 @@ export class IndoorLayer {
       .map((feature) => (feature.geometry as GeoJSON.Point).coordinates);
 
     // add building outline to outlineLayer
-    // const outlineGeo = Maptalks.GeoJSON.toGeometry(geoMap.buildingsBySearchString.get(geoMap.currentSearchString).feature);
     const outlineGeo = new Maptalks.Polygon(BackendService.getOutline());
     outlineGeo.updateSymbol({ polygonFill: "#4d4d4d", polygonOpacity : 0.8});
     this.outlineInstance.addGeometry(outlineGeo);
@@ -287,7 +285,7 @@ export class IndoorLayer {
           let pattern_fill: string = null;
           if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
             const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
-            const size = lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
+            const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium" : "large");
             pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
           }
           geo.updateSymbol({
@@ -352,9 +350,7 @@ export class IndoorLayer {
           // area does not have doors
           // TODO: check if door is part of any area (corridor may have door to area, that should not be visible)
           // TODO: if current feature == corridor, only draw if door is only part of corridors, otherwise draw it as only part of the room
-          const coords = (
-            feature.geometry as GeoJSON.Polygon
-          ).coordinates[0].slice(1);
+          const coords = feature.geometry.coordinates[0].slice(1);
           for (let i = 0; i < coords.length; i++) {
             const coord = coords.at(i);
             // if current coordinate is a door (there exists a door, for which both positions match)
@@ -367,43 +363,37 @@ export class IndoorLayer {
               const prev = coords.at(i - 1);
               const after = coords.at((i + 1) % coords.length);
               // door should be scaled to common width
-              const prevDist = coordinateHelpers.getDistanceBetweenCoordinatesInM(prev, coord);
-              const afterDist = coordinateHelpers.getDistanceBetweenCoordinatesInM(after, coord);
+              const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(prev, coord);
+              const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, coord);
               const doorWidth = 1; // in meters
               // we need to take spherical earth into account, therefore we must project into mercator, then calculate the door and project back
               const prevDoorCoord = [
                 coord[0] + ((prev[0] - coord[0]) * doorWidth) / (2 * prevDist),
-                coordinateHelpers.y2lat(
-                  coordinateHelpers.lat2y(coord[1]) +
-                    ((coordinateHelpers.lat2y(prev[1]) -
-                      coordinateHelpers.lat2y(coord[1])) *
+                CoordinateHelpers.y2lat(
+                  CoordinateHelpers.lat2y(coord[1]) +
+                    ((CoordinateHelpers.lat2y(prev[1]) -
+                      CoordinateHelpers.lat2y(coord[1])) *
                       doorWidth) /
                       (2 * prevDist)
                 ),
               ];
               const afterDoorCoord = [
-                coord[0] +
-                  ((after[0] - coord[0]) * doorWidth) / (2 * afterDist),
-                coordinateHelpers.y2lat(
-                  coordinateHelpers.lat2y(coord[1]) +
-                    ((coordinateHelpers.lat2y(after[1]) -
-                      coordinateHelpers.lat2y(coord[1])) *
+                coord[0] + ((after[0] - coord[0]) * doorWidth) / (2 * afterDist),
+                CoordinateHelpers.y2lat(
+                  CoordinateHelpers.lat2y(coord[1]) +
+                    ((CoordinateHelpers.lat2y(after[1]) -
+                      CoordinateHelpers.lat2y(coord[1])) *
                       doorWidth) /
                       (2 * afterDist)
                 ),
               ];
-              const color = geoMap.selectedFeatures.includes(
-                feature.id.toString()
-              )
-                ? colors.roomColorS
-                : FeatureService.getFeatureStyle(feature)["polygonFill"];
+              const color = geoMap.selectedFeatures.includes(feature.id.toString()) ? colors.roomColorS : FeatureService.getFeatureStyle(feature)["polygonFill"];
               const door = new Maptalks.LineString(
                 [prevDoorCoord, afterDoorCoord],
                 {
                   symbol: {
                     lineColor: color,
-                    lineWidth:
-                      FeatureService.getFeatureStyle(feature)["lineWidth"],
+                    lineWidth: FeatureService.getFeatureStyle(feature)["lineWidth"],
                   },
                 }
               );
@@ -420,13 +410,13 @@ export class IndoorLayer {
         geo.updateSymbol(style);
         this.roomsInstance.addGeometry(geo);
       } else if (feature.geometry.type == "Point") {
+        // usually doors
         this.addMarker(feature);
       } else {
         // console.log(feature)
         // We don't look at these points, maybe in future? (TODO)
       }
     });
-    this.makeFeaturesAccessible();
     this.markers.updateMarkers();
 
     // section for staircases
@@ -508,7 +498,6 @@ export class IndoorLayer {
       ).forEach(feature => {
         meshes.push( // complex staircases generate multiple meshes (bottom and 2 sides)
           ...complexStaircase(
-            feature,
             filterConnectedPathways(feature, doors, lowestPoints, pathways, level),
             allNodes,
             altitude,
@@ -571,40 +560,13 @@ export class IndoorLayer {
   handleClick(feature: GeoJSON.Feature<any, any>): void {
     console.log(feature);
 
-    const accessibilityDescription =
-      FeatureService.getAccessibilityDescription(feature);
+    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
     DescriptionArea.update(accessibilityDescription, "description");
 
     geoMap.selectedFeatures = [feature.id.toString()];
     // TODO: might need to optimize this, needs a long time to update all layers at the moment
     // idea: only update the layers that are needed
     geoMap.indoorLayers.forEach((layer) => layer.updateLayer());
-  }
-
-  makeFeaturesAccessible(): void {
-    // TODO: Dunno how this works with maptalks...
-    const featurePaths = document.getElementsByClassName("leaflet-interactive");
-    for (let i = 0; i < featurePaths.length; i++) {
-      featurePaths[i].setAttribute("aria-disabled", "true");
-    }
-
-    const markerIcons = document.getElementsByClassName("leaflet-marker-icon");
-    for (let i = 0; i < markerIcons.length; i++) {
-      markerIcons[i].setAttribute("aria-disabled", "true");
-      markerIcons[i].removeAttribute("tabindex");
-    }
-  }
-
-  getRoomsLayerInstance(): Maptalks.VectorLayer {
-    return this.roomsInstance;
-  }
-
-  getRoomNumbersLayerInstance(): Maptalks.VectorLayer {
-    return this.roomNumbersInstance;
-  }
-
-  getDoorsLayerInstance(): Maptalks.VectorLayer {
-    return this.doorsInstance;
   }
 
   /**
@@ -624,10 +586,6 @@ export class IndoorLayer {
   ): Promise<void> {
     let startTime: number | null = null;
     const layers = [
-      // this.roomsInstance,
-      // this.roomNumbersInstance,
-      // this.doorsInstance,
-      // this.markers.getLayer(),
       this.positionLayer,
       this.outlineInstance,
     ];

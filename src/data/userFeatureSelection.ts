@@ -4,10 +4,7 @@ import { lang } from "../services/languageService";
 
 /**Initial data for modal, also list of profiles per selectable userFeature*/
 
-const UserFeatureSelection: Map<UserFeatureEnum, any> = new Map<
-  UserFeatureEnum,
-  any
->();
+const UserFeatureSelection = new Map<UserFeatureEnum, any>();
 
 UserFeatureSelection.set(UserFeatureEnum.entrancesExits, {
   name: lang.userProfileEntranceExit,

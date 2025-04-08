@@ -6,13 +6,12 @@ import {
 } from "../../public/strings/constants.json";
 import { GeoJsonObject, Position } from "geojson";
 import { getArrayDepth } from "../utils/getArrayDepth";
-import { geoMap } from "../main";
 import { lang } from "./languageService";
 import { extent} from "geojson-bounds";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { booleanContainsPoint } from "bbox-fns";
-import backendService from "./backendService";
+import BackendService from "./backendService";
 
 /**
  * Finding a building by search string:
@@ -30,10 +29,8 @@ function handleSearch(searchString: string): Promise<BuildingInterface> {
   const found = buildings.features.some(
     (building: GeoJSON.Feature<any, any>) => {
       if (
-        (building.properties.name !== undefined &&
-          building.properties.name === searchString) ||
-        (building.properties.loc_ref !== undefined &&
-          building.properties.loc_ref === searchString)
+        (building.properties.name !== undefined && building.properties.name === searchString) ||
+        (building.properties.loc_ref !== undefined && building.properties.loc_ref === searchString)
       ) {
         returnBuilding = {
           boundingBox: extent(building),
@@ -63,18 +60,16 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
             nominatimResponse.length === 0 ||
             nominatimResponse[0] === undefined
           ) {
-            return reject(lang.buildingNotFound);
+            return reject(new Error(lang.buildingNotFound));
           }
 
           const BBox = nominatimResponse[0]["boundingbox"];
           const buildingFeature = getBuilding(
-            nominatimResponse[0]["osm_type"] +
-              "/" +
-              nominatimResponse[0]["osm_id"]
+            nominatimResponse[0]["osm_type"] + "/" + nominatimResponse[0]["osm_id"]
           );
 
           if (buildingFeature === null) {
-            return reject(lang.buildingNotSITconform);
+            return reject(new Error(lang.buildingNotSITconform));
           }
 
           if (BBox !== undefined) {
@@ -85,21 +80,16 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
             return resolve(returnBuilding);
           }
 
-          return reject(null);
+          return reject(new Error());
         } else if (xhr.status > 400) {
-          return reject(null);
+          return reject(new Error());
         }
       }
     };
 
     xhr.open(
       "GET",
-      NOMINATIM_SERVER +
-        "?key= " +
-        MAPQUEST_API_KEY +
-        "&format=json&q=" +
-        encodeURIComponent(searchString) +
-        "&addressdetails=0&limit=1",
+      NOMINATIM_SERVER + "?key= " + MAPQUEST_API_KEY + "&format=json&q=" + encodeURIComponent(searchString) + "&addressdetails=0&limit=1",
       true
     );
     xhr.send();
@@ -169,13 +159,11 @@ function checkIfInside(
   switch (getArrayDepth(featureCoordinates)) {
     case 1: {
       featureCoordinates = <Position>featureCoordinates;
-    //   const latLng = new LatLng(featureCoordinates[0], featureCoordinates[1]);
       return booleanContainsPoint(buildingBBox, featureCoordinates);
     }
     case 2: {
       featureCoordinates = <Position[]>featureCoordinates;
       return featureCoordinates.some((fc: Position) => {
-        // const latLng = new LatLng(fc[0], fc[1]);
         return booleanContainsPoint(buildingBBox, fc);
       });
     }
@@ -183,7 +171,6 @@ function checkIfInside(
       featureCoordinates = <Position[][]>featureCoordinates;
       return featureCoordinates.some((fc: Position[]) => {
         return fc.some((fc2: Position) => {
-        //   const latLng = new LatLng(fc2[0], fc2[1]);
           return booleanContainsPoint(buildingBBox, fc2);
         });
       });
@@ -208,11 +195,11 @@ function getBuilding(featureId: string): GeoJSON.Feature<any, any> {
 }
 
 function getBuildingGeoJSON(): GeoJSON.FeatureCollection<any> {
-  return backendService.getGeoJson();
+  return BackendService.getGeoJson();
 }
 
 function getBuildingDescription(): string {
-  return backendService.getBuildingDescription();
+  return BackendService.getBuildingDescription();
 }
 
 export default {

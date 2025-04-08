@@ -1,7 +1,7 @@
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { lang } from "../services/languageService";
 
-const UserGroups: Map<UserGroupEnum, any> = new Map<UserGroupEnum, any>();
+const UserGroups = new Map<UserGroupEnum, any>();
 UserGroups.set(UserGroupEnum.blindPeople, {
   name: lang.userProfileVisImpairments,
   icon: "\\images\\eye.svg",

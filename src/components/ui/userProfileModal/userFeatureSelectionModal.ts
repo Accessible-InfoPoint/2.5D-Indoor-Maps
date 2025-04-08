@@ -1,5 +1,4 @@
 import { Modal } from "bootstrap";
-import { UserFeatureEnum } from "../../../models/userFeatureEnum";
 import FeatureService from "../../../services/featureService";
 import { UserFeatureSelection } from "../../../data/userFeatureSelection";
 import UserProfileModal from "./userProfileModal";
@@ -11,8 +10,7 @@ const userFeatureSelectionModal = new Modal(
   { backdrop: "static", keyboard: false }
 );
 
-const checkboxState: Map<UserFeatureEnum, boolean> =
-  FeatureService.getCurrentFeatures();
+const checkboxState = FeatureService.getCurrentFeatures();
 
 function render(): void {
   //create checkboxes and headings

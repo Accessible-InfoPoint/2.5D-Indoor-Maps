@@ -7,7 +7,6 @@ import { UserGroupEnum } from "../../../models/userGroupEnum";
 import { LanguageSettings } from "../../../data/languageSettings";
 import { LanguageSettingsEnum } from "../../../models/languageSettingsEnum";
 import VisualSettingsModal from "./userVisualSettingsModal";
-import UserVisualSettingsModal from "./userVisualSettingsModal";
 
 function render(): void {
   renderProfiles(); //profile quick switch
@@ -61,14 +60,6 @@ function renderSettings(): void {
     button.setAttribute("data-bs-target", v.linkedModal);
     button.setAttribute("data-bs-toggle", "modal");
 
-    // button.className =
-    //   "list-group-item d-flex justify-content-between align-items-start";
-    // button.innerHTML =
-    //   v.name +
-    //   ' <span aria-hidden="true"><i class="material-icons">' +
-    //   v.icon +
-    //   "</i></span>";
-
     li.appendChild(button)
     document.getElementById("userSettingsList").appendChild(li);
   });
@@ -104,13 +95,11 @@ function renderLinkedModals() {
 }
 
 function show(): void {
-  // userProfileModal.show();
   document.getElementById("userProfileList").focus();
 }
 function hideAll(): void {
-  // userProfileModal.hide();
   FeatureSelectionModal.hide();
-  UserVisualSettingsModal.hide();
+  VisualSettingsModal.hide();
 }
 
 function setUserProfile(userGroup: UserGroupEnum): void {

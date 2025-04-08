@@ -26,7 +26,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
-  Developed by: Richard Fuchs, Danny Schober, Jacques-Maurice Walther
+  Developed by: Richard Fuchs, Danny Schober, Jacques-Maurice Walther, Jan Schmalfuß-Schwarz
 */
 
 const express = require('express');

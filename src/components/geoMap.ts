@@ -14,13 +14,12 @@ import BuildingService from "../services/buildingService";
 import LoadingIndicator from "./ui/loadingIndicator";
 import { IndoorLayer } from "./indoorLayer";
 import AccessibilityService from "../services/accessibilityService";
-import Accessibility from "../utils/makeAccessible";
 import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import * as Maptalks from "maptalks";
-import backendService from "../services/backendService";
+import BackendService from "../services/backendService";
 
 export class GeoMap {
   mapInstance: Maptalks.Map = null;
@@ -40,12 +39,8 @@ export class GeoMap {
   infoPoint: GeoJSON.Feature;
   configMode = false; // set only during configuration of building constants
 
-  state = {
-    connected: false,
-  };
-
   constructor() {
-    const buildingConstants = backendService.getBuildingConstants();
+    const buildingConstants = BackendService.getBuildingConstants();
     this.standardZoom = buildingConstants["standardZoom"];
     this.maxZoom = buildingConstants["maxZoom"];
     this.minZoom = buildingConstants["minZoom"];
@@ -79,10 +74,6 @@ export class GeoMap {
         attribution: CARTO_ATTRIBUTION,
       }),
     });
-    this.mapInstance
-      .on("moveend", this.makeAccessible)
-      .on("load", this.makeAccessible)
-      .on("zoomend", this.makeAccessible);
 
     this.mapInstance.on("moving moveend", () => {
       this.flatMapInstance.setCenter(this.mapInstance.getCenter());
@@ -108,7 +99,6 @@ export class GeoMap {
         console.log("pitch", this.mapInstance.getPitch());
     });
 
-    this.makeAccessible();
     this.applyStyleFilters();
   }
 
@@ -120,25 +110,14 @@ export class GeoMap {
     this.mapInstance.removeLayer(obj);
   }
 
-  makeAccessible(): void {
-    Accessibility.removeShadowPane();
-    Accessibility.silenceTileImages();
-    Accessibility.silenceMapMarkers();
-    Accessibility.silenceLeafletAttribution();
-    //accessibility.silenceZoomControls();
-    //accessibility.silenceCenteringButton();
-    Accessibility.silenceMapPane();
-    //accessibility.silenceBottomLeafletControls();
-  }
-
   showBuilding(): string {
-    this.handleBuildingChange();
+    this.handleBuildingLoad();
     this.centerMapToBuilding();
 
     return lang.searchBuildingFound;
   }
 
-  handleBuildingChange(): void {
+  handleBuildingLoad(): void {
     LevelControl.handleChange();
     LevelService.clearData();
 
@@ -165,7 +144,7 @@ export class GeoMap {
   }
 
   centerMapToBuilding(): void {
-    const ext = backendService.getBoundingBoxExtent();
+    const ext = BackendService.getBoundingBoxExtent();
 
     this.standardCenter = [ext.getCenter().x, ext.getCenter().y];
 
@@ -216,7 +195,7 @@ export class GeoMap {
       const initialHeightOldLevel = oldLevel == oldLevelBottom ? 0 : LEVEL_HEIGHT;
       const finalHeightNewLevel = newLevel == newLevelBottom ? 0 : LEVEL_HEIGHT;
       const difference = this.getLevelDifference(oldLevel, newLevel);
-      const offset = oldLevel == oldLevelBottom ? -LEVEL_HEIGHT : newLevel == newLevelBottom ? LEVEL_HEIGHT : 0;
+      const offset = oldLevel == oldLevelBottom ? -LEVEL_HEIGHT : (newLevel == newLevelBottom ? LEVEL_HEIGHT : 0);
 
       const finalHeightOldLevel = initialHeightOldLevel - LEVEL_HEIGHT * difference - offset;
       const initialHeightNewLevel = finalHeightNewLevel + LEVEL_HEIGHT * difference + offset;
@@ -288,9 +267,7 @@ export class GeoMap {
   }
 
   applyStyleFilters = (): void => {
-    this.mapInstance
-      .getBaseLayer()
-      .setOpacity(ColorService.getEnvOpacity() / 100);
+    this.mapInstance.getBaseLayer().setOpacity(ColorService.getEnvOpacity() / 100);
     document.getElementById("map").style.filter = `saturate(${
       (ColorService.getColorStrength() * 2) / 100
     })`;

@@ -9,7 +9,7 @@ let maxOffset = 0;
 let numLevels = 0;
 let allLevelNames: string[] = [];
 
-function handleChange(): void {
+function handleLoad(): void {
   //reCreate
 
   remove();
@@ -17,7 +17,7 @@ function handleChange(): void {
 }
 
 async function create(): Promise<void> {
-  const levelNames = await LevelService.getLevelNames();
+  const levelNames = LevelService.getLevelNames();
   render(levelNames);
 }
 
@@ -33,7 +33,6 @@ function render(allLevelNamesParam: string[]): void {
   allLevelNames.forEach((level: string) => {
     const changeToLevel = lang.changeLevel + level;
     const levelLi = document.createElement("li");
-    // levelBtn.className = "page-item";
     const levelBtn = document.createElement("button")
     levelBtn.className = "square";
     levelBtn.innerHTML = level
@@ -48,10 +47,9 @@ function render(allLevelNamesParam: string[]): void {
     levelBtn.addEventListener("click", () => {
       geoMap.handleLevelChange(level);
 
-      for (let i = 0; i < levelControl.children.length; i++) {
-        levelControl.children[i].children[0].classList.remove("active");
+      for (const element of levelControl.children) {
+        element.children[0].classList.remove("active");
       }
-      //(<HTMLElement>e.target).parentElement.classList.add("active");
       levelBtn.classList.add("active");
     });
 
@@ -171,7 +169,7 @@ function setupControlShifter(): void {
 }
 
 export default {
-  handleChange,
+  handleChange: handleLoad,
   focusOnLevel,
   setupControlShifter,
   setMargin,

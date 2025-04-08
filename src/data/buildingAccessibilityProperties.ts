@@ -12,8 +12,7 @@ export const buildingAccessibilityProperties: AccessibilityPropertiesInterface[]
   [
     {
       hasCorrectProperties: (f) =>
-        f.properties.wheelchair !== undefined &&
-        f.properties.wheelchair === "yes",
+        f.properties.wheelchair !== undefined && f.properties.wheelchair === "yes",
       msgTrue: lang.buildingAccessibilityWheelchairTrue,
       msgFalse: (f) =>
         f.properties.wheelchair === undefined

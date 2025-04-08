@@ -36,28 +36,31 @@ export const levelAccessibilityProperties: AccessibilityPropertiesInterface[] =
       hasCorrectProperties: (f) =>
         ["de", "en"].some(
           (lng) =>
-            (f.properties.tactile_writing !== undefined &&
-              f.properties.tactile_writing === "yes") ||
-            (f.properties["tactile_writing:embossed_printed_letters:" + lng] !==
-              undefined &&
-              f.properties[
-                "tactile_writing:embossed_printed_letters:" + lng
-              ] === "yes") ||
-            (f.properties["tactile_writing:engraved_printed_letters:" + lng] !==
-              undefined &&
-              f.properties[
-                "tactile_writing:engraved_printed_letters:" + lng
-              ] === "yes") ||
-            (f.properties["tactile_writing:braille:" + lng] !== undefined &&
-              f.properties["tactile_writing:braille:" + lng] === "yes") ||
-            (f.properties["tactile_writing:computer_braille:" + lng] !==
-              undefined &&
-              f.properties["tactile_writing:computer_braille:" + lng] ===
-                "yes") ||
-            (f.properties["tactile_writing:fakoo:" + lng] !== undefined &&
-              f.properties["tactile_writing:fakoo:" + lng] === "yes") ||
-            (f.properties["tactile_writing:moon:" + lng] !== undefined &&
-              f.properties["tactile_writing:moon:" + lng] === "yes")
+            (f.properties.tactile_writing !== undefined && f.properties.tactile_writing === "yes") ||
+            (
+              f.properties["tactile_writing:embossed_printed_letters:" + lng] !== undefined &&
+              f.properties["tactile_writing:embossed_printed_letters:" + lng] === "yes"
+            ) ||
+            (
+              f.properties["tactile_writing:engraved_printed_letters:" + lng] !== undefined &&
+              f.properties["tactile_writing:engraved_printed_letters:" + lng] === "yes"
+            ) ||
+            (
+              f.properties["tactile_writing:braille:" + lng] !== undefined &&
+              f.properties["tactile_writing:braille:" + lng] === "yes"
+            ) ||
+            (
+              f.properties["tactile_writing:computer_braille:" + lng] !== undefined &&
+              f.properties["tactile_writing:computer_braille:" + lng] === "yes"
+            ) ||
+            (
+              f.properties["tactile_writing:fakoo:" + lng] !== undefined &&
+              f.properties["tactile_writing:fakoo:" + lng] === "yes"
+            ) ||
+            (
+              f.properties["tactile_writing:moon:" + lng] !== undefined &&
+              f.properties["tactile_writing:moon:" + lng] === "yes"
+            )
         ),
       msgTrue: lang.buildingAccessibilityTactileWritingTrue,
       msgFalse: lang.buildingAccessibilityTactileWritingFalse,
@@ -67,10 +70,10 @@ export const levelAccessibilityProperties: AccessibilityPropertiesInterface[] =
       hasCorrectProperties: (f) =>
         f.properties.highway !== undefined &&
         f.properties.highway === "elevator" &&
-        ((f.properties["speech_output:en"] !== undefined &&
-          f.properties["speech_output:en"] === "yes") ||
-          (f.properties["speech_output:de"] !== undefined &&
-            f.properties["speech_output:de"] === "yes")),
+        (
+          (f.properties["speech_output:en"] !== undefined && f.properties["speech_output:en"] === "yes") ||
+          (f.properties["speech_output:de"] !== undefined && f.properties["speech_output:de"] === "yes")
+        ),
       msgTrue: lang.buildingAccessibilityElevatorSpeechTrue,
       msgFalse: lang.buildingAccessibilityElevatorSpeechFalse,
       userGroups: [UserGroupEnum.blindPeople],

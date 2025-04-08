@@ -102,9 +102,12 @@ export const featureAccessibilityProperties: AccessibilityPropertiesInterface[] 
       msgTrue: (f) =>
         (f.properties.male !== undefined
           ? lang.featureAccessibilityMale
-          : f.properties.female !== undefined
-          ? lang.featureAccessibilityFemale
-          : lang.featureAccessibilityUnisex) + lang.featureAccessibilityToilet,
+          : (
+            f.properties.female !== undefined
+            ? lang.featureAccessibilityFemale
+            : lang.featureAccessibilityUnisex
+          )
+        ) + lang.featureAccessibilityToilet,
       msgFalse: null,
       userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.blindPeople],
       iconFilename: ICONS.TOILETS,
@@ -118,9 +121,12 @@ export const featureAccessibilityProperties: AccessibilityPropertiesInterface[] 
       msgTrue: (f) =>
         (f.properties.entrance === "main"
           ? lang.featureAccessibilityMain
-          : f.properties.entrance === "secondary"
-          ? lang.featureAccessibilitySecondary
-          : "") + lang.featureAccessibilityEntrance,
+          : (
+            f.properties.entrance === "secondary"
+            ? lang.featureAccessibilitySecondary
+            : ""
+          )
+        ) + lang.featureAccessibilityEntrance,
       msgFalse: null,
       userGroups: allGroups,
       iconFilename: ICONS.ENTRANCE,
@@ -129,10 +135,8 @@ export const featureAccessibilityProperties: AccessibilityPropertiesInterface[] 
     /* emergency exits (general) */
     {
       hasCorrectProperties: (f) =>
-        (f.properties.exit !== undefined &&
-          ["yes", "emergency"].includes(f.properties.exit)) ||
-        (f.properties.entrance !== undefined &&
-          ["exit", "emergency"].includes(f.properties.entrance)),
+        (f.properties.exit !== undefined && ["yes", "emergency"].includes(f.properties.exit)) ||
+        (f.properties.entrance !== undefined && ["exit", "emergency"].includes(f.properties.entrance)),
       msgTrue: lang.featureAccessibilityExit,
       msgFalse: null,
       userGroups: allGroups,
@@ -142,8 +146,7 @@ export const featureAccessibilityProperties: AccessibilityPropertiesInterface[] 
     /* information boards (general, except blind people) */
     {
       hasCorrectProperties: (f) =>
-        f.properties.information !== undefined &&
-        ["board", "map"].includes(f.properties.information),
+        f.properties.information !== undefined && ["board", "map"].includes(f.properties.information),
       msgTrue: lang.featureAccessibilityInformationBoard,
       msgFalse: null,
       userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.wheelchairUsers],
@@ -154,8 +157,7 @@ export const featureAccessibilityProperties: AccessibilityPropertiesInterface[] 
     /* stairs (general, except wheelchair users) */
     {
       hasCorrectProperties: (f) =>
-        (f.properties.highway !== undefined &&
-          f.properties.highway === "steps") ||
+        (f.properties.highway !== undefined &&  f.properties.highway === "steps") ||
         (f.properties.stairs !== undefined && f.properties.stairs === "yes"),
       msgTrue: lang.userProfileStairs,
       msgFalse: null,

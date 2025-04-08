@@ -8,47 +8,9 @@
 </head>
 
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#" id="navbarBrandText" tabindex="-1">
-            <img src="./images/icons-192.png" alt="" width="32" height="32" class="d-inline-block align-text-top">
-            Accessible Maps mobile</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-0 ms-lg-4 me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active flex-nowrap d-flex" href="javascript:void(0)" id="changeUserProfileBtn">
-                        <span class="material-icons align-text-top me-1" aria-hidden="true">people</span>
-                        <span id="changeUserProfileBtnLabel">Change user Profile</span>
-                    </a>
-                </li>
-            </ul>
-            <div class="d-flex justify-content-end flex-column flex-sm-column flex-lg-row flex-lg-wrap" id="searchWrapper" role="search">
-                <div class="form-group row flex-nowrap" id="buildingSearchWrapper">
-                    <label class="d-flex flex-nowrap text-white align-items-center justify-content-lg-end col-4 justify-content-sm-start"
-                           for="buildingSearchInput" id="currentBuilding">Current Building:</label>
-                    <div class="input-group col-8">
-                        <input class="form-control hide-clear-icon" type="text" placeholder="Search for buildings"
-                               aria-label="Search for buildings"
-                               id="buildingSearchInput" disabled>
-                        <button class="btn btn-danger" id="clearBuildingSearch" aria-label="Clear search field">x
-                        </button>
-                        <button class="btn btn-secondary hidden" id="buildingSearchSubmit" disabled>Search</button>
-                    </div>
-                </div>
-
-                
-            </div>
-
             <div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator">
                 <span class="visually-hidden">Loading...</span>
             </div>
-        </div>
-    </div>
-</nav>
 <div id="toastWrapper"></div>
 
 <div id="map" aria-disabled="true"></div>

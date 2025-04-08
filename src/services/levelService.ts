@@ -4,7 +4,6 @@ import { hasLevel } from "../utils/hasCurrentLevel";
 import AccessibilityService from "./accessibilityService";
 import { geoMap } from "../main";
 import { lang } from "./languageService";
-import BackendService from "./backendService";
 
 const geoJSONByLevel = new Map<string, any>();
 
