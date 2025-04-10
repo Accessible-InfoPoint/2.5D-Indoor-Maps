@@ -44,6 +44,7 @@ function removeEmpty() {
   ].forEach((l) => {
     if (!l.hasChildNodes()) {
       l.style.display = "none";
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       l.previousElementSibling.style.display = "none";
     }

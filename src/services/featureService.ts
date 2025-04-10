@@ -139,9 +139,10 @@ export function getCurrentFeatures(): Map<UserFeatureEnum, boolean> {
       : (() => {
           const currentlySelectedFeatures = new Map();
           for (const v of UserFeatureSelection.values()) {
-            v.userGroups.some((g: any) => g === currentProfile)
-              ? currentlySelectedFeatures.set(v.id, true)
-              : currentlySelectedFeatures.set(v.id, false);
+            if (v.userGroups.some((g: any) => g === currentProfile))
+              currentlySelectedFeatures.set(v.id, true)
+            else
+              currentlySelectedFeatures.set(v.id, false);
 
             //currentlySelectedFeatures.set(v.id, v.isCheckedDefault);
           }

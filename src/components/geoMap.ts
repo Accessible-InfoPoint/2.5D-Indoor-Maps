@@ -254,7 +254,8 @@ export class GeoMap {
         this.selectedFeatures = results.map((feature) => feature.id.toString());
         this.indoorLayers.forEach((layer) => layer.updateLayer());
 
-        const selectedLevel = results[0].properties.level.toString();
+        // from the levels of the feature, select the nearest to the current level
+        const selectedLevel = (results[0].properties.level as string[]).sort((a, b) => Math.abs(parseFloat(a) - parseFloat(this.currentLevel)) - Math.abs(parseFloat(b) - parseFloat(this.currentLevel)))[0];
         LevelControl.focusOnLevel(selectedLevel);
         this.handleLevelChange(selectedLevel);
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-disable no-undef */ // we check whether localStorage is undefined or null
 const downloadResource = require("./_downloadResource");
 const {RESOURCES_TO_DOWNLOAD, MAX_OVERPASS_FILE_AGE_IN_DAYS} = require("./constants");

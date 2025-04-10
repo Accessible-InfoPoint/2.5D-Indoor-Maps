@@ -107,7 +107,6 @@ export class MarkerClusterLayer {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     handleClick(cluster: { center: Maptalks.Coordinate; id: string | number; symbol: object; }[]): void {
         const map = this.layerInstance.getMap();
         if (cluster.length > 1) {
@@ -146,7 +145,6 @@ export class MarkerClusterLayer {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 function centerOfCluster(cluster: { center: Maptalks.Coordinate; id: string | number; symbol: object; }[]) : Maptalks.Coordinate {
     return new Maptalks.Coordinate(
         cluster.map((marker) => marker.center.x).reduce((prev, val) => prev + val, 0) / cluster.length,

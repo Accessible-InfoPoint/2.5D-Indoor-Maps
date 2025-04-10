@@ -16,7 +16,7 @@ function handleLoad(): void {
   create();
 }
 
-async function create(): Promise<void> {
+function create(): void {
   const levelNames = LevelService.getLevelNames();
   render(levelNames);
 }
