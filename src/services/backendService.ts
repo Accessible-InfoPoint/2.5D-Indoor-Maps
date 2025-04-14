@@ -5,6 +5,7 @@ import HttpService from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { extractLevels } from "../utils/extractLevels";
+import DoorService from "./doorService";
 
 let buildingConstants: Record<string, number>;
 let buildingDescription = "";
@@ -16,7 +17,7 @@ let buildingInterface: BuildingInterface;
 async function fetchBackendData(): Promise<void> {
   await HttpService.fetchOverpassData();
 
-  const currentBuilding = "HSZ";
+  const currentBuilding = "APB";
 
   buildingInterface = await BuildingService.handleSearch(BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
 
@@ -27,6 +28,8 @@ async function fetchBackendData(): Promise<void> {
       buildingInterface.boundingBox
     );
   }
+
+  console.log("BuildingService", structuredClone(geoJson));
 
   // rewrite the geojson so that 
   geoJson.features.forEach(
@@ -39,6 +42,40 @@ async function fetchBackendData(): Promise<void> {
       feature.properties.level = levels.map((val) => val.toString());
 
       levels.forEach((l) => allLevels.add(l));
+    }
+  )
+
+  // initialize doors
+  geoJson.features.forEach(
+    (feature) => {
+      if (feature.geometry.type != "Point")
+        return;
+
+      if (!("door" in feature.properties) || feature.properties.door == "no")
+        return
+
+      const levels = new Set<string>();
+      extractLevels(feature.properties.level ?? "").forEach(l => levels.add(l.toString()));
+      extractLevels(feature.properties.repeat_on ?? "").forEach(l => levels.add(l.toString()));
+      DoorService.addDoor(feature.geometry.coordinates, levels, feature.properties);
+    }
+  )
+  // Add rooms to the doors
+  geoJson.features.forEach(
+    (feature) => {
+      if (feature.geometry.type == "Polygon" && "indoor" in feature.properties && feature.properties["indoor"] != "pathway" && feature.properties["area"] != "no") {
+        const coords = feature.geometry.coordinates[0].slice(1);
+        for (let i = 0; i < coords.length; i++) {
+          const coord = coords.at(i);
+          if (DoorService.checkIfDoorExists(coord)) {
+            DoorService.addRoomToDoor(coord, feature);
+            // to correctly rotate door, it must be in line with previous and next coordinate
+            const prev = coords.at(i - 1);
+            const after = coords.at((i + 1) % coords.length);
+            DoorService.calculateDoorOrientation(coord, prev, after);
+          }
+        }
+      }
     }
   )
   

@@ -1,7 +1,6 @@
 import DescriptionArea from "./ui/descriptionArea";
 import FeatureService from "../services/featureService";
 import LevelService from "../services/levelService";
-import CoordinateHelpers from "../utils/coordinateHelpers";
 import { geoMap } from "../main";
 import ColorService, { colors } from "../services/colorService";
 import {
@@ -27,6 +26,8 @@ import { MeshBasicMaterial, Plane, Vector3 } from "three";
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import { UserGroupEnum } from "../models/userGroupEnum";
+import DoorService from "../services/doorService";
+import { DoorDataInterface } from "../models/doorDataInterface";
 
 
 export class IndoorLayer {
@@ -131,6 +132,7 @@ export class IndoorLayer {
 
     // draw layer and room labels
     this.drawIndoorLayerByGeoJSON(geoJSON);
+    this.drawDoors(DoorService.getDoorsByLevel(level));
     // add layers to map instance
     this.roomsInstance = this.roomsInstance.addTo(geoMap.mapInstance);
     this.roomNumbersInstance = this.roomNumbersInstance.addTo(geoMap.mapInstance);
@@ -171,6 +173,7 @@ export class IndoorLayer {
   updateLayer(): void {
     this.clearIndoorLayer();
     this.drawIndoorLayerByGeoJSON(LevelService.getLevelGeoJSON(this.level));
+    this.drawDoors(DoorService.getDoorsByLevel(this.level));
   }
 
   /**
@@ -275,7 +278,7 @@ export class IndoorLayer {
 
       // polygons, which are indoor can be rooms and areas
       // OSM does not encode anything in the geometry type, pathways (stair-middle-line) and tactile paving might also be classified as polygons, when the start and end point is the same
-      if (feature.geometry.type == "Polygon" && "indoor" in feature.properties && feature.properties["indoor"] != "pathway" && feature.properties["area"] != "no") {
+      if (feature.geometry.type == "Polygon" && "indoor" in feature.properties && feature.properties["indoor"] != "pathway" && feature.properties["area"] != "no") { // TODO: move to helper function as it is reused in backendService
         const geo = Maptalks.GeoJSON.toGeometry(feature);
         // set the specified style
         geo.updateSymbol(FeatureService.getFeatureStyle(feature));
@@ -342,65 +345,6 @@ export class IndoorLayer {
         this.roomsInstance.addGeometry(geo);
         this.showRoomNumber(feature); // generate room number / name
         this.addMarker(feature); // add accessibility marker for certain rooms
-        // Add Doors to rooms
-        if (
-          "indoor" in feature.properties &&
-          feature.properties["indoor"] != "area"
-        ) {
-          // area does not have doors
-          // TODO: check if door is part of any area (corridor may have door to area, that should not be visible)
-          // TODO: if current feature == corridor, only draw if door is only part of corridors, otherwise draw it as only part of the room
-          const coords = feature.geometry.coordinates[0].slice(1);
-          for (let i = 0; i < coords.length; i++) {
-            const coord = coords.at(i);
-            // if current coordinate is a door (there exists a door, for which both positions match)
-            if (
-              doors.findIndex(
-                (pos) => pos[0] == coord[0] && pos[1] == coord[1]
-              ) != -1
-            ) {
-              // to correctly rotate door, it must be in line with previous and next coordinate
-              const prev = coords.at(i - 1);
-              const after = coords.at((i + 1) % coords.length);
-              // door should be scaled to common width
-              const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(prev, coord);
-              const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, coord);
-              const doorWidth = 1; // in meters
-              // we need to take spherical earth into account, therefore we must project into mercator, then calculate the door and project back
-              const prevDoorCoord = [
-                coord[0] + ((prev[0] - coord[0]) * doorWidth) / (2 * prevDist),
-                CoordinateHelpers.y2lat(
-                  CoordinateHelpers.lat2y(coord[1]) +
-                    ((CoordinateHelpers.lat2y(prev[1]) -
-                      CoordinateHelpers.lat2y(coord[1])) *
-                      doorWidth) /
-                      (2 * prevDist)
-                ),
-              ];
-              const afterDoorCoord = [
-                coord[0] + ((after[0] - coord[0]) * doorWidth) / (2 * afterDist),
-                CoordinateHelpers.y2lat(
-                  CoordinateHelpers.lat2y(coord[1]) +
-                    ((CoordinateHelpers.lat2y(after[1]) -
-                      CoordinateHelpers.lat2y(coord[1])) *
-                      doorWidth) /
-                      (2 * afterDist)
-                ),
-              ];
-              const color = geoMap.selectedFeatures.includes(feature.id.toString()) ? colors.roomColorS : FeatureService.getFeatureStyle(feature)["polygonFill"];
-              const door = new Maptalks.LineString(
-                [prevDoorCoord, afterDoorCoord],
-                {
-                  symbol: {
-                    lineColor: color,
-                    lineWidth: FeatureService.getFeatureStyle(feature)["lineWidth"],
-                  },
-                }
-              );
-              this.doorsInstance.addGeometry(door);
-            }
-          }
-        }
       } else if (feature.properties["tactile_paving"]) {
         // tactile paving is only allowed LineString
         const geo = Maptalks.GeoJSON.toGeometry(feature);
@@ -513,6 +457,35 @@ export class IndoorLayer {
     // also save references to meshes directly for changing altitude later
     this.meshes = meshes;
     this.meshes.forEach((mesh) => mesh.setAltitude(altitude));
+  }
+
+  private drawDoors(doors: DoorDataInterface[]): void {
+    doors.forEach(door => {
+      if (door.rooms.length == 0) {
+        console.log("empty door", door);
+        return;
+      }
+      let color = "";
+
+      if (door.rooms.every(feature => ["corridor", "area"].includes(feature.properties.indoor)))
+        color = FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["polygonFill"] // if every room connected is a corridor or an area (for rooms bordering an area), we draw it in corridor color
+      else
+        color = FeatureService.getFeatureStyle(Array.from(door.rooms).filter(feature => !["corridor", "area"].includes(feature.properties.indoor))[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
+
+      if (door.rooms.some(feature => geoMap.selectedFeatures.includes(feature.id.toString())))
+        color = colors.roomColorS; // at least one room is selected, color door in selected room color
+
+      const doorLine = new Maptalks.LineString(
+        door.orientation,
+        {
+          symbol: {
+            lineColor: color,
+            lineWidth: FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["lineWidth"],
+          },
+        }
+      );
+      this.doorsInstance.addGeometry(doorLine);
+    })
   }
 
   /**
