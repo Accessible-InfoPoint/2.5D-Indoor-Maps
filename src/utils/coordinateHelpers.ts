@@ -113,10 +113,10 @@ function simplifyByAngle(polygon: GeoJSON.Position[], degTol = 1): GeoJSON.Posit
  * smoothing the offset at each point using vector averaging and projection.
  *
  * @param points - Array of Vector2 points representing the original line.
- * @param width - Offset distance (positive or negative) in the same unit as the vectors.
+ * @param width - Offset distance (positive to the right or negative to the left) in the same unit as the vectors.
  * @returns Array of Vector2 points representing the offset line.
  */
-function offsetLine(points: Vector2[], width: number): Vector2[] {
+export function offsetLine(points: Vector2[], width: number): Vector2[] {
     const vectors: Vector2[] = [];
 
     // Compute normalized direction vectors between each consecutive point

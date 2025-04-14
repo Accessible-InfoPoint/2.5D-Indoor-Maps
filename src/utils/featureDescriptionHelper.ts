@@ -7,19 +7,18 @@ export function featureDescriptionHelper(
 ): string {
   let description = " [";
 
-  accessibilityProperties.forEach((e: AccessibilityPropertiesInterface) => {
-    if (!e.userGroups.includes(UserService.getCurrentProfile())) {
+  accessibilityProperties.forEach((element) => {
+    if (!element.userGroups.includes(UserService.getCurrentProfile())) {
       return; // only show properties for currently selected user profile
     }
 
-    if (e.hasCorrectProperties(feature)) {
-      description +=
-        (typeof e.msgTrue === "string" ? e.msgTrue : e.msgTrue(feature)) + ", ";
-    } else if (e.msgFalse !== null && typeof e.msgFalse === "string") {
-      description += e.msgFalse + ", ";
-    } else if (e.msgFalse !== null && typeof e.msgFalse === "function") {
-      if (e.msgFalse(feature)) {
-        description += e.msgFalse(feature) + ", ";
+    if (element.hasCorrectProperties(feature)) {
+      description += (typeof element.msgTrue === "string" ? element.msgTrue : element.msgTrue(feature)) + ", ";
+    } else if (element.msgFalse !== null && typeof element.msgFalse === "string") {
+      description += element.msgFalse + ", ";
+    } else if (element.msgFalse !== null && typeof element.msgFalse === "function") {
+      if (element.msgFalse(feature)) {
+        description += element.msgFalse(feature) + ", ";
       }
     }
   });

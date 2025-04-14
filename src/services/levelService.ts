@@ -17,11 +17,11 @@ function getCurrentLevelGeoJSON(): GeoJSON.FeatureCollection<any> {
 }
 
 function getLevelGeoJSON(level: string): GeoJSON.FeatureCollection {
-  const currentBuildingIndoorData = BuildingService.getBuildingGeoJSON();
-
   if (geoJSONByLevel.get(level) !== undefined) {
     return geoJSONByLevel.get(level);
   }
+
+  const currentBuildingIndoorData = BuildingService.getBuildingGeoJSON();
 
   const levelFilteredFeatures =
     currentBuildingIndoorData.features.filter((feat) => hasLevel(feat, level));

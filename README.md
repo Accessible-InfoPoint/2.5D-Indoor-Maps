@@ -52,10 +52,12 @@ JS source files which are needed to run the Node-based webserver. Exported funct
 The client application's source files, written in TypeScript.
 
 ## Icons
+
 Free icon attributions:
-* https://thenounproject.com/
-* https://freeicons.io/profile/5790
-* https://www.freepik.com
-* https://www.flaticon.com/
+
+* <https://thenounproject.com/>
+* <https://freeicons.io/profile/5790>
+* <https://www.freepik.com>
+* <https://www.flaticon.com/>
 
 See attribution files for further details.
