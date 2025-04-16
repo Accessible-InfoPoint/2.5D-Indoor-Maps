@@ -22,7 +22,7 @@ import {
   filterConnectedPathways,
 } from "./threejs/complexStaircase";
 import BuildingService from "../services/buildingService";
-import { MeshBasicMaterial, Plane, Vector3 } from "three";
+import { DoubleSide, MeshBasicMaterial, Plane, Vector3 } from "three";
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import { UserGroupEnum } from "../models/userGroupEnum";
@@ -47,21 +47,25 @@ export class IndoorLayer {
     color: colors.stairsColor,
     opacity: STAIRCASE_OPACITY,
     transparent: true,
+    side: DoubleSide,
   });
   staircaseOutlineMaterial = new MeshBasicMaterial({
     color: colors.stairsColor,
     opacity: STAIRCASE_OUTLINE_OPACITY,
     transparent: true,
+    side: DoubleSide,
   });
   staircaseSelectedMaterial = new MeshBasicMaterial({
     color: colors.roomColorS,
     opacity: STAIRCASE_OPACITY,
     transparent: true,
+    side: DoubleSide,
   });
   staircaseSelectedOutlineMaterial = new MeshBasicMaterial({
     color: colors.roomColorS,
     opacity: STAIRCASE_OUTLINE_OPACITY,
     transparent: true,
+    side: DoubleSide,
   });
 
   altitude: number;
@@ -337,8 +341,8 @@ export class IndoorLayer {
           // add selected room to outline
           this.outlineInstance.addGeometry(geo.copy());
         }
-        // add to outline if feature is corridor, elevator or stairs
-        if ((feature.properties["indoor"] == "corridor" || feature.properties["highway"] == "elevator" || feature.properties["stairs"] == "yes") && !geoMap.selectedFeatures.includes(feature.id.toString())) {
+        // add to outline if feature is corridor, area, elevator or stairs
+        if ((feature.properties["indoor"] == "corridor" || feature.properties["indoor"] == "area" || feature.properties["highway"] == "elevator" || feature.properties["stairs"] == "yes") && !geoMap.selectedFeatures.includes(feature.id.toString())) {
           this.outlineInstance.addGeometry(geo.copy());
         }
         geo.on("click", () => this.handleClick(feature)); // select feature when clicked
