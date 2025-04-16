@@ -18,6 +18,7 @@
         "INDOOR": "/overpass/indoor.json",
         "BUILDINGS": "/overpass/buildings.json"
     },
+    "LOCAL_GEOJSON_DATA_URL": "/geojson/",
     "MARKERS_IMG_DIR": "/images/",
     "MAP_START_LAT": "51.02546115",
     "MAP_START_LNG": "13.72293115",

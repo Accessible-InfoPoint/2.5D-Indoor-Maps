@@ -1,5 +1,5 @@
 {
-    "APB": {
+    "apb": {
         "SEARCH_STRING": "APB",
         "BEARING_OFFSET": 90,
         "BEARING_CALC_NODE1": "8109446525",
@@ -11,7 +11,7 @@
         "STANDARD_PITCH_3D_MODE": 72,
         "STANDARD_ZOOM_3D_MODE": 20.1
     },
-    "HSZ": {
+    "hsz": {
         "SEARCH_STRING": "HSZ",
         "BEARING_OFFSET": 90,
         "BEARING_CALC_NODE1": "8191259603",
@@ -22,5 +22,29 @@
         "STANDARD_BEARING_3D_MODE": -75,
         "STANDARD_PITCH_3D_MODE": 72,
         "STANDARD_ZOOM_3D_MODE": 20.72
+    },
+    "berlin_hbf": {
+        "SEARCH_STRING": "Berlin Hauptbahnhof",
+        "BEARING_OFFSET": 90,
+        "BEARING_CALC_NODE1": "2739626375",
+        "BEARING_CALC_NODE2": "12759401719",
+        "STANDARD_ZOOM": 18.7,
+        "MAX_ZOOM": 20.9,
+        "MIN_ZOOM": 18.55,
+        "STANDARD_BEARING_3D_MODE": 27,
+        "STANDARD_PITCH_3D_MODE": 72,
+        "STANDARD_ZOOM_3D_MODE": 19.6
+    },
+    "berlin_hbf_with_platforms": {
+        "SEARCH_STRING": "Berlin Hauptbahnhof",
+        "BEARING_OFFSET": 90,
+        "BEARING_CALC_NODE1": "2739626375",
+        "BEARING_CALC_NODE2": "12759401719",
+        "STANDARD_ZOOM": 18.7,
+        "MAX_ZOOM": 20.9,
+        "MIN_ZOOM": 18.55,
+        "STANDARD_BEARING_3D_MODE": 27,
+        "STANDARD_PITCH_3D_MODE": 72,
+        "STANDARD_ZOOM_3D_MODE": 19.6
     }
 }

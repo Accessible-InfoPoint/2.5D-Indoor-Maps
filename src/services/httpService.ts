@@ -1,4 +1,4 @@
-import { OVERPASS_DATA_URLS } from "../../public/strings/constants.json";
+import { OVERPASS_DATA_URLS, LOCAL_GEOJSON_DATA_URL } from "../../public/strings/constants.json";
 import { lang } from "./languageService";
 
 let indoorDataGeoJSON: GeoJSON.FeatureCollection<any, any>;
@@ -29,14 +29,14 @@ function getBuildingData(): GeoJSON.FeatureCollection<any, any> {
 }
 
 function fetchIndoorData() {
-  return getOverpassData(OVERPASS_DATA_URLS.INDOOR);
+  return getLocalData(OVERPASS_DATA_URLS.INDOOR);
 }
 
 function fetchBuildingData() {
-  return getOverpassData(OVERPASS_DATA_URLS.BUILDINGS);
+  return getLocalData(OVERPASS_DATA_URLS.BUILDINGS);
 }
 
-function getOverpassData(overpassQuery: string) {
+function getLocalData(overpassQuery: string) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
@@ -45,7 +45,7 @@ function getOverpassData(overpassQuery: string) {
           const returnValue = JSON.parse(xhr.responseText);
           resolve(returnValue);
         } else if (xhr.status > 400) {
-          reject(lang.buildingErrorFetching + xhr.statusText);
+          reject(new Error(lang.buildingErrorFetching + xhr.statusText));
         }
       }
     };
@@ -55,8 +55,13 @@ function getOverpassData(overpassQuery: string) {
   });
 }
 
+function fetchLocalGeojson(geojson_building: string): Promise<GeoJSON.FeatureCollection<any, any>> {
+  return getLocalData(LOCAL_GEOJSON_DATA_URL + geojson_building + ".geojson") as Promise<GeoJSON.FeatureCollection<any, any>>;
+}
+
 export default {
   fetchOverpassData,
   getIndoorData,
   getBuildingData,
+  fetchLocalGeojson,
 };

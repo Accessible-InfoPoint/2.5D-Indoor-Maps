@@ -49,11 +49,20 @@ export class GeoMap {
     this.standardPitch3DMode = buildingConstants["standardPitch3DMode"];
     this.standardZoom3DMode = buildingConstants["standardZoom3DMode"];
 
+    // default infoPoint location is on default level (in case no explicit infoPoint is set)
+    this.infoPoint = {
+      "properties": {
+        "level": INDOOR_LEVEL
+      },
+      "type": "Feature",
+      "geometry": null
+    };
+
     this.mapInstance = new Maptalks.Map("map", {
       center: [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)],
       zoom: this.standardZoom,
-      maxZoom: this.maxZoom,
-      minZoom: this.minZoom,
+      maxZoom: this.configMode ? null : this.maxZoom,
+      minZoom: this.configMode ? null : this.minZoom,
       dragRotate: this.configMode,
       dragPitch: this.configMode,
       baseLayer: new Maptalks.TileLayer("carto", {

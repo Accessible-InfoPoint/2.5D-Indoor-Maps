@@ -21,16 +21,19 @@ import BackendService from "./backendService";
  */
 
 /*Search*/
-function handleSearch(searchString: string): Promise<BuildingInterface> {
+function handleSearch(featureCollection: GeoJSON.FeatureCollection, searchString: string): Promise<BuildingInterface> {
   let returnBuilding: BuildingInterface;
 
-  const buildings = HttpService.getBuildingData();
+  const buildings = featureCollection;
   // console.log(buildings)
   const found = buildings.features.some(
     (building: GeoJSON.Feature<any, any>) => {
       if (
-        (building.properties.name !== undefined && building.properties.name === searchString) ||
-        (building.properties.loc_ref !== undefined && building.properties.loc_ref === searchString)
+        building.properties.building !== undefined &&
+        (
+          (building.properties.name !== undefined && building.properties.name === searchString) ||
+          (building.properties.loc_ref !== undefined && building.properties.loc_ref === searchString)
+        )
       ) {
         returnBuilding = {
           boundingBox: extent(building),
@@ -178,6 +181,18 @@ function checkIfInside(
   }
 }
 
+function filterInsideAndLevel(featureCollection: GeoJSON.FeatureCollection) {
+  const filteredFeatures = featureCollection.features.filter((f) =>
+    ("indoor" in f.properties && f.properties.indoor != "no") || "level" in f.properties
+  );
+
+  //create a new object to avoid to original GeoJSON object to be modified
+  return {
+    type: "FeatureCollection",
+    features: filteredFeatures,
+  } as GeoJSON.FeatureCollection<any>;
+}
+
 function getBuilding(featureId: string): GeoJSON.Feature<any, any> {
   //findBuildingFeatureInDataset
   const buildings = HttpService.getBuildingData();
@@ -207,5 +222,6 @@ export default {
   getBuildingDescription,
   handleSearch,
   runIndoorSearch,
-  filterByBounds
+  filterByBounds,
+  filterInsideAndLevel
 };

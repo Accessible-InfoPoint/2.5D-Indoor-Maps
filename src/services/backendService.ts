@@ -6,6 +6,7 @@ import * as BuildingConstantsDefinition from "../../public/strings/buildingConst
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { extractLevels } from "../utils/extractLevels";
 import DoorService from "./doorService";
+import { BackendSourceEnum } from "../models/backendSourceEnum";
 
 let buildingConstants: Record<string, number>;
 let buildingDescription = "";
@@ -14,22 +15,34 @@ const allLevels = new Set<number>();
 
 let buildingInterface: BuildingInterface;
 
+const source: BackendSourceEnum = BackendSourceEnum.localGeojson;
+const currentBuilding = "apb";
+
 async function fetchBackendData(): Promise<void> {
-  await HttpService.fetchOverpassData();
+  if (source == BackendSourceEnum.cachedOverpass) {
+    await HttpService.fetchOverpassData();
 
-  const currentBuilding = "APB";
+    buildingInterface = await BuildingService.handleSearch(HttpService.getBuildingData(), BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
 
-  buildingInterface = await BuildingService.handleSearch(BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
+    // filter indoor elements by bounds of building
+    if (buildingInterface !== undefined) {
+      geoJson = BuildingService.filterByBounds(
+        HttpService.getIndoorData(),
+        buildingInterface.boundingBox
+      );
+    }
+  } else if (source == BackendSourceEnum.localGeojson) {
+    const full_geojson = await HttpService.fetchLocalGeojson(currentBuilding);
 
-  // filter indoor elements by bounds of building
-  if (buildingInterface !== undefined) {
-    geoJson = BuildingService.filterByBounds(
-      HttpService.getIndoorData(),
-      buildingInterface.boundingBox
-    );
+    buildingInterface = await BuildingService.handleSearch(full_geojson, BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);
+
+    if (buildingInterface !== undefined) {
+      geoJson = BuildingService.filterInsideAndLevel(full_geojson);
+    }
   }
 
-  console.log("BuildingService", structuredClone(geoJson));
+  console.log("BackendService BuildingInterface", structuredClone(buildingInterface));
+  console.log("BackendService GeoJSON", structuredClone(geoJson));
 
   // rewrite the geojson so that 
   geoJson.features.forEach(
@@ -38,10 +51,21 @@ async function fetchBackendData(): Promise<void> {
         return;
       }
 
+      if (feature.properties.level === undefined) {
+        console.log("no level: ", feature);
+        return;
+      }
+
       const levels = extractLevels(feature.properties.level);
       feature.properties.level = levels.map((val) => val.toString());
 
-      levels.forEach((l) => allLevels.add(l));
+      levels.forEach(
+        (l) => {
+          if (!allLevels.has(l))
+            console.log("Level " + l + "added by feature", feature);
+          allLevels.add(l);
+        }
+      );
     }
   )
 
@@ -89,7 +113,7 @@ async function fetchBackendData(): Promise<void> {
   }
 
   // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
-  // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again.
+  // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
   const p1 = (
     geoJson.features.find((feature) => feature.id == "node/" + BuildingConstantsDefinition[currentBuilding].BEARING_CALC_NODE1)
     .geometry as GeoJSON.Point
