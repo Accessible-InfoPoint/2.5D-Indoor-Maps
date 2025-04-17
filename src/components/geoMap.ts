@@ -1,13 +1,15 @@
 import {
-  INDOOR_LEVEL,
-  MAP_START_LAT,
-  MAP_START_LNG,
   CARTO_TILE_SERVER,
   CARTO_TILE_SUBDOMAINS,
   CARTO_ATTRIBUTION,
+} from "../../public/strings/constants.json";
+import {
+  INDOOR_LEVEL,
+  MAP_START_LAT,
+  MAP_START_LNG,
   LEVEL_HEIGHT,
   OPACITY_TRANSLUCENT_LAYER,
-} from "../../public/strings/constants.json";
+} from "../../public/strings/settings.json";
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
 import BuildingService from "../services/buildingService";

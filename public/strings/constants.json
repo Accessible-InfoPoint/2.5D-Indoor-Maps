@@ -1,13 +1,5 @@
 {
-    "INDOOR_LEVEL": "0",
-    "FILL_OPACITY": "1",
-    "STAIRCASE_OPACITY": 0.5,
-    "STAIRCASE_OUTLINE_OPACITY": 0.85,
-    "OPACITY_TRANSLUCENT_LAYER": 0.35,
-    "WALL_WEIGHT": 1,
-    "WALL_WEIGHT_PAVING": 3,
-    "LEVEL_HEIGHT": 12,
-    "STAIRCASE_HANDRAIL_HEIGHT": 1,
+    
     "OSM_TILE_SERVER": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
     "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
@@ -20,10 +12,6 @@
     },
     "LOCAL_GEOJSON_DATA_URL": "/geojson/",
     "MARKERS_IMG_DIR": "/images/",
-    "MAP_START_LAT": "51.02546115",
-    "MAP_START_LNG": "13.72293115",
-    "VISIBLE_LEVEL_CONTROLS": 4,
-    "START_LEVEL_CONTROL_POSITION": 2,
     "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
     "CARTO_ATTRIBUTION": "&copy; <a href='http://osm.org'>OpenStreetMap</a> contributors, &copy; <a href='https://carto.com/'>CARTO</a>",
     "COLORS": {

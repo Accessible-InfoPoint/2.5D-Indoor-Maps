@@ -2,12 +2,12 @@
 const jimp = require("jimp");
 const path = require('path');
 const fs = require('fs');
-const { COLOR_PROFILE_FOLDER, CONSTANTS_PATH, PATTERN_FILL_IMAGES_FOLDER } = require("./constants");
+const { COLOR_PROFILE_FOLDER, SETTINGS_PATH, PATTERN_FILL_IMAGES_FOLDER } = require("./constants");
 
 module.exports = function createPatternFillImages() {
     console.log("=== Creating PatternFill Images ===");
 
-    const fill_opacity = Math.floor(JSON.parse(fs.readFileSync(path.resolve(__dirname, CONSTANTS_PATH)))["FILL_OPACITY"] * 255).toString(16);
+    const fill_opacity = Math.floor(JSON.parse(fs.readFileSync(path.resolve(__dirname, SETTINGS_PATH)))["FILL_OPACITY"] * 255).toString(16);
 
     fs.readdirSync(path.resolve(__dirname, COLOR_PROFILE_FOLDER)).forEach(file => {
         const data = JSON.parse(fs.readFileSync(path.resolve(__dirname, COLOR_PROFILE_FOLDER + file)));

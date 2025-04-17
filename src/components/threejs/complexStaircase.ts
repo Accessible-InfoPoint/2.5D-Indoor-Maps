@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { BaseObject, ThreeLayer } from "maptalks.three";
 import { Prism } from "./prism";
-import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/constants.json";
+import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 
 const defaultStaircaseWidth = 1;

@@ -3,11 +3,13 @@ import { featureAccessibilityProperties } from "../data/featureAccessibilityProp
 import UserService from "../services/userService";
 import { lang } from "./languageService";
 import {
-  FILL_OPACITY,
   MARKERS_IMG_DIR,
+} from "../../public/strings/constants.json";
+import {
+  FILL_OPACITY,
   WALL_WEIGHT,
   WALL_WEIGHT_PAVING,
-} from "../../public/strings/constants.json";
+} from "../../public/strings/settings.json";
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";

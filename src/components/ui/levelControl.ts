@@ -1,4 +1,4 @@
-import { INDOOR_LEVEL, VISIBLE_LEVEL_CONTROLS, START_LEVEL_CONTROL_POSITION } from "../../../public/strings/constants.json";
+import { INDOOR_LEVEL, VISIBLE_LEVEL_CONTROLS, START_LEVEL_CONTROL_POSITION } from "../../../public/strings/settings.json";
 import LevelService from "../../services/levelService";
 import { geoMap } from "../../main";
 import { lang } from "../../services/languageService";

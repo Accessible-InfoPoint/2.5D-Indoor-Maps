@@ -1,7 +1,7 @@
 import { geoMap } from "../../main";
 import * as Maptalks from "maptalks";
 import LevelService from "../../services/levelService";
-import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/constants.json"
+import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/settings.json"
 
 function setup(): void {
   document.getElementById("switch2D").onclick = () => {

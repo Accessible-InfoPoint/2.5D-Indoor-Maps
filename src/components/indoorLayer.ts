@@ -6,10 +6,12 @@ import ColorService, { colors } from "../services/colorService";
 import {
   MARKERS_IMG_DIR,
   ICONS,
+} from "../../public/strings/constants.json";
+import {
   STAIRCASE_OPACITY,
   STAIRCASE_OUTLINE_OPACITY,
   LEVEL_HEIGHT
-} from "../../public/strings/constants.json";
+} from "../../public/strings/settings.json";
 import * as Maptalks from "maptalks";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
