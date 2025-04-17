@@ -1,5 +1,4 @@
 {
-    
     "OSM_TILE_SERVER": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
     "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",

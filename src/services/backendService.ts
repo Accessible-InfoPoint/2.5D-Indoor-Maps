@@ -57,7 +57,7 @@ async function fetchBackendData(): Promise<void> {
       }
 
       const levels = extractLevels(feature.properties.level);
-      feature.properties.level = levels.map((val) => val.toString());
+      feature.properties.level = levels;
 
       levels.forEach(
         (l) => {
@@ -78,9 +78,9 @@ async function fetchBackendData(): Promise<void> {
       if (!("door" in feature.properties) || feature.properties.door == "no")
         return
 
-      const levels = new Set<string>();
-      extractLevels(feature.properties.level ?? "").forEach(l => levels.add(l.toString()));
-      extractLevels(feature.properties.repeat_on ?? "").forEach(l => levels.add(l.toString()));
+      const levels = new Set<number>();
+      extractLevels(feature.properties.level ?? "").forEach(l => levels.add(l));
+      extractLevels(feature.properties.repeat_on ?? "").forEach(l => levels.add(l));
       DoorService.addDoor(feature.geometry.coordinates, levels, feature.properties);
     }
   )

@@ -1,7 +1,6 @@
 jest.mock("maptalks", () => {});
 
 import levelService from '../../src/services/levelService';
-import BuildingService from '../../src/services/buildingService';
 import * as hasCurrentLevel from '../../src/utils/hasCurrentLevel';
 import AccessibilityService from '../../src/services/accessibilityService';
 import BackendService from '../../src/services/backendService';
@@ -25,6 +24,8 @@ jest.mock('../../src/services/languageService', () => ({
 describe('levelService', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+    jest.clearAllMocks();
+    levelService.clearData();
   });
 
   describe('getLevelGeoJSON', () => {
@@ -35,19 +36,19 @@ describe('levelService', () => {
       ];
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
-      (BuildingService.getBuildingGeoJSON as jest.Mock).mockReturnValue(mockGeoJSON);
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
-        (feat, level) => feat.properties.level === level
+        (feat, level) => feat.properties.level === level.toString()
       );
 
-      const result = levelService.getLevelGeoJSON('1');
+      const result = levelService.getLevelGeoJSON(1);
       expect(result.features).toEqual([
         { id: 1, properties: { level: '1' } },
       ]);
 
       // Should return cached version on next call
-      const cached = levelService.getLevelGeoJSON('1');
-      expect(BuildingService.getBuildingGeoJSON).toHaveBeenCalledTimes(1);
+      const cached = levelService.getLevelGeoJSON(1);
+      expect(BackendService.getGeoJson).toHaveBeenCalledTimes(1);
       expect(cached).toBe(result);
     });
   });
@@ -61,7 +62,7 @@ describe('levelService', () => {
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
       (geoMap.getCurrentLevel as jest.Mock).mockReturnValue('1');
-      (BuildingService.getBuildingGeoJSON as jest.Mock).mockReturnValue(mockGeoJSON);
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
         (feat, level) => feat.properties.level === level
       );
@@ -88,9 +89,9 @@ describe('levelService', () => {
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
       (geoMap.getCurrentLevel as jest.Mock).mockReturnValue('1');
-      (BuildingService.getBuildingGeoJSON as jest.Mock).mockReturnValue(mockGeoJSON);
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
-        (feat, level) => feat.properties.level === level
+        (feat, level) => feat.properties.level === level.toString()
       );
       (AccessibilityService.getForLevel as jest.Mock).mockReturnValue('is accessible');
 
@@ -106,18 +107,18 @@ describe('levelService', () => {
       ];
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
-      (BuildingService.getBuildingGeoJSON as jest.Mock).mockReturnValue(mockGeoJSON);
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
-        (feat, level) => feat.properties.level === level
+        (feat, level) => feat.properties.level === level.toString()
       );
 
       // Populate cache
-      levelService.getLevelGeoJSON('1');
+      levelService.getLevelGeoJSON(1);
       levelService.clearData();
 
       // Should reload and call again
-      levelService.getLevelGeoJSON('1');
-      expect(BuildingService.getBuildingGeoJSON).toHaveBeenCalledTimes(2);
+      levelService.getLevelGeoJSON(1);
+      expect(BackendService.getGeoJson).toHaveBeenCalledTimes(2);
     });
   });
 });

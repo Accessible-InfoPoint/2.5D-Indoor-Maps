@@ -1,7 +1,7 @@
 import { geoMap } from "../../main";
 import * as Maptalks from "maptalks";
-import LevelService from "../../services/levelService";
 import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/settings.json"
+import BackendService from "../../services/backendService";
 
 function setup(): void {
   document.getElementById("switch2D").onclick = () => {
@@ -17,22 +17,22 @@ function setup(): void {
       });
       let offset = 0;
       // if we are on the highest level, don't show anything above
-      if (LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) == LevelService.getLevelNames().length - 1) {
+      if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) + 1]).hideAll();
+          geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).hideAll();
         });
       }
 
       // if we are on the lowest level, don't show anything below
-      if (LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+      if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) - 1]).hideAll();
+          geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).hideAll();
         });
       }
 
@@ -66,23 +66,23 @@ function setup(): void {
 
       let offset = 0;
       // if we are on the highest level, don't show anything above
-      if (LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) == LevelService.getLevelNames().length - 1) {
+      if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) + 1]).show3D();
-        visibleLayers.push(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) + 1])
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).show3D();
+        visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1])
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
 
       // if we are on the lowest level, don't show anything below
-      if (LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) - 1]).show3D();
-        visibleLayers.push(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) - 1])
-        geoMap.indoorLayers.get(LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+      if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).show3D();
+        visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1])
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
-      LevelService.getLevelNames().filter(item => !visibleLayers.includes(item)).forEach(item => {
+      BackendService.getAllLevels().filter(item => !visibleLayers.includes(item)).forEach(item => {
         geoMap.indoorLayers.get(item).hideAll();
       })
 

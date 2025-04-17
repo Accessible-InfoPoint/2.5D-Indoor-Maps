@@ -27,7 +27,7 @@ export class GeoMap {
   mapInstance: Maptalks.Map = null;
   flatMapInstance: Maptalks.Map = null;
   currentLevel = INDOOR_LEVEL;
-  indoorLayers: Map<string, IndoorLayer>;
+  indoorLayers: Map<number, IndoorLayer>;
   selectedFeatures: string[] = [];
   flatMode = true;
   standardCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
@@ -132,11 +132,11 @@ export class GeoMap {
     LevelControl.handleChange();
     LevelService.clearData();
 
-    this.currentLevel = "0";
+    this.currentLevel = INDOOR_LEVEL;
     this.mapInstance.setBearing(this.standardBearing);
 
     this.indoorLayers = new Map(
-      LevelService.getLevelNames()
+      BackendService.getAllLevels()
         .reverse()
         .map((val) => [
           val,
@@ -146,7 +146,7 @@ export class GeoMap {
     this.indoorLayers.forEach((layer) => {
       layer.hideAll();
     });
-    this.handleLevelChange("0");
+    this.handleLevelChange(INDOOR_LEVEL);
 
     AccessibilityService.reset();
 
@@ -177,7 +177,7 @@ export class GeoMap {
     }, 1000);
   }
 
-  handleLevelChange(newLevel: string): void {
+  handleLevelChange(newLevel: number): void {
     const animationDuration = 1;
 
     if (this.flatMode) {
@@ -189,19 +189,19 @@ export class GeoMap {
         return;
       }
       const oldLevel = this.getCurrentLevel();
-      const oldLevelTop = LevelService.getLevelNames()[0] == this.getCurrentLevel()
+      const oldLevelTop = BackendService.getAllLevels()[0] == this.getCurrentLevel()
           ? this.getCurrentLevel()
-          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(this.getCurrentLevel()) - 1];
-      const oldLevelBottom = LevelService.getLevelNames()[LevelService.getLevelNames().length - 1] == this.getCurrentLevel()
+          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(this.getCurrentLevel()) - 1];
+      const oldLevelBottom = BackendService.getAllLevels()[BackendService.getAllLevels().length - 1] == this.getCurrentLevel()
           ? this.getCurrentLevel()
-          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(this.getCurrentLevel()) + 1];
+          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(this.getCurrentLevel()) + 1];
 
-      const newLevelTop = LevelService.getLevelNames()[0] == newLevel
+      const newLevelTop = BackendService.getAllLevels()[0] == newLevel
           ? newLevel
-          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(newLevel) - 1];
-      const newLevelBottom = LevelService.getLevelNames()[LevelService.getLevelNames().length - 1] == newLevel
+          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(newLevel) - 1];
+      const newLevelBottom = BackendService.getAllLevels()[BackendService.getAllLevels().length - 1] == newLevel
           ? newLevel
-          : LevelService.getLevelNames()[LevelService.getLevelNames().indexOf(newLevel) + 1];
+          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(newLevel) + 1];
 
       const initialHeightOldLevel = oldLevel == oldLevelBottom ? 0 : LEVEL_HEIGHT;
       const finalHeightNewLevel = newLevel == newLevelBottom ? 0 : LEVEL_HEIGHT;
@@ -215,7 +215,7 @@ export class GeoMap {
         this.indoorLayers.get(element).show3D();
       });
       setTimeout(() => {
-        LevelService.getLevelNames().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
+        BackendService.getAllLevels().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
           this.indoorLayers.get(item).hideAll();
         })
       }, animationDuration * 1000);
@@ -247,14 +247,14 @@ export class GeoMap {
   }
 
   // only support whole level differences
-  getLevelDifference(level1: string, level2: string): number {
+  getLevelDifference(level1: number, level2: number): number {
     return (
-      LevelService.getLevelNames().indexOf(level1) -
-      LevelService.getLevelNames().indexOf(level2)
+      BackendService.getAllLevels().indexOf(level1) -
+      BackendService.getAllLevels().indexOf(level2)
     );
   }
 
-  getCurrentLevel(): string {
+  getCurrentLevel(): number {
     return this.currentLevel;
   }
 
@@ -266,7 +266,7 @@ export class GeoMap {
         this.indoorLayers.forEach((layer) => layer.updateLayer());
 
         // from the levels of the feature, select the nearest to the current level
-        const selectedLevel = (results[0].properties.level as string[]).sort((a, b) => Math.abs(parseFloat(a) - parseFloat(this.currentLevel)) - Math.abs(parseFloat(b) - parseFloat(this.currentLevel)))[0];
+        const selectedLevel = (results[0].properties.level as number[]).sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel))[0];
         LevelControl.focusOnLevel(selectedLevel);
         this.handleLevelChange(selectedLevel);
 

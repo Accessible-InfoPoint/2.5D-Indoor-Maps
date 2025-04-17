@@ -71,9 +71,9 @@ export class IndoorLayer {
   });
 
   altitude: number;
-  level: string;
+  level: number;
 
-  constructor(geoJSON: GeoJSON.FeatureCollection, level = "", altitude = 0) {
+  constructor(geoJSON: GeoJSON.FeatureCollection, level: number, altitude = 0) {
     // initialize level (as ID) and altitude
     this.altitude = altitude;
     this.level = level;
@@ -304,7 +304,7 @@ export class IndoorLayer {
 
           // calculate difference between this level and level of infoPoint
           if (geoMap.infoPoint != null) {
-            const diff = parseFloat(this.level) - parseFloat(geoMap.infoPoint.properties.level);
+            const diff = this.level - parseFloat(geoMap.infoPoint.properties.level); // TODO: make infopoint level dependant only on settings
             if (diff > 0) {
               this.levelDiff = "+" + diff.toString();
             } else {

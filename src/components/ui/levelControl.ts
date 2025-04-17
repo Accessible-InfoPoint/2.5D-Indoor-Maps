@@ -40,12 +40,12 @@ function render(allLevelNamesParam: string[]): void {
     levelBtn.setAttribute("aria-label", changeToLevel);
     levelBtn.setAttribute("tabindex", "0");
 
-    if (level == INDOOR_LEVEL) {
+    if (level == INDOOR_LEVEL.toString()) { // TODO: Check for level ref, name might not be simply numerical
       levelBtn.classList.add("active");
     }
 
     levelBtn.addEventListener("click", () => {
-      geoMap.handleLevelChange(level);
+      geoMap.handleLevelChange(parseFloat(level));
 
       for (const element of levelControl.children) {
         element.children[0].classList.remove("active");
@@ -59,7 +59,7 @@ function render(allLevelNamesParam: string[]): void {
 
   setWindow();
 
-  const index = allLevelNames.findIndex((level) => level == INDOOR_LEVEL);
+  const index = allLevelNames.findIndex((level) => level == INDOOR_LEVEL.toString());
   offset = index - START_LEVEL_CONTROL_POSITION; // current should be second to last in visible
   maxOffset = numLevels - VISIBLE_LEVEL_CONTROLS;
   offset = Math.max(minOffset, Math.min(maxOffset, offset));
@@ -132,16 +132,16 @@ function disableLevelShifters(): void {
   }
 }
 
-function focusOnLevel(selectedLevel: string): void {
+function focusOnLevel(selectedLevel: number): void {
   const levelControl = document.getElementById("levelControl");
   const list = levelControl.children;
   for (const item of list) {
-    if (item.firstChild.textContent === selectedLevel) {
+    if (item.firstChild.textContent === selectedLevel.toString()) {
       item.children[0].classList.add("active");
     } else item.children[0].classList.remove("active");
   }
 
-  const index = allLevelNames.findIndex((level) => level == selectedLevel);
+  const index = allLevelNames.findIndex((level) => level == selectedLevel.toString());
   if (index < offset) {
     // level is above in height what is currently visible
     // we need to shift offset down

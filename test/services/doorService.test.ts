@@ -2,8 +2,8 @@ import doorService from '../../src/services/doorService';
 
 const sampleCoord: GeoJSON.Position = [10.0, 50.0];
 const otherCoord: GeoJSON.Position = [10.1, 50.1];
-const levelA = 'LevelA';
-const levelB = 'LevelB';
+const levelA = 0;
+const levelB = 1;
 
 const mockProps = { width: 2 };
 

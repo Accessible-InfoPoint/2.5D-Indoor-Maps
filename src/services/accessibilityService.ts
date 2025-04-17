@@ -1,10 +1,10 @@
 import { levelAccessibilityProperties } from "../data/levelAccessibilityProperties";
 import UserService from "./userService";
 
-const propertiesByLevel: Map<string, string> = new Map<string, string>();
+const propertiesByLevel = new Map<number, string>();
 
 function getForLevel(
-  level: string,
+  level: number,
   featureCollection: GeoJSON.FeatureCollection<any, any>
 ): string {
   if (propertiesByLevel.get(level) !== undefined) {

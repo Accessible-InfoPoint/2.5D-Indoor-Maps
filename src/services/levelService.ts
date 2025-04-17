@@ -1,11 +1,10 @@
-import BuildingService from "./buildingService";
 import { hasLevel } from "../utils/hasCurrentLevel";
 import AccessibilityService from "./accessibilityService";
 import { geoMap } from "../main";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
 
-const geoJSONByLevel = new Map<string, any>();
+const geoJSONByLevel = new Map<number, any>();
 
 function clearData(): void {
   geoJSONByLevel.clear();
@@ -16,15 +15,14 @@ function getCurrentLevelGeoJSON(): GeoJSON.FeatureCollection<any> {
   return getLevelGeoJSON(currentLevel);
 }
 
-function getLevelGeoJSON(level: string): GeoJSON.FeatureCollection {
+function getLevelGeoJSON(level: number): GeoJSON.FeatureCollection {
   if (geoJSONByLevel.get(level) !== undefined) {
     return geoJSONByLevel.get(level);
   }
 
-  const currentBuildingIndoorData = BuildingService.getBuildingGeoJSON();
+  const currentBuildingIndoorData = BackendService.getGeoJson();
 
-  const levelFilteredFeatures =
-    currentBuildingIndoorData.features.filter((feat) => hasLevel(feat, level));
+  const levelFilteredFeatures = currentBuildingIndoorData.features.filter((feat) => hasLevel(feat, level));
   const levelFilteredFeatureCollection: GeoJSON.FeatureCollection<any, any> = {
     type: "FeatureCollection",
     features: levelFilteredFeatures,

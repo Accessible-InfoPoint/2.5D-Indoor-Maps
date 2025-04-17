@@ -13,7 +13,7 @@ function clearDoorIndex() {
 
 function addDoor(
   coord: GeoJSON.Position,
-  levels: Set<string>,
+  levels: Set<number>,
   geojsonProps: Record<string, any>
 ) {
   const key = coordKey(coord);
@@ -82,7 +82,7 @@ function calculateDoorOrientation(
   }
 }
 
-function getDoorsByLevel(level: string): DoorDataInterface[] {
+function getDoorsByLevel(level: number): DoorDataInterface[] {
   return Array.from(doorIndex.values()).filter(door => door.levels.has(level));
 }
 

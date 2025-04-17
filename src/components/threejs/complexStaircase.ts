@@ -97,7 +97,7 @@ export function complexStaircase(lineStrings: [GeoJSON.Position[], number][], al
 }
 
 // when given a staircase feature, we need to filter out the pathways that indicate the center of the stair, it might also be multiple ones
-export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON.Position[], lowestPoints: GeoJSON.Feature[], pathways: GeoJSON.Feature[], level: string): [GeoJSON.Position[], number][] {
+export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON.Position[], lowestPoints: GeoJSON.Feature[], pathways: GeoJSON.Feature[], level: number): [GeoJSON.Position[], number][] {
   const connectedPathways = new Set<GeoJSON.Feature>();
   // special nodes are those that are doors or lowest points of a stair
   const specialNodes = (feature.geometry as GeoJSON.Polygon).coordinates[0].filter(p => doors.some(d => d.toString() == p.toString()) || lowestPoints.some(lp => (lp.geometry as GeoJSON.Point).coordinates.toString() == p.toString()));
@@ -111,10 +111,10 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
     const paths = pathways.filter(
       path => pathwayToCoords(path).some(lsp => lsp.toString() == p.toString()) &&
       (
-        path.properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out
+        path.properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
         ("repeat_on" in path.properties && path.properties.repeat_on === level) || // repeat on has multiple possible formats
-        ("repeat_on" in path.properties && regExSemicolon.test(path.properties.repeat_on) && path.properties.repeat_on.split(";").includes(level)) ||
-        ("repeat_on" in path.properties && regExRange.test(path.properties.repeat_on) && arrayRange(parseInt(path.properties.repeat_on.match(regExRange)[1]), parseInt(path.properties.repeat_on.match(regExRange)[2]), 1).map((num) => num.toString()).includes(level))
+        ("repeat_on" in path.properties && regExSemicolon.test(path.properties.repeat_on) && path.properties.repeat_on.split(";").includes(level.toString())) ||
+        ("repeat_on" in path.properties && regExRange.test(path.properties.repeat_on) && arrayRange(parseInt(path.properties.repeat_on.match(regExRange)[1]), parseInt(path.properties.repeat_on.match(regExRange)[2]), 1).includes(level))
       )
     );
 
