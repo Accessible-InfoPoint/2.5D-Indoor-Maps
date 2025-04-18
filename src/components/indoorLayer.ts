@@ -471,26 +471,8 @@ export class IndoorLayer {
         console.log("empty door", door);
         return;
       }
-      let color = "";
-
-      if (door.rooms.every(feature => ["corridor", "area"].includes(feature.properties.indoor)))
-        color = FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["polygonFill"] // if every room connected is a corridor or an area (for rooms bordering an area), we draw it in corridor color
-      else
-        color = FeatureService.getFeatureStyle(Array.from(door.rooms).filter(feature => !["corridor", "area"].includes(feature.properties.indoor))[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
-
-      if (door.rooms.some(feature => geoMap.selectedFeatures.includes(feature.id.toString())))
-        color = colors.roomColorS; // at least one room is selected, color door in selected room color
-
-      const doorLine = new Maptalks.LineString(
-        door.orientation,
-        {
-          symbol: {
-            lineColor: color,
-            lineWidth: FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["lineWidth"],
-          },
-        }
-      );
-      this.doorsInstance.addGeometry(doorLine);
+      
+      this.doorsInstance.addGeometry(DoorService.getVisualization(door));
     })
   }
 

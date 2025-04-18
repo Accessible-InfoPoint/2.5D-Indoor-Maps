@@ -9,7 +9,10 @@ import { geoMap } from '../../src/main';
 jest.mock('../../src/services/buildingService');
 jest.mock('../../src/utils/hasCurrentLevel');
 jest.mock('../../src/services/accessibilityService');
-jest.mock('../../src/services/backendService');
+jest.mock('../../src/services/backendService', () => ({
+  getGeoJson: jest.fn(),
+  getAllLevels: jest.fn()
+}));
 jest.mock('../../src/main', () => ({
   geoMap: {
     getCurrentLevel: jest.fn(),

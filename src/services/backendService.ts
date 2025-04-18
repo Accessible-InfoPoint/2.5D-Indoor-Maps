@@ -75,7 +75,7 @@ async function fetchBackendData(): Promise<void> {
       if (feature.geometry.type != "Point")
         return;
 
-      if (!("door" in feature.properties) || feature.properties.door == "no")
+      if (!("door" in feature.properties))
         return
 
       const levels = new Set<number>();
