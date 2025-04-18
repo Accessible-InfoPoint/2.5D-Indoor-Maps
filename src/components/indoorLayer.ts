@@ -30,6 +30,8 @@ import UserService from "../services/userService";
 import { UserGroupEnum } from "../models/userGroupEnum";
 import DoorService from "../services/doorService";
 import { DoorDataInterface } from "../models/doorDataInterface";
+import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../utils/drawableElementFilter";
+import { extractLevels } from "../utils/extractLevels";
 
 
 export class IndoorLayer {
@@ -244,7 +246,7 @@ export class IndoorLayer {
   private drawIndoorLayerByGeoJSON(geoJSON: GeoJSON.FeatureCollection) {
     this.markers.clear();
 
-    // filter out all positions of doors
+    // filter out all positions of doors, needed for stairs (at the moment)
     const doors = geoJSON.features
       .filter((feature) => "door" in feature.properties)
       .map((feature) => (feature.geometry as GeoJSON.Point).coordinates);
@@ -258,93 +260,22 @@ export class IndoorLayer {
     geoJSON.features.forEach((feature) => {
       // set position of infoPoint
       if (feature.properties["information"] == "tactile_map") {
-        geoMap.infoPoint = feature;
-        new Maptalks.Marker((feature.geometry as GeoJSON.Point).coordinates, {
-          properties: {
-            name: "i",
-          },
-          symbol: [
-            {
-              markerType: "pin",
-              markerFill: "rgb(255, 195, 195)",
-              markerLineColor: "#000000",
-              markerLineWidth: 2,
-              markerWidth: 80,
-              markerHeight: 70,
-            } as Maptalks.VectorMarkerSymbol,
-            {
-              textFaceName: "sans-serif",
-              textName: "{name}",
-              textSize: 18,
-              textDy: -35,
-            } as Maptalks.TextSymbol,
-          ],
-        }).addTo(this.positionLayer);
+        this.markInfoPoint(feature);
       }
 
       // polygons, which are indoor can be rooms and areas
       // OSM does not encode anything in the geometry type, pathways (stair-middle-line) and tactile paving might also be classified as polygons, when the start and end point is the same
-      if (feature.geometry.type == "Polygon" && "indoor" in feature.properties && feature.properties["indoor"] != "pathway" && feature.properties["area"] != "no") { // TODO: move to helper function as it is reused in backendService
+      if (isDrawableRoomOrArea(feature)) {
         const geo = Maptalks.GeoJSON.toGeometry(feature);
         // set the specified style
         geo.updateSymbol(FeatureService.getFeatureStyle(feature));
+
         // if room is currently selected
         if (geoMap.selectedFeatures.includes(feature.id.toString())) {
-          // color room in selected color and set pattern if in wheelchair mode and room is wheelchair accessible
-          let pattern_fill: string = null;
-          if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
-            const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
-            const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium" : "large");
-            pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
-          }
-          geo.updateSymbol({
-            polygonFill: colors.roomColorS,
-            polygonPatternFile: pattern_fill,
-          });
-
-          // calculate difference between this level and level of infoPoint
-          if (geoMap.infoPoint != null) {
-            const diff = this.level - parseFloat(geoMap.infoPoint.properties.level); // TODO: make infopoint level dependant only on settings
-            if (diff > 0) {
-              this.levelDiff = "+" + diff.toString();
-            } else {
-              this.levelDiff = diff.toString();
-            }
-          } else {
-            this.levelDiff = "";
-          }
-
-          // if feature is in multiple levels, we only want to display the position marker on the nearest layer to the current position (infoPoint)
-          if (
-            !Array.isArray(feature.properties["level"]) ||
-            Math.min(...(feature.properties["level"] as string[]).map(level => Math.abs(parseFloat(level) - parseFloat(geoMap.infoPoint.properties.level)))).toString() == this.levelDiff
-          ) {
-            // add position Marker of selected room
-            new Maptalks.Marker(PolygonCenter(feature.geometry).coordinates, {
-              properties: { name: this.levelDiff },
-              symbol: [
-                {
-                  markerType: "pin",
-                  markerFill: "rgb(195, 255, 195)",
-                  markerLineColor: "#000000",
-                  markerLineWidth: 2,
-                  markerWidth: 80,
-                  markerHeight: 70,
-                } as Maptalks.VectorMarkerSymbol,
-                {
-                  textFaceName: "sans-serif",
-                  textName: "{name}",
-                  textSize: 18,
-                  textDy: -35,
-                } as Maptalks.TextSymbol,
-              ],
-            }).addTo(this.positionLayer);
-          }
-          // add selected room to outline
-          this.outlineInstance.addGeometry(geo.copy());
+          this.handleSelectedFeature(feature, geo)
         }
         // add to outline if feature is corridor, area, elevator or stairs
-        if ((feature.properties["indoor"] == "corridor" || feature.properties["indoor"] == "area" || feature.properties["highway"] == "elevator" || feature.properties["stairs"] == "yes") && !geoMap.selectedFeatures.includes(feature.id.toString())) {
+        if (isVisibleIn3DMode(feature)) {
           this.outlineInstance.addGeometry(geo.copy());
         }
         geo.on("click", () => this.handleClick(feature)); // select feature when clicked
@@ -403,8 +334,8 @@ export class IndoorLayer {
     this.threeLayer.prepareToDraw = function() {
       this.getRenderer().context.clippingPlanes = [new Plane(new Vector3(0, 0, -1), this.altitudeToVector3(2.25 * LEVEL_HEIGHT, 2.25 * LEVEL_HEIGHT).x)];
 
-      // add simple staircases
       meshes.push(
+        // add simple staircases
         // filter out staircases on top level
         // when something is level 0-3, it is represented as [0, 1, 2, 3], but level 3 should not have it displayed
         ...geoJSON.features.filter(feat => 
@@ -465,6 +396,13 @@ export class IndoorLayer {
     this.meshes.forEach((mesh) => mesh.setAltitude(altitude));
   }
 
+  
+  /**
+   * Draw overlays for all doors
+   *
+   * @private
+   * @param {DoorDataInterface[]} doors Array of all doors data
+   */
   private drawDoors(doors: DoorDataInterface[]): void {
     doors.forEach(door => {
       if (door.rooms.length == 0) {
@@ -474,6 +412,83 @@ export class IndoorLayer {
       
       this.doorsInstance.addGeometry(DoorService.getVisualization(door));
     })
+  }
+
+  private markInfoPoint(feature: GeoJSON.Feature): void {
+    geoMap.infoPoint = feature;
+    const infoPointLevels = extractLevels(feature.properties.level ?? geoMap.infoPointLevel.toString());
+    geoMap.infoPointLevel = infoPointLevels.length == 1 ? infoPointLevels[0] : geoMap.infoPointLevel; // if infoPoint is on multiple levels, fall back to INDOOR_LEVEL
+    new Maptalks.Marker((feature.geometry as GeoJSON.Point).coordinates, {
+      properties: {
+        name: "i",
+      },
+      symbol: [
+        {
+          markerType: "pin",
+          markerFill: "rgb(255, 195, 195)",
+          markerLineColor: "#000000",
+          markerLineWidth: 2,
+          markerWidth: 80,
+          markerHeight: 70,
+        } as Maptalks.VectorMarkerSymbol,
+        {
+          textFaceName: "sans-serif",
+          textName: "{name}",
+          textSize: 18,
+          textDy: -35,
+        } as Maptalks.TextSymbol,
+      ],
+    }).addTo(this.positionLayer);
+  }
+
+  private handleSelectedFeature(feature: GeoJSON.Feature, geo: Maptalks.Geometry): void {
+    // color room in selected color and set pattern if in wheelchair mode and room is explicitly wheelchair accessible
+    let pattern_fill: string = null;
+    if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
+      const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
+      const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium" : "large");
+      pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
+    }
+    geo.updateSymbol({
+      polygonFill: colors.roomColorS,
+      polygonPatternFile: UserService.getCurrentProfile() == UserGroupEnum.wheelchairUsers ? pattern_fill : null,
+    });
+
+    // add marker to show level difference in 2.5D view
+    // calculate difference between this level and level of infoPoint (or standard level if no InfoPoint is set)
+    const diff = this.level - geoMap.infoPointLevel;
+    if (diff > 0) {
+      this.levelDiff = "+" + diff.toString();
+    } else {
+      this.levelDiff = diff.toString();
+    }
+
+    // if feature is in multiple levels, we only want to display the position marker on the nearest layer to the current position (infoPoint)
+    if (
+      !Array.isArray(feature.properties["level"]) ||
+      Math.min(...(feature.properties["level"] as number[]).map(level => Math.abs(level - geoMap.infoPointLevel))).toString() == this.levelDiff
+    ) {
+      // add position Marker of selected room
+      new Maptalks.Marker(PolygonCenter(feature.geometry).coordinates, {
+        properties: { name: this.levelDiff },
+        symbol: [
+          {
+            markerType: "pin",
+            markerFill: "rgb(195, 255, 195)",
+            markerLineColor: "#000000",
+            markerLineWidth: 2,
+            markerWidth: 80,
+            markerHeight: 70,
+          } as Maptalks.VectorMarkerSymbol,
+          {
+            textFaceName: "sans-serif",
+            textName: "{name}",
+            textSize: 18,
+            textDy: -35,
+          } as Maptalks.TextSymbol,
+        ],
+      }).addTo(this.positionLayer);
+    }
   }
 
   /**
@@ -494,16 +509,19 @@ export class IndoorLayer {
     const {
       indoor,
       stairs,
-      ref: roomNo,
+      ref,
+      name,
       handrail,
       amenity,
     } = feature.properties;
 
+    const label = name || ref;
+
     //only rooms; no toilets/..
-    if (roomNo && indoor == "room" && !amenity && !handrail && !stairs) {
+    if (label && indoor == "room" && !["toilets"].includes(amenity) && !handrail && !stairs) {
       new Maptalks.Marker(PolygonCenter(feature.geometry).coordinates, {
         symbol: {
-          textName: roomNo,
+          textName: label,
           textHorizontalAlignment: "middle",
           textVerticalAlignment: "middle",
           textFill: "#000",

@@ -7,6 +7,7 @@ import CoordinateHelpers from "../utils/coordinateHelpers";
 import { extractLevels } from "../utils/extractLevels";
 import DoorService from "./doorService";
 import { BackendSourceEnum } from "../models/backendSourceEnum";
+import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
 
 let buildingConstants: Record<string, number>;
 let buildingDescription = "";
@@ -87,8 +88,8 @@ async function fetchBackendData(): Promise<void> {
   // Add rooms to the doors
   geoJson.features.forEach(
     (feature) => {
-      if (feature.geometry.type == "Polygon" && "indoor" in feature.properties && feature.properties["indoor"] != "pathway" && feature.properties["area"] != "no") {
-        const coords = feature.geometry.coordinates[0].slice(1);
+      if (isDrawableRoomOrArea(feature)) {
+        const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0].slice(1);
         for (let i = 0; i < coords.length; i++) {
           const coord = coords.at(i);
           if (DoorService.checkIfDoorExists(coord)) {

@@ -39,6 +39,7 @@ export class GeoMap {
   standardPitch3DMode = 0;
   standardBearing3DMode = 0;
   infoPoint: GeoJSON.Feature;
+  infoPointLevel = INDOOR_LEVEL;
   configMode = false; // set only during configuration of building constants
 
   constructor() {

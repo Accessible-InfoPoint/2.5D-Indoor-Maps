@@ -51,7 +51,6 @@ function checkForMatchingTags(tags: UserFeatureEnum[]): boolean {
 function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
   let iconFileName = "";
 
-//   console.log(feature);
   const isFeatureAccessible = featureAccessibilityProperties.some(
     ({ hasCorrectProperties, iconFilename, userGroups, tags }) => {
       if (
@@ -60,11 +59,6 @@ function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
         iconFilename !== undefined &&
         checkForMatchingTags(tags)
       ) {
-        // console.log([
-        //   userGroups,
-        //   userService.getCurrentProfile(),
-        //   tags
-        // ]);
         iconFileName = iconFilename;
         return true;
       }
@@ -126,8 +120,7 @@ function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
 function getWallWeight(feature: GeoJSON.Feature<any>): number {
   //highlight tactile paving lines
   //decides wall weight based on the user profile and feature
-  return UserService.getCurrentProfile() == UserGroupEnum.blindPeople &&
-    feature.geometry.type === "LineString" &&
+  return feature.geometry.type === "LineString" &&
     feature.properties.tactile_paving === "yes"
     ? WALL_WEIGHT_PAVING
     : WALL_WEIGHT;
