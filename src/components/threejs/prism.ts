@@ -67,7 +67,7 @@ export class Prism extends BaseObject {
 
     // Create a Maptalks polygon from the corner coordinates
     const polygon = new Maptalks.Polygon(corners.map(p =>
-      new Maptalks.Coordinate(p as Maptalks.CoordinateArray)
+      new Maptalks.Coordinate(p as [number, number])
     ));
 
     // Get the 3D center point of the polygon
@@ -80,7 +80,7 @@ export class Prism extends BaseObject {
       const z = (layer as ThreeLayer).altitudeToVector3(altitude, altitude).x;
 
       const p = (layer as ThreeLayer).coordinateToVector3(
-        new Maptalks.Coordinate(corners[i] as Maptalks.CoordinateArray)
+        new Maptalks.Coordinate(corners[i] as [number, number])
       ).sub(centerPt);
 
       const xy = [p.x.toFixed(4), p.y.toFixed(4)].join('-').toString();

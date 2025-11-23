@@ -20,7 +20,7 @@ export function simpleStaircase(coordinates: GeoJSON.Position[], altitude: numbe
     // (simplify the nodes by removing those with nearly a 180 degree angle)
     ...coordinateHelpers.simplifyByAngle(coordinates, 5).slice(0, -1).map(coord =>
       // construct an object that nears a cylinder, but with 10 radial segments
-      layer.toBar(new Maptalks.Coordinate(coord as Maptalks.CoordinateArray), {height: LEVEL_HEIGHT, altitude: altitude, radialSegments: 10, asynchronous: true, radius: 0.02}, outlineMaterial)
+      layer.toBar(new Maptalks.Coordinate(coord as [number, number]), {height: LEVEL_HEIGHT, altitude: altitude, radialSegments: 10, asynchronous: true, radius: 0.02}, outlineMaterial)
     )
   ];
 }

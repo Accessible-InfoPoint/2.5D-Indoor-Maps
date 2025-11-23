@@ -88,7 +88,7 @@ function setup(): void {
 
       animate({
         centerStart: geoMap.mapInstance.getCenter(),
-        centerEnd: new Maptalks.Coordinate(geoMap.standardCenter as Maptalks.CoordinateArray),
+        centerEnd: new Maptalks.Coordinate(geoMap.standardCenter as [number, number]),
         bearingStart: geoMap.mapInstance.getBearing(),
         bearingEnd: geoMap.standardBearing3DMode,
         pitchStart: geoMap.mapInstance.getPitch(),

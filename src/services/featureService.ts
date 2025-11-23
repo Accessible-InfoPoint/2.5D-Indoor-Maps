@@ -74,7 +74,7 @@ function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
         markerHeight: 48,
         markerHorizontalAlignment: "middle",
         markerVerticalAlignment: "middle"
-      } as Maptalks.FileMarkerSymbol,
+      },
     });
   }
   return null;

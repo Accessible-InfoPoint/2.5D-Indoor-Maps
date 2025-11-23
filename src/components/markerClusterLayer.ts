@@ -30,7 +30,7 @@ export class MarkerClusterLayer {
     private readonly options = defaultOptions;
     private readonly indoorLayer: IndoorLayer;
 
-    constructor(id: string, indoorLayer: IndoorLayer, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: Maptalks.VectorLayerOptionsType) {
+    constructor(id: string, indoorLayer: IndoorLayer, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: any) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
         Maptalks.Util.extend(this.options, clusteringOptions);
         this.markers = markers ?? [];

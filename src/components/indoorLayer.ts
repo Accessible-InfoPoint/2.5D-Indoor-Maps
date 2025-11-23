@@ -430,7 +430,7 @@ export class IndoorLayer {
           markerLineWidth: 2,
           markerWidth: 80,
           markerHeight: 70,
-        } as Maptalks.VectorMarkerSymbol,
+        },
         {
           textFaceName: "sans-serif",
           textName: "{name}",
@@ -479,7 +479,7 @@ export class IndoorLayer {
             markerLineWidth: 2,
             markerWidth: 80,
             markerHeight: 70,
-          } as Maptalks.VectorMarkerSymbol,
+          },
           {
             textFaceName: "sans-serif",
             textName: "{name}",
