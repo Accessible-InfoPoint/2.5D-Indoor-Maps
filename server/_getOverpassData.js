@@ -5,10 +5,8 @@ const {RESOURCES_TO_DOWNLOAD, MAX_OVERPASS_FILE_AGE_IN_DAYS} = require("./consta
 const fs = require("fs");
 const path = require("path");
 
-if (typeof localStorage === "undefined" || localStorage === null) {
-    const LocalStorage = require('node-localstorage').LocalStorage;
-    localStorage = new LocalStorage('./tmp/localStorage');
-}
+const LocalStorage = require('node-localstorage').LocalStorage;
+localStorage = new LocalStorage('./tmp/localStorage');
 
 module.exports = function getOverpassData() {
     console.log("=== Downloading Overpass data ===");
