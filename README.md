@@ -61,3 +61,11 @@ Free icon attributions:
 * <https://www.flaticon.com/>
 
 See attribution files for further details.
+
+## Data Sources and Attribution
+
+This project uses OpenStreetMap data for indoor map representation and visualization.
+
+OpenStreetMap data is © OpenStreetMap contributors and available under the Open Database License (ODbL). For more information, see the OpenStreetMap copyright and license information.
+
+When using, modifying, or distributing maps or derived works based on OpenStreetMap data, please ensure that proper attribution is provided in accordance with the OpenStreetMap attribution guidelines.
