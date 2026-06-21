@@ -1,7 +1,6 @@
 import * as Maptalks from "maptalks";
 import { geoMap } from "../main";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
-import { IndoorLayer } from "./indoorLayer";
 
 export interface MarkerClusterLayerOptions {
     'maxClusterRadius'?: number,
@@ -24,18 +23,20 @@ export interface FeatureMarker {
     feature: GeoJSON.Feature
 }
 
+type FeatureClickHandler = (feature: GeoJSON.Feature) => void;
+
 export class MarkerClusterLayer {
     private markers: FeatureMarker[];
     private readonly layerInstance: Maptalks.VectorLayer;
     private readonly options = defaultOptions;
-    private readonly indoorLayer: IndoorLayer;
+    private readonly handleFeatureClick: FeatureClickHandler;
 
-    constructor(id: string, indoorLayer: IndoorLayer, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: any) {
+    constructor(id: string, handleFeatureClick: FeatureClickHandler, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: any) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
         Maptalks.Util.extend(this.options, clusteringOptions);
         this.markers = markers ?? [];
         console.log(this.options.symbol);
-        this.indoorLayer = indoorLayer;
+        this.handleFeatureClick = handleFeatureClick;
     }
 
     addTo(map: Maptalks.Map): this {
@@ -123,7 +124,7 @@ export class MarkerClusterLayer {
             }
         } else {
             const marker = this.markers.find((fm) => fm.marker.getId() == cluster[0].id);
-            this.indoorLayer.handleClick(marker.feature);
+            this.handleFeatureClick(marker.feature);
         }
     }
 

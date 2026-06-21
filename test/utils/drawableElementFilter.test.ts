@@ -1,11 +1,5 @@
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from '../../src/utils/drawableElementFilter';
 
-jest.mock('../../src/main', () => ({
-  geoMap: {
-    selectedFeatures: ['room-123']
-  }
-}));
-
 describe('isDrawableRoomOrArea', () => {
   it('returns true for a valid drawable room', () => {
     const feature: GeoJSON.Feature = {
@@ -97,7 +91,7 @@ describe('isVisibleIn3DMode', () => {
       properties: {},
     };
 
-    expect(isVisibleIn3DMode(feature)).toBe(true);
+    expect(isVisibleIn3DMode(feature, ['room-123'])).toBe(true);
   });
 
   it('returns false if none of the conditions match', () => {

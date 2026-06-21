@@ -1,5 +1,3 @@
-import { geoMap } from "../main";
-
 export function isDrawableRoomOrArea(feature: GeoJSON.Feature): boolean {
   return feature.geometry.type == "Polygon" &&
     "indoor" in feature.properties &&
@@ -7,10 +5,10 @@ export function isDrawableRoomOrArea(feature: GeoJSON.Feature): boolean {
     feature.properties["area"] != "no";
 }
 
-export function isVisibleIn3DMode(feature: GeoJSON.Feature): boolean {
+export function isVisibleIn3DMode(feature: GeoJSON.Feature, selectedFeatureIds: string[] = []): boolean {
   return feature.properties["indoor"] == "corridor" ||
   feature.properties["indoor"] == "area" ||
   feature.properties["highway"] == "elevator" ||
   feature.properties["stairs"] == "yes" ||
-  geoMap.selectedFeatures.includes(feature.id.toString());
+  selectedFeatureIds.includes(feature.id.toString());
 }
