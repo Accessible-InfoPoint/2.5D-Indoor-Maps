@@ -3,6 +3,7 @@ import { BaseObject, ThreeLayer } from "maptalks.three";
 import { Prism } from "./prism";
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
+import { extractLevels } from "../../utils/extractLevels";
 
 const defaultStaircaseWidth = 1;
 
@@ -104,17 +105,12 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
 
   // we check each of those special nodes, whether they have a pathway that connects to them
   specialNodes.forEach(p => {
-    const regExSemicolon = /-?\d*(;-?\d)/;
-    const regExRange = /(-?\d)-(-?\d)/;
-    const arrayRange = (start: number, stop: number, step: number) => Array.from({ length: (stop - start) / step + 1 }, (v, index) => start + index * step);
     // filter the pathways that contain the current special node
     const paths = pathways.filter(
       path => pathwayToCoords(path).some(lsp => lsp.toString() == p.toString()) &&
       (
         path.properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
-        ("repeat_on" in path.properties && path.properties.repeat_on === level) || // repeat on has multiple possible formats
-        ("repeat_on" in path.properties && regExSemicolon.test(path.properties.repeat_on) && path.properties.repeat_on.split(";").includes(level.toString())) ||
-        ("repeat_on" in path.properties && regExRange.test(path.properties.repeat_on) && arrayRange(parseInt(path.properties.repeat_on.match(regExRange)[1]), parseInt(path.properties.repeat_on.match(regExRange)[2]), 1).includes(level))
+        extractLevels(path.properties.repeat_on).includes(level)
       )
     );
 

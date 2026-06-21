@@ -39,6 +39,16 @@ describe("hasLevel", () => {
     expect(hasLevel(feature, 2)).toBe(true);
   });
 
+  it("matches multi-digit repeat_on ranges", () => {
+    const feature = createFeature({ repeat_on: "10-12" });
+    expect(hasLevel(feature, 11)).toBe(true);
+  });
+
+  it("matches negative repeat_on ranges", () => {
+    const feature = createFeature({ repeat_on: "-3--1" });
+    expect(hasLevel(feature, -2)).toBe(true);
+  });
+
   it("does not match when level is not found", () => {
     const feature = createFeature({ level: "3" });
     expect(hasLevel(feature, 1)).toBe(false);

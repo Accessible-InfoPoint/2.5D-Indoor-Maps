@@ -16,14 +16,45 @@ const allLevels = new Set<number>();
 
 let buildingInterface: BuildingInterface;
 
-const source: BackendSourceEnum = BackendSourceEnum.localGeojson;
-const currentBuilding = "apb";
+export interface BackendConfig {
+  source: BackendSourceEnum,
+  building: keyof typeof BuildingConstantsDefinition,
+}
 
-async function fetchBackendData(): Promise<void> {
-  if (source == BackendSourceEnum.cachedOverpass) {
+const defaultBackendConfig: BackendConfig = {
+  source: BackendSourceEnum.localGeojson,
+  building: "apb",
+};
+
+let backendConfig: BackendConfig = { ...defaultBackendConfig };
+
+function configureBackend(config: Partial<BackendConfig>): void {
+  backendConfig = {
+    ...backendConfig,
+    ...config,
+  };
+}
+
+function resetBackendData(): void {
+  buildingConstants = undefined;
+  buildingDescription = "";
+  geoJson = undefined;
+  allLevels.clear();
+  buildingInterface = undefined;
+  DoorService.clearDoorIndex();
+}
+
+async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<void> {
+  configureBackend(config);
+  resetBackendData();
+
+  const currentBuilding = backendConfig.building;
+  const buildingDefinition = BuildingConstantsDefinition[currentBuilding];
+
+  if (backendConfig.source == BackendSourceEnum.cachedOverpass) {
     await HttpService.fetchOverpassData();
 
-    buildingInterface = await BuildingService.handleSearch(HttpService.getBuildingData(), BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);	
+    buildingInterface = await BuildingService.handleSearch(HttpService.getBuildingData(), buildingDefinition.SEARCH_STRING);
 
     // filter indoor elements by bounds of building
     if (buildingInterface !== undefined) {
@@ -32,10 +63,10 @@ async function fetchBackendData(): Promise<void> {
         buildingInterface.boundingBox
       );
     }
-  } else if (source == BackendSourceEnum.localGeojson) {
+  } else if (backendConfig.source == BackendSourceEnum.localGeojson) {
     const full_geojson = await HttpService.fetchLocalGeojson(currentBuilding);
 
-    buildingInterface = await BuildingService.handleSearch(full_geojson, BuildingConstantsDefinition[currentBuilding].SEARCH_STRING);
+    buildingInterface = await BuildingService.handleSearch(full_geojson, buildingDefinition.SEARCH_STRING);
 
     if (buildingInterface !== undefined) {
       geoJson = BuildingService.filterInsideAndLevel(full_geojson);
@@ -116,11 +147,11 @@ async function fetchBackendData(): Promise<void> {
   // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
   // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
   const p1 = (
-    geoJson.features.find((feature) => feature.id == "node/" + BuildingConstantsDefinition[currentBuilding].BEARING_CALC_NODE1)
+    geoJson.features.find((feature) => feature.id == "node/" + buildingDefinition.BEARING_CALC_NODE1)
     .geometry as GeoJSON.Point
   ).coordinates;
   const p2 = (
-    geoJson.features.find((feature) => feature.id == "node/" + BuildingConstantsDefinition[currentBuilding].BEARING_CALC_NODE2)
+    geoJson.features.find((feature) => feature.id == "node/" + buildingDefinition.BEARING_CALC_NODE2)
     .geometry as GeoJSON.Point
   ).coordinates;
 
@@ -130,18 +161,18 @@ async function fetchBackendData(): Promise<void> {
       p2[0] - p1[0],
       // we need to use mercator projection for the latitude
       CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
-    ) * (180 / Math.PI) + BuildingConstantsDefinition[currentBuilding].BEARING_OFFSET
+    ) * (180 / Math.PI) + buildingDefinition.BEARING_OFFSET
   // angle is between 0 and 360 after calculation (might even be above 360), maptalks needs it between -180 and 180
   + 180) % 360) - 180;
 
   buildingConstants = {
-    "standardZoom": BuildingConstantsDefinition[currentBuilding].STANDARD_ZOOM,
-    "maxZoom": BuildingConstantsDefinition[currentBuilding].MAX_ZOOM,
-    "minZoom": BuildingConstantsDefinition[currentBuilding].MIN_ZOOM,
+    "standardZoom": buildingDefinition.STANDARD_ZOOM,
+    "maxZoom": buildingDefinition.MAX_ZOOM,
+    "minZoom": buildingDefinition.MIN_ZOOM,
     "standardBearing": standardBearing,
-    "standardBearing3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_BEARING_3D_MODE,
-    "standardPitch3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_PITCH_3D_MODE,
-    "standardZoom3DMode": BuildingConstantsDefinition[currentBuilding].STANDARD_ZOOM_3D_MODE
+    "standardBearing3DMode": buildingDefinition.STANDARD_BEARING_3D_MODE,
+    "standardPitch3DMode": buildingDefinition.STANDARD_PITCH_3D_MODE,
+    "standardZoom3DMode": buildingDefinition.STANDARD_ZOOM_3D_MODE
   }
 }
 
@@ -165,6 +196,10 @@ function getAllLevels(): number[] {
   return Array.from(allLevels).sort((a, b) => -a + b); // reverse order
 }
 
+function getBackendConfig(): BackendConfig {
+  return { ...backendConfig };
+}
+
 function getBoundingBoxExtent(): Maptalks.Extent {
   return new Maptalks.Extent(
     buildingInterface.boundingBox[0],
@@ -181,5 +216,7 @@ export default {
   getGeoJson,
   getBoundingBoxExtent,
   fetchBackendData,
-  getAllLevels
+  getAllLevels,
+  configureBackend,
+  getBackendConfig,
 };
