@@ -4,11 +4,33 @@ import * as Maptalks from "maptalks";
 import { colors } from "../services/colorService";
 import FeatureService from "../services/featureService";
 import { geoMap } from "../main";
+import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
 
 const doorIndex = new Map<string, DoorDataInterface>();
 
 function coordKey(coord: GeoJSON.Position): string {
   return coord.join(',');
+}
+
+function findDoorByCoordinate(coord: GeoJSON.Position): DoorDataInterface {
+  const exactMatch = doorIndex.get(coordKey(coord));
+
+  if (exactMatch)
+    return exactMatch;
+
+  let nearestDoor: DoorDataInterface = null;
+  let nearestDistance = DOOR_MATCH_TOLERANCE_M;
+
+  doorIndex.forEach((door) => {
+    const distance = CoordinateHelpers.getDistanceBetweenCoordinatesInM(coord, door.coord);
+
+    if (distance <= nearestDistance) {
+      nearestDoor = door;
+      nearestDistance = distance;
+    }
+  });
+
+  return nearestDoor;
 }
 
 function clearDoorIndex() {
@@ -35,14 +57,14 @@ function addDoor(
 }
 
 function checkIfDoorExists(doorCoord: GeoJSON.Position): boolean {
-  return doorIndex.has(coordKey(doorCoord))
+  return findDoorByCoordinate(doorCoord) !== null;
 }
 
 function addRoomToDoor(
   doorCoord: GeoJSON.Position,
   roomFeature: GeoJSON.Feature
 ) {
-  const door = doorIndex.get(coordKey(doorCoord));
+  const door = findDoorByCoordinate(doorCoord);
 
   if (door)
     door.rooms.push(roomFeature);
@@ -53,30 +75,31 @@ function calculateDoorOrientation(
   previous: GeoJSON.Position,
   after: GeoJSON.Position
 ) {
-  const door = doorIndex.get(coordKey(doorCoord));
+  const door = findDoorByCoordinate(doorCoord);
 
   if (door && door.orientation == undefined) {
+    const matchedDoorCoord = door.coord;
     // door should be scaled to common width
-    const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, doorCoord);
-    const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, doorCoord);
+    const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, matchedDoorCoord);
+    const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, matchedDoorCoord);
     const doorWidth = door.properties.width ?? 1; // in meters
     // we need to take spherical earth into account, therefore we must project into mercator, then calculate the door and project back
     const prevDoorCoord = [
-      doorCoord[0] + ((previous[0] - doorCoord[0]) * doorWidth) / (2 * prevDist),
+      matchedDoorCoord[0] + ((previous[0] - matchedDoorCoord[0]) * doorWidth) / (2 * prevDist),
       CoordinateHelpers.y2lat(
-        CoordinateHelpers.lat2y(doorCoord[1]) +
+        CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
           ((CoordinateHelpers.lat2y(previous[1]) -
-            CoordinateHelpers.lat2y(doorCoord[1])) *
+            CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
             doorWidth) /
             (2 * prevDist)
       ),
     ];
     const afterDoorCoord = [
-      doorCoord[0] + ((after[0] - doorCoord[0]) * doorWidth) / (2 * afterDist),
+      matchedDoorCoord[0] + ((after[0] - matchedDoorCoord[0]) * doorWidth) / (2 * afterDist),
       CoordinateHelpers.y2lat(
-        CoordinateHelpers.lat2y(doorCoord[1]) +
+        CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
           ((CoordinateHelpers.lat2y(after[1]) -
-            CoordinateHelpers.lat2y(doorCoord[1])) *
+            CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
             doorWidth) /
             (2 * afterDist)
       ),

@@ -46,6 +46,8 @@ jest.mock("maptalks", () => {
 
 
 const sampleCoord: GeoJSON.Position = [10.0, 50.0];
+const nearSampleCoord: GeoJSON.Position = [10.000001, 50.0];
+const farSampleCoord: GeoJSON.Position = [10.00001, 50.0];
 const otherCoord: GeoJSON.Position = [10.1, 50.1];
 const levelA = 0;
 const levelB = 1;
@@ -75,6 +77,16 @@ describe('doorService', () => {
       expect(doorService.checkIfDoorExists(sampleCoord)).toBe(true);
     });
 
+    it('returns true for a nearby door coordinate within tolerance', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      expect(doorService.checkIfDoorExists(nearSampleCoord)).toBe(true);
+    });
+
+    it('returns false for a nearby door coordinate outside tolerance', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      expect(doorService.checkIfDoorExists(farSampleCoord)).toBe(false);
+    });
+
     it('returns false for a non-existing door', () => {
       doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
       expect(doorService.checkIfDoorExists(otherCoord)).toBe(false);
@@ -96,6 +108,14 @@ describe('doorService', () => {
     it('adds a room to the door', () => {
       doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
       doorService.addRoomToDoor(sampleCoord, roomFeature);
+      const door = doorService.getDoorsByLevel(levelA)[0];
+      expect(door.rooms.length).toBe(1);
+      expect(door.rooms[0].properties!.name).toBe('Room 1');
+    });
+
+    it('adds a room to a nearby matching door', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      doorService.addRoomToDoor(nearSampleCoord, roomFeature);
       const door = doorService.getDoorsByLevel(levelA)[0];
       expect(door.rooms.length).toBe(1);
       expect(door.rooms[0].properties!.name).toBe('Room 1');
@@ -127,6 +147,15 @@ describe('doorService', () => {
     it('calculates orientation with no width set', () => {
       doorService.addDoor(sampleCoord, new Set([levelA]), {});
       doorService.calculateDoorOrientation(sampleCoord, prev, after);
+      const door = doorService.getDoorsByLevel(levelA)[0];
+      expect(door.orientation).toBeDefined();
+      expect(Array.isArray(door.orientation)).toBe(true);
+      expect(door.orientation?.length).toBe(2);
+    });
+
+    it('calculates orientation for a nearby matching door', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      doorService.calculateDoorOrientation(nearSampleCoord, prev, after);
       const door = doorService.getDoorsByLevel(levelA)[0];
       expect(door.orientation).toBeDefined();
       expect(Array.isArray(door.orientation)).toBe(true);
