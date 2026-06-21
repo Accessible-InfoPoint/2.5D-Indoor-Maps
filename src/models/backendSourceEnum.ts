@@ -1,4 +1,4 @@
 export enum BackendSourceEnum {
-  cachedOverpass,
-  localGeojson
+  cachedOverpass = "cachedOverpass",
+  localGeojson = "localGeojson"
 }

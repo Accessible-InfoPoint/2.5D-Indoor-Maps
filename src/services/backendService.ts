@@ -8,6 +8,10 @@ import { extractLevels } from "../utils/extractLevels";
 import DoorService from "./doorService";
 import { BackendSourceEnum } from "../models/backendSourceEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
+import {
+  BACKEND_SOURCE,
+  CURRENT_BUILDING,
+} from "../../public/strings/settings.json";
 
 let buildingConstants: Record<string, number>;
 let buildingDescription = "";
@@ -21,12 +25,33 @@ export interface BackendConfig {
   building: keyof typeof BuildingConstantsDefinition,
 }
 
-const defaultBackendConfig: BackendConfig = {
+const fallbackBackendConfig: BackendConfig = {
   source: BackendSourceEnum.localGeojson,
   building: "apb",
 };
 
+const defaultBackendConfig: BackendConfig = {
+  source: parseBackendSource(BACKEND_SOURCE),
+  building: parseBuildingId(CURRENT_BUILDING),
+};
+
 let backendConfig: BackendConfig = { ...defaultBackendConfig };
+
+function parseBackendSource(value: string): BackendSourceEnum {
+  if (Object.values(BackendSourceEnum).includes(value as BackendSourceEnum))
+    return value as BackendSourceEnum;
+
+  console.warn(`Unknown backend source "${value}", falling back to "${fallbackBackendConfig.source}".`);
+  return fallbackBackendConfig.source;
+}
+
+function parseBuildingId(value: string): keyof typeof BuildingConstantsDefinition {
+  if (value in BuildingConstantsDefinition)
+    return value as keyof typeof BuildingConstantsDefinition;
+
+  console.warn(`Unknown building "${value}", falling back to "${fallbackBackendConfig.building}".`);
+  return fallbackBackendConfig.building;
+}
 
 function configureBackend(config: Partial<BackendConfig>): void {
   backendConfig = {
