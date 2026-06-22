@@ -8,11 +8,11 @@ import {
     MarkerSymbol,
     ResolvedMarkerClusterOptions,
     resolveMarkerClusterOptions,
-} from "./markerCluster/markerClusterModel";
+} from "./markerClusterModel";
 
-export type MarkerClusterLayerOptions = MarkerClusterOptions;
+export type MaptalksMarkerClusterLayerOptions = MarkerClusterOptions;
 
-export interface FeatureMarker {
+export interface MaptalksFeatureMarker {
     marker: Maptalks.Marker,
     feature: GeoJSON.Feature
 }
@@ -20,8 +20,8 @@ export interface FeatureMarker {
 type FeatureClickHandler = (feature: GeoJSON.Feature) => void;
 type ProjectionMapProvider = () => Maptalks.Map;
 
-export class MarkerClusterLayer {
-    private markers: FeatureMarker[];
+export class MaptalksMarkerClusterLayer {
+    private markers: MaptalksFeatureMarker[];
     private readonly layerInstance: Maptalks.VectorLayer;
     private readonly options: ResolvedMarkerClusterOptions;
     private readonly handleFeatureClick: FeatureClickHandler;
@@ -31,8 +31,8 @@ export class MarkerClusterLayer {
         id: string,
         handleFeatureClick: FeatureClickHandler,
         getProjectionMap: ProjectionMapProvider,
-        markers?: FeatureMarker[],
-        clusteringOptions?: MarkerClusterLayerOptions,
+        markers?: MaptalksFeatureMarker[],
+        clusteringOptions?: MaptalksMarkerClusterLayerOptions,
         vectorLayerOptions?: Maptalks.VectorLayerOptionsType
     ) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
@@ -90,7 +90,7 @@ export class MarkerClusterLayer {
         this.layerInstance.clear();
     }
 
-    addMarkers(markers: FeatureMarker | FeatureMarker[]): void {
+    addMarkers(markers: MaptalksFeatureMarker | MaptalksFeatureMarker[]): void {
         if (!Array.isArray(markers)) {
             this.markers.push(markers);
         } else {
@@ -111,7 +111,7 @@ export class MarkerClusterLayer {
     }
 }
 
-function toClusterableMarker(featureMarker: FeatureMarker, map: Maptalks.Map): ClusterableMarker {
+function toClusterableMarker(featureMarker: MaptalksFeatureMarker, map: Maptalks.Map): ClusterableMarker {
     const center = featureMarker.marker.getCenter();
     const projectedCenter = map.coordinateToContainerPoint(center);
     const symbol = toMarkerSymbol(featureMarker.marker.getSymbol());

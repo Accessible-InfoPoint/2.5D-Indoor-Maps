@@ -14,7 +14,7 @@ import { colors } from "../../services/colorService";
 import DoorService from "../../services/doorService";
 import FeatureService from "../../services/featureService";
 import { DoorDataInterface } from "../../models/doorDataInterface";
-import { MarkerClusterLayer } from "../markerClusterLayer";
+import { MaptalksMarkerClusterLayer } from "../markerCluster/maptalksMarkerClusterLayer";
 import { complexStaircase, filterConnectedPathways } from "../threejs/complexStaircase";
 import { simpleStaircase } from "../threejs/simpleStaircase";
 import {
@@ -35,7 +35,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   private readonly doorsInstance: Maptalks.VectorLayer;
   private readonly outlineInstance: Maptalks.VectorLayer;
   private readonly positionLayer: Maptalks.VectorLayer;
-  private readonly markers: MarkerClusterLayer;
+  private readonly markers: MaptalksMarkerClusterLayer;
   private threeLayer: ThreeLayer;
   private meshes: BaseObject[] = [];
   private altitude: number;
@@ -101,7 +101,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
       forceRenderOnMoving: true,
       forceRenderOnRotating: true,
     }).addTo(mapContext.map);
-    this.markers = new MarkerClusterLayer(
+    this.markers = new MaptalksMarkerClusterLayer(
       "markerCluster" + level,
       (feature) => this.events.onFeatureSelected(feature),
       () => this.mapContext.markerProjectionMap,
