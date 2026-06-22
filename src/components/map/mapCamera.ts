@@ -25,4 +25,6 @@ export interface MapCamera {
   setCenterAndZoom(center: MapCenter, zoom: number): void;
   setZoom(zoom: number): void;
   zoomBy(delta: number): void;
+  animateToCenter(center: MapCenter, duration: number): void;
+  animateToZoom(zoom: number, duration: number): void;
 }

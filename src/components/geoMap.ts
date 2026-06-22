@@ -1,9 +1,4 @@
 import {
-  CARTO_TILE_SERVER,
-  CARTO_TILE_SUBDOMAINS,
-  CARTO_ATTRIBUTION,
-} from "../../public/strings/constants.json";
-import {
   INDOOR_LEVEL,
   MAP_START_LAT,
   MAP_START_LNG,
@@ -20,15 +15,13 @@ import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
-import * as Maptalks from "maptalks";
 import BackendService from "../services/backendService";
-import { MaptalksIndoorLevelView } from "./indoorLevel/maptalksIndoorLevelView";
 import { MapCamera } from "./map/mapCamera";
-import { MaptalksMapCamera } from "./map/maptalksMapCamera";
+import { MapView } from "./map/mapView";
+import { MaptalksMapView } from "./map/maptalksMapView";
 
 export class GeoMap {
-  mapInstance: Maptalks.Map = null;
-  flatMapInstance: Maptalks.Map = null;
+  private readonly mapView: MapView;
   camera: MapCamera = null;
   currentLevel = INDOOR_LEVEL;
   indoorLayers: Map<number, IndoorLevel>;
@@ -65,66 +58,15 @@ export class GeoMap {
       "geometry": null
     };
 
-    this.mapInstance = new Maptalks.Map("map", {
-      center: [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)],
-      zoom: this.standardZoom,
-      maxZoom: this.configMode ? null : this.maxZoom,
-      minZoom: this.configMode ? null : this.minZoom,
-      dragRotate: this.configMode,
-      dragPitch: this.configMode,
-      baseLayer: new Maptalks.TileLayer("carto", {
-        urlTemplate: CARTO_TILE_SERVER,
-        subdomains: CARTO_TILE_SUBDOMAINS,
-        attribution: CARTO_ATTRIBUTION,
-      }),
-    });
-    this.camera = new MaptalksMapCamera(this.mapInstance);
-
-    this.flatMapInstance = new Maptalks.Map("flatMap", {
-      center: [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)],
-      zoom: this.standardZoom,
+    this.mapView = new MaptalksMapView({
+      configMode: this.configMode,
+      standardZoom: this.standardZoom,
       maxZoom: this.maxZoom,
       minZoom: this.minZoom,
-      baseLayer: new Maptalks.TileLayer("carto", {
-        urlTemplate: CARTO_TILE_SERVER,
-        subdomains: CARTO_TILE_SUBDOMAINS,
-        attribution: CARTO_ATTRIBUTION,
-      }),
     });
-
-    this.mapInstance.on("moving moveend", () => {
-      this.flatMapInstance.setCenter(this.mapInstance.getCenter());
-    });
-
-    this.mapInstance.on("zooming zoomend", () => {
-      if (this.configMode)
-        console.log("zoom", this.mapInstance.getZoom());
-      this.flatMapInstance.setCenterAndZoom(
-        this.mapInstance.getCenter(),
-        this.mapInstance.getZoom()
-      );
-    });
-
-    this.mapInstance.on("rotate", () => {
-      if (this.configMode)
-        console.log("bearing", this.mapInstance.getBearing());
-      this.flatMapInstance.setBearing(this.mapInstance.getBearing());
-    });
-
-    this.mapInstance.on("pitch", () => {
-      if (this.configMode)
-        console.log("pitch", this.mapInstance.getPitch());
-    });
+    this.camera = this.mapView.camera;
 
     this.applyStyleFilters();
-  }
-
-  add(obj: Maptalks.Layer): Maptalks.Layer {
-    return obj.addTo(this.mapInstance);
-  }
-
-  remove(obj: Maptalks.Layer): void {
-    this.mapInstance.removeLayer(obj);
   }
 
   showBuilding(): string {
@@ -139,19 +81,15 @@ export class GeoMap {
     LevelService.clearData();
 
     this.currentLevel = INDOOR_LEVEL;
-    this.mapInstance.setBearing(this.standardBearing);
+    this.camera.setBearing(this.standardBearing);
 
     this.indoorLayers = new Map(
       BackendService.getAllLevels()
         .reverse()
         .map((val) => {
-          const view = new MaptalksIndoorLevelView(
+          const view = this.mapView.createIndoorLevelView(
             val,
             0,
-            {
-              map: this.mapInstance,
-              markerProjectionMap: this.flatMapInstance,
-            },
             {
               onFeatureSelected: (feature) => this.handleFeatureSelection(feature),
             }
@@ -183,21 +121,19 @@ export class GeoMap {
 
     this.standardCenter = [ext.getCenter().x, ext.getCenter().y];
 
-    this.mapInstance.animateTo(
-      { center: ext.getCenter() },
-      { duration: 350 }
+    this.camera.animateToCenter(
+      {
+        x: this.standardCenter[0],
+        y: this.standardCenter[1],
+      },
+      350
     );
     setTimeout(() => {
-      this.mapInstance.animateTo(
-        {
-          zoom: this.standardZoom
-        },
-        { duration: 350 }
-      );
+      this.camera.animateToZoom(this.standardZoom, 350);
     }, 350);
     setTimeout(() => {
       // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
-      console.log(this.mapInstance.getCenter(), this.mapInstance.getZoom());
+      console.log(this.camera.getPosition());
     }, 1000);
   }
 
@@ -315,10 +251,8 @@ export class GeoMap {
   }
 
   applyStyleFilters = (): void => {
-    this.mapInstance.getBaseLayer().setOpacity(ColorService.getEnvOpacity() / 100);
-    document.getElementById("map").style.filter = `saturate(${
-      (ColorService.getColorStrength() * 2) / 100
-    })`;
+    this.mapView.setBaseLayerOpacity(ColorService.getEnvOpacity() / 100);
+    this.mapView.setSaturation((ColorService.getColorStrength() * 2) / 100);
 
     //wall weight rendered per feature -> feature service
   };

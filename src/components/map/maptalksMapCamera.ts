@@ -46,4 +46,15 @@ export class MaptalksMapCamera implements MapCamera {
   zoomBy(delta: number): void {
     this.map.setZoom(this.map.getZoom() + delta);
   }
+
+  animateToCenter(center: MapCenter, duration: number): void {
+    this.map.animateTo(
+      { center: new Maptalks.Coordinate(center.x, center.y) },
+      { duration }
+    );
+  }
+
+  animateToZoom(zoom: number, duration: number): void {
+    this.map.animateTo({ zoom }, { duration });
+  }
 }
