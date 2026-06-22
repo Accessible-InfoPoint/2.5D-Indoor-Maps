@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "Node16",
     "target": "ES2022",
+    "strict": false,
     "noImplicitAny": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "rootDir": ".",
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["jest", "node"]
   },
   "include": ["src", "test"]
 }

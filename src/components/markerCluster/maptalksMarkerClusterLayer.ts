@@ -33,9 +33,9 @@ export class MaptalksMarkerClusterLayer {
         getProjectionMap: ProjectionMapProvider,
         markers?: MaptalksFeatureMarker[],
         clusteringOptions?: MaptalksMarkerClusterLayerOptions,
-        vectorLayerOptions?: Maptalks.VectorLayerOptionsType
+        vectorLayerOptions?: Record<string, unknown>
     ) {
-        this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
+        this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions as any);
         this.options = resolveMarkerClusterOptions(clusteringOptions);
         this.markers = markers ?? [];
         this.handleFeatureClick = handleFeatureClick;
@@ -143,8 +143,8 @@ function toMarkerSymbol(symbol: unknown): MarkerSymbol {
     return isSymbolRecord(symbol) ? symbol : null;
 }
 
-function toMaptalksSymbol(symbol: MarkerSymbol): Maptalks.AnyMarkerSymbol | Maptalks.AnyMarkerSymbol[] {
-    return symbol as Maptalks.AnyMarkerSymbol | Maptalks.AnyMarkerSymbol[];
+function toMaptalksSymbol(symbol: MarkerSymbol): MarkerSymbol {
+    return symbol;
 }
 
 function isSymbolRecord(symbol: unknown): symbol is Record<string, unknown> {
