@@ -13,7 +13,7 @@ function marker(
   projectedY: number,
   markerFile?: string
 ): ClusterableMarker {
-  const symbol = markerFile ? { markerFile } : null;
+  const symbol = markerFile ? { markerFile } : undefined;
 
   return {
     id,

@@ -31,8 +31,8 @@ export class MaptalksMapView implements MapView {
     this.map = new Maptalks.Map("map", {
       center: [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)],
       zoom: options.standardZoom,
-      maxZoom: options.configMode ? null : options.maxZoom,
-      minZoom: options.configMode ? null : options.minZoom,
+      maxZoom: options.configMode ? undefined : options.maxZoom,
+      minZoom: options.configMode ? undefined : options.minZoom,
       dragRotate: options.configMode,
       dragPitch: options.configMode,
       baseLayer: this.createBaseLayer(),

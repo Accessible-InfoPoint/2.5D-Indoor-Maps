@@ -8,17 +8,18 @@ import DoorService from "./doorService";
 import { BackendSourceEnum } from "../models/backendSourceEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { getRequiredArrayValue, getRequiredMatch } from "../utils/requiredHelpers";
 import {
   BACKEND_SOURCE,
   CURRENT_BUILDING,
 } from "../../public/strings/settings.json";
 
-let buildingConstants: Record<string, number>;
+let buildingConstants: Record<string, number> | undefined;
 let buildingDescription = "";
-let geoJson: GeoJSON.FeatureCollection;
+let geoJson: GeoJSON.FeatureCollection | undefined;
 const allLevels = new Set<number>();
 
-let buildingInterface: BuildingInterface;
+let buildingInterface: BuildingInterface | undefined;
 
 export interface BackendConfig {
   source: BackendSourceEnum,
@@ -102,7 +103,10 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   console.log("BackendService GeoJSON", structuredClone(geoJson));
 
   // rewrite the geojson so that 
-  geoJson.features.forEach(
+  const indoorGeoJson = getLoadedGeoJson();
+  const currentBuildingInterface = getLoadedBuildingInterface();
+
+  indoorGeoJson.features.forEach(
     (feature) => {
       const properties = getRequiredFeatureProperties(feature);
 
@@ -129,7 +133,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   )
 
   // initialize doors
-  geoJson.features.forEach(
+  indoorGeoJson.features.forEach(
     (feature) => {
       const properties = getRequiredFeatureProperties(feature);
 
@@ -146,17 +150,21 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
     }
   )
   // Add rooms to the doors
-  geoJson.features.forEach(
+  indoorGeoJson.features.forEach(
     (feature) => {
       if (isDrawableRoomOrArea(feature)) {
-        const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0].slice(1);
+        const coords = getRequiredArrayValue(
+          (feature.geometry as GeoJSON.Polygon).coordinates,
+          0,
+          "Room coordinates"
+        ).slice(1);
         for (let i = 0; i < coords.length; i++) {
-          const coord = coords.at(i);
+          const coord = getRequiredArrayValue(coords, i, "Room coordinates");
           if (DoorService.checkIfDoorExists(coord)) {
             DoorService.addRoomToDoor(coord, feature);
             // to correctly rotate door, it must be in line with previous and next coordinate
-            const prev = coords.at(i - 1);
-            const after = coords.at((i + 1) % coords.length);
+            const prev = getRequiredArrayValue(coords, i - 1, "Room coordinates");
+            const after = getRequiredArrayValue(coords, (i + 1) % coords.length, "Room coordinates");
             DoorService.calculateDoorOrientation(coord, prev, after);
           }
         }
@@ -165,7 +173,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   )
   
   // build building description
-  const buildingProperties = getRequiredFeatureProperties(buildingInterface.feature);
+  const buildingProperties = getRequiredFeatureProperties(currentBuildingInterface.feature);
 
   if (buildingProperties.name !== undefined) {
     buildingDescription += buildingProperties.name;
@@ -178,11 +186,17 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
   // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
   const p1 = (
-    geoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE1)
+    getRequiredMatch(
+      indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE1),
+      "Bearing calculation node 1"
+    )
     .geometry as GeoJSON.Point
   ).coordinates;
   const p2 = (
-    geoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE2)
+    getRequiredMatch(
+      indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE2),
+      "Bearing calculation node 2"
+    )
     .geometry as GeoJSON.Point
   ).coordinates;
 
@@ -208,10 +222,18 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 }
 
 function getOutline(): number[][] {
-  return (buildingInterface.feature.geometry as GeoJSON.Polygon).coordinates[0];
+  return getRequiredArrayValue(
+    (getLoadedBuildingInterface().feature.geometry as GeoJSON.Polygon).coordinates,
+    0,
+    "Building outline coordinates"
+  );
 }
 
 function getBuildingConstants(): Record<string, number> {
+  if (buildingConstants === undefined) {
+    throw new Error("Building constants have not been loaded.");
+  }
+
   return buildingConstants;
 }
 
@@ -220,7 +242,7 @@ function getBuildingDescription(): string {
 }
 
 function getGeoJson(): GeoJSON.FeatureCollection {
-  return geoJson;
+  return getLoadedGeoJson();
 }
 
 function getAllLevels(): number[] {
@@ -232,7 +254,23 @@ function getBackendConfig(): BackendConfig {
 }
 
 function getBoundingBox(): GeoJSON.BBox {
-  return [...buildingInterface.boundingBox] as GeoJSON.BBox;
+  return [...getLoadedBuildingInterface().boundingBox] as GeoJSON.BBox;
+}
+
+function getLoadedGeoJson(): GeoJSON.FeatureCollection {
+  if (geoJson === undefined) {
+    throw new Error("Indoor GeoJSON has not been loaded.");
+  }
+
+  return geoJson;
+}
+
+function getLoadedBuildingInterface(): BuildingInterface {
+  if (buildingInterface === undefined) {
+    throw new Error("Building interface has not been loaded.");
+  }
+
+  return buildingInterface;
 }
 
 export default {

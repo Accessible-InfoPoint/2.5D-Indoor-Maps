@@ -119,7 +119,7 @@ function buildSelectedFeatureStyle(feature: GeoJSON.Feature, userProfile: UserGr
 function buildSelectedPositionMarker(
   feature: GeoJSON.Feature,
   options: IndoorLevelRenderBuilderOptions
-): PositionMarkerRenderItem {
+): PositionMarkerRenderItem | undefined {
   const properties = getRequiredFeatureProperties(feature);
   const diff = options.level - options.infoPointLevel;
   const label = diff > 0 ? "+" + diff.toString() : diff.toString();

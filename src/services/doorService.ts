@@ -19,13 +19,13 @@ function coordKey(coord: GeoJSON.Position): string {
   return coord.join(',');
 }
 
-function findDoorByCoordinate(coord: GeoJSON.Position): DoorDataInterface {
+function findDoorByCoordinate(coord: GeoJSON.Position): DoorDataInterface | null {
   const exactMatch = doorIndex.get(coordKey(coord));
 
   if (exactMatch)
     return exactMatch;
 
-  let nearestDoor: DoorDataInterface = null;
+  let nearestDoor: DoorDataInterface | null = null;
   let nearestDistance = DOOR_MATCH_TOLERANCE_M;
 
   doorIndex.forEach((door) => {
@@ -142,6 +142,9 @@ function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): D
 
   if (door.rooms.some(feature => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
     color = colors.roomColorS; // at least one room is selected, color door in selected room color
+
+  if (!door.orientation)
+    return renderData;
 
   renderData.push({
     coordinates: door.orientation,

@@ -143,7 +143,7 @@ function focusOnLevel(selectedLevel: number): void {
   const levelControl = getRequiredElement("levelControl");
   const list = levelControl.children;
   for (const item of list) {
-    if (item.firstChild.textContent === selectedLevel.toString()) {
+    if (item.firstChild?.textContent === selectedLevel.toString()) {
       item.children[0].classList.add("active");
     } else item.children[0].classList.remove("active");
   }

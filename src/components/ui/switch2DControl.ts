@@ -3,6 +3,7 @@ import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings
 import BackendService from "../../services/backendService";
 import { MapCamera, MapCenter } from "../map/mapCamera";
 import { getRequiredElement } from "../../utils/domHelpers";
+import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
 
 function setup(): void {
   const switch2DLabel = getRequiredElement("switch2DLabel");
@@ -22,26 +23,26 @@ function setup(): void {
       // if we are on the highest level, don't show anything above
       // TODO: move to own function, like "isTopLevel" and "isBottomLevel"
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel().animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
-        geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel().animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
         // TODO: move to own function, like "getLevelBelow" and "getLevelAbove"
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getAdjacentIndoorLevel(1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).hideAll();
+          getAdjacentIndoorLevel(1).hideAll();
         });
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getAdjacentIndoorLevel(-1).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).hideAll();
+          getAdjacentIndoorLevel(-1).hideAll();
         });
       }
 
-      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show2DView();
+      getCurrentIndoorLevel().show2DView();
 
       const currentCameraPosition = geoMap.camera.getPosition();
       
@@ -69,28 +70,28 @@ function setup(): void {
 
       const visibleLayers = [geoMap.getCurrentLevel()];
 
-      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show3DView();
+      getCurrentIndoorLevel().show3DView();
 
       let offset = 0;
       // if we are on the highest level, don't show anything above
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel().animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
-        geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).show3DView();
-        visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1])
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getCurrentIndoorLevel().animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
+        getAdjacentIndoorLevel(1).show3DView();
+        visibleLayers.push(getAdjacentLevel(1))
+        getAdjacentIndoorLevel(1).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).show3DView();
-        visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1])
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getAdjacentIndoorLevel(-1).show3DView();
+        visibleLayers.push(getAdjacentLevel(-1))
+        getAdjacentIndoorLevel(-1).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
       BackendService.getAllLevels().filter(item => !visibleLayers.includes(item)).forEach(item => {
-        geoMap.indoorLayers.get(item).hideAll();
+        getIndoorLevel(item).hideAll();
       })
 
       const currentCameraPosition = geoMap.camera.getPosition();
@@ -121,6 +122,29 @@ interface AnimationOptions {
   pitchEnd: number,
   zoomStart: number,
   zoomEnd: number
+}
+
+function getCurrentIndoorLevel() {
+  return getIndoorLevel(geoMap.getCurrentLevel());
+}
+
+function getAdjacentIndoorLevel(offset: number) {
+  return getIndoorLevel(getAdjacentLevel(offset));
+}
+
+function getIndoorLevel(level: number) {
+  return getRequiredMapValue(geoMap.indoorLayers, level, "Indoor layers");
+}
+
+function getAdjacentLevel(offset: number): number {
+  const levels = BackendService.getAllLevels();
+  const currentIndex = levels.indexOf(geoMap.getCurrentLevel());
+
+  return getRequiredArrayValue(
+    levels,
+    currentIndex + offset,
+    "Building levels"
+  );
 }
 
 function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): void {

@@ -36,7 +36,7 @@ import Legend from "./components/ui/legend";
 import CenterBtn from "./components/ui/centeringButton";
 import LevelControl from "./components/ui/levelControl";
 
-export let geoMap: GeoMap = null;
+export let geoMap: GeoMap;
 document.addEventListener("DOMContentLoaded", function () {
   LoadingIndicator.start();
 

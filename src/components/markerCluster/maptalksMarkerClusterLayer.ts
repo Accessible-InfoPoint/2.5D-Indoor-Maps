@@ -135,15 +135,15 @@ function toCoordinate(point: { x: number; y: number }): Maptalks.Coordinate {
     return new Maptalks.Coordinate(point.x, point.y);
 }
 
-function toMarkerSymbol(symbol: unknown): MarkerSymbol {
+function toMarkerSymbol(symbol: unknown): MarkerSymbol | undefined {
     if (Array.isArray(symbol)) {
-        return symbol.filter(isSymbolRecord);
-    }
+    return symbol.filter(isSymbolRecord);
+  }
 
-    return isSymbolRecord(symbol) ? symbol : null;
+    return isSymbolRecord(symbol) ? symbol : undefined;
 }
 
-function toMaptalksSymbol(symbol: MarkerSymbol): MarkerSymbol {
+function toMaptalksSymbol(symbol: MarkerSymbol | undefined): MarkerSymbol | undefined {
     return symbol;
 }
 

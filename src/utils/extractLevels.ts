@@ -24,6 +24,9 @@ export function extractLevels(level: LevelValue): number[] {
     finalArray = level.split(";").flatMap(val => extractLevels(val));
   } else if (regExRange.test(level)) {
     const matches = regExRange.exec(level);
+    if (!matches) {
+      return [];
+    }
     finalArray = arrayRange(parseFloat(matches[1]), parseFloat(matches[2]), 1)
   } else if (!isNaN(parseFloat(level))) {
     finalArray = [parseFloat(level)]

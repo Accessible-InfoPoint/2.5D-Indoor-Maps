@@ -170,4 +170,6 @@ function pathwayToCoords(feature: GeoJSON.Feature): GeoJSON.Position[] {
   if (feature.geometry.type == "Polygon") {
     return feature.geometry.coordinates[0];
   }
+
+  throw new Error(`Unsupported pathway geometry type "${feature.geometry.type}".`);
 }

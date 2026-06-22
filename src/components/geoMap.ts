@@ -20,12 +20,13 @@ import { MapCamera } from "./map/mapCamera";
 import { MapView } from "./map/mapView";
 import { MaptalksMapView } from "./map/maptalksMapView";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 
 export class GeoMap {
   private readonly mapView: MapView;
-  camera: MapCamera = null;
+  camera: MapCamera;
   currentLevel = INDOOR_LEVEL;
-  indoorLayers: Map<number, IndoorLevel>;
+  indoorLayers: Map<number, IndoorLevel> = new Map();
   selectedFeatures: string[] = [];
   flatMode = true;
   standardCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
@@ -56,7 +57,10 @@ export class GeoMap {
         "level": INDOOR_LEVEL
       },
       "type": "Feature",
-      "geometry": null
+      "geometry": {
+        type: "GeometryCollection",
+        geometries: [],
+      }
     };
 
     this.mapView = new MaptalksMapView({
@@ -143,27 +147,19 @@ export class GeoMap {
     const animationDuration = 1;
 
     if (this.flatMode) {
-      this.indoorLayers.get(this.currentLevel).hideAll();
+      this.getIndoorLevel(this.currentLevel).hideAll();
       this.currentLevel = newLevel;
-      this.indoorLayers.get(this.currentLevel).show2DView();
+      this.getIndoorLevel(this.currentLevel).show2DView();
     } else {
       if (newLevel == this.currentLevel) {
         return;
       }
       const oldLevel = this.getCurrentLevel();
-      const oldLevelTop = BackendService.getAllLevels()[0] == this.getCurrentLevel()
-          ? this.getCurrentLevel()
-          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(this.getCurrentLevel()) - 1];
-      const oldLevelBottom = BackendService.getAllLevels()[BackendService.getAllLevels().length - 1] == this.getCurrentLevel()
-          ? this.getCurrentLevel()
-          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(this.getCurrentLevel()) + 1];
+      const oldLevelTop = this.getLevelAboveOrSelf(oldLevel);
+      const oldLevelBottom = this.getLevelBelowOrSelf(oldLevel);
 
-      const newLevelTop = BackendService.getAllLevels()[0] == newLevel
-          ? newLevel
-          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(newLevel) - 1];
-      const newLevelBottom = BackendService.getAllLevels()[BackendService.getAllLevels().length - 1] == newLevel
-          ? newLevel
-          : BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(newLevel) + 1];
+      const newLevelTop = this.getLevelAboveOrSelf(newLevel);
+      const newLevelBottom = this.getLevelBelowOrSelf(newLevel);
 
       const initialHeightOldLevel = oldLevel == oldLevelBottom ? 0 : LEVEL_HEIGHT;
       const finalHeightNewLevel = newLevel == newLevelBottom ? 0 : LEVEL_HEIGHT;
@@ -174,31 +170,31 @@ export class GeoMap {
       const initialHeightNewLevel = finalHeightNewLevel + LEVEL_HEIGHT * difference + offset;
 
       [newLevel, newLevelTop, newLevelBottom].filter(item => ![oldLevel, oldLevelTop, oldLevelBottom].includes(item)).forEach(element => {
-        this.indoorLayers.get(element).show3DView();
+        this.getIndoorLevel(element).show3DView();
       });
       setTimeout(() => {
         BackendService.getAllLevels().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
-          this.indoorLayers.get(item).hideAll();
+          this.getIndoorLevel(item).hideAll();
         })
       }, animationDuration * 1000);
 
-      this.indoorLayers.get(newLevel).animateAltitude(initialHeightNewLevel, finalHeightNewLevel, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, 1, animationDuration);
-      this.indoorLayers.get(oldLevel).animateAltitude(initialHeightOldLevel, finalHeightOldLevel, 1, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, animationDuration);
+      this.getIndoorLevel(newLevel).animateAltitude(initialHeightNewLevel, finalHeightNewLevel, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, 1, animationDuration);
+      this.getIndoorLevel(oldLevel).animateAltitude(initialHeightOldLevel, finalHeightOldLevel, 1, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, animationDuration);
 
       if (newLevel != newLevelBottom) {
-        this.indoorLayers.get(newLevelBottom).animateAltitude(initialHeightNewLevel - LEVEL_HEIGHT, finalHeightNewLevel - LEVEL_HEIGHT, oldLevel == newLevelBottom ? 1 : oldLevelTop == newLevelBottom ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
+        this.getIndoorLevel(newLevelBottom).animateAltitude(initialHeightNewLevel - LEVEL_HEIGHT, finalHeightNewLevel - LEVEL_HEIGHT, oldLevel == newLevelBottom ? 1 : oldLevelTop == newLevelBottom ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
       }
 
       if (newLevel != newLevelTop && newLevelTop != oldLevel) {
-        this.indoorLayers.get(newLevelTop).animateAltitude(initialHeightNewLevel + LEVEL_HEIGHT, finalHeightNewLevel + LEVEL_HEIGHT, oldLevel == newLevelTop ? 1 : oldLevelBottom == newLevelTop ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
+        this.getIndoorLevel(newLevelTop).animateAltitude(initialHeightNewLevel + LEVEL_HEIGHT, finalHeightNewLevel + LEVEL_HEIGHT, oldLevel == newLevelTop ? 1 : oldLevelBottom == newLevelTop ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
       }
 
       if (oldLevelBottom != newLevelTop && oldLevelBottom != newLevel && oldLevel != oldLevelBottom) {
-        this.indoorLayers.get(oldLevelBottom).animateAltitude(initialHeightOldLevel - LEVEL_HEIGHT, finalHeightOldLevel - LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
+        this.getIndoorLevel(oldLevelBottom).animateAltitude(initialHeightOldLevel - LEVEL_HEIGHT, finalHeightOldLevel - LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
       }
 
       if (oldLevelTop != newLevelBottom && oldLevelTop != newLevel && oldLevel != oldLevelTop) {
-        this.indoorLayers.get(oldLevelTop).animateAltitude(initialHeightOldLevel + LEVEL_HEIGHT, finalHeightOldLevel + LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
+        this.getIndoorLevel(oldLevelTop).animateAltitude(initialHeightOldLevel + LEVEL_HEIGHT, finalHeightOldLevel + LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
       }
 
       this.currentLevel = newLevel;
@@ -240,13 +236,18 @@ export class GeoMap {
         this.indoorLayers.forEach((layer) => layer.updateLayer());
 
         // from the levels of the feature, select the nearest to the current level
-        const selectedLevel = (getRequiredFeatureProperties(results[0]).level as number[]).sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel))[0];
+        const result = getRequiredArrayValue(results, 0, "Indoor search results");
+        const selectedLevel = getRequiredArrayValue(
+          (getRequiredFeatureProperties(result).level as number[])
+            .sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)),
+          0,
+          "Indoor search result levels"
+        );
         LevelControl.focusOnLevel(selectedLevel);
         this.handleLevelChange(selectedLevel);
 
-        const feature = results[0];
         const accessibilityDescription =
-          FeatureService.getAccessibilityDescription(feature);
+          FeatureService.getAccessibilityDescription(result);
         DescriptionArea.update(accessibilityDescription);
       } else LoadingIndicator.error(lang.searchNotFound);
     } else LoadingIndicator.error(lang.searchEmpty);
@@ -258,4 +259,28 @@ export class GeoMap {
 
     //wall weight rendered per feature -> feature service
   };
+
+  private getIndoorLevel(level: number): IndoorLevel {
+    return getRequiredMapValue(this.indoorLayers, level, "Indoor layers");
+  }
+
+  private getLevelAboveOrSelf(level: number): number {
+    const levels = BackendService.getAllLevels();
+    const index = levels.indexOf(level);
+
+    if (index <= 0)
+      return level;
+
+    return getRequiredArrayValue(levels, index - 1, "Building levels");
+  }
+
+  private getLevelBelowOrSelf(level: number): number {
+    const levels = BackendService.getAllLevels();
+    const index = levels.indexOf(level);
+
+    if (index == -1 || index >= levels.length - 1)
+      return level;
+
+    return getRequiredArrayValue(levels, index + 1, "Building levels");
+  }
 }

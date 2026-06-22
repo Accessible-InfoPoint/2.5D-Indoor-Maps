@@ -5,7 +5,7 @@ export interface ClusterPoint {
   y: number;
 }
 
-export type MarkerSymbol = Record<string, unknown> | Record<string, unknown>[] | null;
+export type MarkerSymbol = Record<string, unknown> | Record<string, unknown>[];
 
 export interface MarkerClusterOptions {
   maxClusterRadius?: number;
@@ -18,7 +18,7 @@ export interface MarkerClusterOptions {
 export interface ResolvedMarkerClusterOptions {
   maxClusterRadius: number;
   sameSymbolClusterRadius: number;
-  symbol: MarkerSymbol;
+  symbol?: MarkerSymbol;
   combineSameSymbol: boolean;
   ignorePitch: boolean;
 }
@@ -27,20 +27,20 @@ export interface ClusterableMarker {
   id: string | number;
   center: ClusterPoint;
   projectedCenter: ClusterPoint;
-  symbol: MarkerSymbol;
+  symbol?: MarkerSymbol;
   markerFile?: string;
 }
 
 export interface MarkerCluster {
   markers: ClusterableMarker[];
   center: ClusterPoint;
-  symbol: MarkerSymbol;
+  symbol?: MarkerSymbol;
 }
 
 export const defaultMarkerClusterOptions: ResolvedMarkerClusterOptions = {
   maxClusterRadius: 30,
   sameSymbolClusterRadius: 70,
-  symbol: null,
+  symbol: undefined,
   combineSameSymbol: true,
   ignorePitch: true,
 };
@@ -96,7 +96,7 @@ export function buildMarkerClusters(
   return clusters;
 }
 
-export function getMarkerFile(symbol: MarkerSymbol): string | undefined {
+export function getMarkerFile(symbol: MarkerSymbol | undefined): string | undefined {
   if (Array.isArray(symbol))
     return symbol.map(getMarkerFile).find((markerFile) => markerFile !== undefined);
 
@@ -122,7 +122,7 @@ function belongsToCluster(
 function getClusterSymbol(
   cluster: ClusterableMarker[],
   options: ResolvedMarkerClusterOptions
-): MarkerSymbol {
+): MarkerSymbol | undefined {
   if (!options.combineSameSymbol)
     return options.symbol;
 
@@ -137,7 +137,7 @@ function getClusterSymbol(
   )) {
     return cluster.find(
       (marker) => marker.markerFile === MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR
-    ).symbol;
+    )?.symbol;
   }
 
   return options.symbol;

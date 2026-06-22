@@ -1,5 +1,6 @@
 import { LanguageSettingsEnum } from "../models/languageSettingsEnum";
 import { LanguageSettings } from "../data/languageSettings";
+import { getRequiredMapValue } from "../utils/requiredHelpers";
 //sprachdateien:
 import * as string from "../../public/strings/lang.en.json";
 import * as stringDe from "../../public/strings/lang.de.json";
@@ -8,8 +9,9 @@ const defaultLanguage = LanguageSettingsEnum.english;
 const languageKey = "language";
 
 function getCurrentLanguage(): LanguageSettingsEnum {
-  const language = localStorage.getItem(languageKey)
-    ? <LanguageSettingsEnum>parseInt(localStorage.getItem(languageKey))
+  const storedLanguage = localStorage.getItem(languageKey);
+  const language = storedLanguage
+    ? <LanguageSettingsEnum>parseInt(storedLanguage)
     : defaultLanguage;
 
   return language;
@@ -17,7 +19,7 @@ function getCurrentLanguage(): LanguageSettingsEnum {
 
 function getCurrentLanguageAcronym(): string {
   const language = getCurrentLanguage();
-  return LanguageSettings.get(language).acronym;
+  return getRequiredMapValue(LanguageSettings, language, "Language settings").acronym;
 }
 
 function setLanguage(language: LanguageSettingsEnum): void {

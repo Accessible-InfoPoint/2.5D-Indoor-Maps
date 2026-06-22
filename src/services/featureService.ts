@@ -51,7 +51,7 @@ function getAccessibilityDescription(feature: GeoJSON.Feature): string {
   return lang.selectedMapObjectPrefix + popUpText;
 }
 
-function checkForMatchingTags(tags: UserFeatureEnum[]): boolean {
+function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
   if (tags == undefined) return false;
   const hasMatched = tags.some((t) => {
     return currentlySelectedFeatures.get(UserFeatureEnum[t]);
@@ -60,7 +60,7 @@ function checkForMatchingTags(tags: UserFeatureEnum[]): boolean {
   return hasMatched;
 }
 
-function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMarkerData {
+function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMarkerData | null {
   let iconFileName = "";
 
   const isFeatureAccessible = featureAccessibilityProperties.some(

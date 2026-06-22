@@ -23,7 +23,7 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geo
 
 /*Search*/
 function handleSearch(featureCollection: GeoJSON.FeatureCollection, searchString: string): Promise<BuildingInterface> {
-  let returnBuilding: BuildingInterface;
+  let returnBuilding: BuildingInterface | undefined;
 
   const buildings = featureCollection;
   // console.log(buildings)
@@ -49,6 +49,10 @@ function handleSearch(featureCollection: GeoJSON.FeatureCollection, searchString
   );
 
   if (found) {
+    if (!returnBuilding) {
+      return Promise.reject(new Error(lang.buildingNotFound));
+    }
+
     return Promise.resolve(returnBuilding);
   }
 
@@ -74,7 +78,7 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
             nominatimResponse[0]["osm_type"] + "/" + nominatimResponse[0]["osm_id"]
           );
 
-          if (buildingFeature === null) {
+          if (buildingFeature === undefined) {
             return reject(new Error(lang.buildingNotSITconform));
           }
 
@@ -130,10 +134,6 @@ export function filterByBounds(
 ): GeoJSON.FeatureCollection<any> {
   const featureCollection = <GeoJSON.FeatureCollection<any>>geoJSON;
 
-  if (buildingBBox === null) {
-    return null;
-  }
-
   const filteredFeatures = featureCollection.features.filter((f) =>
     doFilterByBounds(f, buildingBBox)
   );
@@ -185,6 +185,8 @@ function checkIfInside(
         });
       });
     }
+    default:
+      return false;
   }
 }
 
@@ -202,10 +204,10 @@ function filterInsideAndLevel(featureCollection: GeoJSON.FeatureCollection) {
   } as GeoJSON.FeatureCollection<any>;
 }
 
-function getBuilding(featureId: string): GeoJSON.Feature<any, any> {
+function getBuilding(featureId: string): GeoJSON.Feature<any, any> | undefined {
   //findBuildingFeatureInDataset
   const buildings = HttpService.getBuildingData();
-  let foundBuilding: GeoJSON.Feature<any, any> = null;
+  let foundBuilding: GeoJSON.Feature<any, any> | undefined;
 
   buildings.features.some((b) => {
     if (getRequiredFeatureId(b) === featureId) {

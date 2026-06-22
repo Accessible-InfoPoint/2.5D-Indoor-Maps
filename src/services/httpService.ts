@@ -28,15 +28,15 @@ function getBuildingData(): GeoJSON.FeatureCollection<any, any> {
   return buildingDataGeoJSON;
 }
 
-function fetchIndoorData() {
+function fetchIndoorData(): Promise<GeoJSON.FeatureCollection<any, any>> {
   return getLocalData(OVERPASS_DATA_URLS.INDOOR);
 }
 
-function fetchBuildingData() {
+function fetchBuildingData(): Promise<GeoJSON.FeatureCollection<any, any>> {
   return getLocalData(OVERPASS_DATA_URLS.BUILDINGS);
 }
 
-function getLocalData(overpassQuery: string) {
+function getLocalData(overpassQuery: string): Promise<GeoJSON.FeatureCollection<any, any>> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
@@ -56,7 +56,7 @@ function getLocalData(overpassQuery: string) {
 }
 
 function fetchLocalGeojson(geojson_building: string): Promise<GeoJSON.FeatureCollection<any, any>> {
-  return getLocalData(LOCAL_GEOJSON_DATA_URL + geojson_building + ".geojson") as Promise<GeoJSON.FeatureCollection<any, any>>;
+  return getLocalData(LOCAL_GEOJSON_DATA_URL + geojson_building + ".geojson");
 }
 
 export default {

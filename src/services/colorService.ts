@@ -4,6 +4,8 @@ import * as red_green from "../../public/strings/colorProfiles/red_green.json";
 import * as blue_yellow from "../../public/strings/colorProfiles/blue_yellow.json";
 import { lang } from "../services/languageService";
 
+type ColorProfile = typeof _default;
+
 const profileKey = "colorProfile";
 const opacityKey = "environmentOpacity";
 const strengthKey = "colorStrength";
@@ -17,7 +19,7 @@ function setCurrentProfile(profile: string): void {
   localStorage.setItem(profileKey, profile);
 }
 
-function getCurrentColors() {
+function getCurrentColors(): ColorProfile {
   const profile = getCurrentProfile();
 
   switch (profile) {
@@ -29,6 +31,8 @@ function getCurrentColors() {
       return red_green;
     case "blue_yellow":
       return blue_yellow;
+    default:
+      return _default;
   }
 }
 
@@ -42,6 +46,8 @@ function getCurrentColorTranslation(profile: string): string{
       return lang.colorProfile_red_green;
     case "blue_yellow":
       return lang.colorProfile_blue_yellow;
+    default:
+      return lang.colorProfile_none;
   }
 }
 
@@ -50,8 +56,10 @@ function setEnvOpacity(opacity: number): void {
 }
 
 function getEnvOpacity(): number {
-  return localStorage.getItem(opacityKey)
-    ? +localStorage.getItem(opacityKey)
+  const opacity = localStorage.getItem(opacityKey);
+
+  return opacity
+    ? +opacity
     : 100;
 }
 
@@ -60,8 +68,10 @@ function setColorStrength(strength: number): void {
 }
 
 function getColorStrength(): number {
-  return localStorage.getItem(strengthKey)
-    ? +localStorage.getItem(strengthKey)
+  const strength = localStorage.getItem(strengthKey);
+
+  return strength
+    ? +strength
     : 50;
 }
 
@@ -70,8 +80,10 @@ function setLineThickness(thickness: number): void {
 }
 
 function getLineThickness(): number {
-  return localStorage.getItem(thicknessKey)
-    ? +localStorage.getItem(thicknessKey)
+  const thickness = localStorage.getItem(thicknessKey);
+
+  return thickness
+    ? +thickness
     : 50;
 }
 

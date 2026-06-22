@@ -4,8 +4,9 @@ const profileKey = "userProfile";
 const featureKey = "currentlySelectedFeatures";
 
 function getCurrentProfile(): UserGroupEnum {
-  const profile = localStorage.getItem(profileKey)
-    ? <UserGroupEnum>parseInt(localStorage.getItem(profileKey))
+  const storedProfile = localStorage.getItem(profileKey);
+  const profile = storedProfile
+    ? <UserGroupEnum>parseInt(storedProfile)
     : UserGroupEnum.noImpairments;
 
   return profile;

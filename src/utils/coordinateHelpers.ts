@@ -1,4 +1,5 @@
 import { Vector2 } from "three";
+import { getRequiredArrayValue } from "./requiredHelpers";
 
 /**
  * Given Latitude and Longitude of two points, calculate the shortest distance between them (along the great circle) in kilometers
@@ -127,7 +128,11 @@ export function offsetLine(points: Vector2[], width: number): Vector2[] {
     }
 
     // Extend vectors to align with the start and end points
-    const fullVectors = [vectors[0].clone(), ...vectors, vectors.at(-1).clone()];
+    const fullVectors = [
+        getRequiredArrayValue(vectors, 0, "Offset vectors").clone(),
+        ...vectors,
+        getRequiredArrayValue(vectors, -1, "Offset vectors").clone(),
+    ];
 
     // Determine the side of offset (left/right based on width sign)
     const rotateDirection = width / Math.abs(width);

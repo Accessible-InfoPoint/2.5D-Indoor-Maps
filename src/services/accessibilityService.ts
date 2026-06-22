@@ -1,5 +1,6 @@
 import { levelAccessibilityProperties } from "../data/levelAccessibilityProperties";
 import UserService from "./userService";
+import { getRequiredMapValue } from "../utils/requiredHelpers";
 
 const propertiesByLevel = new Map<number, string>();
 
@@ -8,14 +9,14 @@ function getForLevel(
   featureCollection: GeoJSON.FeatureCollection<any, any>
 ): string {
   if (propertiesByLevel.get(level) !== undefined) {
-    return propertiesByLevel.get(level);
+    return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
   }
 
   propertiesByLevel.set(
     level,
-    this.getAccessibilityInformation(featureCollection.features)
+    getAccessibilityInformation(featureCollection.features)
   );
-  return propertiesByLevel.get(level);
+  return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
 }
 
 function reset(): void {
