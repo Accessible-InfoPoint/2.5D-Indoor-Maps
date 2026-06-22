@@ -1,48 +1,15 @@
 import doorService from "../../src/services/doorService";
-import * as Maptalks from "maptalks";
 import { DoorDataInterface } from "../../src/models/doorDataInterface";
 import FeatureService from "../../src/services/featureService";
-import { geoMap } from "../../src/main";
 
 jest.mock("../../src/services/featureService", () => ({
   getFeatureStyle: jest.fn()
-}));
-jest.mock("../../src/main", () => ({
-  geoMap: {
-    selectedFeatures: [] as string[],
-  },
 }));
 jest.mock("../../src/services/colorService", () => ({
   colors: {
     roomColorS: "#ff0000",
   },
 }));
-jest.mock("maptalks", () => {
-  class MockLineString {
-    coordinates: any;
-    options: any;
-    constructor(coordinates: any, options: any) {
-      this.coordinates = coordinates;
-      this.options = options;
-    }
-
-    getCoordinates() {
-      return this.coordinates;
-    }
-
-    getSymbol() {
-      return this.options?.symbol;
-    }
-  }
-
-  return {
-    LineString: MockLineString,
-    // Mock other classes as no-op if needed
-    // Map: jest.fn(),
-    // Marker: jest.fn(),
-    // etc...
-  };
-});
 
 
 const sampleCoord: GeoJSON.Position = [10.0, 50.0];
@@ -185,7 +152,7 @@ describe('doorService', () => {
     });
   });
 
-  describe("getVisualization", () => {
+  describe("getRenderData", () => {
     const createMockRoom = (id: string, indoorType: string) => ({
       id,
       properties: { indoor: indoorType },
@@ -201,7 +168,6 @@ describe('doorService', () => {
     beforeEach(() => {
       // Reset mock behavior before each test
       (FeatureService.getFeatureStyle as jest.Mock).mockReset();
-      geoMap.selectedFeatures = [];
     });
   
     it("draws the door in corridor color when both rooms are corridors", () => {
@@ -224,13 +190,12 @@ describe('doorService', () => {
         properties: {},
       };
   
-      const result = doorService.getVisualization(door);
+      const result = doorService.getRenderData(door, []);
       expect(result.length).toBe(1);
   
-      const line = result[0] as Maptalks.LineString;
-      expect(line.getCoordinates()).toEqual(mockOrientation);
-      expect(line.getSymbol().lineColor).toBe("#cccccc");
-      expect(line.getSymbol().lineWidth).toBe(3);
+      expect(result[0].coordinates).toEqual(mockOrientation);
+      expect(result[0].symbol.lineColor).toBe("#cccccc");
+      expect(result[0].symbol.lineWidth).toBe(3);
     });
   
     it("draws the door in the non-corridor room color if not all are corridors", () => {
@@ -254,18 +219,15 @@ describe('doorService', () => {
         properties: {},
       };
   
-      const result = doorService.getVisualization(door);
-      const line = result[0] as Maptalks.LineString;
+      const result = doorService.getRenderData(door, []);
   
-      expect(line.getSymbol().lineColor).toBe("#123456");
-      expect(line.getSymbol().lineWidth).toBe(4);
+      expect(result[0].symbol.lineColor).toBe("#123456");
+      expect(result[0].symbol.lineWidth).toBe(4);
     });
   
     it("uses selected room color if any room is selected", () => {
       const room1 = createMockRoom("1", "room");
       const room2 = createMockRoom("2", "corridor");
-  
-      geoMap.selectedFeatures = ["1"];
   
       (FeatureService.getFeatureStyle as jest.Mock).mockReturnValue({
         polygonFill: "#abcdef",
@@ -283,11 +245,10 @@ describe('doorService', () => {
         properties: {},
       };
   
-      const result = doorService.getVisualization(door);
-      const line = result[0] as Maptalks.LineString;
+      const result = doorService.getRenderData(door, ["1"]);
   
-      expect(line.getSymbol().lineColor).toBe("#ff0000"); // colors.roomColorS
-      expect(line.getSymbol().lineWidth).toBe(5);
+      expect(result[0].symbol.lineColor).toBe("#ff0000"); // colors.roomColorS
+      expect(result[0].symbol.lineWidth).toBe(5);
     });
   });
 });

@@ -1,4 +1,3 @@
-import * as Maptalks from "maptalks";
 import { BuildingInterface } from "../models/buildingInterface";
 import BuildingService from "./buildingService";
 import HttpService from "./httpService";
@@ -187,7 +186,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
       // we need to use mercator projection for the latitude
       CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
     ) * (180 / Math.PI) + buildingDefinition.BEARING_OFFSET
-  // angle is between 0 and 360 after calculation (might even be above 360), maptalks needs it between -180 and 180
+  // angle is between 0 and 360 after calculation (might even be above 360), map camera expects it between -180 and 180
   + 180) % 360) - 180;
 
   buildingConstants = {
@@ -225,13 +224,8 @@ function getBackendConfig(): BackendConfig {
   return { ...backendConfig };
 }
 
-function getBoundingBoxExtent(): Maptalks.Extent {
-  return new Maptalks.Extent(
-    buildingInterface.boundingBox[0],
-    buildingInterface.boundingBox[1],
-    buildingInterface.boundingBox[2],
-    buildingInterface.boundingBox[3]
-  );
+function getBoundingBox(): GeoJSON.BBox {
+  return [...buildingInterface.boundingBox] as GeoJSON.BBox;
 }
 
 export default {
@@ -239,7 +233,7 @@ export default {
   getBuildingConstants,
   getBuildingDescription,
   getGeoJson,
-  getBoundingBoxExtent,
+  getBoundingBox,
   fetchBackendData,
   getAllLevels,
   configureBackend,

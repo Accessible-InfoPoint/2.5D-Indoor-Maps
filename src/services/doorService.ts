@@ -1,12 +1,18 @@
 import { DoorDataInterface } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
-import * as Maptalks from "maptalks";
 import { colors } from "../services/colorService";
 import FeatureService from "../services/featureService";
-import { geoMap } from "../main";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
 
 const doorIndex = new Map<string, DoorDataInterface>();
+
+export interface DoorRenderData {
+  coordinates: GeoJSON.Position[];
+  symbol: {
+    lineColor: string;
+    lineWidth: number;
+  };
+}
 
 function coordKey(coord: GeoJSON.Position): string {
   return coord.join(',');
@@ -113,9 +119,9 @@ function getDoorsByLevel(level: number): DoorDataInterface[] {
   return Array.from(doorIndex.values()).filter(door => door.levels.has(level));
 }
 
-function getVisualization(door: DoorDataInterface): Maptalks.Geometry[] {
+function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): DoorRenderData[] {
   // TODO: other types of doors need different visualizations, especially revolving doors
-  const geo: Maptalks.Geometry[] = [];
+  const renderData: DoorRenderData[] = [];
 
   // linear door (e.g. hinged, sliding, opening etc)
   let color = "";
@@ -125,21 +131,18 @@ function getVisualization(door: DoorDataInterface): Maptalks.Geometry[] {
   else
     color = FeatureService.getFeatureStyle(door.rooms.filter(feature => !(["corridor", "area"].includes(feature.properties.indoor) && feature.properties.stairs !== "yes"))[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
 
-  if (door.rooms.some(feature => geoMap.selectedFeatures.includes(feature.id.toString())))
+  if (door.rooms.some(feature => selectedFeatureIds.includes(feature.id.toString())))
     color = colors.roomColorS; // at least one room is selected, color door in selected room color
 
-  const doorLine = new Maptalks.LineString(
-    door.orientation,
-    {
-      symbol: {
-        lineColor: color,
-        lineWidth: FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["lineWidth"],
-      },
-    }
-  );
-  geo.push(doorLine);
+  renderData.push({
+    coordinates: door.orientation,
+    symbol: {
+      lineColor: color,
+      lineWidth: FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["lineWidth"],
+    },
+  });
 
-  return geo;
+  return renderData;
 }
 
 export default {
@@ -149,5 +152,5 @@ export default {
   addRoomToDoor,
   calculateDoorOrientation,
   getDoorsByLevel,
-  getVisualization
+  getRenderData
 }

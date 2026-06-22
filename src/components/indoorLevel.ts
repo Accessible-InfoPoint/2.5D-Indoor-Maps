@@ -79,7 +79,7 @@ export class IndoorLevel {
     }
 
     this.view.render(renderModel, geoMap.selectedFeatures);
-    this.view.drawDoors(DoorService.getDoorsByLevel(this.level));
+    this.view.drawDoors(DoorService.getDoorsByLevel(this.level), geoMap.selectedFeatures);
   }
 
   /**

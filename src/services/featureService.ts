@@ -14,12 +14,22 @@ import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import ColorService, { colors } from "./colorService";
-import * as Maptalks from "maptalks";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 const currentlySelectedFeatures: Map<any, boolean> = getCurrentFeatures();
+
+export interface AccessibilityMarkerData {
+  coordinates: GeoJSON.Position;
+  symbol: {
+    markerFile: string;
+    markerWidth: number;
+    markerHeight: number;
+    markerHorizontalAlignment: "middle";
+    markerVerticalAlignment: "middle";
+  };
+}
 
 function getAccessibilityDescription(feature: GeoJSON.Feature): string {
   let popUpText = feature.properties.ref ?? "(no name)";
@@ -48,7 +58,7 @@ function checkForMatchingTags(tags: UserFeatureEnum[]): boolean {
   return hasMatched;
 }
 
-function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
+function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMarkerData {
   let iconFileName = "";
 
   const isFeatureAccessible = featureAccessibilityProperties.some(
@@ -67,7 +77,8 @@ function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
   );
 
   if (isFeatureAccessible) {
-    return new Maptalks.Marker(feature.geometry.type == "Polygon" ? polygonCenter(feature.geometry).coordinates : (feature.geometry as unknown as GeoJSON.Point).coordinates, {
+    return {
+      coordinates: feature.geometry.type == "Polygon" ? polygonCenter(feature.geometry).coordinates : (feature.geometry as GeoJSON.Point).coordinates,
       symbol: {
         markerFile: MARKERS_IMG_DIR + iconFileName,
         markerWidth: 48,
@@ -75,7 +86,7 @@ function getAccessibilityMarker(feature: GeoJSON.Feature): Maptalks.Marker {
         markerHorizontalAlignment: "middle",
         markerVerticalAlignment: "middle"
       },
-    });
+    };
   }
   return null;
 }
@@ -174,7 +185,7 @@ export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
 
 export default {
   getAccessibilityDescription,
-  getAccessibilityMarker,
+  getAccessibilityMarkerData,
   getFeatureStyle,
   getWallWeight,
   getCurrentFeatures,

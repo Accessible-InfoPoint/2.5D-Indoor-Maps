@@ -173,14 +173,20 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
     this.renderStaircases(renderModel, selectedFeatureIds);
   }
 
-  drawDoors(doors: DoorDataInterface[]): void {
+  drawDoors(doors: DoorDataInterface[], selectedFeatureIds: string[]): void {
     doors.forEach(door => {
       if (door.rooms.length == 0) {
         console.log("empty door", door);
         return;
       }
 
-      this.doorsInstance.addGeometry(DoorService.getVisualization(door));
+      this.doorsInstance.addGeometry(
+        DoorService.getRenderData(door, selectedFeatureIds).map((doorRenderData) =>
+          new Maptalks.LineString(doorRenderData.coordinates, {
+            symbol: doorRenderData.symbol,
+          })
+        )
+      );
     });
   }
 
@@ -357,8 +363,11 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   }
 
   private addMarker(feature: GeoJSON.Feature<any, any>): void {
-    const marker = FeatureService.getAccessibilityMarker(feature);
-    if (marker) {
+    const markerData = FeatureService.getAccessibilityMarkerData(feature);
+    if (markerData) {
+      const marker = new Maptalks.Marker(markerData.coordinates, {
+        symbol: markerData.symbol,
+      });
       marker.setId(feature.id.toString());
       this.markers.addMarkers({ marker: marker, feature: feature });
     }

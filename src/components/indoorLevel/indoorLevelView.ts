@@ -8,7 +8,7 @@ export interface IndoorLevelViewEvents {
 export interface IndoorLevelView {
   clear(): void;
   render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void;
-  drawDoors(doors: DoorDataInterface[]): void;
+  drawDoors(doors: DoorDataInterface[], selectedFeatureIds: string[]): void;
   hideAll(): void;
   showAll(): void;
   show2DView(): void;

@@ -117,15 +117,16 @@ export class GeoMap {
   }
 
   centerMapToBuilding(): void {
-    const ext = BackendService.getBoundingBoxExtent();
+    const boundingBox = BackendService.getBoundingBox();
+    const center = {
+      x: (boundingBox[0] + boundingBox[2]) / 2,
+      y: (boundingBox[1] + boundingBox[3]) / 2,
+    };
 
-    this.standardCenter = [ext.getCenter().x, ext.getCenter().y];
+    this.standardCenter = [center.x, center.y];
 
     this.camera.animateToCenter(
-      {
-        x: this.standardCenter[0],
-        y: this.standardCenter[1],
-      },
+      center,
       350
     );
     setTimeout(() => {
