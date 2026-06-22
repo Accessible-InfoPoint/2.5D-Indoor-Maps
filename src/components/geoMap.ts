@@ -82,7 +82,7 @@ export class GeoMap {
   }
 
   handleBuildingLoad(): void {
-    LevelControl.handleChange();
+    LevelControl.handleChange(this);
     LevelService.clearData();
 
     this.currentLevel = INDOOR_LEVEL;
@@ -102,11 +102,19 @@ export class GeoMap {
 
           return [
             val,
-            new IndoorLevel(
-              LevelService.getLevelGeoJSON(val),
-              val,
-              view
-            ),
+              new IndoorLevel(
+                LevelService.getLevelGeoJSON(val),
+                val,
+                view,
+                {
+                  getSelectedFeatureIds: () => this.selectedFeatures,
+                  getInfoPointLevel: () => this.infoPointLevel,
+                  setInfoPoint: (feature, level) => {
+                    this.infoPoint = feature;
+                    this.infoPointLevel = level;
+                  },
+                }
+              ),
           ] as [number, IndoorLevel];
         })
     );
@@ -200,7 +208,7 @@ export class GeoMap {
       this.currentLevel = newLevel;
     }
 
-    const message = LevelService.getCurrentLevelDescription();
+    const message = LevelService.getCurrentLevelDescription(this.currentLevel);
     DescriptionArea.update(message);
   }
 

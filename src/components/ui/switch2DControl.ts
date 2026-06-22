@@ -1,11 +1,11 @@
-import { geoMap } from "../../main";
+import type { GeoMap } from "../geoMap";
 import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/settings.json"
 import BackendService from "../../services/backendService";
 import { MapCamera, MapCenter } from "../map/mapCamera";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
 
-function setup(): void {
+function setup(geoMap: GeoMap): void {
   const switch2DLabel = getRequiredElement("switch2DLabel");
 
   getRequiredElement("switch2D").onclick = () => {
@@ -23,25 +23,25 @@ function setup(): void {
       // if we are on the highest level, don't show anything above
       // TODO: move to own function, like "isTopLevel" and "isBottomLevel"
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        getCurrentIndoorLevel().animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
-        getCurrentIndoorLevel().animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
-        getAdjacentIndoorLevel(1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getCurrentIndoorLevel(geoMap).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
+        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          getAdjacentIndoorLevel(1).hideAll();
+          getAdjacentIndoorLevel(geoMap, 1).hideAll();
         });
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        getAdjacentIndoorLevel(-1).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
-          getAdjacentIndoorLevel(-1).hideAll();
+          getAdjacentIndoorLevel(geoMap, -1).hideAll();
         });
       }
 
-      getCurrentIndoorLevel().show2DView();
+      getCurrentIndoorLevel(geoMap).show2DView();
 
       const currentCameraPosition = geoMap.camera.getPosition();
       
@@ -69,28 +69,28 @@ function setup(): void {
 
       const visibleLayers = [geoMap.getCurrentLevel()];
 
-      getCurrentIndoorLevel().show3DView();
+      getCurrentIndoorLevel(geoMap).show3DView();
 
       let offset = 0;
       // if we are on the highest level, don't show anything above
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        getCurrentIndoorLevel().animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
-        getCurrentIndoorLevel().animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
-        getAdjacentIndoorLevel(1).show3DView();
-        visibleLayers.push(getAdjacentLevel(1))
-        getAdjacentIndoorLevel(1).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
+        getAdjacentIndoorLevel(geoMap, 1).show3DView();
+        visibleLayers.push(getAdjacentLevel(geoMap, 1))
+        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        getAdjacentIndoorLevel(-1).show3DView();
-        visibleLayers.push(getAdjacentLevel(-1))
-        getAdjacentIndoorLevel(-1).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getAdjacentIndoorLevel(geoMap, -1).show3DView();
+        visibleLayers.push(getAdjacentLevel(geoMap, -1))
+        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
       BackendService.getAllLevels().filter(item => !visibleLayers.includes(item)).forEach(item => {
-        getIndoorLevel(item).hideAll();
+        getIndoorLevel(geoMap, item).hideAll();
       })
 
       const currentCameraPosition = geoMap.camera.getPosition();
@@ -123,19 +123,19 @@ interface AnimationOptions {
   zoomEnd: number
 }
 
-function getCurrentIndoorLevel() {
-  return getIndoorLevel(geoMap.getCurrentLevel());
+function getCurrentIndoorLevel(geoMap: GeoMap) {
+  return getIndoorLevel(geoMap, geoMap.getCurrentLevel());
 }
 
-function getAdjacentIndoorLevel(offset: number) {
-  return getIndoorLevel(getAdjacentLevel(offset));
+function getAdjacentIndoorLevel(geoMap: GeoMap, offset: number) {
+  return getIndoorLevel(geoMap, getAdjacentLevel(geoMap, offset));
 }
 
-function getIndoorLevel(level: number) {
+function getIndoorLevel(geoMap: GeoMap, level: number) {
   return getRequiredMapValue(geoMap.indoorLayers, level, "Indoor layers");
 }
 
-function getAdjacentLevel(offset: number): number {
+function getAdjacentLevel(geoMap: GeoMap, offset: number): number {
   const levels = BackendService.getAllLevels();
   const currentIndex = levels.indexOf(geoMap.getCurrentLevel());
 

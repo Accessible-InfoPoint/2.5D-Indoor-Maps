@@ -1,6 +1,6 @@
 import { INDOOR_LEVEL, VISIBLE_LEVEL_CONTROLS, START_LEVEL_CONTROL_POSITION } from "../../../public/strings/settings.json";
 import LevelService from "../../services/levelService";
-import { geoMap } from "../../main";
+import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 
@@ -10,23 +10,23 @@ let maxOffset = 0;
 let numLevels = 0;
 let allLevelNames: string[] = [];
 
-function handleLoad(): void {
+function handleLoad(geoMap: GeoMap): void {
   //reCreate
 
   remove();
-  create();
+  create(geoMap);
 }
 
-function create(): void {
+function create(geoMap: GeoMap): void {
   const levelNames = LevelService.getLevelNames();
-  render(levelNames);
+  render(levelNames, geoMap);
 }
 
 function remove(): void {
   getRequiredElement("levelControl").innerHTML = "";
 }
 
-function render(allLevelNamesParam: string[]): void {
+function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
   const levelControl = getRequiredElement("levelControl");
   allLevelNames = allLevelNamesParam;
   numLevels = allLevelNames.length;

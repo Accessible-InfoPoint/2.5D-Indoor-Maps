@@ -1,5 +1,4 @@
 import LevelService from "../services/levelService";
-import { geoMap } from "../main";
 import BuildingService from "../services/buildingService";
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
@@ -7,13 +6,20 @@ import DoorService from "../services/doorService";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
 
+interface IndoorLevelState {
+  getSelectedFeatureIds: () => string[];
+  getInfoPointLevel: () => number;
+  setInfoPoint: (feature: GeoJSON.Feature, level: number) => void;
+}
+
 export class IndoorLevel {
   level: number;
 
   constructor(
     geoJSON: GeoJSON.FeatureCollection,
     level: number,
-    private readonly view: IndoorLevelView
+    private readonly view: IndoorLevelView,
+    private readonly state: IndoorLevelState
   ) {
     this.level = level;
 
@@ -66,20 +72,22 @@ export class IndoorLevel {
       buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
       outlineCoordinates: BackendService.getOutline(),
       level: this.level,
-      selectedFeatureIds: geoMap.selectedFeatures,
-      infoPointLevel: geoMap.infoPointLevel,
+      selectedFeatureIds: this.state.getSelectedFeatureIds(),
+      infoPointLevel: this.state.getInfoPointLevel(),
       userProfile: UserService.getCurrentProfile(),
     });
 
     if (renderModel.infoPoint) {
-      geoMap.infoPoint = renderModel.infoPoint.feature;
-      geoMap.infoPointLevel = renderModel.infoPoint.levels.length == 1
-        ? renderModel.infoPoint.levels[0]
-        : geoMap.infoPointLevel;
+      this.state.setInfoPoint(
+        renderModel.infoPoint.feature,
+        renderModel.infoPoint.levels.length == 1
+          ? renderModel.infoPoint.levels[0]
+          : this.state.getInfoPointLevel()
+      );
     }
 
-    this.view.render(renderModel, geoMap.selectedFeatures);
-    this.view.drawDoors(DoorService.getDoorsByLevel(this.level), geoMap.selectedFeatures);
+    this.view.render(renderModel, this.state.getSelectedFeatureIds());
+    this.view.drawDoors(DoorService.getDoorsByLevel(this.level), this.state.getSelectedFeatureIds());
   }
 
   /**

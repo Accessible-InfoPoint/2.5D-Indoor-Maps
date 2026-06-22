@@ -1,7 +1,7 @@
-import { geoMap } from "../../main";
+import type { GeoMap } from "../geoMap";
 import { getRequiredElement } from "../../utils/domHelpers";
 
-function setup(): void {
+function setup(geoMap: GeoMap): void {
   getRequiredElement("zoomControlIn").onclick = () => {
     geoMap.camera.zoomBy(0.33);
   };

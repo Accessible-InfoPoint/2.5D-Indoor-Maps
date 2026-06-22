@@ -35,18 +35,19 @@ import LoadingIndicator from "./components/ui/loadingIndicator";
 import Legend from "./components/ui/legend";
 import CenterBtn from "./components/ui/centeringButton";
 import LevelControl from "./components/ui/levelControl";
+import { setupUi } from "./ui";
 
-export let geoMap: GeoMap;
 document.addEventListener("DOMContentLoaded", function () {
   LoadingIndicator.start();
 
   BackendService.fetchBackendData().then(() => {
     LoadingIndicator.end();
-    geoMap = new GeoMap();
+    const geoMap = new GeoMap();
     geoMap.showBuilding();
     Legend.create();
     LevelControl.setupControlShifter();
-    CenterBtn.create();
+    CenterBtn.create(geoMap);
+    setupUi(geoMap);
     translate();
   });
 });

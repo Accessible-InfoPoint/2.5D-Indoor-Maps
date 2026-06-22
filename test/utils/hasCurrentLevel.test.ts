@@ -1,12 +1,5 @@
 import { hasLevel, hasCurrentLevel } from "../../src/utils/hasCurrentLevel";
 
-jest.mock("../../src/main", () => ({
-  geoMap: {
-    getCurrentLevel: jest.fn(),
-  },
-}));
-import { geoMap } from "../../src/main"; // to mock geoMap
-
 const createFeature = (props: Record<string, any>): GeoJSON.Feature => ({
   type: "Feature",
   geometry: { type: "Point", coordinates: [0, 0] },
@@ -56,21 +49,13 @@ describe("hasLevel", () => {
 });
 
 describe("hasCurrentLevel", () => {
-  beforeEach(() => {
-    (geoMap.getCurrentLevel as jest.Mock).mockReturnValue("2");;
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   it("returns true if feature has current level", () => {
     const feature = createFeature({ level: ["1", "2", "3"] });
-    expect(hasCurrentLevel(feature)).toBe(true);
+    expect(hasCurrentLevel(feature, "2")).toBe(true);
   });
 
   it("returns false if feature does not have current level", () => {
     const feature = createFeature({ level: ["5"] });
-    expect(hasCurrentLevel(feature)).toBe(false);
+    expect(hasCurrentLevel(feature, "2")).toBe(false);
   });
 });

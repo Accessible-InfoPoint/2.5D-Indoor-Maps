@@ -1,4 +1,4 @@
-import { geoMap } from "../../main";
+import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 
@@ -7,7 +7,7 @@ const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInpu
 
 const state: { indoorSearchQuery: string } = { indoorSearchQuery: "" };
 
-function render(): void {
+function render(geoMap: GeoMap): void {
   indoorSearchSubmit.addEventListener("click", () => {
     state.indoorSearchQuery = indoorSearchInput.value;
 

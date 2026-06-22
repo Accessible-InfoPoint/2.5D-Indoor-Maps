@@ -1,8 +1,6 @@
-import { geoMap } from "../main";
 import { extractLevels } from "./extractLevels";
 
-export function hasCurrentLevel(feature: GeoJSON.Feature<any>): boolean {
-  const currentLevel = geoMap.getCurrentLevel();
+export function hasCurrentLevel(feature: GeoJSON.Feature<any>, currentLevel: number | string): boolean {
   return hasLevel(feature, currentLevel)
 }
 

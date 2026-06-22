@@ -4,7 +4,6 @@ import levelService from '../../src/services/levelService';
 import * as hasCurrentLevel from '../../src/utils/hasCurrentLevel';
 import AccessibilityService from '../../src/services/accessibilityService';
 import BackendService from '../../src/services/backendService';
-import { geoMap } from '../../src/main';
 
 jest.mock('../../src/services/buildingService');
 jest.mock('../../src/utils/hasCurrentLevel');
@@ -12,11 +11,6 @@ jest.mock('../../src/services/accessibilityService');
 jest.mock('../../src/services/backendService', () => ({
   getGeoJson: jest.fn(),
   getAllLevels: jest.fn()
-}));
-jest.mock('../../src/main', () => ({
-  geoMap: {
-    getCurrentLevel: jest.fn(),
-  },
 }));
 jest.mock('../../src/services/languageService', () => ({
   lang: {
@@ -64,13 +58,12 @@ describe('levelService', () => {
       ];
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
-      (geoMap.getCurrentLevel as jest.Mock).mockReturnValue('1');
       (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
-        (feat, level) => feat.properties.level === level
+        (feat, level) => feat.properties.level === level.toString()
       );
 
-      const result = levelService.getCurrentLevelGeoJSON();
+      const result = levelService.getCurrentLevelGeoJSON(1);
       expect(result.features.length).toBe(1);
       expect(result.features[0].properties!.level).toBe('1');
     });
@@ -91,14 +84,13 @@ describe('levelService', () => {
       ];
       const mockGeoJSON = { type: 'FeatureCollection', features: mockFeatures };
 
-      (geoMap.getCurrentLevel as jest.Mock).mockReturnValue('1');
       (BackendService.getGeoJson as jest.Mock).mockReturnValue(mockGeoJSON);
       (hasCurrentLevel.hasLevel as jest.Mock).mockImplementation(
         (feat, level) => feat.properties.level === level.toString()
       );
       (AccessibilityService.getForLevel as jest.Mock).mockReturnValue('is accessible');
 
-      const result = levelService.getCurrentLevelDescription();
+      const result = levelService.getCurrentLevelDescription(1);
       expect(result).toBe('Level 1 is accessible');
     });
   });
