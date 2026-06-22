@@ -1,7 +1,7 @@
 import { geoMap } from "../../main";
-import * as Maptalks from "maptalks";
 import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/settings.json"
 import BackendService from "../../services/backendService";
+import { MapCamera, MapCenter } from "../map/mapCamera";
 
 function setup(): void {
   document.getElementById("switch2D").onclick = () => {
@@ -9,7 +9,7 @@ function setup(): void {
 
     if (geoMap.flatMode) {
       document.getElementById("switch2DLabel").innerHTML = "3d_rotation";
-      geoMap.mapInstance.setOptions({
+      geoMap.camera.setInteractionOptions({
         dragRotate: false,
         dragPan: true,
         switchDragButton: false,
@@ -17,11 +17,13 @@ function setup(): void {
       });
       let offset = 0;
       // if we are on the highest level, don't show anything above
+      // TODO: move to own function, like "isTopLevel" and "isBottomLevel"
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, 0, 1, 1, 0.5);
         offset = 1;
       } else {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
+        // TODO: move to own function, like "getLevelBelow" and "getLevelAbove"
         geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
           geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).hideAll();
@@ -37,21 +39,23 @@ function setup(): void {
       }
 
       geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show2DView();
+
+      const currentCameraPosition = geoMap.camera.getPosition();
       
-      animate({
-        centerStart: geoMap.mapInstance.getCenter(),
-        centerEnd: geoMap.mapInstance.getCenter(),
-        bearingStart: geoMap.mapInstance.getBearing(),
+      animate(geoMap.camera, {
+        centerStart: currentCameraPosition.center,
+        centerEnd: currentCameraPosition.center,
+        bearingStart: currentCameraPosition.bearing,
         bearingEnd: geoMap.standardBearing,
-        pitchStart: geoMap.mapInstance.getPitch(),
+        pitchStart: currentCameraPosition.pitch,
         pitchEnd: 0,
-        zoomStart: geoMap.mapInstance.getZoom(),
+        zoomStart: currentCameraPosition.zoom,
         // zoomEnd: document.getElementById("uiWrapper").classList.contains("wheelchairMode") ? geoMap.standardZoomWheelchairMode : geoMap.standardZoom
         zoomEnd: geoMap.standardZoom
       }, 0.5)
     } else {
       document.getElementById("switch2DLabel").innerHTML = "map";
-      geoMap.mapInstance.setOptions({
+      geoMap.camera.setInteractionOptions({
         dragRotate: true,
         // dragPitch: true, // temp
         // dragRotatePitch: true // temp
@@ -86,14 +90,19 @@ function setup(): void {
         geoMap.indoorLayers.get(item).hideAll();
       })
 
-      animate({
-        centerStart: geoMap.mapInstance.getCenter(),
-        centerEnd: new Maptalks.Coordinate(geoMap.standardCenter as [number, number]),
-        bearingStart: geoMap.mapInstance.getBearing(),
+      const currentCameraPosition = geoMap.camera.getPosition();
+
+      animate(geoMap.camera, {
+        centerStart: currentCameraPosition.center,
+        centerEnd: {
+          x: geoMap.standardCenter[0],
+          y: geoMap.standardCenter[1],
+        },
+        bearingStart: currentCameraPosition.bearing,
         bearingEnd: geoMap.standardBearing3DMode,
-        pitchStart: geoMap.mapInstance.getPitch(),
+        pitchStart: currentCameraPosition.pitch,
         pitchEnd: geoMap.standardPitch3DMode,
-        zoomStart: geoMap.mapInstance.getZoom(),
+        zoomStart: currentCameraPosition.zoom,
         zoomEnd: geoMap.standardZoom3DMode
       }, 0.5)
     }
@@ -101,8 +110,8 @@ function setup(): void {
 }
 
 interface AnimationOptions {
-  centerStart: Maptalks.Coordinate,
-  centerEnd: Maptalks.Coordinate,
+  centerStart: MapCenter,
+  centerEnd: MapCenter,
   bearingStart: number,
   bearingEnd: number,
   pitchStart: number,
@@ -111,7 +120,7 @@ interface AnimationOptions {
   zoomEnd: number
 }
 
-function animate(options: AnimationOptions, duration = 0.5): void {
+function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): void {
   let startTime: number | null = null;
   const dir = ((options.bearingStart + 360) % 360) - ((options.bearingEnd + 360) % 360); // neg = clockwise, pos = counter-clockwise
   let bearingEnd = options.bearingEnd;
@@ -137,17 +146,17 @@ function animate(options: AnimationOptions, duration = 0.5): void {
       const centerY = options.centerStart.y + easeInOutCubic(progress) * (options.centerEnd.y - options.centerStart.y);
       const zoom = options.zoomStart + easeInOutCubic(progress) * (options.zoomEnd - options.zoomStart);
 
-      geoMap.mapInstance.setBearing(bearing);
-      geoMap.mapInstance.setPitch(pitch);
-      geoMap.mapInstance.setCenterAndZoom(new Maptalks.Coordinate(centerX, centerY), zoom);
+      camera.setBearing(bearing);
+      camera.setPitch(pitch);
+      camera.setCenterAndZoom({ x: centerX, y: centerY }, zoom);
 
       if (progress < 1) {
           requestAnimationFrame(animateStep);
       } else {
           // Ensure the final state is set
-          geoMap.mapInstance.setBearing(options.bearingEnd);
-          geoMap.mapInstance.setPitch(options.pitchEnd);
-          geoMap.mapInstance.setCenterAndZoom(options.centerEnd, options.zoomEnd);
+          camera.setBearing(options.bearingEnd);
+          camera.setPitch(options.pitchEnd);
+          camera.setCenterAndZoom(options.centerEnd, options.zoomEnd);
       }
   }
 

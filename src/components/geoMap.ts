@@ -23,10 +23,13 @@ import FeatureService from "../services/featureService";
 import * as Maptalks from "maptalks";
 import BackendService from "../services/backendService";
 import { MaptalksIndoorLevelView } from "./indoorLevel/maptalksIndoorLevelView";
+import { MapCamera } from "./map/mapCamera";
+import { MaptalksMapCamera } from "./map/maptalksMapCamera";
 
 export class GeoMap {
   mapInstance: Maptalks.Map = null;
   flatMapInstance: Maptalks.Map = null;
+  camera: MapCamera = null;
   currentLevel = INDOOR_LEVEL;
   indoorLayers: Map<number, IndoorLevel>;
   selectedFeatures: string[] = [];
@@ -75,6 +78,7 @@ export class GeoMap {
         attribution: CARTO_ATTRIBUTION,
       }),
     });
+    this.camera = new MaptalksMapCamera(this.mapInstance);
 
     this.flatMapInstance = new Maptalks.Map("flatMap", {
       center: [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)],
