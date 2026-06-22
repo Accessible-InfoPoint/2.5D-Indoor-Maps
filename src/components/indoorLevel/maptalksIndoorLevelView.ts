@@ -23,6 +23,7 @@ import {
   RoomRenderItem,
 } from "./indoorLevelRenderModel";
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
+import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 
 export interface MaptalksIndoorLevelViewMapContext {
   map: Maptalks.Map;
@@ -368,7 +369,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
       const marker = new Maptalks.Marker(markerData.coordinates, {
         symbol: markerData.symbol,
       });
-      marker.setId(feature.id.toString());
+      marker.setId(getRequiredFeatureId(feature));
       this.markers.addMarkers({ marker: marker, feature: feature });
     }
   }
@@ -409,8 +410,8 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
           simpleStaircase(
             (feature.geometry as GeoJSON.Polygon).coordinates[0],
             altitude,
-            selectedFeatureIds.includes(feature.id.toString()) ? selectedMaterial1 : material1,
-            selectedFeatureIds.includes(feature.id.toString()) ? selectedMaterial2 : material2,
+            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial1 : material1,
+            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial2 : material2,
             this,
             () => onclick(feature)
           )
@@ -422,7 +423,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
             filterConnectedPathways(feature, staircase.doorCoordinates, staircase.lowestPoints, staircase.pathways, level),
             staircase.allNodes,
             altitude,
-            selectedFeatureIds.includes(feature.id.toString()) ? selectedMaterial1 : material1,
+            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial1 : material1,
             this,
             () => onclick(feature)
           )

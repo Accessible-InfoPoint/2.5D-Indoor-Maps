@@ -4,6 +4,7 @@ import { Prism } from "./prism";
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import { extractLevels } from "../../utils/extractLevels";
+import { getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 
 const defaultStaircaseWidth = 1;
 
@@ -25,7 +26,7 @@ export function complexStaircase(lineStrings: [GeoJSON.Position[], number][], al
     const nodesLevels = ls.map(p => {
       const potentialNode = allNodes.find(p2 => (p2.geometry as GeoJSON.Point).coordinates.toString() == p.toString());
       if (potentialNode == undefined) { return undefined; }
-      return potentialNode.properties["level"];
+      return getRequiredFeatureProperties(potentialNode)["level"];
     });
     const allNodesHaveLevel = nodesLevels.every(p => p != undefined);
     let altitudes : number[];
@@ -34,7 +35,10 @@ export function complexStaircase(lineStrings: [GeoJSON.Position[], number][], al
       const max = Math.max(...nodesLevels.map(parseFloat));
       altitudes = ls.map(p => {
         const node = allNodes.find(p2 => (p2.geometry as GeoJSON.Point).coordinates.toString() == p.toString());
-        return (parseFloat(node.properties["level"]) - min) / (max - min) * (LEVEL_HEIGHT - thickness);
+        if (node == undefined) {
+          throw new Error(`Staircase node for coordinate "${p.toString()}" was not found.`);
+        }
+        return (parseFloat(getRequiredFeatureProperties(node)["level"]) - min) / (max - min) * (LEVEL_HEIGHT - thickness);
       })
     } else {
       altitudes = ls.map((p, i) => {
@@ -107,11 +111,15 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
   specialNodes.forEach(p => {
     // filter the pathways that contain the current special node
     const paths = pathways.filter(
-      path => pathwayToCoords(path).some(lsp => lsp.toString() == p.toString()) &&
-      (
-        path.properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
-        extractLevels(path.properties.repeat_on).includes(level)
-      )
+      path => {
+        const properties = getRequiredFeatureProperties(path);
+
+        return pathwayToCoords(path).some(lsp => lsp.toString() == p.toString()) &&
+          (
+            properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
+            extractLevels(properties.repeat_on).includes(level)
+          );
+      }
     );
 
     paths.forEach(path => {
@@ -119,13 +127,14 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
       const lowestIndex = pathwayToCoords(path).findIndex(p => lowestPoints.some(lp => (lp.geometry as GeoJSON.Point).coordinates.toString() == p.toString()));
 
       if (lowestIndex > pathwayToCoords(path).length / 2) {
+        const properties = getRequiredFeatureProperties(path);
         const reversedPath: GeoJSON.Feature = {
           type: "Feature",
           geometry: {
             type: "LineString",
             coordinates: pathwayToCoords(path).reverse()
           },
-          properties: path.properties,
+          properties,
           id: path.id,
           bbox: path.bbox
         }
@@ -146,7 +155,11 @@ export function filterConnectedPathways(feature: GeoJSON.Feature, doors: GeoJSON
   })
 
   // return the list of positions and a width
-  return Array.from(connectedPathways).map(feat => [pathwayToCoords(feat), "width" in feat.properties ? parseFloat(feat.properties.width) : defaultStaircaseWidth]);
+  return Array.from(connectedPathways).map(feat => {
+    const properties = getRequiredFeatureProperties(feat);
+
+    return [pathwayToCoords(feat), "width" in properties ? parseFloat(properties.width) : defaultStaircaseWidth];
+  });
 }
 
 function pathwayToCoords(feature: GeoJSON.Feature): GeoJSON.Position[] {

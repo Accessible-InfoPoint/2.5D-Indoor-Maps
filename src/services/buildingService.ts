@@ -12,6 +12,7 @@ import { extent} from "geojson-bounds";
 // @ts-ignore
 import { booleanContainsPoint } from "bbox-fns";
 import BackendService from "./backendService";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 /**
  * Finding a building by search string:
@@ -28,11 +29,13 @@ function handleSearch(featureCollection: GeoJSON.FeatureCollection, searchString
   // console.log(buildings)
   const found = buildings.features.some(
     (building: GeoJSON.Feature<any, any>) => {
+      const properties = getRequiredFeatureProperties(building);
+
       if (
-        building.properties.building !== undefined &&
+        properties.building !== undefined &&
         (
-          (building.properties.name !== undefined && building.properties.name === searchString) ||
-          (building.properties.loc_ref !== undefined && building.properties.loc_ref === searchString)
+          (properties.name !== undefined && properties.name === searchString) ||
+          (properties.loc_ref !== undefined && properties.loc_ref === searchString)
         )
       ) {
         returnBuilding = {
@@ -110,11 +113,13 @@ function runIndoorSearch(searchString: string): GeoJSON.Feature[] {
 }
 
 function filterByString(f: GeoJSON.Feature, searchString: string) {
+  const properties = getRequiredFeatureProperties(f);
   const s = searchString.toLowerCase();
+
   return (
-    (f.properties.ref?.toLowerCase().startsWith(s)) || //room number
-    (f.properties.indoor?.toLowerCase().startsWith(s)) || //type
-    (f.properties.amenity?.toLowerCase().startsWith(s)) //toilet type
+    (properties.ref?.toLowerCase().startsWith(s)) || //room number
+    (properties.indoor?.toLowerCase().startsWith(s)) || //type
+    (properties.amenity?.toLowerCase().startsWith(s)) //toilet type
   );
 }
 
@@ -150,8 +155,10 @@ function doFilterByBounds(
 }
 
 function checkIfValid(feature: GeoJSON.Feature<any>): boolean {
+  const properties = getRequiredFeatureProperties(feature);
+
   return !(
-    feature.properties === undefined || feature.properties.level === undefined
+    properties.level === undefined
   );
 }
 
@@ -182,9 +189,11 @@ function checkIfInside(
 }
 
 function filterInsideAndLevel(featureCollection: GeoJSON.FeatureCollection) {
-  const filteredFeatures = featureCollection.features.filter((f) =>
-    ("indoor" in f.properties && f.properties.indoor != "no") || "level" in f.properties
-  );
+  const filteredFeatures = featureCollection.features.filter((f) => {
+    const properties = getRequiredFeatureProperties(f);
+
+    return ("indoor" in properties && properties.indoor != "no") || "level" in properties;
+  });
 
   //create a new object to avoid to original GeoJSON object to be modified
   return {
@@ -199,7 +208,7 @@ function getBuilding(featureId: string): GeoJSON.Feature<any, any> {
   let foundBuilding: GeoJSON.Feature<any, any> = null;
 
   buildings.features.some((b) => {
-    if (b.id === featureId) {
+    if (getRequiredFeatureId(b) === featureId) {
       foundBuilding = b;
       return true;
     }

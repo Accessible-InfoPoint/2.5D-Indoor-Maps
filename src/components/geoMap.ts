@@ -19,6 +19,7 @@ import BackendService from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
 import { MapView } from "./map/mapView";
 import { MaptalksMapView } from "./map/maptalksMapView";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -225,7 +226,7 @@ export class GeoMap {
     const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
     DescriptionArea.update(accessibilityDescription, "description");
 
-    this.selectedFeatures = [feature.id.toString()];
+    this.selectedFeatures = [getRequiredFeatureId(feature)];
     // TODO: might need to optimize this, needs a long time to update all layers at the moment
     // idea: only update the layers that are needed
     this.indoorLayers.forEach((layer) => layer.updateLayer());
@@ -235,11 +236,11 @@ export class GeoMap {
     if (searchString) {
       const results = BuildingService.runIndoorSearch(searchString);
       if (results.length != 0) {
-        this.selectedFeatures = results.map((feature) => feature.id.toString());
+        this.selectedFeatures = results.map((feature) => getRequiredFeatureId(feature));
         this.indoorLayers.forEach((layer) => layer.updateLayer());
 
         // from the levels of the feature, select the nearest to the current level
-        const selectedLevel = (results[0].properties.level as number[]).sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel))[0];
+        const selectedLevel = (getRequiredFeatureProperties(results[0]).level as number[]).sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel))[0];
         LevelControl.focusOnLevel(selectedLevel);
         this.handleLevelChange(selectedLevel);
 

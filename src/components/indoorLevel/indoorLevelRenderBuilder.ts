@@ -3,6 +3,7 @@ import ColorService, { colors } from "../../services/colorService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import { extractLevels } from "../../utils/extractLevels";
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../../utils/drawableElementFilter";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import {
   IndoorLevelRenderModel,
   PositionMarkerRenderItem,
@@ -27,16 +28,18 @@ export function buildIndoorLevelRenderModel(options: IndoorLevelRenderBuilderOpt
   let infoPoint = undefined;
 
   options.geoJSON.features.forEach((feature) => {
-    if (feature.properties["information"] == "tactile_map") {
+    const properties = getRequiredFeatureProperties(feature);
+
+    if (properties["information"] == "tactile_map") {
       infoPoint = {
         feature,
-        levels: extractLevels(feature.properties.level ?? options.infoPointLevel.toString()),
+        levels: extractLevels(properties.level ?? options.infoPointLevel.toString()),
       };
     }
 
     if (isDrawableRoomOrArea(feature)) {
       rooms.push(buildRoomRenderItem(feature, options));
-    } else if (feature.properties["tactile_paving"]) {
+    } else if (properties["tactile_paving"]) {
       tactilePaving.push({
         feature,
         style: buildTactilePavingStyle(feature),
@@ -55,12 +58,14 @@ export function buildIndoorLevelRenderModel(options: IndoorLevelRenderBuilderOpt
     staircase: {
       doorCoordinates: getDoorCoordinates(options.geoJSON),
       lowestPoints: options.buildingGeoJSON.features.filter(
-        (feature) => "point:lowest" in feature.properties
+        (feature) => "point:lowest" in getRequiredFeatureProperties(feature)
       ),
       pathways: options.geoJSON.features.filter(
-        (feature) =>
-          "indoor" in feature.properties &&
-          feature.properties["indoor"] == "pathway"
+        (feature) => {
+          const properties = getRequiredFeatureProperties(feature);
+
+          return "indoor" in properties && properties["indoor"] == "pathway";
+        }
       ),
       allNodes: options.buildingGeoJSON.features.filter(
         (feature) => feature.geometry.type == "Point"
@@ -75,7 +80,7 @@ function buildRoomRenderItem(
   feature: GeoJSON.Feature,
   options: IndoorLevelRenderBuilderOptions
 ): RoomRenderItem {
-  const isSelected = options.selectedFeatureIds.includes(feature.id.toString());
+  const isSelected = options.selectedFeatureIds.includes(getRequiredFeatureId(feature));
 
   return {
     feature,
@@ -96,9 +101,10 @@ function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unkno
 }
 
 function buildSelectedFeatureStyle(feature: GeoJSON.Feature, userProfile: UserGroupEnum): Record<string, unknown> {
-  let patternFill: string = null;
+  const properties = getRequiredFeatureProperties(feature);
+  let patternFill: string | null = null;
 
-  if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
+  if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
     const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
     const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium" : "large");
     patternFill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
@@ -114,12 +120,13 @@ function buildSelectedPositionMarker(
   feature: GeoJSON.Feature,
   options: IndoorLevelRenderBuilderOptions
 ): PositionMarkerRenderItem {
+  const properties = getRequiredFeatureProperties(feature);
   const diff = options.level - options.infoPointLevel;
   const label = diff > 0 ? "+" + diff.toString() : diff.toString();
 
   if (
-    Array.isArray(feature.properties["level"]) &&
-    Math.min(...(feature.properties["level"] as number[]).map(level => Math.abs(level - options.infoPointLevel))).toString() != label
+    Array.isArray(properties["level"]) &&
+    Math.min(...(properties["level"] as number[]).map(level => Math.abs(level - options.infoPointLevel))).toString() != label
   ) {
     return undefined;
   }
@@ -130,7 +137,7 @@ function buildSelectedPositionMarker(
   };
 }
 
-function getRoomLabel(feature: GeoJSON.Feature): string {
+function getRoomLabel(feature: GeoJSON.Feature): string | undefined {
   const {
     indoor,
     stairs,
@@ -138,7 +145,7 @@ function getRoomLabel(feature: GeoJSON.Feature): string {
     name,
     handrail,
     amenity,
-  } = feature.properties;
+  } = getRequiredFeatureProperties(feature);
 
   const label = name || ref;
 
@@ -151,7 +158,7 @@ function getRoomLabel(feature: GeoJSON.Feature): string {
 
 function getDoorCoordinates(geoJSON: GeoJSON.FeatureCollection): GeoJSON.Position[] {
   return geoJSON.features
-    .filter((feature) => "door" in feature.properties)
+    .filter((feature) => "door" in getRequiredFeatureProperties(feature))
     .map((feature) => (feature.geometry as GeoJSON.Point).coordinates);
 }
 
@@ -160,18 +167,22 @@ function getStaircaseFeatures(
   options: IndoorLevelRenderBuilderOptions,
   isStaircaseType: (feature: GeoJSON.Feature) => boolean
 ): GeoJSON.Feature[] {
-  return geoJSON.features.filter(feat =>
-    isStaircaseType(feat) &&
-    (
-      !Array.isArray(feat.properties.level) ||
-      Array.isArray(feat.properties.level) &&
-      (feat.properties.level.at(-1) != options.level)
-    )
-  ).filter(feat =>
-    options.userProfile != UserGroupEnum.wheelchairUsers ||
-    (
-      options.userProfile == UserGroupEnum.wheelchairUsers &&
-      "wheelchair" in feat.properties && feat.properties["wheelchair"] == "yes"
-    )
-  );
+  return geoJSON.features.filter(feat => {
+    const properties = getRequiredFeatureProperties(feat);
+
+    return isStaircaseType(feat) &&
+      (
+        !Array.isArray(properties.level) ||
+        Array.isArray(properties.level) &&
+        (properties.level.at(-1) != options.level)
+      );
+  }).filter(feat => {
+    const properties = getRequiredFeatureProperties(feat);
+
+    return options.userProfile != UserGroupEnum.wheelchairUsers ||
+      (
+        options.userProfile == UserGroupEnum.wheelchairUsers &&
+        "wheelchair" in properties && properties["wheelchair"] == "yes"
+      );
+  });
 }

@@ -14,6 +14,7 @@ import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import ColorService, { colors } from "./colorService";
+import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -32,13 +33,14 @@ export interface AccessibilityMarkerData {
 }
 
 function getAccessibilityDescription(feature: GeoJSON.Feature): string {
-  let popUpText = feature.properties.ref ?? "(no name)";
+  const properties = getRequiredFeatureProperties(feature);
+  let popUpText = properties.ref ?? "(no name)";
 
   if (
-    feature.properties.name !== undefined &&
-    feature.properties.name.length !== 0
+    properties.name !== undefined &&
+    properties.name.length !== 0
   ) {
-    popUpText += " (" + feature.properties.name + ")";
+    popUpText += " (" + properties.name + ")";
   }
 
   popUpText += featureDescriptionHelper(
@@ -92,29 +94,30 @@ function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMark
 }
 
 function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
+  const properties = getRequiredFeatureProperties(feature);
   let fill = "#fff";
-  let pattern_fill: string = null;
+  let pattern_fill: string | null = null;
   const lineWidth = getWallWeight(feature) + ColorService.getLineThickness() / 20;
   const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium": "large");
 
-  if (feature.properties.amenity === "toilets") {
+  if (properties.amenity === "toilets") {
     fill = colors.toiletColor;
-    if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
+    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
       pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_toiletColor.png";
     }
   } else if (
-    feature.properties.stairs ||
-    (feature.properties.highway &&
-      (feature.properties.highway == "elevator" ||
-        feature.properties.highway == "escalator"))
+    properties.stairs ||
+    (properties.highway &&
+      (properties.highway == "elevator" ||
+        properties.highway == "escalator"))
   ) {
     fill = colors.stairsColor;
-    if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
+    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
       pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_stairsColor.png";
     }
-  } else if (feature.properties.indoor === "room") {
+  } else if (properties.indoor === "room") {
     fill = colors.roomColor;
-    if ("wheelchair" in feature.properties && feature.properties["wheelchair"] == "yes") {
+    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
       pattern_fill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColor.png";
     }
   }
@@ -129,10 +132,12 @@ function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
 }
 
 function getWallWeight(feature: GeoJSON.Feature<any>): number {
+  const properties = getRequiredFeatureProperties(feature);
+
   //highlight tactile paving lines
   //decides wall weight based on the user profile and feature
   return feature.geometry.type === "LineString" &&
-    feature.properties.tactile_paving === "yes"
+    properties.tactile_paving === "yes"
     ? WALL_WEIGHT_PAVING
     : WALL_WEIGHT;
 }
@@ -165,22 +170,28 @@ export function setCurrentFeatures(checkboxState: Map<UserFeatureEnum, boolean>)
 }
 
 export function isStaircase(feature: GeoJSON.Feature): boolean {
-  return "stairs" in feature.properties && feature.properties["stairs"] == "yes" ||
+  const properties = getRequiredFeatureProperties(feature);
+
+  return "stairs" in properties && properties["stairs"] == "yes" ||
   (
-    "highway" in feature.properties &&
+    "highway" in properties &&
     (
-      feature.properties["highway"] == "elevator" ||
-      feature.properties["highway"] == "escalator"
+      properties["highway"] == "elevator" ||
+      properties["highway"] == "escalator"
     )
   )
 }
 
 export function isSimpleStaircase(feature: GeoJSON.Feature): boolean {
-  return isStaircase(feature) && "indoor" in feature.properties && feature.properties["indoor"] == "room";
+  const properties = getRequiredFeatureProperties(feature);
+
+  return isStaircase(feature) && "indoor" in properties && properties["indoor"] == "room";
 }
 
 export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
-  return isStaircase(feature) && "indoor" in feature.properties && feature.properties["indoor"] != "room";
+  const properties = getRequiredFeatureProperties(feature);
+
+  return isStaircase(feature) && "indoor" in properties && properties["indoor"] != "room";
 }
 
 export default {

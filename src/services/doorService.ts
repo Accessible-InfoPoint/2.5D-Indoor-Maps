@@ -3,6 +3,7 @@ import CoordinateHelpers from "../utils/coordinateHelpers";
 import { colors } from "../services/colorService";
 import FeatureService from "../services/featureService";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 const doorIndex = new Map<string, DoorDataInterface>();
 
@@ -126,12 +127,20 @@ function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): D
   // linear door (e.g. hinged, sliding, opening etc)
   let color = "";
 
-  if (door.rooms.every(feature => ["corridor", "area"].includes(feature.properties.indoor) && feature.properties.stairs !== "yes"))
+  if (door.rooms.every(feature => {
+    const properties = getRequiredFeatureProperties(feature);
+
+    return ["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes";
+  }))
     color = FeatureService.getFeatureStyle(door.rooms[0])["polygonFill"] // if every room connected is a corridor or an area (for rooms bordering an area, and it is not a free standing staircase), we draw it in corridor color
   else
-    color = FeatureService.getFeatureStyle(door.rooms.filter(feature => !(["corridor", "area"].includes(feature.properties.indoor) && feature.properties.stairs !== "yes"))[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
+    color = FeatureService.getFeatureStyle(door.rooms.filter(feature => {
+      const properties = getRequiredFeatureProperties(feature);
 
-  if (door.rooms.some(feature => selectedFeatureIds.includes(feature.id.toString())))
+      return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
+    })[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
+
+  if (door.rooms.some(feature => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
     color = colors.roomColorS; // at least one room is selected, color door in selected room color
 
   renderData.push({

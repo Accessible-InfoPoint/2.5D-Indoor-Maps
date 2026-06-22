@@ -7,6 +7,7 @@ import { extractLevels } from "../utils/extractLevels";
 import DoorService from "./doorService";
 import { BackendSourceEnum } from "../models/backendSourceEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import {
   BACKEND_SOURCE,
   CURRENT_BUILDING,
@@ -103,17 +104,19 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   // rewrite the geojson so that 
   geoJson.features.forEach(
     (feature) => {
+      const properties = getRequiredFeatureProperties(feature);
+
       if (!["Polygon", "LineString"].includes(feature.geometry.type)) { // only use geometries for levels that are actually drawn
         return;
       }
 
-      if (feature.properties.level === undefined) {
+      if (properties.level === undefined) {
         console.log("no level: ", feature);
         return;
       }
 
-      const levels = extractLevels(feature.properties.level);
-      feature.properties.level = levels;
+      const levels = extractLevels(properties.level);
+      properties.level = levels;
 
       levels.forEach(
         (l) => {
@@ -128,16 +131,18 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   // initialize doors
   geoJson.features.forEach(
     (feature) => {
+      const properties = getRequiredFeatureProperties(feature);
+
       if (feature.geometry.type != "Point")
         return;
 
-      if (!("door" in feature.properties))
+      if (!("door" in properties))
         return
 
       const levels = new Set<number>();
-      extractLevels(feature.properties.level ?? "").forEach(l => levels.add(l));
-      extractLevels(feature.properties.repeat_on ?? "").forEach(l => levels.add(l));
-      DoorService.addDoor(feature.geometry.coordinates, levels, feature.properties);
+      extractLevels(properties.level ?? "").forEach(l => levels.add(l));
+      extractLevels(properties.repeat_on ?? "").forEach(l => levels.add(l));
+      DoorService.addDoor(feature.geometry.coordinates, levels, properties);
     }
   )
   // Add rooms to the doors
@@ -160,22 +165,24 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   )
   
   // build building description
-  if (buildingInterface.feature.properties.name !== undefined) {
-    buildingDescription += buildingInterface.feature.properties.name;
+  const buildingProperties = getRequiredFeatureProperties(buildingInterface.feature);
+
+  if (buildingProperties.name !== undefined) {
+    buildingDescription += buildingProperties.name;
   
-    if (buildingInterface.feature.properties.loc_ref !== undefined) {
-      buildingDescription += " (" + buildingInterface.feature.properties.loc_ref + ")";
+    if (buildingProperties.loc_ref !== undefined) {
+      buildingDescription += " (" + buildingProperties.loc_ref + ")";
     }
   }
 
   // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
   // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
   const p1 = (
-    geoJson.features.find((feature) => feature.id == "node/" + buildingDefinition.BEARING_CALC_NODE1)
+    geoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE1)
     .geometry as GeoJSON.Point
   ).coordinates;
   const p2 = (
-    geoJson.features.find((feature) => feature.id == "node/" + buildingDefinition.BEARING_CALC_NODE2)
+    geoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE2)
     .geometry as GeoJSON.Point
   ).coordinates;
 
