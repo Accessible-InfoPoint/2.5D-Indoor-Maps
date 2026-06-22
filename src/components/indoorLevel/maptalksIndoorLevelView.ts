@@ -15,8 +15,12 @@ import DoorService from "../../services/doorService";
 import FeatureService from "../../services/featureService";
 import { DoorDataInterface } from "../../models/doorDataInterface";
 import { MaptalksMarkerClusterLayer } from "../markerCluster/maptalksMarkerClusterLayer";
-import { complexStaircase, filterConnectedPathways } from "../threejs/complexStaircase";
-import { simpleStaircase } from "../threejs/simpleStaircase";
+import { renderMaptalksStaircaseItems } from "../staircase/maptalksStaircaseRenderer";
+import {
+  buildComplexStaircaseRenderItems,
+  buildSimpleStaircaseRenderItems,
+  filterConnectedPathways,
+} from "../staircase/staircaseRenderBuilder";
 import {
   IndoorLevelRenderModel,
   PositionMarkerRenderItem,
@@ -406,24 +410,39 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
       this.getRenderer().context.clippingPlanes = [new Plane(new Vector3(0, 0, -1), this.altitudeToVector3(2.25 * LEVEL_HEIGHT, 2.25 * LEVEL_HEIGHT).x)];
 
       meshes.push(
-        ...staircase.simpleFeatures.flatMap(feature =>
-          simpleStaircase(
+        ...staircase.simpleFeatures.flatMap(feature => {
+          const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
+          const items = buildSimpleStaircaseRenderItems(
             (feature.geometry as GeoJSON.Polygon).coordinates[0],
-            altitude,
-            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial1 : material1,
-            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial2 : material2,
+            altitude
+          );
+
+          return renderMaptalksStaircaseItems(
+            items,
+            {
+              main: isSelected ? selectedMaterial1 : material1,
+              outline: isSelected ? selectedMaterial2 : material2,
+            },
             this,
             () => onclick(feature)
-          )
-        )
+          );
+        })
       );
       staircase.complexFeatures.forEach(feature => {
+        const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
+        const items = buildComplexStaircaseRenderItems(
+          filterConnectedPathways(feature, staircase.doorCoordinates, staircase.lowestPoints, staircase.pathways, level),
+          staircase.allNodes,
+          altitude
+        );
+
         meshes.push(
-          ...complexStaircase(
-            filterConnectedPathways(feature, staircase.doorCoordinates, staircase.lowestPoints, staircase.pathways, level),
-            staircase.allNodes,
-            altitude,
-            selectedFeatureIds.includes(getRequiredFeatureId(feature)) ? selectedMaterial1 : material1,
+          ...renderMaptalksStaircaseItems(
+            items,
+            {
+              main: isSelected ? selectedMaterial1 : material1,
+              outline: isSelected ? selectedMaterial2 : material2,
+            },
             this,
             () => onclick(feature)
           )

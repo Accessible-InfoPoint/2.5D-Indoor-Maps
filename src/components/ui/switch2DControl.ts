@@ -27,7 +27,6 @@ function setup(): void {
         offset = 1;
       } else {
         getCurrentIndoorLevel().animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
-        // TODO: move to own function, like "getLevelBelow" and "getLevelAbove"
         getAdjacentIndoorLevel(1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
         .then(() => {
           getAdjacentIndoorLevel(1).hideAll();
