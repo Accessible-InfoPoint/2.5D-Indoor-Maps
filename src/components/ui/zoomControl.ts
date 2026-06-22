@@ -1,10 +1,11 @@
 import { geoMap } from "../../main";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 function setup(): void {
-  document.getElementById("zoomControlIn").onclick = () => {
+  getRequiredElement("zoomControlIn").onclick = () => {
     geoMap.camera.zoomBy(0.33);
   };
-  document.getElementById("zoomControlOut").onclick = () => {
+  getRequiredElement("zoomControlOut").onclick = () => {
     geoMap.camera.zoomBy(-0.33);
   };
 }

@@ -1,6 +1,7 @@
 import Toast from "./toast";
+import { getRequiredElement } from "../../utils/domHelpers";
 
-const loadingIndicator = document.getElementById("loadingIndicator");
+const loadingIndicator = getRequiredElement("loadingIndicator");
 
 function start(): void {
   loadingIndicator.classList.remove("text-danger");

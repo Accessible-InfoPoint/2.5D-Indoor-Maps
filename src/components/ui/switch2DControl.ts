@@ -2,13 +2,16 @@ import { geoMap } from "../../main";
 import { LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER } from "../../../public/strings/settings.json"
 import BackendService from "../../services/backendService";
 import { MapCamera, MapCenter } from "../map/mapCamera";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 function setup(): void {
-  document.getElementById("switch2D").onclick = () => {
+  const switch2DLabel = getRequiredElement("switch2DLabel");
+
+  getRequiredElement("switch2D").onclick = () => {
     geoMap.flatMode = !geoMap.flatMode;
 
     if (geoMap.flatMode) {
-      document.getElementById("switch2DLabel").innerHTML = "3d_rotation";
+      switch2DLabel.innerHTML = "3d_rotation";
       geoMap.camera.setInteractionOptions({
         dragRotate: false,
         dragPan: true,
@@ -50,11 +53,11 @@ function setup(): void {
         pitchStart: currentCameraPosition.pitch,
         pitchEnd: 0,
         zoomStart: currentCameraPosition.zoom,
-        // zoomEnd: document.getElementById("uiWrapper").classList.contains("wheelchairMode") ? geoMap.standardZoomWheelchairMode : geoMap.standardZoom
+        // zoomEnd: wheelchair mode ? geoMap.standardZoomWheelchairMode : geoMap.standardZoom
         zoomEnd: geoMap.standardZoom
       }, 0.5)
     } else {
-      document.getElementById("switch2DLabel").innerHTML = "map";
+      switch2DLabel.innerHTML = "map";
       geoMap.camera.setInteractionOptions({
         dragRotate: true,
         // dragPitch: true, // temp

@@ -2,9 +2,10 @@ import { colors } from "../../services/colorService";
 import { lang } from "../../services/languageService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import UserService from "../../services/userService";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 function create(): void {
-  const legendList = document.getElementById("legendList");
+  const legendList = getRequiredElement("legendList");
   legendList.innerHTML = "";
 
   const label = document.createElement("li");

@@ -1,5 +1,7 @@
 import { Toast } from "bootstrap";
 
+import { getRequiredElement } from "../../utils/domHelpers";
+
 function render(message: string): void {
   const toastDiv = document.createElement("div");
   toastDiv.classList.add("toast", "align-items-center");
@@ -14,7 +16,7 @@ function render(message: string): void {
     '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>\n' +
     "</div>";
 
-  document.getElementById("toastWrapper").appendChild(toastDiv);
+  getRequiredElement("toastWrapper").appendChild(toastDiv);
 
   new Toast(toastDiv, { animation: false }).show();
 }

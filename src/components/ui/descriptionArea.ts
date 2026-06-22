@@ -1,7 +1,9 @@
+import { getRequiredElement } from "../../utils/domHelpers";
+
 function update(message: string, elementId = "description"): void {
-  const popUpArea = document.getElementById(elementId);
+  const popUpArea = getRequiredElement(elementId);
   popUpArea.innerText = message;
-  document.getElementById("descriptionArea").focus();
+  getRequiredElement("descriptionArea").focus();
 }
 
 export default {

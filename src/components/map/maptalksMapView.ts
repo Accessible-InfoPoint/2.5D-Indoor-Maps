@@ -13,6 +13,7 @@ import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLev
 import { MapCamera } from "./mapCamera";
 import { MaptalksMapCamera } from "./maptalksMapCamera";
 import { MapView } from "./mapView";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 interface MaptalksMapViewOptions {
   configMode: boolean;
@@ -71,7 +72,7 @@ export class MaptalksMapView implements MapView {
   }
 
   setSaturation(saturation: number): void {
-    document.getElementById("map").style.filter = `saturate(${saturation})`;
+    getRequiredElement("map").style.filter = `saturate(${saturation})`;
   }
 
   private createBaseLayer(): Maptalks.TileLayer {

@@ -4,9 +4,10 @@ import { UserFeatureSelection } from "../../../data/userFeatureSelection";
 import UserProfileModal from "./userProfileModal";
 import UserService from "../../../services/userService";
 import { lang } from "../../../services/languageService";
+import { getRequiredElement } from "../../../utils/domHelpers";
 
 const userFeatureSelectionModal = new Modal(
-  document.getElementById("userFeatureSelectionModal"),
+  getRequiredElement("userFeatureSelectionModal"),
   { backdrop: "static", keyboard: false }
 );
 
@@ -15,23 +16,29 @@ const checkboxState = FeatureService.getCurrentFeatures();
 function render(): void {
   //create checkboxes and headings
   const currentProfile = UserService.getCurrentProfile();
+  const userAccessibleFeatureList = getRequiredElement(
+    "userAccessibleFeatureList"
+  );
+  const userFeatureList = getRequiredElement("userFeatureList");
+
   UserFeatureSelection.forEach((v) => {
     if (v.userGroups.some((g: any) => g === currentProfile)) {
       if (v.accessibleFeature) {
-        document
-          .getElementById("userAccessibleFeatureList")
-          .append(renderCheckbox(v));
+        userAccessibleFeatureList.append(renderCheckbox(v));
       } else {
-        document.getElementById("userFeatureList").append(renderCheckbox(v));
+        userFeatureList.append(renderCheckbox(v));
       }
     }
   });
 
-  document.getElementById("userFeatureModalLabel").innerText = lang.userFeatureModalLabel;
-  document.getElementById("featureSelectionHeader").innerText = lang.featureSelectionHeader;
-  document.getElementById("accessibleFeatureSelectionHeader").innerText = lang.accessibleFeatureSelectionHeader;
+  getRequiredElement("userFeatureModalLabel").innerText =
+    lang.userFeatureModalLabel;
+  getRequiredElement("featureSelectionHeader").innerText =
+    lang.featureSelectionHeader;
+  getRequiredElement("accessibleFeatureSelectionHeader").innerText =
+    lang.accessibleFeatureSelectionHeader;
 
-  const saveFeaturesButton = document.getElementById("saveFeatureSelection");
+  const saveFeaturesButton = getRequiredElement("saveFeatureSelection");
   saveFeaturesButton.onclick = () => onSave();
 
   removeEmpty();
@@ -39,14 +46,15 @@ function render(): void {
 
 function removeEmpty() {
   [
-    document.getElementById("userFeatureList"),
-    document.getElementById("userAccessibleFeatureList"),
+    getRequiredElement("userFeatureList"),
+    getRequiredElement("userAccessibleFeatureList"),
   ].forEach((l) => {
     if (!l.hasChildNodes()) {
       l.style.display = "none";
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      l.previousElementSibling.style.display = "none";
+
+      if (l.previousElementSibling instanceof HTMLElement) {
+        l.previousElementSibling.style.display = "none";
+      }
     }
   });
 }
@@ -62,7 +70,7 @@ function renderCheckbox(v: any): HTMLDivElement {
   checkbox.type = "checkbox";
   checkbox.id = v.id;
 
-  checkbox.checked = checkboxState.get(v.id);
+  checkbox.checked = checkboxState.get(v.id) ?? false;
 
   checkbox.onchange = () => {
     checkboxState.set(v.id, checkbox.checked);

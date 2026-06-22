@@ -1,5 +1,6 @@
 import { geoMap } from "../../main";
 import { lang } from "../../services/languageService";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 function create(): void {
   const button = document.createElement("button");
@@ -8,7 +9,7 @@ function create(): void {
   button.onclick = () => geoMap.centerMapToBuilding();
   button.innerHTML = '<span aria-label="' + lang.centeringButton + '" title="' + lang.centeringButton + '"><i class="material-icons">center_focus_weak</i></span>';
 
-  const indoorSearch = document.getElementById("indoorSearchWrapper");
+  const indoorSearch = getRequiredElement("indoorSearchWrapper");
   indoorSearch.insertBefore(button, indoorSearch.firstChild);
 }
 

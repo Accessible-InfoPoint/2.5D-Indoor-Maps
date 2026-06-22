@@ -6,6 +6,7 @@ import { UserSettings } from "../../../data/userSettings";
 import { UserGroupEnum } from "../../../models/userGroupEnum";
 import { LanguageSettings } from "../../../data/languageSettings";
 import { LanguageSettingsEnum } from "../../../models/languageSettingsEnum";
+import { getRequiredElement } from "../../../utils/domHelpers";
 import VisualSettingsModal from "./userVisualSettingsModal";
 
 function render(): void {
@@ -17,12 +18,14 @@ function render(): void {
 }
 
 function renderProfiles(): void {
-  document.getElementById("userProfileList").innerHTML = "";
+  const userProfileList = getRequiredElement("userProfileList");
+  userProfileList.innerHTML = "";
+
   const label = document.createElement("li");
   label.innerHTML = lang.profiles;
   label.ariaHidden = "true";
   label.className = "label";
-  document.getElementById("userProfileList").appendChild(label);
+  userProfileList.appendChild(label);
 
   UserGroups.forEach((v, k) => {
     const li = document.createElement("li");
@@ -39,18 +42,20 @@ function renderProfiles(): void {
       button.classList.add("active");
     }
 
-    li.appendChild(button)
+    li.appendChild(button);
 
-    document.getElementById("userProfileList").appendChild(li);
+    userProfileList.appendChild(li);
   });
 }
 function renderSettings(): void {
-  document.getElementById("userSettingsList").innerHTML = "";
+  const userSettingsList = getRequiredElement("userSettingsList");
+  userSettingsList.innerHTML = "";
+
   const label = document.createElement("li");
   label.innerHTML = lang.settingsHeader;
   label.ariaHidden = "true";
   label.className = "label";
-  document.getElementById("userSettingsList").appendChild(label);
+  userSettingsList.appendChild(label);
 
   UserSettings.forEach((v) => {
     const li = document.createElement("li");
@@ -60,18 +65,20 @@ function renderSettings(): void {
     button.setAttribute("data-bs-target", v.linkedModal);
     button.setAttribute("data-bs-toggle", "modal");
 
-    li.appendChild(button)
-    document.getElementById("userSettingsList").appendChild(li);
+    li.appendChild(button);
+    userSettingsList.appendChild(li);
   });
 }
 
 function renderLanguages(): void {
-  document.getElementById("languageList").innerHTML = "";
+  const languageList = getRequiredElement("languageList");
+  languageList.innerHTML = "";
+
   const label = document.createElement("li");
   label.innerHTML = lang.languageHeader;
   label.ariaHidden = "true";
   label.className = "label";
-  document.getElementById("languageList").appendChild(label);
+  languageList.appendChild(label);
 
   LanguageSettings.forEach((v, k) => {
     const li = document.createElement("li");
@@ -84,8 +91,8 @@ function renderLanguages(): void {
       button.classList.add("active");
     }
 
-    li.appendChild(button)
-    document.getElementById("languageList").appendChild(li);
+    li.appendChild(button);
+    languageList.appendChild(li);
   });
 }
 
@@ -95,7 +102,7 @@ function renderLinkedModals() {
 }
 
 function show(): void {
-  document.getElementById("userProfileList").focus();
+  getRequiredElement("userProfileList").focus();
 }
 function hideAll(): void {
   FeatureSelectionModal.hide();

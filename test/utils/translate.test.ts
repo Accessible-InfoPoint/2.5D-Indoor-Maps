@@ -3,6 +3,7 @@
  */
 
 import { translate } from '../../src/utils/translate';
+import { getRequiredElement } from '../../src/utils/domHelpers';
 
 // Optional: Mock LanguageService and lang if needed
 jest.mock('../../src/services/languageService', () => ({
@@ -42,9 +43,12 @@ describe('translate()', () => {
 
   it('updates aria-labels and titles', () => {
     translate();
-    expect(document.getElementById('userProfileList')?.ariaLabel).toBe('Profiles');
-    expect(document.getElementById('switch2DLabel')?.title).toBe('2D Mode');
-    expect(document.getElementById('switch2DLabel')?.ariaLabel).toBe('2D Mode');
+    const userProfileList = getRequiredElement('userProfileList');
+    const switch2DLabel = getRequiredElement('switch2DLabel');
+
+    expect(userProfileList.ariaLabel).toBe('Profiles');
+    expect(switch2DLabel.title).toBe('2D Mode');
+    expect(switch2DLabel.ariaLabel).toBe('2D Mode');
   });
 
   it('updates button text content by class', () => {

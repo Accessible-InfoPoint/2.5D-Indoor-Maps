@@ -2,6 +2,7 @@ import { INDOOR_LEVEL, VISIBLE_LEVEL_CONTROLS, START_LEVEL_CONTROL_POSITION } fr
 import LevelService from "../../services/levelService";
 import { geoMap } from "../../main";
 import { lang } from "../../services/languageService";
+import { getRequiredElement } from "../../utils/domHelpers";
 
 let offset = 1;
 const minOffset = 0;
@@ -22,11 +23,11 @@ function create(): void {
 }
 
 function remove(): void {
-  document.getElementById("levelControl").innerHTML = "";
+  getRequiredElement("levelControl").innerHTML = "";
 }
 
 function render(allLevelNamesParam: string[]): void {
-  const levelControl = document.getElementById("levelControl");
+  const levelControl = getRequiredElement("levelControl");
   allLevelNames = allLevelNamesParam;
   numLevels = allLevelNames.length;
 
@@ -81,37 +82,40 @@ function moveDown(): void {
 }
 
 function setWindow(): void {
-  const levelControl = document.getElementById("levelControl");
+  const levelControl = getRequiredElement("levelControl");
+  const levelShiftUp = getRequiredElement("levelShiftUp");
+  const levelShiftDown = getRequiredElement("levelShiftDown");
+  const levelControlWindow = getRequiredElement("levelControlWindow");
   const shownLevels = Math.min(VISIBLE_LEVEL_CONTROLS, numLevels);
   if (numLevels <= VISIBLE_LEVEL_CONTROLS) {
-    document.getElementById("levelShiftUp").style.display = "none";
-    document.getElementById("levelShiftDown").style.display = "none";
+    levelShiftUp.style.display = "none";
+    levelShiftDown.style.display = "none";
   } else {
-    document.getElementById("levelShiftUp").style.display = "inline-block";
-    document.getElementById("levelShiftDown").style.display = "inline-block";
+    levelShiftUp.style.display = "inline-block";
+    levelShiftDown.style.display = "inline-block";
   }
 
   const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
   const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
 
-  if (document.getElementById("uiWrapper").classList.contains("wheelchairMode")) {
-    document.getElementById("levelControlWindow").style.width = (shownLevels * size + (shownLevels - 1) * gap) + "px";
-    document.getElementById("levelControlWindow").style.height = "auto";
+  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
+    levelControlWindow.style.width = (shownLevels * size + (shownLevels - 1) * gap) + "px";
+    levelControlWindow.style.height = "auto";
   } else {
-    document.getElementById("levelControlWindow").style.height = (shownLevels * size + (shownLevels - 1) * gap) + "px";
-    document.getElementById("levelControlWindow").style.width = "auto";
+    levelControlWindow.style.height = (shownLevels * size + (shownLevels - 1) * gap) + "px";
+    levelControlWindow.style.width = "auto";
   }
 }
 
 function setMargin(): void {
-  if (document.getElementById("uiWrapper").classList.contains("wheelchairMode")) {
-    const levelControl = document.getElementById("levelControl");
+  const levelControl = getRequiredElement("levelControl");
+
+  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
     levelControl.style.marginLeft = (-1 * (size + gap) * offset) + "px";
     levelControl.style.marginTop = "0px";
   } else {
-    const levelControl = document.getElementById("levelControl");
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
     levelControl.style.marginTop = (-1 * (size + gap) * offset) + "px";
@@ -120,20 +124,23 @@ function setMargin(): void {
 }
 
 function disableLevelShifters(): void {
+  const levelShiftUp = getRequiredElement("levelShiftUp");
+  const levelShiftDown = getRequiredElement("levelShiftDown");
+
   if (offset == minOffset) {
-    document.getElementById("levelShiftUp").setAttribute("disabled", "disabled");
+    levelShiftUp.setAttribute("disabled", "disabled");
   } else {
-    document.getElementById("levelShiftUp").removeAttribute("disabled");
+    levelShiftUp.removeAttribute("disabled");
   }
   if (offset == maxOffset) {
-    document.getElementById("levelShiftDown").setAttribute("disabled", "disabled");
+    levelShiftDown.setAttribute("disabled", "disabled");
   } else {
-    document.getElementById("levelShiftDown").removeAttribute("disabled");
+    levelShiftDown.removeAttribute("disabled");
   }
 }
 
 function focusOnLevel(selectedLevel: number): void {
-  const levelControl = document.getElementById("levelControl");
+  const levelControl = getRequiredElement("levelControl");
   const list = levelControl.children;
   for (const item of list) {
     if (item.firstChild.textContent === selectedLevel.toString()) {
@@ -158,11 +165,11 @@ function focusOnLevel(selectedLevel: number): void {
 }
 
 function setupControlShifter(): void {
-  const up = document.getElementById("levelShiftUp");
+  const up = getRequiredElement("levelShiftUp");
   up.addEventListener("click", () => {
     moveUp();
   })
-  const down = document.getElementById("levelShiftDown");
+  const down = getRequiredElement("levelShiftDown");
   down.addEventListener("click", () => {
     moveDown();
   })

@@ -1,12 +1,9 @@
 import { geoMap } from "../../main";
 import { lang } from "../../services/languageService";
+import { getRequiredElement } from "../../utils/domHelpers";
 
-const indoorSearchSubmit = <HTMLButtonElement>(
-  document.getElementById("indoorSearchSubmit")
-);
-const indoorSearchInput = <HTMLInputElement>(
-  document.getElementById("indoorSearchInput")
-);
+const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
+const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
 
 const state: { indoorSearchQuery: string } = { indoorSearchQuery: "" };
 
@@ -27,13 +24,9 @@ function render(): void {
     }
   });
 
-  document.getElementById("indoorSearchSubmit").innerText = lang.indoorSearchSubmit;
-  document
-    .getElementById("indoorSearchInput")
-    .setAttribute("placeholder", lang.indoorSearchPlaceholder);
-  document
-    .getElementById("indoorSearchInput")
-    .setAttribute("aria-label", lang.indoorSearchPlaceholder);
+  indoorSearchSubmit.innerText = lang.indoorSearchSubmit;
+  indoorSearchInput.setAttribute("placeholder", lang.indoorSearchPlaceholder);
+  indoorSearchInput.setAttribute("aria-label", lang.indoorSearchPlaceholder);
 }
 
 export default {

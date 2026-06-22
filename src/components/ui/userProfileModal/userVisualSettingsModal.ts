@@ -3,14 +3,15 @@ import { COLOR_PROFS } from "../../../../public/strings/colorProfiles.json";
 import UserProfileModal from "./userProfileModal";
 import ColorService from "../../../services/colorService";
 import { lang } from "../../../services/languageService";
+import { getRequiredElement } from "../../../utils/domHelpers";
 
 const userVisualSettingsModal = new Modal(
-  document.getElementById("userVisualSettingsModal"),
+  getRequiredElement("userVisualSettingsModal"),
   { backdrop: "static", keyboard: false }
 );
 
-const colorBlindnessList = document.getElementById("colorBlindnessList");
-const contrastSettingsList = document.getElementById("contrastSettingsList");
+const colorBlindnessList = getRequiredElement("colorBlindnessList");
+const contrastSettingsList = getRequiredElement("contrastSettingsList");
 
 const state: {
   selectedColorProfile: string;
@@ -34,21 +35,20 @@ function render(): void {
   renderColorBlindnessList();
   renderContrastSettingsList();
 
-  document.getElementById("visualSettingsLabel").innerText =
-    lang.visualSettingsLabel;
-  document.getElementById("colorBlindnessHeader").innerText =
+  getRequiredElement("visualSettingsLabel").innerText = lang.visualSettingsLabel;
+  getRequiredElement("colorBlindnessHeader").innerText =
     lang.colorBlindnessHeader;
-  document.getElementById("contrastSettingsHeader").innerText =
+  getRequiredElement("contrastSettingsHeader").innerText =
     lang.contrastSettingsHeader;
 
-  const saveFeaturesButton = document.getElementById("saveVisualSettings");
+  const saveFeaturesButton = getRequiredElement("saveVisualSettings");
   saveFeaturesButton.onclick = () => onSave();
 }
 function renderColorBlindnessList(): void {
   const { colorProfiles: profiles } = state;
 
   profiles.forEach((p) => {
-    document.getElementById("colorBlindnessList").append(renderCheckbox(p));
+    colorBlindnessList.append(renderCheckbox(p));
   });
 }
 
