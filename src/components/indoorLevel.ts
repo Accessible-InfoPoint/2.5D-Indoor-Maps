@@ -5,28 +5,17 @@ import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import DoorService from "../services/doorService";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
-import { MaptalksIndoorLevelView } from "./indoorLevel/maptalksIndoorLevelView";
-import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevel/indoorLevelView";
+import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
 
 export class IndoorLevel {
-  private readonly view: IndoorLevelView;
   level: number;
 
   constructor(
     geoJSON: GeoJSON.FeatureCollection,
     level: number,
-    private readonly events: IndoorLevelViewEvents,
-    altitude = 0
+    private readonly view: IndoorLevelView
   ) {
     this.level = level;
-    this.view = new MaptalksIndoorLevelView(
-      level,
-      altitude,
-      geoMap.mapInstance,
-      {
-        onFeatureSelected: (feature) => this.events.onFeatureSelected(feature),
-      }
-    );
 
     this.render(geoJSON);
   }

@@ -24,6 +24,11 @@ import {
 } from "./indoorLevelRenderModel";
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 
+export interface MaptalksIndoorLevelViewMapContext {
+  map: Maptalks.Map;
+  markerProjectionMap: Maptalks.Map;
+}
+
 export class MaptalksIndoorLevelView implements IndoorLevelView {
   private readonly roomsInstance: Maptalks.VectorLayer;
   private readonly roomNumbersInstance: Maptalks.VectorLayer;
@@ -63,14 +68,14 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   constructor(
     private readonly level: number,
     altitude: number,
-    private readonly map: Maptalks.Map,
+    private readonly mapContext: MaptalksIndoorLevelViewMapContext,
     private readonly events: IndoorLevelViewEvents
   ) {
     this.altitude = altitude;
 
     this.roomsInstance = new Maptalks.VectorLayer("indoor" + level, undefined, {
       enableAltitude: true,
-    }).addTo(map);
+    }).addTo(mapContext.map);
     this.roomNumbersInstance = new Maptalks.VectorLayer(
       "roomNumbers" + level,
       undefined,
@@ -79,11 +84,11 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
         altitude: altitude,
         minZoom: 20.5,
       }
-    ).addTo(map);
+    ).addTo(mapContext.map);
     this.doorsInstance = new Maptalks.VectorLayer("doors" + level, undefined, {
       enableAltitude: true,
       altitude: altitude,
-    }).addTo(map);
+    }).addTo(mapContext.map);
     this.outlineInstance = new Maptalks.VectorLayer(
       "outline" + level,
       undefined,
@@ -91,14 +96,15 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
         enableAltitude: true,
         altitude: altitude,
       }
-    ).addTo(map);
+    ).addTo(mapContext.map);
     this.threeLayer = new ThreeLayer("stairs" + level, {
       forceRenderOnMoving: true,
       forceRenderOnRotating: true,
-    }).addTo(map);
+    }).addTo(mapContext.map);
     this.markers = new MarkerClusterLayer(
       "markerCluster" + level,
       (feature) => this.events.onFeatureSelected(feature),
+      () => this.mapContext.markerProjectionMap,
       undefined,
       {
         symbol: {
@@ -113,7 +119,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
         enableAltitude: true,
         altitude: altitude,
       }
-    ).addTo(map);
+    ).addTo(mapContext.map);
     this.positionLayer = new Maptalks.VectorLayer(
       "positionLayer" + level,
       undefined,
@@ -121,7 +127,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
         enableAltitude: true,
         altitude: altitude,
       }
-    ).addTo(map);
+    ).addTo(mapContext.map);
   }
 
   clear(): void {
@@ -134,7 +140,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
     const tempVisibility = this.threeLayer.isVisible();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    this.map.removeLayer(this.threeLayer);
+    this.mapContext.map.removeLayer(this.threeLayer);
     this.threeLayer = new ThreeLayer("stairs" + this.level, {
       forceRenderOnMoving: true,
       forceRenderOnRotating: true,
@@ -142,7 +148,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
     if (!tempVisibility) {
       this.threeLayer.hide();
     }
-    this.threeLayer = this.threeLayer.addTo(this.map);
+    this.threeLayer = this.threeLayer.addTo(this.mapContext.map);
   }
 
   render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {

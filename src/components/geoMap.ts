@@ -22,6 +22,7 @@ import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import * as Maptalks from "maptalks";
 import BackendService from "../services/backendService";
+import { MaptalksIndoorLevelView } from "./indoorLevel/maptalksIndoorLevelView";
 
 export class GeoMap {
   mapInstance: Maptalks.Map = null;
@@ -139,17 +140,28 @@ export class GeoMap {
     this.indoorLayers = new Map(
       BackendService.getAllLevels()
         .reverse()
-        .map((val) => [
-          val,
-          new IndoorLevel(
-            LevelService.getLevelGeoJSON(val),
+        .map((val) => {
+          const view = new MaptalksIndoorLevelView(
             val,
+            0,
+            {
+              map: this.mapInstance,
+              markerProjectionMap: this.flatMapInstance,
+            },
             {
               onFeatureSelected: (feature) => this.handleFeatureSelection(feature),
-            },
-            0
-          ),
-        ])
+            }
+          );
+
+          return [
+            val,
+            new IndoorLevel(
+              LevelService.getLevelGeoJSON(val),
+              val,
+              view
+            ),
+          ] as [number, IndoorLevel];
+        })
     );
     this.indoorLayers.forEach((layer) => {
       layer.hideAll();

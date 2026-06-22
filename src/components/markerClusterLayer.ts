@@ -1,5 +1,4 @@
 import * as Maptalks from "maptalks";
-import { geoMap } from "../main";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
 
 export interface MarkerClusterLayerOptions {
@@ -24,19 +23,29 @@ export interface FeatureMarker {
 }
 
 type FeatureClickHandler = (feature: GeoJSON.Feature) => void;
+type ProjectionMapProvider = () => Maptalks.Map;
 
 export class MarkerClusterLayer {
     private markers: FeatureMarker[];
     private readonly layerInstance: Maptalks.VectorLayer;
     private readonly options = defaultOptions;
     private readonly handleFeatureClick: FeatureClickHandler;
+    private readonly getProjectionMap: ProjectionMapProvider;
 
-    constructor(id: string, handleFeatureClick: FeatureClickHandler, markers?: FeatureMarker[], clusteringOptions?: MarkerClusterLayerOptions, vectorLayerOptions?: any) {
+    constructor(
+        id: string,
+        handleFeatureClick: FeatureClickHandler,
+        getProjectionMap: ProjectionMapProvider,
+        markers?: FeatureMarker[],
+        clusteringOptions?: MarkerClusterLayerOptions,
+        vectorLayerOptions?: any
+    ) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
         Maptalks.Util.extend(this.options, clusteringOptions);
         this.markers = markers ?? [];
         console.log(this.options.symbol);
         this.handleFeatureClick = handleFeatureClick;
+        this.getProjectionMap = getProjectionMap;
     }
 
     addTo(map: Maptalks.Map): this {
@@ -47,7 +56,7 @@ export class MarkerClusterLayer {
 
     updateMarkers(): void {
         this.layerInstance.clear();
-        const map = this.options.ignorePitch ? geoMap.flatMapInstance : this.layerInstance.getMap();
+        const map = this.options.ignorePitch ? this.getProjectionMap() : this.layerInstance.getMap();
         if (map) {
             let todo = this.markers.map((marker) => {
                 return {
