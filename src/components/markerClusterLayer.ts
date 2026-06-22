@@ -1,21 +1,16 @@
 import * as Maptalks from "maptalks";
-import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
+import {
+    buildMarkerClusters,
+    ClusterableMarker,
+    getMarkerFile,
+    MarkerCluster,
+    MarkerClusterOptions,
+    MarkerSymbol,
+    ResolvedMarkerClusterOptions,
+    resolveMarkerClusterOptions,
+} from "./markerCluster/markerClusterModel";
 
-export interface MarkerClusterLayerOptions {
-    'maxClusterRadius'?: number,
-    'sameSymbolClusterRadius'?: number,
-    'symbol'?: Record<string, unknown>,
-    'combineSameSymbol'?: boolean,
-    'ignorePitch'?: boolean,
-}
-
-const defaultOptions: MarkerClusterLayerOptions = {
-    'maxClusterRadius': 30,
-    'sameSymbolClusterRadius': 70,
-    'symbol': null,
-    'combineSameSymbol': true,
-    'ignorePitch': true,
-}
+export type MarkerClusterLayerOptions = MarkerClusterOptions;
 
 export interface FeatureMarker {
     marker: Maptalks.Marker,
@@ -28,7 +23,7 @@ type ProjectionMapProvider = () => Maptalks.Map;
 export class MarkerClusterLayer {
     private markers: FeatureMarker[];
     private readonly layerInstance: Maptalks.VectorLayer;
-    private readonly options = defaultOptions;
+    private readonly options: ResolvedMarkerClusterOptions;
     private readonly handleFeatureClick: FeatureClickHandler;
     private readonly getProjectionMap: ProjectionMapProvider;
 
@@ -38,12 +33,11 @@ export class MarkerClusterLayer {
         getProjectionMap: ProjectionMapProvider,
         markers?: FeatureMarker[],
         clusteringOptions?: MarkerClusterLayerOptions,
-        vectorLayerOptions?: any
+        vectorLayerOptions?: Maptalks.VectorLayerOptionsType
     ) {
         this.layerInstance = new Maptalks.VectorLayer(id, undefined, vectorLayerOptions);
-        Maptalks.Util.extend(this.options, clusteringOptions);
+        this.options = resolveMarkerClusterOptions(clusteringOptions);
         this.markers = markers ?? [];
-        console.log(this.options.symbol);
         this.handleFeatureClick = handleFeatureClick;
         this.getProjectionMap = getProjectionMap;
     }
@@ -58,73 +52,25 @@ export class MarkerClusterLayer {
         this.layerInstance.clear();
         const map = this.options.ignorePitch ? this.getProjectionMap() : this.layerInstance.getMap();
         if (map) {
-            let todo = this.markers.map((marker) => {
-                return {
-                    center: marker.marker.getCenter(),
-                    id: marker.marker.getId(),
-                    symbol: marker.marker.getSymbol()
-                }
-            });
-            const clusters = [];
-            while (todo.length) {
-                const next = todo.pop();
-                const newCluster = [next];
-                const noCluster = []
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                todo.sort((a, b) => Number(b.symbol["markerFile"] == next.symbol["markerFile"]) - Number(a.symbol["markerFile"] == next.symbol["markerFile"])) // sort so that same symbol is first
-                while (todo.length) {
-                    const toCheck = todo.pop();
-                    if (newCluster.some((inCluster) => {
-                        const d = map.coordinateToContainerPoint(toCheck.center).distanceTo(map.coordinateToContainerPoint(inCluster.center));
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
-                        return d < this.options.maxClusterRadius || (toCheck.symbol["markerFile"] == inCluster.symbol["markerFile"] && d < this.options.sameSymbolClusterRadius);
-                    })) {
-                        newCluster.push(toCheck);
-                    } else {
-                        noCluster.push(toCheck);
-                    }
-                }
-                todo = noCluster;
-                clusters.push(newCluster);
-            }
-            this.layerInstance.addGeometry(clusters.map((cluster) => {
-                const eqSet = (xs: Set<string>, ys: Set<string>) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
-                const center = centerOfCluster(cluster);
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                const sameSymbol = new Set(cluster.map((marker) => marker.symbol["markerFile"])).size == 1;
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                const wheelchairToilet = eqSet(new Set(cluster.map((marker) => marker.symbol["markerFile"])), new Set([MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR, MARKERS_IMG_DIR + ICONS.WHEELCHAIR]));
-                let symbol;
-                if (sameSymbol && this.options.combineSameSymbol) {
-                    symbol = cluster[0].symbol;
-                } else if (wheelchairToilet && this.options.combineSameSymbol) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    symbol = cluster.find((obj) => obj.symbol["markerFile"] == MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR).symbol;
-                } else {
-                    symbol = this.options.symbol;
-                }
-                const marker = new Maptalks.Marker(center, {
-                    symbol: symbol
-                });
-                marker.on("click", () => this.handleClick(cluster))
-                return marker;
-            }));
+            const clusters = buildMarkerClusters(
+                this.markers.map((marker) => toClusterableMarker(marker, map)),
+                this.options
+            );
+
+            this.layerInstance.addGeometry(clusters.map((cluster) => this.renderCluster(cluster)));
         }
     }
 
-    handleClick(cluster: { center: Maptalks.Coordinate; id: string | number; symbol: object; }[]): void {
+    handleClick(cluster: MarkerCluster): void {
         const map = this.layerInstance.getMap();
-        if (cluster.length > 1) {
-            console.log(cluster);
+        if (cluster.markers.length > 1) {
             if (map) {
-                const extent = new Maptalks.Extent(cluster[0].center, cluster[1].center);
-                for (let i = 2; i < cluster.length; i++) {
-                    extent.combine(cluster[i].center);
+                const extent = new Maptalks.Extent(
+                    toCoordinate(cluster.markers[0].center),
+                    toCoordinate(cluster.markers[1].center)
+                );
+                for (let i = 2; i < cluster.markers.length; i++) {
+                    extent.combine(toCoordinate(cluster.markers[i].center));
                 }
                 map.animateTo({center: extent.getCenter()}, {duration: 350});
                 setTimeout(() => {
@@ -132,8 +78,10 @@ export class MarkerClusterLayer {
                 }, 350);
             }
         } else {
-            const marker = this.markers.find((fm) => fm.marker.getId() == cluster[0].id);
-            this.handleFeatureClick(marker.feature);
+            const marker = this.markers.find((fm) => fm.marker.getId() === cluster.markers[0].id);
+            if (marker) {
+                this.handleFeatureClick(marker.feature);
+            }
         }
     }
 
@@ -153,11 +101,52 @@ export class MarkerClusterLayer {
     getLayer(): Maptalks.VectorLayer {
         return this.layerInstance;
     }
+
+    private renderCluster(cluster: MarkerCluster): Maptalks.Marker {
+        const marker = new Maptalks.Marker(toCoordinate(cluster.center), {
+            symbol: toMaptalksSymbol(cluster.symbol)
+        });
+        marker.on("click", () => this.handleClick(cluster));
+        return marker;
+    }
 }
 
-function centerOfCluster(cluster: { center: Maptalks.Coordinate; id: string | number; symbol: object; }[]) : Maptalks.Coordinate {
-    return new Maptalks.Coordinate(
-        cluster.map((marker) => marker.center.x).reduce((prev, val) => prev + val, 0) / cluster.length,
-        cluster.map((marker) => marker.center.y).reduce((prev, val) => prev + val, 0) / cluster.length
-    )
+function toClusterableMarker(featureMarker: FeatureMarker, map: Maptalks.Map): ClusterableMarker {
+    const center = featureMarker.marker.getCenter();
+    const projectedCenter = map.coordinateToContainerPoint(center);
+    const symbol = toMarkerSymbol(featureMarker.marker.getSymbol());
+
+    return {
+        center: {
+            x: center.x,
+            y: center.y,
+        },
+        projectedCenter: {
+            x: projectedCenter.x,
+            y: projectedCenter.y,
+        },
+        id: featureMarker.marker.getId(),
+        symbol,
+        markerFile: getMarkerFile(symbol),
+    };
+}
+
+function toCoordinate(point: { x: number; y: number }): Maptalks.Coordinate {
+    return new Maptalks.Coordinate(point.x, point.y);
+}
+
+function toMarkerSymbol(symbol: unknown): MarkerSymbol {
+    if (Array.isArray(symbol)) {
+        return symbol.filter(isSymbolRecord);
+    }
+
+    return isSymbolRecord(symbol) ? symbol : null;
+}
+
+function toMaptalksSymbol(symbol: MarkerSymbol): Maptalks.AnyMarkerSymbol | Maptalks.AnyMarkerSymbol[] {
+    return symbol as Maptalks.AnyMarkerSymbol | Maptalks.AnyMarkerSymbol[];
+}
+
+function isSymbolRecord(symbol: unknown): symbol is Record<string, unknown> {
+    return typeof symbol === "object" && symbol !== null && !Array.isArray(symbol);
 }
