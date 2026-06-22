@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
   LoadingIndicator.start();
 
   BackendService.fetchBackendData().then(() => {
+    LoadingIndicator.end();
     geoMap = new GeoMap();
     geoMap.showBuilding();
     Legend.create();
