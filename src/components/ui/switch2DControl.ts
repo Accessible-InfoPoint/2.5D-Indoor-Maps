@@ -36,7 +36,7 @@ function setup(): void {
         });
       }
 
-      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).hide3D();
+      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show2DView();
       
       animate({
         centerStart: geoMap.mapInstance.getCenter(),
@@ -62,7 +62,7 @@ function setup(): void {
 
       const visibleLayers = [geoMap.getCurrentLevel()];
 
-      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show3D();
+      geoMap.indoorLayers.get(geoMap.getCurrentLevel()).show3DView();
 
       let offset = 0;
       // if we are on the highest level, don't show anything above
@@ -71,14 +71,14 @@ function setup(): void {
         offset = 1;
       } else {
         geoMap.indoorLayers.get(geoMap.getCurrentLevel()).animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).show3D();
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).show3DView();
         visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1])
         geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) + 1]).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).show3D();
+        geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).show3DView();
         visibleLayers.push(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1])
         geoMap.indoorLayers.get(BackendService.getAllLevels()[BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) - 1]).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
       }

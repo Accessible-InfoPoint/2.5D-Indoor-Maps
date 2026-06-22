@@ -1,5 +1,3 @@
-import DescriptionArea from "./ui/descriptionArea";
-import FeatureService from "../services/featureService";
 import LevelService from "../services/levelService";
 import { geoMap } from "../main";
 import BuildingService from "../services/buildingService";
@@ -8,28 +6,32 @@ import UserService from "../services/userService";
 import DoorService from "../services/doorService";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { MaptalksIndoorLevelView } from "./indoorLevel/maptalksIndoorLevelView";
+import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevel/indoorLevelView";
 
-
-export class IndoorLayer {
-  private readonly view: MaptalksIndoorLevelView;
+export class IndoorLevel {
+  private readonly view: IndoorLevelView;
   level: number;
 
-  constructor(geoJSON: GeoJSON.FeatureCollection, level: number, altitude = 0) {
+  constructor(
+    geoJSON: GeoJSON.FeatureCollection,
+    level: number,
+    private readonly events: IndoorLevelViewEvents,
+    altitude = 0
+  ) {
     this.level = level;
     this.view = new MaptalksIndoorLevelView(
       level,
       altitude,
       geoMap.mapInstance,
-      (feature) => this.handleClick(feature)
+      {
+        onFeatureSelected: (feature) => this.events.onFeatureSelected(feature),
+      }
     );
 
     this.render(geoJSON);
   }
 
-  /**
-   * Clear all layers, as threeLayer does not support this feature it is deleted and created new
-   */
-  clearIndoorLayer(): void {
+  clear(): void {
     this.view.clear();
   }
 
@@ -37,7 +39,7 @@ export class IndoorLayer {
    * Redraws all layers
    */
   updateLayer(): void {
-    this.clearIndoorLayer();
+    this.clear();
     this.render(LevelService.getLevelGeoJSON(this.level));
   }
 
@@ -56,17 +58,17 @@ export class IndoorLayer {
   }
 
   /**
-   * Hides all 3D layers and shows 2D layers and resets altitude and opacity
+   * Shows the level in 2D mode and resets altitude and opacity
    */
-  hide3D(): void {
-    this.view.hide3D();
+  show2DView(): void {
+    this.view.show2DView();
   }
 
   /**
-   * Hides all 2D layers and shows 3D layers and resets altitude and opacity
+   * Shows the level in 3D mode and resets altitude and opacity
    */
-  show3D(): void {
-    this.view.show3D();
+  show3DView(): void {
+    this.view.show3DView();
   }
 
   private render(geoJSON: GeoJSON.FeatureCollection): void {
@@ -89,21 +91,6 @@ export class IndoorLayer {
 
     this.view.render(renderModel, geoMap.selectedFeatures);
     this.view.drawDoors(DoorService.getDoorsByLevel(this.level));
-  }
-
-  /**
-   * Select feature when clicked
-   */
-  handleClick(feature: GeoJSON.Feature<any, any>): void {
-    console.log(feature);
-
-    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
-    DescriptionArea.update(accessibilityDescription, "description");
-
-    geoMap.selectedFeatures = [feature.id.toString()];
-    // TODO: might need to optimize this, needs a long time to update all layers at the moment
-    // idea: only update the layers that are needed
-    geoMap.indoorLayers.forEach((layer) => layer.updateLayer());
   }
 
   /**

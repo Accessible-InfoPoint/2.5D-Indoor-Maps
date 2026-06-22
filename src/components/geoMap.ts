@@ -14,7 +14,7 @@ import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
 import BuildingService from "../services/buildingService";
 import LoadingIndicator from "./ui/loadingIndicator";
-import { IndoorLayer } from "./indoorLayer";
+import { IndoorLevel } from "./indoorLevel";
 import AccessibilityService from "../services/accessibilityService";
 import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
@@ -27,7 +27,7 @@ export class GeoMap {
   mapInstance: Maptalks.Map = null;
   flatMapInstance: Maptalks.Map = null;
   currentLevel = INDOOR_LEVEL;
-  indoorLayers: Map<number, IndoorLayer>;
+  indoorLayers: Map<number, IndoorLevel>;
   selectedFeatures: string[] = [];
   flatMode = true;
   standardCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
@@ -141,7 +141,14 @@ export class GeoMap {
         .reverse()
         .map((val) => [
           val,
-          new IndoorLayer(LevelService.getLevelGeoJSON(val), val, 0),
+          new IndoorLevel(
+            LevelService.getLevelGeoJSON(val),
+            val,
+            {
+              onFeatureSelected: (feature) => this.handleFeatureSelection(feature),
+            },
+            0
+          ),
         ])
     );
     this.indoorLayers.forEach((layer) => {
@@ -173,7 +180,7 @@ export class GeoMap {
       );
     }, 350);
     setTimeout(() => {
-      // this.indoorLayer.animateAltitude(10, 0, 0, 0.25, 0.5)
+      // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
       console.log(this.mapInstance.getCenter(), this.mapInstance.getZoom());
     }, 1000);
   }
@@ -184,7 +191,7 @@ export class GeoMap {
     if (this.flatMode) {
       this.indoorLayers.get(this.currentLevel).hideAll();
       this.currentLevel = newLevel;
-      this.indoorLayers.get(this.currentLevel).hide3D();
+      this.indoorLayers.get(this.currentLevel).show2DView();
     } else {
       if (newLevel == this.currentLevel) {
         return;
@@ -213,7 +220,7 @@ export class GeoMap {
       const initialHeightNewLevel = finalHeightNewLevel + LEVEL_HEIGHT * difference + offset;
 
       [newLevel, newLevelTop, newLevelBottom].filter(item => ![oldLevel, oldLevelTop, oldLevelBottom].includes(item)).forEach(element => {
-        this.indoorLayers.get(element).show3D();
+        this.indoorLayers.get(element).show3DView();
       });
       setTimeout(() => {
         BackendService.getAllLevels().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
@@ -257,6 +264,18 @@ export class GeoMap {
 
   getCurrentLevel(): number {
     return this.currentLevel;
+  }
+
+  handleFeatureSelection(feature: GeoJSON.Feature): void {
+    console.log(feature);
+
+    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
+    DescriptionArea.update(accessibilityDescription, "description");
+
+    this.selectedFeatures = [feature.id.toString()];
+    // TODO: might need to optimize this, needs a long time to update all layers at the moment
+    // idea: only update the layers that are needed
+    this.indoorLayers.forEach((layer) => layer.updateLayer());
   }
 
   handleIndoorSearch(searchString: string): void {

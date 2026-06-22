@@ -22,10 +22,9 @@ import {
   PositionMarkerRenderItem,
   RoomRenderItem,
 } from "./indoorLevelRenderModel";
+import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 
-type FeatureClickHandler = (feature: GeoJSON.Feature) => void;
-
-export class MaptalksIndoorLevelView {
+export class MaptalksIndoorLevelView implements IndoorLevelView {
   private readonly roomsInstance: Maptalks.VectorLayer;
   private readonly roomNumbersInstance: Maptalks.VectorLayer;
   private readonly doorsInstance: Maptalks.VectorLayer;
@@ -65,7 +64,7 @@ export class MaptalksIndoorLevelView {
     private readonly level: number,
     altitude: number,
     private readonly map: Maptalks.Map,
-    private readonly onFeatureClick: FeatureClickHandler
+    private readonly events: IndoorLevelViewEvents
   ) {
     this.altitude = altitude;
 
@@ -99,7 +98,7 @@ export class MaptalksIndoorLevelView {
     }).addTo(map);
     this.markers = new MarkerClusterLayer(
       "markerCluster" + level,
-      onFeatureClick,
+      (feature) => this.events.onFeatureSelected(feature),
       undefined,
       {
         symbol: {
@@ -201,7 +200,7 @@ export class MaptalksIndoorLevelView {
     this.setAltitudeAndOpacity(0, 1);
   }
 
-  hide3D(): void {
+  show2DView(): void {
     this.threeLayer.hide();
     this.outlineInstance.hide();
     this.doorsInstance.show();
@@ -212,7 +211,7 @@ export class MaptalksIndoorLevelView {
     this.setAltitudeAndOpacity(0, 1);
   }
 
-  show3D(): void {
+  show3DView(): void {
     this.threeLayer.show();
     this.outlineInstance.show();
     this.doorsInstance.hide();
@@ -299,7 +298,7 @@ export class MaptalksIndoorLevelView {
     if (item.isVisibleIn3D) {
       this.outlineInstance.addGeometry(geo.copy());
     }
-    geo.on("click", () => this.onFeatureClick(item.feature));
+    geo.on("click", () => this.events.onFeatureSelected(item.feature));
     this.roomsInstance.addGeometry(geo);
     this.showRoomNumber(item);
     this.addMarker(item.feature);
@@ -385,7 +384,7 @@ export class MaptalksIndoorLevelView {
     const altitude = this.altitude;
     const level = this.level;
     const staircase = renderModel.staircase;
-    const onclick = (feature: GeoJSON.Feature) => this.onFeatureClick(feature);
+    const onclick = (feature: GeoJSON.Feature) => this.events.onFeatureSelected(feature);
 
     this.threeLayer.prepareToDraw = function() {
       this.getRenderer().context.clippingPlanes = [new Plane(new Vector3(0, 0, -1), this.altitudeToVector3(2.25 * LEVEL_HEIGHT, 2.25 * LEVEL_HEIGHT).x)];
