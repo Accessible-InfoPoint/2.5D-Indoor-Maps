@@ -46,7 +46,9 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
     }
 
     levelBtn.addEventListener("click", () => {
-      geoMap.handleLevelChange(parseFloat(level));
+      const didChangeLevel = geoMap.handleLevelChange(parseFloat(level));
+      if (!didChangeLevel)
+        return;
 
       for (const element of levelControl.children) {
         element.children[0].classList.remove("active");
@@ -139,6 +141,15 @@ function disableLevelShifters(): void {
   }
 }
 
+function setLevelSelectionDisabled(disabled: boolean): void {
+  for (const element of getRequiredElement("levelControl").children) {
+    const levelButton = element.firstElementChild;
+    if (levelButton instanceof HTMLButtonElement) {
+      levelButton.disabled = disabled;
+    }
+  }
+}
+
 function focusOnLevel(selectedLevel: number): void {
   const levelControl = getRequiredElement("levelControl");
   const list = levelControl.children;
@@ -181,4 +192,5 @@ export default {
   setupControlShifter,
   setMargin,
   setWindow,
+  setLevelSelectionDisabled,
 };

@@ -40,6 +40,7 @@ export class GeoMap {
   infoPoint: GeoJSON.Feature;
   infoPointLevel = INDOOR_LEVEL;
   configMode = false; // set only during configuration of building constants
+  private isLevelTransitionRunning = false;
 
   constructor() {
     const buildingConstants = BackendService.getBuildingConstants();
@@ -151,8 +152,11 @@ export class GeoMap {
     }, 1000);
   }
 
-  handleLevelChange(newLevel: number): void {
+  handleLevelChange(newLevel: number): boolean {
     const animationDuration = 1;
+
+    if (!this.flatMode && this.isLevelTransitionRunning)
+      return false;
 
     if (this.flatMode) {
       this.getIndoorLevel(this.currentLevel).hideAll();
@@ -160,7 +164,7 @@ export class GeoMap {
       this.getIndoorLevel(this.currentLevel).show2DView();
     } else {
       if (newLevel == this.currentLevel) {
-        return;
+        return true;
       }
       const oldLevel = this.getCurrentLevel();
       const oldLevelTop = this.getLevelAboveOrSelf(oldLevel);
@@ -180,36 +184,52 @@ export class GeoMap {
       [newLevel, newLevelTop, newLevelBottom].filter(item => ![oldLevel, oldLevelTop, oldLevelBottom].includes(item)).forEach(element => {
         this.getIndoorLevel(element).show3DView();
       });
-      setTimeout(() => {
-        BackendService.getAllLevels().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
-          this.getIndoorLevel(item).hideAll();
-        })
-      }, animationDuration * 1000);
-
-      this.getIndoorLevel(newLevel).animateAltitude(initialHeightNewLevel, finalHeightNewLevel, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, 1, animationDuration);
-      this.getIndoorLevel(oldLevel).animateAltitude(initialHeightOldLevel, finalHeightOldLevel, 1, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, animationDuration);
+      const animationPromises = [
+        this.getIndoorLevel(newLevel).animateAltitude(initialHeightNewLevel, finalHeightNewLevel, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, 1, animationDuration),
+        this.getIndoorLevel(oldLevel).animateAltitude(initialHeightOldLevel, finalHeightOldLevel, 1, Math.abs(difference) == 1 ? OPACITY_TRANSLUCENT_LAYER : 0, animationDuration),
+      ];
 
       if (newLevel != newLevelBottom) {
-        this.getIndoorLevel(newLevelBottom).animateAltitude(initialHeightNewLevel - LEVEL_HEIGHT, finalHeightNewLevel - LEVEL_HEIGHT, oldLevel == newLevelBottom ? 1 : oldLevelTop == newLevelBottom ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
+        animationPromises.push(
+          this.getIndoorLevel(newLevelBottom).animateAltitude(initialHeightNewLevel - LEVEL_HEIGHT, finalHeightNewLevel - LEVEL_HEIGHT, oldLevel == newLevelBottom ? 1 : oldLevelTop == newLevelBottom ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration)
+        );
       }
 
       if (newLevel != newLevelTop && newLevelTop != oldLevel) {
-        this.getIndoorLevel(newLevelTop).animateAltitude(initialHeightNewLevel + LEVEL_HEIGHT, finalHeightNewLevel + LEVEL_HEIGHT, oldLevel == newLevelTop ? 1 : oldLevelBottom == newLevelTop ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
+        animationPromises.push(
+          this.getIndoorLevel(newLevelTop).animateAltitude(initialHeightNewLevel + LEVEL_HEIGHT, finalHeightNewLevel + LEVEL_HEIGHT, oldLevel == newLevelTop ? 1 : oldLevelBottom == newLevelTop ? OPACITY_TRANSLUCENT_LAYER : 0, OPACITY_TRANSLUCENT_LAYER, animationDuration)
+        );
       }
 
       if (oldLevelBottom != newLevelTop && oldLevelBottom != newLevel && oldLevel != oldLevelBottom) {
-        this.getIndoorLevel(oldLevelBottom).animateAltitude(initialHeightOldLevel - LEVEL_HEIGHT, finalHeightOldLevel - LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
+        animationPromises.push(
+          this.getIndoorLevel(oldLevelBottom).animateAltitude(initialHeightOldLevel - LEVEL_HEIGHT, finalHeightOldLevel - LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration)
+        );
       }
 
       if (oldLevelTop != newLevelBottom && oldLevelTop != newLevel && oldLevel != oldLevelTop) {
-        this.getIndoorLevel(oldLevelTop).animateAltitude(initialHeightOldLevel + LEVEL_HEIGHT, finalHeightOldLevel + LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration);
+        animationPromises.push(
+          this.getIndoorLevel(oldLevelTop).animateAltitude(initialHeightOldLevel + LEVEL_HEIGHT, finalHeightOldLevel + LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration)
+        );
       }
 
       this.currentLevel = newLevel;
+      this.isLevelTransitionRunning = true;
+      LevelControl.setLevelSelectionDisabled(true);
+
+      Promise.all(animationPromises).then(() => {
+        BackendService.getAllLevels().filter(item => ![newLevel, newLevelTop, newLevelBottom].includes(item)).forEach(item => {
+          this.getIndoorLevel(item).hideAll();
+        })
+      }).finally(() => {
+        this.isLevelTransitionRunning = false;
+        LevelControl.setLevelSelectionDisabled(false);
+      });
     }
 
     const message = LevelService.getCurrentLevelDescription(this.currentLevel);
     DescriptionArea.update(message);
+    return true;
   }
 
   // only support whole level differences
@@ -251,8 +271,9 @@ export class GeoMap {
           0,
           "Indoor search result levels"
         );
-        LevelControl.focusOnLevel(selectedLevel);
-        this.handleLevelChange(selectedLevel);
+        if (this.handleLevelChange(selectedLevel)) {
+          LevelControl.focusOnLevel(selectedLevel);
+        }
 
         const accessibilityDescription =
           FeatureService.getAccessibilityDescription(result);
