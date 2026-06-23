@@ -11,10 +11,11 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: "22"
+        node-version-file: ".node-version"
+        cache: "npm"
 
     - name: Install modules
-      run: npm install
+      run: npm ci
 
     - name: Run tests
       run: npm test
