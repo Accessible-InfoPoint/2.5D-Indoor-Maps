@@ -6,8 +6,13 @@ jest.mock("../../src/services/featureService", () => ({
   getFeatureStyle: jest.fn()
 }));
 jest.mock("../../src/services/colorService", () => ({
-  colors: {
+  getCurrentColors: () => ({
     roomColorS: "#ff0000",
+  }),
+  default: {
+    getCurrentColors: () => ({
+      roomColorS: "#ff0000",
+    }),
   },
 }));
 

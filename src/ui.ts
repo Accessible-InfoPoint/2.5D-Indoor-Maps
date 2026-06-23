@@ -4,11 +4,21 @@ import SearchForm from "./components/ui/searchForm";
 import ZoomControl from "./components/ui/zoomControl";
 import WheelchairModeControl from "./components/ui/wheelchairModeControl";
 import Switch2DControl from "./components/ui/switch2DControl";
+import Legend from "./components/ui/legend";
+import { translate } from "./utils/translate";
 
 export function setupUi(geoMap: GeoMap): void {
+  const refreshSettings = () => {
+    geoMap.refreshSettings();
+    Legend.create();
+    SearchForm.updateLabels();
+    UserProfileModal.render(refreshSettings);
+    translate();
+  };
+
   SearchForm.render(geoMap);
-  UserProfileModal.render();
+  UserProfileModal.render(refreshSettings);
   ZoomControl.setup(geoMap);
-  WheelchairModeControl.setup();
+  WheelchairModeControl.setup(refreshSettings);
   Switch2DControl.setup(geoMap);
 }

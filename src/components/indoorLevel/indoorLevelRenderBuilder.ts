@@ -1,5 +1,5 @@
 import FeatureService from "../../services/featureService";
-import ColorService, { colors } from "../../services/colorService";
+import ColorService from "../../services/colorService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import { extractLevels } from "../../utils/extractLevels";
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../../utils/drawableElementFilter";
@@ -111,7 +111,7 @@ function buildSelectedFeatureStyle(feature: GeoJSON.Feature, userProfile: UserGr
   }
 
   return {
-    polygonFill: colors.roomColorS,
+    polygonFill: ColorService.getCurrentColors().roomColorS,
     polygonPatternFile: userProfile == UserGroupEnum.wheelchairUsers ? patternFill : null,
   };
 }

@@ -17,6 +17,11 @@ jest.mock('../../src/services/languageService', () => ({
     languageHeader: 'Languages',
     switch2DButton: '2D Mode',
     switchWheelchairModeButton: 'Wheelchair Mode',
+    zoomInButton: 'Zoom in',
+    zoomOutButton: 'Zoom out',
+    changeLevel: 'Change to level ',
+    showPreviousLevels: 'Show previous levels',
+    showNextLevels: 'Show next levels',
     saveButton: 'Save',
     closeButton: 'Close',
   },
@@ -31,6 +36,13 @@ describe('translate()', () => {
       <ul id="languageList"></ul>
       <button id="switch2DLabel"></button>
       <button id="switchWheelchairMode"></button>
+      <button id="zoomControlInLabel"></button>
+      <button id="zoomControlOutLabel"></button>
+      <button id="levelShiftUp"></button>
+      <button id="levelShiftDown"></button>
+      <ul id="levelControl">
+        <li><button>1</button></li>
+      </ul>
       <button class="saveButton"></button>
       <button class="closeButton"></button>
     `;
@@ -45,10 +57,19 @@ describe('translate()', () => {
     translate();
     const userProfileList = getRequiredElement('userProfileList');
     const switch2DLabel = getRequiredElement('switch2DLabel');
+    const zoomControlInLabel = getRequiredElement('zoomControlInLabel');
+    const levelShiftUp = getRequiredElement('levelShiftUp');
+    const levelButton = getRequiredElement('levelControl').children[0].firstElementChild as HTMLElement;
 
     expect(userProfileList.ariaLabel).toBe('Profiles');
     expect(switch2DLabel.title).toBe('2D Mode');
     expect(switch2DLabel.ariaLabel).toBe('2D Mode');
+    expect(zoomControlInLabel.title).toBe('Zoom in');
+    expect(zoomControlInLabel.ariaLabel).toBe('Zoom in');
+    expect(levelShiftUp.title).toBe('Show previous levels');
+    expect(levelShiftUp.ariaLabel).toBe('Show previous levels');
+    expect(levelButton.title).toBe('Change to level 1');
+    expect(levelButton.ariaLabel).toBe('Change to level 1');
   });
 
   it('updates button text content by class', () => {

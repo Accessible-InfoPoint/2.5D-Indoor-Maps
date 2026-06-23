@@ -24,6 +24,10 @@ function render(geoMap: GeoMap): void {
     }
   });
 
+  updateLabels();
+}
+
+function updateLabels(): void {
   indoorSearchSubmit.innerText = lang.indoorSearchSubmit;
   indoorSearchInput.setAttribute("placeholder", lang.indoorSearchPlaceholder);
   indoorSearchInput.setAttribute("aria-label", lang.indoorSearchPlaceholder);
@@ -31,4 +35,5 @@ function render(geoMap: GeoMap): void {
 
 export default {
   render,
+  updateLabels,
 };

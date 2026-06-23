@@ -7,6 +7,7 @@ import * as stringDe from "../../public/strings/lang.de.json";
 
 const defaultLanguage = LanguageSettingsEnum.english;
 const languageKey = "language";
+type LanguageStrings = typeof string;
 
 function getCurrentLanguage(): LanguageSettingsEnum {
   const storedLanguage = localStorage.getItem(languageKey);
@@ -24,11 +25,11 @@ function getCurrentLanguageAcronym(): string {
 
 function setLanguage(language: LanguageSettingsEnum): void {
   localStorage.setItem(languageKey, language.toString());
-  /*
-   * Hack: reload window location to properly update all profile-specific information.
-   * Relevant data is stored in localStorage and remains persistent after reload.
-   */
-  setTimeout(window.location.reload.bind(window.location), 200);
+  lang = getLanguageStrings(language);
+}
+
+function getLanguageStrings(language: LanguageSettingsEnum): LanguageStrings {
+  return language == LanguageSettingsEnum.english ? string : stringDe;
 }
 
 export default {
@@ -38,5 +39,4 @@ export default {
 };
 
 /*exported language json for the use in all components*/
-export const lang =
-  getCurrentLanguage() == LanguageSettingsEnum.english ? string : stringDe;
+export let lang = getLanguageStrings(getCurrentLanguage());

@@ -90,6 +90,7 @@ function getLineThickness(): number {
 export default {
   getCurrentProfile,
   setCurrentProfile,
+  getCurrentColors,
   getCurrentColorTranslation,
   getEnvOpacity,
   setEnvOpacity,
@@ -98,5 +99,3 @@ export default {
   getLineThickness,
   setLineThickness,
 };
-
-export const colors = getCurrentColors();

@@ -6,20 +6,31 @@ import UserService from "../../../services/userService";
 import { lang } from "../../../services/languageService";
 import { getRequiredElement } from "../../../utils/domHelpers";
 
+type SettingsChangeHandler = () => void;
+
 const userFeatureSelectionModal = new Modal(
   getRequiredElement("userFeatureSelectionModal"),
   { backdrop: "static", keyboard: false }
 );
 
-const checkboxState = FeatureService.getCurrentFeatures();
+let checkboxState = FeatureService.getCurrentFeatures();
 
-function render(): void {
+function render(onSettingsChanged: SettingsChangeHandler): void {
   //create checkboxes and headings
+  checkboxState = FeatureService.getCurrentFeatures();
   const currentProfile = UserService.getCurrentProfile();
   const userAccessibleFeatureList = getRequiredElement(
     "userAccessibleFeatureList"
   );
   const userFeatureList = getRequiredElement("userFeatureList");
+  userAccessibleFeatureList.innerHTML = "";
+  userFeatureList.innerHTML = "";
+  userAccessibleFeatureList.style.removeProperty("display");
+  userFeatureList.style.removeProperty("display");
+  if (userAccessibleFeatureList.previousElementSibling instanceof HTMLElement)
+    userAccessibleFeatureList.previousElementSibling.style.removeProperty("display");
+  if (userFeatureList.previousElementSibling instanceof HTMLElement)
+    userFeatureList.previousElementSibling.style.removeProperty("display");
 
   UserFeatureSelection.forEach((v) => {
     if (v.userGroups.some((g: any) => g === currentProfile)) {
@@ -39,7 +50,7 @@ function render(): void {
     lang.accessibleFeatureSelectionHeader;
 
   const saveFeaturesButton = getRequiredElement("saveFeatureSelection");
-  saveFeaturesButton.onclick = () => onSave();
+  saveFeaturesButton.onclick = () => onSave(onSettingsChanged);
 
   removeEmpty();
 }
@@ -78,7 +89,7 @@ function renderCheckbox(v: any): HTMLDivElement {
 
   label.className = "form-check-label";
   label.htmlFor = v.id;
-  label.innerText = v.name;
+  label.innerText = getFeatureName(v.id);
 
   checkbox_div.appendChild(checkbox);
   checkbox_div.appendChild(label);
@@ -86,19 +97,41 @@ function renderCheckbox(v: any): HTMLDivElement {
   return checkbox_div;
 }
 
+function getFeatureName(id: string): string {
+  switch (id) {
+    case "entrancesExits":
+      return lang.userProfileEntranceExit;
+    case "toilets":
+      return lang.userProfileToilets;
+    case "elevators":
+      return lang.userProfileElevators;
+    case "stairs":
+      return lang.userProfileStairs;
+    case "emergencyExits":
+      return lang.userProfileEmergencyExit;
+    case "service":
+      return lang.userProfileServices;
+    case "ramps":
+      return lang.userProfileRamps;
+    case "tactileLines":
+      return lang.userProfileTactileLines;
+    case "disabledParking":
+      return lang.userProfileDisabledParking;
+    case "accessibleToilets":
+      return lang.userProfileAccessibleToilets;
+    default:
+      return id;
+  }
+}
+
 function hide(): void {
   userFeatureSelectionModal.hide();
 }
 
-function onSave(): void {
+function onSave(onSettingsChanged: SettingsChangeHandler): void {
   FeatureService.setCurrentFeatures(checkboxState);
   UserProfileModal.hideAll();
-
-  /*
-   * Hack: reload window location to properly update all profile-specific information.
-   * Relevant data is stored in localStorage and remains persistent after reload.
-   */
-  setTimeout(window.location.reload.bind(window.location), 200);
+  onSettingsChanged();
 }
 
 export default {

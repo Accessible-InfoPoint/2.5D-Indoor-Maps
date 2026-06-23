@@ -33,6 +33,8 @@
 
   "switch2DButton": "Switch to 2.5D View",
   "switchWheelchairModeButton": "Switch to wheelchair mode",
+  "zoomInButton": "Zoom in",
+  "zoomOutButton": "Zoom out",
 
   "colorProfile_none": "none",
   "colorProfile_black_white": "black-white",
@@ -46,6 +48,8 @@
   "selectedBuildingPrefix": "Selected building: ",
 
   "changeLevel": "Change to level ",
+  "showPreviousLevels": "Show higher levels",
+  "showNextLevels": "Show lower levels",
   "currentLevel": "Current level: ",
 
   "searchBuildingFound": "Building found.",

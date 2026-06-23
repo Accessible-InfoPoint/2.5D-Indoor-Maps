@@ -10,7 +10,7 @@ import {
   STAIRCASE_OPACITY,
   STAIRCASE_OUTLINE_OPACITY,
 } from "../../../public/strings/settings.json";
-import { colors } from "../../services/colorService";
+import ColorService from "../../services/colorService";
 import DoorService from "../../services/doorService";
 import FeatureService from "../../services/featureService";
 import { DoorDataInterface } from "../../models/doorDataInterface";
@@ -46,25 +46,25 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   private altitude: number;
 
   private readonly staircaseMaterial = new MeshBasicMaterial({
-    color: colors.stairsColor,
+    color: ColorService.getCurrentColors().stairsColor,
     opacity: STAIRCASE_OPACITY,
     transparent: true,
     side: DoubleSide,
   });
   private readonly staircaseOutlineMaterial = new MeshBasicMaterial({
-    color: colors.stairsColor,
+    color: ColorService.getCurrentColors().stairsColor,
     opacity: STAIRCASE_OUTLINE_OPACITY,
     transparent: true,
     side: DoubleSide,
   });
   private readonly staircaseSelectedMaterial = new MeshBasicMaterial({
-    color: colors.roomColorS,
+    color: ColorService.getCurrentColors().roomColorS,
     opacity: STAIRCASE_OPACITY,
     transparent: true,
     side: DoubleSide,
   });
   private readonly staircaseSelectedOutlineMaterial = new MeshBasicMaterial({
-    color: colors.roomColorS,
+    color: ColorService.getCurrentColors().roomColorS,
     opacity: STAIRCASE_OUTLINE_OPACITY,
     transparent: true,
     side: DoubleSide,
@@ -396,11 +396,16 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   }
 
   private renderStaircases(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
+    const colors = ColorService.getCurrentColors();
     const meshes: BaseObject[] = [];
     const material1 = this.staircaseMaterial;
     const material2 = this.staircaseOutlineMaterial;
     const selectedMaterial1 = this.staircaseSelectedMaterial;
     const selectedMaterial2 = this.staircaseSelectedOutlineMaterial;
+    material1.color.set(colors.stairsColor);
+    material2.color.set(colors.stairsColor);
+    selectedMaterial1.color.set(colors.roomColorS);
+    selectedMaterial2.color.set(colors.roomColorS);
     const altitude = this.altitude;
     const level = this.level;
     const staircase = renderModel.staircase;

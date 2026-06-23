@@ -4,20 +4,23 @@ import FeatureSelectionModal from "./userFeatureSelectionModal";
 import { UserGroups } from "../../../data/userGroups";
 import { UserSettings } from "../../../data/userSettings";
 import { UserGroupEnum } from "../../../models/userGroupEnum";
+import { UserSettingsEnum } from "../../../models/userSettingsEnum";
 import { LanguageSettings } from "../../../data/languageSettings";
 import { LanguageSettingsEnum } from "../../../models/languageSettingsEnum";
 import { getRequiredElement } from "../../../utils/domHelpers";
 import VisualSettingsModal from "./userVisualSettingsModal";
 
-function render(): void {
-  renderProfiles(); //profile quick switch
-  renderSettings(); //settings
-  renderLanguages(); //language selection
+type SettingsChangeHandler = () => void;
 
-  renderLinkedModals();
+function render(onSettingsChanged: SettingsChangeHandler): void {
+  renderProfiles(onSettingsChanged); //profile quick switch
+  renderSettings(); //settings
+  renderLanguages(onSettingsChanged); //language selection
+
+  renderLinkedModals(onSettingsChanged);
 }
 
-function renderProfiles(): void {
+function renderProfiles(onSettingsChanged: SettingsChangeHandler): void {
   const userProfileList = getRequiredElement("userProfileList");
   userProfileList.innerHTML = "";
 
@@ -31,12 +34,13 @@ function renderProfiles(): void {
     const li = document.createElement("li");
     const button = document.createElement("button");
     button.className = "square";
+    const name = getUserProfileName(k);
     if (v.icon.startsWith("\\")) {
-      button.innerHTML = '<img aria-label="' + v.name + '" title="' + v.name + '" src="' + v.icon + '" width="35" height="35" ></span>';
+      button.innerHTML = '<img aria-label="' + name + '" title="' + name + '" src="' + v.icon + '" width="35" height="35" ></span>';
     } else {
-      button.innerHTML = '<span aria-label="' + v.name + '" title="' + v.name + '"><i class="material-icons">' + v.icon + "</i></span>";
+      button.innerHTML = '<span aria-label="' + name + '" title="' + name + '"><i class="material-icons">' + v.icon + "</i></span>";
     }
-    button.onclick = () => setUserProfile(k);
+    button.onclick = () => setUserProfile(k, onSettingsChanged);
 
     if (UserService.getCurrentProfile() === k) {
       button.classList.add("active");
@@ -57,11 +61,12 @@ function renderSettings(): void {
   label.className = "label";
   userSettingsList.appendChild(label);
 
-  UserSettings.forEach((v) => {
+  UserSettings.forEach((v, k) => {
     const li = document.createElement("li");
     const button = document.createElement("button");
+    const name = getUserSettingName(k);
     button.className = "square";
-    button.innerHTML = '<span aria-label="' + v.name + '" title="' + v.name + '"><i class="material-icons">' + v.icon + "</i></span>";
+    button.innerHTML = '<span aria-label="' + name + '" title="' + name + '"><i class="material-icons">' + v.icon + "</i></span>";
     button.setAttribute("data-bs-target", v.linkedModal);
     button.setAttribute("data-bs-toggle", "modal");
 
@@ -70,7 +75,7 @@ function renderSettings(): void {
   });
 }
 
-function renderLanguages(): void {
+function renderLanguages(onSettingsChanged: SettingsChangeHandler): void {
   const languageList = getRequiredElement("languageList");
   languageList.innerHTML = "";
 
@@ -85,7 +90,7 @@ function renderLanguages(): void {
     const button = document.createElement("button");
     button.className = "square";
     button.innerHTML = '<span aria-label="' + v.name + '" title="' + v.name + '">' + v.display + "</span>";
-    button.onclick = () => setLanguage(k);
+    button.onclick = () => setLanguage(k, onSettingsChanged);
 
     if (LanguageService.getCurrentLanguage() === k) {
       button.classList.add("active");
@@ -96,9 +101,9 @@ function renderLanguages(): void {
   });
 }
 
-function renderLinkedModals() {
-  FeatureSelectionModal.render();
-  VisualSettingsModal.render();
+function renderLinkedModals(onSettingsChanged: SettingsChangeHandler) {
+  FeatureSelectionModal.render(onSettingsChanged);
+  VisualSettingsModal.render(onSettingsChanged);
 }
 
 function show(): void {
@@ -109,14 +114,39 @@ function hideAll(): void {
   VisualSettingsModal.hide();
 }
 
-function setUserProfile(userGroup: UserGroupEnum): void {
+function setUserProfile(userGroup: UserGroupEnum, onSettingsChanged: SettingsChangeHandler): void {
   UserService.setProfile(userGroup);
   hideAll();
+  onSettingsChanged();
 }
 
-function setLanguage(language: LanguageSettingsEnum): void {
+function setLanguage(language: LanguageSettingsEnum, onSettingsChanged: SettingsChangeHandler): void {
   LanguageService.setLanguage(language);
   hideAll();
+  onSettingsChanged();
+}
+
+function getUserProfileName(userGroup: UserGroupEnum): string {
+  switch (userGroup) {
+    case UserGroupEnum.blindPeople:
+      return lang.userProfileVisImpairments;
+    case UserGroupEnum.wheelchairUsers:
+      return lang.userProfileWheelchair;
+    case UserGroupEnum.noImpairments:
+    default:
+      return lang.userProfileNoSpecialNeeds;
+  }
+}
+
+function getUserSettingName(setting: UserSettingsEnum): string {
+  switch (setting) {
+    case UserSettingsEnum.visualSettings:
+      return lang.userProfileVisualSettings;
+    case UserSettingsEnum.featureSelection:
+      return lang.userProfileFeatureSelection;
+    default:
+      return "";
+  }
 }
 
 export default {

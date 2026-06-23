@@ -268,6 +268,14 @@ export class GeoMap {
     //wall weight rendered per feature -> feature service
   };
 
+  refreshSettings(): void {
+    this.applyStyleFilters();
+    AccessibilityService.reset();
+    this.indoorLayers.forEach((layer) => layer.updateLayer());
+    const message = LevelService.getCurrentLevelDescription(this.currentLevel);
+    DescriptionArea.update(message);
+  }
+
   private getIndoorLevel(level: number): IndoorLevel {
     return getRequiredMapValue(this.indoorLayers, level, "Indoor layers");
   }

@@ -12,6 +12,24 @@ export function translate(): void {
   getRequiredElement("switch2DLabel").ariaLabel = lang.switch2DButton;
   getRequiredElement("switchWheelchairMode").title = lang.switchWheelchairModeButton;
   getRequiredElement("switchWheelchairMode").ariaLabel = lang.switchWheelchairModeButton;
+  getRequiredElement("zoomControlInLabel").title = lang.zoomInButton;
+  getRequiredElement("zoomControlInLabel").ariaLabel = lang.zoomInButton;
+  getRequiredElement("zoomControlOutLabel").title = lang.zoomOutButton;
+  getRequiredElement("zoomControlOutLabel").ariaLabel = lang.zoomOutButton;
+  getRequiredElement("levelShiftUp").title = lang.showPreviousLevels;
+  getRequiredElement("levelShiftUp").ariaLabel = lang.showPreviousLevels;
+  getRequiredElement("levelShiftDown").title = lang.showNextLevels;
+  getRequiredElement("levelShiftDown").ariaLabel = lang.showNextLevels;
+
+  for (const element of getRequiredElement("levelControl").children) {
+    const levelButton = element.firstElementChild;
+    if (!(levelButton instanceof HTMLElement) || levelButton.textContent === null)
+      continue;
+
+    const changeToLevel = lang.changeLevel + levelButton.textContent;
+    levelButton.title = changeToLevel;
+    levelButton.ariaLabel = changeToLevel;
+  }
 
   for (const element of document.getElementsByClassName("saveButton")) {
     element.textContent = lang.saveButton

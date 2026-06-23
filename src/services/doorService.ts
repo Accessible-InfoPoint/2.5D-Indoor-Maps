@@ -1,6 +1,6 @@
 import { DoorDataInterface } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
-import { colors } from "../services/colorService";
+import ColorService from "../services/colorService";
 import FeatureService from "../services/featureService";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
@@ -141,7 +141,7 @@ function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): D
     })[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
 
   if (door.rooms.some(feature => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
-    color = colors.roomColorS; // at least one room is selected, color door in selected room color
+    color = ColorService.getCurrentColors().roomColorS; // at least one room is selected, color door in selected room color
 
   if (!door.orientation)
     return renderData;

@@ -13,13 +13,12 @@ import {
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
-import ColorService, { colors } from "./colorService";
+import ColorService from "./colorService";
 import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
-const currentlySelectedFeatures: Map<any, boolean> = getCurrentFeatures();
 
 export interface AccessibilityMarkerData {
   coordinates: GeoJSON.Position;
@@ -53,6 +52,7 @@ function getAccessibilityDescription(feature: GeoJSON.Feature): string {
 
 function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
   if (tags == undefined) return false;
+  const currentlySelectedFeatures = getCurrentFeatures();
   const hasMatched = tags.some((t) => {
     return currentlySelectedFeatures.get(UserFeatureEnum[t]);
   });
@@ -95,6 +95,7 @@ function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMark
 
 function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
   const properties = getRequiredFeatureProperties(feature);
+  const colors = ColorService.getCurrentColors();
   let fill = "#fff";
   let pattern_fill: string | null = null;
   const lineWidth = getWallWeight(feature) + ColorService.getLineThickness() / 20;
@@ -142,9 +143,9 @@ function getWallWeight(feature: GeoJSON.Feature<any>): number {
     : WALL_WEIGHT;
 }
 
-export function getCurrentFeatures(): Map<UserFeatureEnum, boolean> {
+export function getCurrentFeatures(): Map<string, boolean> {
   const currentProfile = UserService.getCurrentProfile();
-  const currentlySelectedFeatures: Map<UserFeatureEnum, boolean> =
+  const currentlySelectedFeatures: Map<string, boolean> =
     localStorage.getItem("currentlySelectedFeatures")
       ? new Map(JSON.parse(localStorage.currentlySelectedFeatures))
       : (() => {
@@ -163,7 +164,7 @@ export function getCurrentFeatures(): Map<UserFeatureEnum, boolean> {
   return currentlySelectedFeatures;
 }
 
-export function setCurrentFeatures(checkboxState: Map<UserFeatureEnum, boolean>): void {
+export function setCurrentFeatures(checkboxState: Map<string, boolean>): void {
   localStorage.currentlySelectedFeatures = JSON.stringify([
     ...checkboxState.entries(),
   ]);

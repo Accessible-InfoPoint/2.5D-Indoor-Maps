@@ -5,6 +5,8 @@ import ColorService from "../../../services/colorService";
 import { lang } from "../../../services/languageService";
 import { getRequiredElement } from "../../../utils/domHelpers";
 
+type SettingsChangeHandler = () => void;
+
 const userVisualSettingsModal = new Modal(
   getRequiredElement("userVisualSettingsModal"),
   { backdrop: "static", keyboard: false }
@@ -31,7 +33,10 @@ const state: {
   },
 };
 
-function render(): void {
+function render(onSettingsChanged: SettingsChangeHandler): void {
+  syncStateFromStorage();
+  colorBlindnessList.innerHTML = "";
+  contrastSettingsList.innerHTML = "";
   renderColorBlindnessList();
   renderContrastSettingsList();
 
@@ -42,7 +47,14 @@ function render(): void {
     lang.contrastSettingsHeader;
 
   const saveFeaturesButton = getRequiredElement("saveVisualSettings");
-  saveFeaturesButton.onclick = () => onSave();
+  saveFeaturesButton.onclick = () => onSave(onSettingsChanged);
+}
+
+function syncStateFromStorage(): void {
+  state.selectedColorProfile = ColorService.getCurrentProfile();
+  state.contrastSettings.environmentOpacity[0] = ColorService.getEnvOpacity();
+  state.contrastSettings.colorStrength[0] = ColorService.getColorStrength();
+  state.contrastSettings.lineThickness[0] = ColorService.getLineThickness();
 }
 function renderColorBlindnessList(): void {
   const { colorProfiles: profiles } = state;
@@ -115,19 +127,14 @@ function handleChange() {
   renderColorBlindnessList();
 }
 
-function onSave() {
+function onSave(onSettingsChanged: SettingsChangeHandler) {
   UserProfileModal.hideAll();
 
   ColorService.setCurrentProfile(state.selectedColorProfile);
   ColorService.setEnvOpacity(state.contrastSettings.environmentOpacity[0]);
   ColorService.setColorStrength(state.contrastSettings.colorStrength[0]);
   ColorService.setLineThickness(state.contrastSettings.lineThickness[0]);
-
-  /*
-   * Hack: reload window location to properly update all profile-specific information.
-   * Relevant data is stored in localStorage and remains persistent after reload.
-   */
-  setTimeout(window.location.reload.bind(window.location), 200);
+  onSettingsChanged();
 }
 
 function hide(): void {

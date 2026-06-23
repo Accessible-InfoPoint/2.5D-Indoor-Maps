@@ -33,6 +33,8 @@
 
   "switch2DButton": "Zu 2.5D Ansicht wechseln",
   "switchWheelchairModeButton": "Zu Rollstuhl-Ansicht wechseln",
+  "zoomInButton": "Hineinzoomen",
+  "zoomOutButton": "Herauszoomen",
 
   "colorProfile_none": "Keine",
   "colorProfile_black_white": "Schwarz-Weiß",
@@ -46,6 +48,8 @@
   "selectedBuildingPrefix": "Ausgewähltes Gebäude: ",
 
   "changeLevel": "Wechsle zu Etage ",
+  "showPreviousLevels": "Höhere Etagen anzeigen",
+  "showNextLevels": "Untere Etagen anzeigen",
   "currentLevel": "Ausgewählte Etage: ",
 
   "searchBuildingFound": "Gebäude gefunden.",

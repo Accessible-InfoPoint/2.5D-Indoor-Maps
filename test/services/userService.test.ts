@@ -29,33 +29,10 @@ describe("userService", () => {
 
   describe("setProfile", () => {
     it("stores profile and removes selected features", () => {
-      const reloadMock = jest.fn();
-
-      Object.defineProperty(window, "location", {
-        value: { reload: reloadMock },
-        writable: true,
-      });
-
       userService.setProfile(UserGroupEnum.wheelchairUsers);
 
       expect(localStorage.getItem(profileKey)).toBe(UserGroupEnum.wheelchairUsers.toString());
       expect(localStorage.getItem(featureKey)).toBeNull();
-    });
-
-    it("calls window.location.reload after timeout", () => {
-      jest.useFakeTimers();
-
-      const reloadMock = jest.fn();
-
-      Object.defineProperty(window, "location", {
-        value: { reload: reloadMock },
-        writable: true,
-      });
-
-      userService.setProfile(UserGroupEnum.blindPeople);
-
-      jest.advanceTimersByTime(200);
-      expect(reloadMock).toHaveBeenCalled();
     });
   });
 });

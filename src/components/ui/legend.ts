@@ -1,4 +1,4 @@
-import { colors } from "../../services/colorService";
+import ColorService from "../../services/colorService";
 import { lang } from "../../services/languageService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import UserService from "../../services/userService";
@@ -14,6 +14,7 @@ function create(): void {
   label.className = "label";
   legendList.appendChild(label);
   legendList.ariaLabel = lang.legendLabel;
+  const colors = ColorService.getCurrentColors();
 
   addLegendRecord(legendList, colors.roomColor, lang.legendRoom);
   addLegendRecord(legendList, colors.toiletColor, lang.legendToilet);

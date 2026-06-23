@@ -5,7 +5,7 @@ import { getRequiredElement } from "../../utils/domHelpers";
 
 const wheelchairModeKey = "wheelchairMode";
 
-function setup(): void {
+function setup(onSettingsChanged: () => void): void {
   const uiWrapper = getRequiredElement("uiWrapper");
   const levelControl = getRequiredElement("levelControl");
   const indoorSearchWrapper = getRequiredElement("indoorSearchWrapper");
@@ -18,6 +18,7 @@ function setup(): void {
     if (uiWrapper.classList.contains("wheelchairMode")) {
       if (UserService.getCurrentProfile() != UserGroupEnum.wheelchairUsers) {
         UserService.setProfile(UserGroupEnum.wheelchairUsers);
+        onSettingsChanged();
       }
     }
     replaceIcons();
