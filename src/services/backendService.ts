@@ -38,6 +38,14 @@ const defaultBackendConfig: BackendConfig = {
 
 let backendConfig: BackendConfig = { ...defaultBackendConfig };
 
+type BuildingId = keyof typeof BuildingConstantsDefinition;
+type BuildingDefinition = typeof BuildingConstantsDefinition[BuildingId];
+
+interface LoadedBackendData {
+  buildingInterface: BuildingInterface;
+  geoJson: GeoJSON.FeatureCollection;
+}
+
 function parseBackendSource(value: string): BackendSourceEnum {
   if (Object.values(BackendSourceEnum).includes(value as BackendSourceEnum))
     return value as BackendSourceEnum;
@@ -76,36 +84,71 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 
   const currentBuilding = backendConfig.building;
   const buildingDefinition = BuildingConstantsDefinition[currentBuilding];
+  const loadedData = await loadBackendData(backendConfig, buildingDefinition);
 
-  if (backendConfig.source == BackendSourceEnum.cachedOverpass) {
-    await HttpService.fetchOverpassData();
-
-    buildingInterface = await BuildingService.handleSearch(HttpService.getBuildingData(), buildingDefinition.SEARCH_STRING);
-
-    // filter indoor elements by bounds of building
-    if (buildingInterface !== undefined) {
-      geoJson = BuildingService.filterByBounds(
-        HttpService.getIndoorData(),
-        buildingInterface.boundingBox
-      );
-    }
-  } else if (backendConfig.source == BackendSourceEnum.localGeojson) {
-    const full_geojson = await HttpService.fetchLocalGeojson(currentBuilding);
-
-    buildingInterface = await BuildingService.handleSearch(full_geojson, buildingDefinition.SEARCH_STRING);
-
-    if (buildingInterface !== undefined) {
-      geoJson = BuildingService.filterInsideAndLevel(full_geojson);
-    }
-  }
+  buildingInterface = loadedData.buildingInterface;
+  geoJson = loadedData.geoJson;
 
   console.log("BackendService BuildingInterface", structuredClone(buildingInterface));
   console.log("BackendService GeoJSON", structuredClone(geoJson));
 
-  // rewrite the geojson so that 
   const indoorGeoJson = getLoadedGeoJson();
   const currentBuildingInterface = getLoadedBuildingInterface();
 
+  normalizeLevelProperties(indoorGeoJson);
+  initializeDoors(indoorGeoJson);
+  buildingDescription = buildBuildingDescription(currentBuildingInterface);
+  buildingConstants = buildBuildingConstants(indoorGeoJson, buildingDefinition);
+}
+
+async function loadBackendData(
+  config: BackendConfig,
+  buildingDefinition: BuildingDefinition
+): Promise<LoadedBackendData> {
+  switch (config.source) {
+    case BackendSourceEnum.cachedOverpass:
+      return loadCachedOverpassData(buildingDefinition);
+    case BackendSourceEnum.localGeojson:
+      return loadLocalGeoJsonData(config.building, buildingDefinition);
+    default:
+      throw new Error(`Unsupported backend source "${config.source}".`);
+  }
+}
+
+async function loadCachedOverpassData(buildingDefinition: BuildingDefinition): Promise<LoadedBackendData> {
+  await HttpService.fetchOverpassData();
+
+  const loadedBuildingInterface = await BuildingService.handleSearch(
+    HttpService.getBuildingData(),
+    buildingDefinition.SEARCH_STRING
+  );
+
+  return {
+    buildingInterface: loadedBuildingInterface,
+    geoJson: BuildingService.filterByBounds(
+      HttpService.getIndoorData(),
+      loadedBuildingInterface.boundingBox
+    ),
+  };
+}
+
+async function loadLocalGeoJsonData(
+  currentBuilding: BuildingId,
+  buildingDefinition: BuildingDefinition
+): Promise<LoadedBackendData> {
+  const fullGeoJson = await HttpService.fetchLocalGeojson(currentBuilding);
+  const loadedBuildingInterface = await BuildingService.handleSearch(
+    fullGeoJson,
+    buildingDefinition.SEARCH_STRING
+  );
+
+  return {
+    buildingInterface: loadedBuildingInterface,
+    geoJson: BuildingService.filterInsideAndLevel(fullGeoJson),
+  };
+}
+
+function normalizeLevelProperties(indoorGeoJson: GeoJSON.FeatureCollection): void {
   indoorGeoJson.features.forEach(
     (feature) => {
       const properties = getRequiredFeatureProperties(feature);
@@ -131,8 +174,14 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
       );
     }
   )
+}
 
-  // initialize doors
+function initializeDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
+  addDoorFeatures(indoorGeoJson);
+  connectRoomsToDoors(indoorGeoJson);
+}
+
+function addDoorFeatures(indoorGeoJson: GeoJSON.FeatureCollection): void {
   indoorGeoJson.features.forEach(
     (feature) => {
       const properties = getRequiredFeatureProperties(feature);
@@ -149,68 +198,55 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
       DoorService.addDoor(feature.geometry.coordinates, levels, properties);
     }
   )
-  // Add rooms to the doors
+}
+
+function connectRoomsToDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
   indoorGeoJson.features.forEach(
     (feature) => {
-      if (isDrawableRoomOrArea(feature)) {
-        const coords = getRequiredArrayValue(
-          (feature.geometry as GeoJSON.Polygon).coordinates,
-          0,
-          "Room coordinates"
-        ).slice(1);
-        for (let i = 0; i < coords.length; i++) {
-          const coord = getRequiredArrayValue(coords, i, "Room coordinates");
-          if (DoorService.checkIfDoorExists(coord)) {
-            DoorService.addRoomToDoor(coord, feature);
-            // to correctly rotate door, it must be in line with previous and next coordinate
-            const prev = getRequiredArrayValue(coords, i - 1, "Room coordinates");
-            const after = getRequiredArrayValue(coords, (i + 1) % coords.length, "Room coordinates");
-            DoorService.calculateDoorOrientation(coord, prev, after);
-          }
-        }
-      }
+      if (isDrawableRoomOrArea(feature))
+        connectRoomToDoors(feature);
     }
   )
-  
-  // build building description
-  const buildingProperties = getRequiredFeatureProperties(currentBuildingInterface.feature);
+}
 
-  if (buildingProperties.name !== undefined) {
-    buildingDescription += buildingProperties.name;
-  
-    if (buildingProperties.loc_ref !== undefined) {
-      buildingDescription += " (" + buildingProperties.loc_ref + ")";
+function connectRoomToDoors(feature: GeoJSON.Feature): void {
+  const coords = getRequiredArrayValue(
+    (feature.geometry as GeoJSON.Polygon).coordinates,
+    0,
+    "Room coordinates"
+  ).slice(1);
+
+  for (let i = 0; i < coords.length; i++) {
+    const coord = getRequiredArrayValue(coords, i, "Room coordinates");
+    if (DoorService.checkIfDoorExists(coord)) {
+      DoorService.addRoomToDoor(coord, feature);
+      // to correctly rotate door, it must be in line with previous and next coordinate
+      const prev = getRequiredArrayValue(coords, i - 1, "Room coordinates");
+      const after = getRequiredArrayValue(coords, (i + 1) % coords.length, "Room coordinates");
+      DoorService.calculateDoorOrientation(coord, prev, after);
     }
   }
+}
 
-  // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
-  // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
-  const p1 = (
-    getRequiredMatch(
-      indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE1),
-      "Bearing calculation node 1"
-    )
-    .geometry as GeoJSON.Point
-  ).coordinates;
-  const p2 = (
-    getRequiredMatch(
-      indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + buildingDefinition.BEARING_CALC_NODE2),
-      "Bearing calculation node 2"
-    )
-    .geometry as GeoJSON.Point
-  ).coordinates;
+function buildBuildingDescription(currentBuildingInterface: BuildingInterface): string {
+  const buildingProperties = getRequiredFeatureProperties(currentBuildingInterface.feature);
 
-  const standardBearing =((
-    // angle of the line between the two points
-    Math.atan2(
-      p2[0] - p1[0],
-      // we need to use mercator projection for the latitude
-      CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
-    ) * (180 / Math.PI) + buildingDefinition.BEARING_OFFSET
-  // angle is between 0 and 360 after calculation (might even be above 360), map camera expects it between -180 and 180
-  + 180) % 360) - 180;
+  if (buildingProperties.name === undefined)
+    return "";
 
-  buildingConstants = {
+  if (buildingProperties.loc_ref !== undefined)
+    return buildingProperties.name + " (" + buildingProperties.loc_ref + ")";
+
+  return buildingProperties.name;
+}
+
+function buildBuildingConstants(
+  indoorGeoJson: GeoJSON.FeatureCollection,
+  buildingDefinition: BuildingDefinition
+): Record<string, number> {
+  const standardBearing = calculateStandardBearing(indoorGeoJson, buildingDefinition);
+
+  return {
     "standardZoom": buildingDefinition.STANDARD_ZOOM,
     "maxZoom": buildingDefinition.MAX_ZOOM,
     "minZoom": buildingDefinition.MIN_ZOOM,
@@ -219,6 +255,40 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
     "standardPitch3DMode": buildingDefinition.STANDARD_PITCH_3D_MODE,
     "standardZoom3DMode": buildingDefinition.STANDARD_ZOOM_3D_MODE
   }
+}
+
+function calculateStandardBearing(
+  indoorGeoJson: GeoJSON.FeatureCollection,
+  buildingDefinition: BuildingDefinition
+): number {
+  // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
+  // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
+  const p1 = getBearingCalculationNode(indoorGeoJson, buildingDefinition.BEARING_CALC_NODE1, "Bearing calculation node 1");
+  const p2 = getBearingCalculationNode(indoorGeoJson, buildingDefinition.BEARING_CALC_NODE2, "Bearing calculation node 2");
+
+  return ((
+    // angle of the line between the two points
+    Math.atan2(
+      p2[0] - p1[0],
+      // we need to use mercator projection for the latitude
+      CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
+    ) * (180 / Math.PI) + buildingDefinition.BEARING_OFFSET
+  // angle is between 0 and 360 after calculation (might even be above 360), map camera expects it between -180 and 180
+  + 180) % 360) - 180;
+}
+
+function getBearingCalculationNode(
+  indoorGeoJson: GeoJSON.FeatureCollection,
+  nodeId: number | string,
+  label: string
+): GeoJSON.Position {
+  return (
+    getRequiredMatch(
+      indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + nodeId),
+      label
+    )
+    .geometry as GeoJSON.Point
+  ).coordinates;
 }
 
 function getOutline(): number[][] {
