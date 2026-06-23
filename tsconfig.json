@@ -18,5 +18,5 @@
     "skipLibCheck": true,
     "types": ["jest", "node"]
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "index.ts", "server/**/*.ts"]
 }

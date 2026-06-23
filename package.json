@@ -2,16 +2,20 @@
   "name": "2.5d-indoor-maps",
   "version": "1.0.0",
   "description": "A 2.5D indoor mapping tool using OpenStreetMap data for accessible and intuitive multi-floor navigation.",
-  "main": "index.js",
+  "main": "dist/server/index.js",
   "scripts": {
-    "build": "webpack",
-    "start": "node index.js",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "webpack",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "npm run build && npm run serve",
+    "serve": "node dist/server/index.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck:server",
+    "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
-    "build-start": "npm run build && node index.js"
+    "build-start": "npm start"
   },
   "repository": {
     "type": "git",
@@ -28,13 +32,10 @@
     "jimp": "^1.6.1",
     "maptalks": "^1.0.5",
     "maptalks.three": "^0.40.1",
-    "node-localstorage": "^3.0.5",
-    "node-xml-stream": "^1.0.2",
     "osmtogeojson": "https://github.com/tyrasd/osmtogeojson#snyk-fix-65371a4c4920389f7e5127c141088511",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "three": "^0.175.0",
-    "xmlhttprequest": "^1.8.0"
+    "three": "^0.175.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

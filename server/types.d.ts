@@ -1,0 +1,20 @@
+declare module "express" {
+  interface ExpressApp {
+    use(...args: any[]): void;
+    listen(port: number, callback?: () => void): unknown;
+  }
+
+  interface ExpressFactory {
+    (): ExpressApp;
+    static(root: string): unknown;
+    json(): unknown;
+  }
+
+  const express: ExpressFactory;
+  export = express;
+}
+
+declare module "osmtogeojson" {
+  const osmToGeoJson: (data: unknown) => GeoJSON.FeatureCollection;
+  export = osmToGeoJson;
+}

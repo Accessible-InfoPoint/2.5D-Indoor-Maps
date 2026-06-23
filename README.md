@@ -16,18 +16,34 @@ The source files are written in [TypeScript](https://www.typescriptlang.org/).
 
 ## Installation
 
-First, ensure to have [Node.js](https://nodejs.org/en/) installed on your system. In order to install dependencies and
-to build a webpack-bundled JS file, execute the following steps:
+First, ensure to have [Node.js](https://nodejs.org/en/) installed on your system. Install dependencies with:
 
-1. Install dependencies: `npm i`
-2. Compile Typescript files and build JS bundle: `npm run build`
+```sh
+npm i
+```
+
+For production or reproducible deployments, prefer:
+
+```sh
+npm ci
+```
 
 ## Execution
 
-Run `node index.js` or `npm start` in order to start a small webserver. Afterwards, the app is accessible via your
-browser under the displayed url.
+Run one command to build the client and server and start the application:
 
-Alternatively, run `npm run build-start` to combine building and execution of the webserver.
+```sh
+npm start
+```
+
+Afterwards, the app is accessible via your browser under the displayed URL.
+
+For production-like usage, build once and run the compiled server artifact:
+
+```sh
+npm run build
+npm run serve
+```
 
 ## Project structure
 
@@ -45,7 +61,8 @@ This directory doesn't contain any application logic!
 
 ### _server_
 
-JS source files which are needed to run the Node-based webserver. Exported functions from here are called in `./index.js`.
+TypeScript source files which are needed to run the Node-based webserver. Exported functions from here are called in
+`./index.ts` and compiled to `dist/server`.
 
 ### _src_
 
