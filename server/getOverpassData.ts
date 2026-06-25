@@ -2,6 +2,8 @@ import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import {
   MAX_OVERPASS_FILE_AGE_IN_DAYS,
+  MAX_OVERPASS_RATE_LIMIT_RETRIES,
+  OVERPASS_USER_AGENT,
   RESOURCES_TO_DOWNLOAD,
 } from "./constants";
 import { downloadResource } from "./downloadResource";
@@ -15,18 +17,21 @@ export async function getOverpassData(): Promise<void> {
   console.log("=== Downloading Overpass data ===");
 
   const cache = await readDownloadCache();
-  await Promise.all(
-    RESOURCES_TO_DOWNLOAD.map(async (resource) => {
-      const outputPath = resolveProjectPath(resource.dest);
-      if (existsSync(outputPath) && !(await needToReDownloadFile(resource.dest, cache))) {
-        cache[resource.dest] ??= (await fs.stat(outputPath)).mtimeMs;
-        return;
-      }
+  for (const resource of RESOURCES_TO_DOWNLOAD) {
+    const outputPath = resolveProjectPath(resource.dest);
+    if (existsSync(outputPath) && !(await needToReDownloadFile(resource.dest, cache))) {
+      cache[resource.dest] ??= (await fs.stat(outputPath)).mtimeMs;
+      continue;
+    }
 
-      await downloadResource(resource.url, resource.dest);
-      cache[resource.dest] = Date.now();
-    })
-  );
+    await downloadResource(resource.url, resource.dest, {
+      headers: {
+        "User-Agent": OVERPASS_USER_AGENT,
+      },
+      maxRateLimitRetries: MAX_OVERPASS_RATE_LIMIT_RETRIES,
+    });
+    cache[resource.dest] = Date.now();
+  }
   await writeDownloadCache(cache);
 }
 

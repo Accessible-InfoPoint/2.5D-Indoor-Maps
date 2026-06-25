@@ -38,6 +38,21 @@ npm start
 
 Afterwards, the app is accessible via your browser under the displayed URL.
 
+Overpass requests identify the application with a default `User-Agent`. For a
+production deployment, set `OVERPASS_USER_AGENT` to an application identifier
+that also provides operator contact information:
+
+```sh
+OVERPASS_USER_AGENT="2.5D-Indoor-Maps/1.0 (contact@example.org)" npm start
+```
+
+PowerShell:
+
+```powershell
+$env:OVERPASS_USER_AGENT = "2.5D-Indoor-Maps/1.0 (contact@example.org)"
+npm start
+```
+
 For production-like usage, build once and run the compiled server artifact:
 
 ```sh

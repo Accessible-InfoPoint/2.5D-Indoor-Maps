@@ -13,8 +13,3 @@ declare module "express" {
   const express: ExpressFactory;
   export = express;
 }
-
-declare module "osmtogeojson" {
-  const osmToGeoJson: (data: unknown) => GeoJSON.FeatureCollection;
-  export = osmToGeoJson;
-}

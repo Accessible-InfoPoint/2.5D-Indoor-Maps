@@ -36,7 +36,7 @@
     "jimp": "^1.6.1",
     "maptalks": "^1.0.5",
     "maptalks.three": "^0.40.1",
-    "osmtogeojson": "https://github.com/tyrasd/osmtogeojson#snyk-fix-65371a4c4920389f7e5127c141088511",
+    "osm2geojson-ultra": "^4.0.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "three": "^0.175.0"

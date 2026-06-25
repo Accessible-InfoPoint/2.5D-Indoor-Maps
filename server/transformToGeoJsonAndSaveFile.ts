@@ -1,6 +1,5 @@
 import { promises as fs, existsSync } from "node:fs";
 import path from "node:path";
-import osmToGeoJson from "osmtogeojson";
 import { resolveProjectPath } from "./paths";
 
 export async function transformToGeoJsonAndSaveFile(responseText: string, dest: string): Promise<void> {
@@ -12,7 +11,14 @@ export async function transformToGeoJsonAndSaveFile(responseText: string, dest: 
   }
 
   const osmData = JSON.parse(responseText);
-  const transformedData = JSON.stringify(osmToGeoJson(osmData));
+  const { default: osm2geojson } = await import("osm2geojson-ultra");
+  const geoJson = osm2geojson(osmData);
+
+  if (geoJson?.type !== "FeatureCollection") {
+    throw new Error("OSM conversion did not produce a GeoJSON FeatureCollection");
+  }
+
+  const transformedData = JSON.stringify(geoJson);
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, transformedData);
