@@ -119,5 +119,6 @@ export class MapLibreMapView implements MapView {
     this.map.on("zoomend", () => console.log("zoom", this.map.getZoom()));
     this.map.on("rotateend", () => console.log("bearing", this.map.getBearing()));
     this.map.on("pitchend", () => console.log("pitch", this.map.getPitch()));
+    this.map.on("moveend", () => console.log("position", this.map.getCenter()));
   }
 }

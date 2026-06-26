@@ -35,7 +35,7 @@ import LoadingIndicator from "./components/ui/loadingIndicator";
 import Legend from "./components/ui/legend";
 import CenterBtn from "./components/ui/centeringButton";
 import LevelControl from "./components/ui/levelControl";
-import { setupUi } from "./ui";
+import { applyStoredUiLayout, setupUi } from "./ui";
 
 document.addEventListener("DOMContentLoaded", function () {
   LoadingIndicator.start();
@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
   BackendService.fetchBackendData().then(() => {
     LoadingIndicator.end();
     const geoMap = new GeoMap();
+    applyStoredUiLayout();
     geoMap.showBuilding();
     Legend.create();
     LevelControl.setupControlShifter();

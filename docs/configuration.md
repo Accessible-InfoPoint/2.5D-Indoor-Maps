@@ -24,7 +24,7 @@ General application, rendering, backend, and UI settings.
 | `CURRENT_BUILDING` | building id string | Building key from `buildingConstants.json` to load by default. |
 | `MAP_START_LAT` | latitude degrees string | Initial map latitude before backend data recenters the map. |
 | `MAP_START_LNG` | longitude degrees string | Initial map longitude before backend data recenters the map. |
-| `MAP_UI_GAP_PX` | pixels | Extra screen-space gap between visible UI overlays and the map camera padding. |
+| `MAP_UI_GAP_PX` | pixels | Reserved screen-space gap for UI-aware map padding. Currently not applied while MapLibre viewport padding is disabled. |
 | `MAP_MIN_BOUNDS_MARGIN_FACTOR` | unitless multiplier | Minimum amount to expand the building bounding box for pan constraints, relative to the building bbox span. |
 | `MAP_MAX_LATITUDE_BOUND` | latitude degrees | Safety clamp for expanded map bounds. Web Mercator maps should stay below the polar extremes. |
 | `VISIBLE_LEVEL_CONTROLS` | count | Number of level buttons visible in the level control window. |
@@ -42,6 +42,8 @@ match one of these top-level keys when loading local GeoJSON data.
 | `BEARING_CALC_NODE1` | OSM node id string | First reference node used to calculate the standard map bearing. |
 | `BEARING_CALC_NODE2` | OSM node id string | Second reference node used to calculate the standard map bearing. |
 | `STANDARD_ZOOM` | map zoom | Default 2D zoom level after centering on the building. |
+| `STANDARD_CENTER` | `[longitude, latitude]` | Optional 2D/regular-mode center. If omitted, the app uses the loaded building bounding box center. |
+| `STANDARD_CENTER_WHEELCHAIR_MODE` | `[longitude, latitude]` | Optional center for the wheelchair UI layout. If omitted, the app falls back to `STANDARD_CENTER`, then to the bounding box center. |
 | `MAX_ZOOM` | map zoom | Maximum user zoom level outside config mode. |
 | `MIN_ZOOM` | map zoom | Minimum user zoom level outside config mode. |
 | `STANDARD_BEARING_3D_MODE` | degrees | Bearing used when entering 2.5D mode. |

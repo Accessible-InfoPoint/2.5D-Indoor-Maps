@@ -6,7 +6,6 @@ import {
   MAP_MAX_LATITUDE_BOUND,
   MAP_MIN_BOUNDS_MARGIN_FACTOR,
   OPACITY_TRANSLUCENT_LAYER,
-  MAP_UI_GAP_PX,
 } from "../../public/strings/settings.json";
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
@@ -18,9 +17,9 @@ import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
-import BackendService from "../services/backendService";
+import BackendService, { type BuildingCenter } from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapBounds, MapView, MapViewportPadding } from "./map/mapView";
+import { MapBounds, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
@@ -33,7 +32,7 @@ export class GeoMap {
   indoorLayers: Map<number, IndoorLevel> = new Map();
   selectedFeatures: string[] = [];
   flatMode = true;
-  standardCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
+  standardCenter: BuildingCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
   standardBearing = 0;
   standardZoom = 0;
   maxZoom = 0;
@@ -43,7 +42,7 @@ export class GeoMap {
   standardBearing3DMode = 0;
   infoPoint: GeoJSON.Feature;
   infoPointLevel = INDOOR_LEVEL;
-  configMode = false; // set only during configuration of building constants
+  configMode = true; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
 
   constructor() {
@@ -138,12 +137,7 @@ export class GeoMap {
   centerMapToBuilding(): void {
     this.refreshMapViewportConstraints();
 
-    const boundingBox = BackendService.getBoundingBox();
-    const center = {
-      x: (boundingBox[0] + boundingBox[2]) / 2,
-      y: (boundingBox[1] + boundingBox[3]) / 2,
-    };
-
+    const center = this.getInitialMapCenter();
     this.standardCenter = [center.x, center.y];
 
     this.camera.animateToCenter(
@@ -159,15 +153,73 @@ export class GeoMap {
     }, 1000);
   }
 
-  refreshMapViewportConstraints(): void {
-    const padding = this.getViewportPadding();
+  private getInitialMapCenter(): { x: number; y: number } {
+    const configuredCenter = this.getConfiguredStandardCenter();
 
-    this.mapView.setViewportPadding(padding);
+    if (configuredCenter) {
+      return {
+        x: configuredCenter[0],
+        y: configuredCenter[1],
+      };
+    }
+
+    const boundingBox = BackendService.getBoundingBox();
+
+    return {
+      x: (boundingBox[0] + boundingBox[2]) / 2,
+      y: (boundingBox[1] + boundingBox[3]) / 2,
+    };
+  }
+
+  private updateStandardCenter(): void {
+    const center = this.getInitialMapCenter();
+
+    this.standardCenter = [center.x, center.y];
+  }
+
+  private getConfiguredStandardCenter(): BuildingCenter | undefined {
+    const buildingConstants = BackendService.getBuildingConstants();
+
+    if (
+      this.isWheelchairLayoutActive() &&
+      buildingConstants.standardCenterWheelchairMode
+    ) {
+      return buildingConstants.standardCenterWheelchairMode;
+    }
+
+    return buildingConstants.standardCenter;
+  }
+
+  private isWheelchairLayoutActive(): boolean {
+    return getRequiredElement("uiWrapper").classList.contains("wheelchairMode");
+  }
+
+  refreshMapViewportConstraints(recenterToStandardCenter = false): void {
+    this.mapView.setViewportPadding({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
     this.mapView.setMaxBounds(
-      this.expandBoundsForViewportPadding(
-        this.getBuildingBounds(),
-        padding
-      )
+      this.expandBuildingBounds(this.getBuildingBounds())
+    );
+    this.updateStandardCenter();
+
+    if (recenterToStandardCenter) {
+      this.centerCameraOnStandardCenter();
+    }
+  }
+
+  centerCameraOnStandardCenter(): void {
+    const currentCameraPosition = this.camera.getPosition();
+
+    this.camera.setCenterAndZoom(
+      {
+        x: this.standardCenter[0],
+        y: this.standardCenter[1],
+      },
+      currentCameraPosition.zoom
     );
   }
 
@@ -331,66 +383,11 @@ export class GeoMap {
     };
   }
 
-  private getViewportPadding(): MapViewportPadding {
-    const mapRect = getRequiredElement("map").getBoundingClientRect();
-    const mapWidth = Math.max(mapRect.width, 1);
-    const mapHeight = Math.max(mapRect.height, 1);
-    const padding: MapViewportPadding = {
-      top: MAP_UI_GAP_PX,
-      right: MAP_UI_GAP_PX,
-      bottom: MAP_UI_GAP_PX,
-      left: MAP_UI_GAP_PX,
-    };
-
-    getRequiredElement("uiWrapper")
-      .querySelectorAll<HTMLElement>(":scope > *")
-      .forEach((element) => {
-        const style = window.getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-
-        if (
-          style.display == "none" ||
-          style.visibility == "hidden" ||
-          rect.width == 0 ||
-          rect.height == 0 ||
-          rect.right <= mapRect.left ||
-          rect.left >= mapRect.right ||
-          rect.bottom <= mapRect.top ||
-          rect.top >= mapRect.bottom
-        ) {
-          return;
-        }
-
-        const centerX = ((rect.left + rect.right) / 2 - mapRect.left) / mapWidth;
-        const centerY = ((rect.top + rect.bottom) / 2 - mapRect.top) / mapHeight;
-
-        if (centerY < 1 / 3) {
-          padding.top = Math.max(padding.top, rect.bottom - mapRect.top + MAP_UI_GAP_PX);
-        } else if (centerY > 2 / 3) {
-          padding.bottom = Math.max(padding.bottom, mapRect.bottom - rect.top + MAP_UI_GAP_PX);
-        }
-
-        if (centerX < 1 / 3) {
-          padding.left = Math.max(padding.left, rect.right - mapRect.left + MAP_UI_GAP_PX);
-        } else if (centerX > 2 / 3) {
-          padding.right = Math.max(padding.right, mapRect.right - rect.left + MAP_UI_GAP_PX);
-        }
-      });
-
-    return padding;
-  }
-
-  private expandBoundsForViewportPadding(
-    bounds: MapBounds,
-    padding: MapViewportPadding
-  ): MapBounds {
-    const mapRect = getRequiredElement("map").getBoundingClientRect();
+  private expandBuildingBounds(bounds: MapBounds): MapBounds {
     const lngSpan = Math.max(bounds.east - bounds.west, Number.EPSILON);
     const latSpan = Math.max(bounds.north - bounds.south, Number.EPSILON);
-    const horizontalPaddingFactor = (padding.left + padding.right) / Math.max(mapRect.width, 1);
-    const verticalPaddingFactor = (padding.top + padding.bottom) / Math.max(mapRect.height, 1);
-    const lngMargin = lngSpan * Math.max(MAP_MIN_BOUNDS_MARGIN_FACTOR, horizontalPaddingFactor);
-    const latMargin = latSpan * Math.max(MAP_MIN_BOUNDS_MARGIN_FACTOR, verticalPaddingFactor);
+    const lngMargin = lngSpan * MAP_MIN_BOUNDS_MARGIN_FACTOR;
+    const latMargin = latSpan * MAP_MIN_BOUNDS_MARGIN_FACTOR;
 
     return {
       west: bounds.west - lngMargin,
