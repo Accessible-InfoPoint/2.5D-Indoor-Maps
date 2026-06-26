@@ -9,8 +9,8 @@ import {
   MAP_START_LAT,
   MAP_START_LNG,
 } from "../../../public/strings/settings.json";
-import { PendingIndoorLevelView } from "../indoorLevel/pendingIndoorLevelView";
-import { IndoorLevelView } from "../indoorLevel/indoorLevelView";
+import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
+import { MapLibreIndoorLevelView } from "../indoorLevel/maplibreIndoorLevelView";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { MapCamera } from "./mapCamera";
 import { MapLibreMapCamera } from "./maplibreMapCamera";
@@ -48,8 +48,12 @@ export class MapLibreMapView implements MapView {
     this.syncDebugLogging(options.configMode);
   }
 
-  createIndoorLevelView(): IndoorLevelView {
-    return new PendingIndoorLevelView();
+  createIndoorLevelView(
+    level: number,
+    _altitude: number,
+    events: IndoorLevelViewEvents
+  ): IndoorLevelView {
+    return new MapLibreIndoorLevelView(level, this.map, events);
   }
 
   setMaxBounds(bounds: MapBounds): void {
