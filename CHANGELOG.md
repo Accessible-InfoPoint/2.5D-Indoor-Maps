@@ -14,11 +14,15 @@ useful for the project.
 
 ### Added
 
-- 
+- Initial MapLibre map and camera adapter for the migration away from maptalks.
+- UI-aware map viewport padding and max-bounds constraints based on the loaded building bounding box.
+- Custom MapLibre left-button rotate/pitch handling for 3D mode through the existing `switchDragButton` interaction option.
+- Configuration reference documentation for `settings.json` and `buildingConstants.json`.
 
 ### Changed
 
-- 
+- Updated APB MapLibre zoom settings and allowed MapLibre pitch above the default 60 degree limit for the 2.5D view.
+- Switched the base map stylesheet from maptalks to MapLibre while keeping the rendering adapter boundary in place.
 
 ### Fixed
 

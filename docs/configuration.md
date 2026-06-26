@@ -1,0 +1,55 @@
+# Configuration Reference
+
+The application reads runtime configuration from JSON files in `public/strings`.
+JSON does not support comments, so field descriptions live here instead of in the
+configuration files.
+
+## `settings.json`
+
+General application, rendering, backend, and UI settings.
+
+| Field | Unit / Type | Description |
+| --- | --- | --- |
+| `INDOOR_LEVEL` | level number | Default indoor level shown after loading a building. |
+| `FILL_OPACITY` | ratio, `0` to `1` | Default opacity for filled indoor areas. |
+| `STAIRCASE_OPACITY` | ratio, `0` to `1` | Opacity for rendered staircase surfaces. |
+| `STAIRCASE_OUTLINE_OPACITY` | ratio, `0` to `1` | Opacity for staircase outlines. |
+| `OPACITY_TRANSLUCENT_LAYER` | ratio, `0` to `1` | Opacity used for neighboring translucent levels in 2.5D mode. |
+| `WALL_WEIGHT` | pixels | Base line width for walls. |
+| `WALL_WEIGHT_PAVING` | pixels | Base line width for tactile paving. |
+| `LEVEL_HEIGHT` | render units | Vertical distance between levels in 2.5D mode. |
+| `STAIRCASE_HANDRAIL_HEIGHT` | render units | Height used when rendering staircase handrails. |
+| `DOOR_MATCH_TOLERANCE_M` | meters | Distance tolerance for matching door points to room outlines. |
+| `BACKEND_SOURCE` | enum string | Data source. Current values are `localGeojson` and `cachedOverpass`. |
+| `CURRENT_BUILDING` | building id string | Building key from `buildingConstants.json` to load by default. |
+| `MAP_START_LAT` | latitude degrees string | Initial map latitude before backend data recenters the map. |
+| `MAP_START_LNG` | longitude degrees string | Initial map longitude before backend data recenters the map. |
+| `MAP_UI_GAP_PX` | pixels | Extra screen-space gap between visible UI overlays and the map camera padding. |
+| `MAP_MIN_BOUNDS_MARGIN_FACTOR` | unitless multiplier | Minimum amount to expand the building bounding box for pan constraints, relative to the building bbox span. |
+| `MAP_MAX_LATITUDE_BOUND` | latitude degrees | Safety clamp for expanded map bounds. Web Mercator maps should stay below the polar extremes. |
+| `VISIBLE_LEVEL_CONTROLS` | count | Number of level buttons visible in the level control window. |
+| `START_LEVEL_CONTROL_POSITION` | index | Initial position of the selected level inside the level control window. |
+
+## `buildingConstants.json`
+
+Per-building settings keyed by building id. The `CURRENT_BUILDING` setting must
+match one of these top-level keys when loading local GeoJSON data.
+
+| Field | Unit / Type | Description |
+| --- | --- | --- |
+| `SEARCH_STRING` | string | Building search token used to select the building feature from the loaded data. |
+| `BEARING_OFFSET` | degrees | Offset applied after deriving the standard map bearing from two reference nodes. |
+| `BEARING_CALC_NODE1` | OSM node id string | First reference node used to calculate the standard map bearing. |
+| `BEARING_CALC_NODE2` | OSM node id string | Second reference node used to calculate the standard map bearing. |
+| `STANDARD_ZOOM` | map zoom | Default 2D zoom level after centering on the building. |
+| `MAX_ZOOM` | map zoom | Maximum user zoom level outside config mode. |
+| `MIN_ZOOM` | map zoom | Minimum user zoom level outside config mode. |
+| `STANDARD_BEARING_3D_MODE` | degrees | Bearing used when entering 2.5D mode. |
+| `STANDARD_PITCH_3D_MODE` | degrees | Pitch used when entering 2.5D mode. MapLibre defaults to a 60 degree max pitch unless the map view raises it. |
+| `STANDARD_ZOOM_3D_MODE` | map zoom | Zoom used when entering 2.5D mode. |
+
+## Documentation Options
+
+For human-readable notes, keep this Markdown file next to the source. For editor
+validation and inline hints, add JSON Schema files later and reference them from
+the JSON files with a `$schema` field.
