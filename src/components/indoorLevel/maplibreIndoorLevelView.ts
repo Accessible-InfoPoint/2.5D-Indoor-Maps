@@ -1,4 +1,9 @@
-import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import type {
+  GeoJSONSource,
+  Map as MapLibreMap,
+  MapLayerMouseEvent,
+} from "maplibre-gl";
+import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import {
   IndoorLevelRenderModel,
   RoomRenderItem,
@@ -7,6 +12,7 @@ import {
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 
 type LayerVisibility = "visible" | "none";
+type OpacityExpression = ["*", ["coalesce", ["get", string], number], number];
 
 interface MapLibreIndoorLevelLayerSet {
   sourceId: string;
@@ -20,7 +26,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly roomNumbers: MapLibreIndoorLevelLayerSet;
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
   private pendingRenderModel?: IndoorLevelRenderModel;
+  private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
+  private readonly pendingLayerOperations: (() => void)[] = [];
   private visibleLayerIds = new Set<string>();
+  private layersInitialized = false;
   private opacity = 1;
 
   constructor(
@@ -34,27 +43,30 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
 
-    this.whenStyleLoaded(() => this.initializeLayers());
+    this.whenMapStyleReady(() => this.initializeLayers());
   }
+
+  // ===== Public lifecycle ====================================================
 
   clear(): void {
-    this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
-    this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
-    this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
-    this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
-    this.setSourceData(this.accessibilityMarkers.sourceId, this.emptyFeatureCollection());
+    this.whenLayersInitialized(() => {
+      this.roomFeaturesById.clear();
+      this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.accessibilityMarkers.sourceId, this.emptyFeatureCollection());
+    });
   }
 
-  render(renderModel: IndoorLevelRenderModel): void {
+  render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
+    void selectedFeatureIds;
     this.pendingRenderModel = renderModel;
 
-    this.whenStyleLoaded(() => {
-      this.renderOutline(renderModel.outlineCoordinates);
-      this.renderInfoPoint(renderModel);
-      this.renderRooms(renderModel.rooms);
-      this.renderTactilePaving(renderModel.tactilePaving);
-      this.renderRoomNumbers(renderModel.rooms);
-      this.renderAccessibilityMarkers(renderModel);
+    this.whenLayersInitialized(() => {
+      if (this.pendingRenderModel) {
+        this.renderLayerData(this.pendingRenderModel);
+      }
     });
   }
 
@@ -107,29 +119,34 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   setAltitudeAndOpacity(_altitude: number, opacity: number): void {
     this.opacity = opacity;
-    this.whenStyleLoaded(() => this.applyOpacity());
+    this.whenLayersInitialized(() => this.applyOpacity());
   }
 
+  // ===== Layer setup =========================================================
+
   private initializeLayers(): void {
+    if (this.layersInitialized) {
+      return;
+    }
+
     this.addGeoJsonSource(this.infoPoint.sourceId);
     this.addGeoJsonSource(this.rooms.sourceId);
     this.addGeoJsonSource(this.tactilePaving.sourceId);
     this.addGeoJsonSource(this.roomNumbers.sourceId);
     this.addGeoJsonSource(this.accessibilityMarkers.sourceId);
 
-    this.addInfoPointLayers();
     this.addRoomLayers();
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
     this.addAccessibilityMarkerLayers();
+    this.addInfoPointLayers();
 
     this.applyOpacity();
     this.setLayerSetsVisibility("none");
     this.applyVisibleLayers();
+    this.layersInitialized = true;
 
-    if (this.pendingRenderModel) {
-      this.render(this.pendingRenderModel);
-    }
+    this.flushPendingLayerOperations();
   }
 
   private addInfoPointLayers(): void {
@@ -167,8 +184,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       type: "fill",
       source: this.rooms.sourceId,
       paint: {
-        "fill-color": "#ffffff",
-        "fill-opacity": 0,
+        "fill-color": ["coalesce", ["get", "fillColor"], "#ffffff"],
+        "fill-opacity": this.getOpacityExpression("fillOpacity"),
       },
     });
     this.addLayer({
@@ -176,10 +193,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       type: "line",
       source: this.rooms.sourceId,
       paint: {
-        "line-color": "#000000",
-        "line-opacity": 0,
+        "line-color": ["coalesce", ["get", "lineColor"], "#000000"],
+        "line-width": ["coalesce", ["get", "lineWidth"], 1],
+        "line-opacity": this.getOpacityExpression("lineOpacity"),
       },
     });
+    this.bindRoomEvents();
   }
 
   private addTactilePavingLayers(): void {
@@ -223,6 +242,17 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
+  // ===== Render pipelines ===================================================
+
+  private renderLayerData(renderModel: IndoorLevelRenderModel): void {
+    this.renderOutline(renderModel.outlineCoordinates);
+    this.renderInfoPoint(renderModel);
+    this.renderRooms(renderModel.rooms);
+    this.renderTactilePaving(renderModel.tactilePaving);
+    this.renderRoomNumbers(renderModel.rooms);
+    this.renderAccessibilityMarkers(renderModel);
+  }
+
   private renderOutline(outlineCoordinates: number[][]): void {
     void outlineCoordinates;
   }
@@ -248,8 +278,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderRooms(rooms: RoomRenderItem[]): void {
-    void rooms;
-    this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
+    this.roomFeaturesById.clear();
+    this.setSourceData(this.rooms.sourceId, {
+      type: "FeatureCollection",
+      features: rooms.map((room) => this.buildRoomFeature(room)),
+    });
   }
 
   private renderTactilePaving(items: StyledFeatureRenderItem[]): void {
@@ -266,6 +299,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     void renderModel;
     this.setSourceData(this.accessibilityMarkers.sourceId, this.emptyFeatureCollection());
   }
+
+  // ===== MapLibre sources and layers ========================================
 
   private addGeoJsonSource(sourceId: string): void {
     if (this.map.getSource(sourceId)) {
@@ -291,6 +326,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       source.setData(data);
     }
   }
+
+  // ===== Visibility and opacity =============================================
 
   private setVisibleLayerSets(layerSets: MapLibreIndoorLevelLayerSet[]): void {
     this.visibleLayerIds = new Set(layerSets.flatMap((layerSet) => layerSet.layerIds));
@@ -326,6 +363,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private applyOpacity(): void {
     this.setPaintProperty(this.getLayerId("info-point", "circle"), "circle-opacity", this.opacity);
     this.setPaintProperty(this.getLayerId("info-point", "label"), "text-opacity", this.opacity);
+    this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
+    this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
   }
 
   private setPaintProperty(layerId: string, property: string, value: unknown): void {
@@ -334,12 +373,93 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     }
   }
 
+  // ===== Feature conversion ==================================================
+
   private createLayerSet(name: string, layerNames: string[]): MapLibreIndoorLevelLayerSet {
     return {
       sourceId: this.getSourceId(name),
       layerIds: layerNames.map((layerName) => this.getLayerId(name, layerName)),
     };
   }
+
+  private buildRoomFeature(item: RoomRenderItem): GeoJSON.Feature {
+    const featureId = getRequiredFeatureId(item.feature);
+    this.roomFeaturesById.set(featureId, item.feature);
+
+    return {
+      ...item.feature,
+      properties: {
+        ...item.feature.properties,
+        __featureId: featureId,
+        fillColor: this.getStyleString(item.style, "polygonFill", "#ffffff"),
+        fillOpacity: this.getStyleNumber(item.style, "polygonOpacity", 1),
+        lineColor: this.getStyleString(item.style, "lineColor", "#000000"),
+        lineWidth: this.getStyleNumber(item.style, "lineWidth", 1),
+        lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
+        patternFile: this.getStyleString(item.style, "polygonPatternFile", ""),
+      },
+    };
+  }
+
+  // ===== Interaction =========================================================
+
+  private bindRoomEvents(): void {
+    const fillLayerId = this.getLayerId("rooms", "fill");
+
+    this.map.on("click", fillLayerId, (event) => this.handleRoomClick(event));
+    this.map.on("mouseenter", fillLayerId, () => {
+      this.map.getCanvas().style.cursor = "pointer";
+    });
+    this.map.on("mouseleave", fillLayerId, () => {
+      this.map.getCanvas().style.cursor = "";
+    });
+  }
+
+  private handleRoomClick(event: MapLayerMouseEvent): void {
+    const featureId = event.features?.[0]?.properties?.__featureId;
+
+    if (typeof featureId != "string") {
+      return;
+    }
+
+    const feature = this.roomFeaturesById.get(featureId);
+
+    if (feature) {
+      this.events.onFeatureSelected(feature);
+    }
+  }
+
+  // ===== Style helpers =======================================================
+
+  private getStyleString(
+    style: Record<string, unknown>,
+    key: string,
+    fallback: string
+  ): string {
+    const value = style[key];
+
+    return typeof value == "string" ? value : fallback;
+  }
+
+  private getStyleNumber(
+    style: Record<string, unknown>,
+    key: string,
+    fallback: number
+  ): number {
+    const value = style[key];
+
+    return typeof value == "number" ? value : fallback;
+  }
+
+  private getOpacityExpression(propertyName: string): OpacityExpression {
+    return [
+      "*",
+      ["coalesce", ["get", propertyName], 1],
+      this.opacity,
+    ];
+  }
+
+  // ===== Id helpers ==========================================================
 
   private getSourceId(name: string): string {
     return `indoor-level-${this.level}-${name}`;
@@ -356,11 +476,26 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     };
   }
 
-  private whenStyleLoaded(callback: () => void): void {
+  // ===== Map style readiness =================================================
+
+  private whenMapStyleReady(callback: () => void): void {
     if (this.map.isStyleLoaded()) {
       callback();
     } else {
       this.map.once("load", callback);
     }
+  }
+
+  private whenLayersInitialized(callback: () => void): void {
+    if (this.layersInitialized) {
+      callback();
+      return;
+    }
+
+    this.pendingLayerOperations.push(callback);
+  }
+
+  private flushPendingLayerOperations(): void {
+    this.pendingLayerOperations.splice(0).forEach((operation) => operation());
   }
 }

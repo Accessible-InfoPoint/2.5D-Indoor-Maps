@@ -18,6 +18,8 @@ useful for the project.
 - UI-aware map viewport padding and max-bounds constraints based on the loaded building bounding box.
 - Custom MapLibre left-button rotate/pitch handling for 3D mode through the existing `switchDragButton` interaction option.
 - Configuration reference documentation for `settings.json` and `buildingConstants.json`.
+- MapLibre indoor level rendering scaffold with room fill and border layers.
+- Section dividers in the MapLibre indoor level view to make the rendering scaffold easier to navigate.
 
 ### Changed
 
@@ -26,7 +28,7 @@ useful for the project.
 
 ### Fixed
 
-- 
+- Prevented MapLibre indoor levels from staying empty after profile/settings changes by rerendering against initialized layer sources instead of waiting for a second map `load` event.
 
 ### Removed
 
