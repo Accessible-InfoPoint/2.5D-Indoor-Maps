@@ -3,7 +3,10 @@ import {
   MAP_START_LAT,
   MAP_START_LNG,
   LEVEL_HEIGHT,
+  MAP_MAX_LATITUDE_BOUND,
+  MAP_MIN_BOUNDS_MARGIN_FACTOR,
   OPACITY_TRANSLUCENT_LAYER,
+  MAP_UI_GAP_PX,
 } from "../../public/strings/settings.json";
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
@@ -17,10 +20,11 @@ import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import BackendService from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapView } from "./map/mapView";
-import { MaptalksMapView } from "./map/maptalksMapView";
+import { MapBounds, MapView, MapViewportPadding } from "./map/mapView";
+import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
+import { getRequiredElement } from "../utils/domHelpers";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -64,7 +68,7 @@ export class GeoMap {
       }
     };
 
-    this.mapView = new MaptalksMapView({
+    this.mapView = new MapLibreMapView({
       configMode: this.configMode,
       standardZoom: this.standardZoom,
       maxZoom: this.maxZoom,
@@ -77,6 +81,7 @@ export class GeoMap {
 
   showBuilding(): string {
     this.handleBuildingLoad();
+    this.refreshMapViewportConstraints();
     this.centerMapToBuilding();
 
     return lang.searchBuildingFound;
@@ -131,6 +136,8 @@ export class GeoMap {
   }
 
   centerMapToBuilding(): void {
+    this.refreshMapViewportConstraints();
+
     const boundingBox = BackendService.getBoundingBox();
     const center = {
       x: (boundingBox[0] + boundingBox[2]) / 2,
@@ -150,6 +157,18 @@ export class GeoMap {
       // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
       console.log(this.camera.getPosition());
     }, 1000);
+  }
+
+  refreshMapViewportConstraints(): void {
+    const padding = this.getViewportPadding();
+
+    this.mapView.setViewportPadding(padding);
+    this.mapView.setMaxBounds(
+      this.expandBoundsForViewportPadding(
+        this.getBuildingBounds(),
+        padding
+      )
+    );
   }
 
   handleLevelChange(newLevel: number): boolean {
@@ -299,6 +318,86 @@ export class GeoMap {
 
   private getIndoorLevel(level: number): IndoorLevel {
     return getRequiredMapValue(this.indoorLayers, level, "Indoor layers");
+  }
+
+  private getBuildingBounds(): MapBounds {
+    const boundingBox = BackendService.getBoundingBox();
+
+    return {
+      west: getRequiredArrayValue(boundingBox, 0, "Building bounding box"),
+      south: getRequiredArrayValue(boundingBox, 1, "Building bounding box"),
+      east: getRequiredArrayValue(boundingBox, 2, "Building bounding box"),
+      north: getRequiredArrayValue(boundingBox, 3, "Building bounding box"),
+    };
+  }
+
+  private getViewportPadding(): MapViewportPadding {
+    const mapRect = getRequiredElement("map").getBoundingClientRect();
+    const mapWidth = Math.max(mapRect.width, 1);
+    const mapHeight = Math.max(mapRect.height, 1);
+    const padding: MapViewportPadding = {
+      top: MAP_UI_GAP_PX,
+      right: MAP_UI_GAP_PX,
+      bottom: MAP_UI_GAP_PX,
+      left: MAP_UI_GAP_PX,
+    };
+
+    getRequiredElement("uiWrapper")
+      .querySelectorAll<HTMLElement>(":scope > *")
+      .forEach((element) => {
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+
+        if (
+          style.display == "none" ||
+          style.visibility == "hidden" ||
+          rect.width == 0 ||
+          rect.height == 0 ||
+          rect.right <= mapRect.left ||
+          rect.left >= mapRect.right ||
+          rect.bottom <= mapRect.top ||
+          rect.top >= mapRect.bottom
+        ) {
+          return;
+        }
+
+        const centerX = ((rect.left + rect.right) / 2 - mapRect.left) / mapWidth;
+        const centerY = ((rect.top + rect.bottom) / 2 - mapRect.top) / mapHeight;
+
+        if (centerY < 1 / 3) {
+          padding.top = Math.max(padding.top, rect.bottom - mapRect.top + MAP_UI_GAP_PX);
+        } else if (centerY > 2 / 3) {
+          padding.bottom = Math.max(padding.bottom, mapRect.bottom - rect.top + MAP_UI_GAP_PX);
+        }
+
+        if (centerX < 1 / 3) {
+          padding.left = Math.max(padding.left, rect.right - mapRect.left + MAP_UI_GAP_PX);
+        } else if (centerX > 2 / 3) {
+          padding.right = Math.max(padding.right, mapRect.right - rect.left + MAP_UI_GAP_PX);
+        }
+      });
+
+    return padding;
+  }
+
+  private expandBoundsForViewportPadding(
+    bounds: MapBounds,
+    padding: MapViewportPadding
+  ): MapBounds {
+    const mapRect = getRequiredElement("map").getBoundingClientRect();
+    const lngSpan = Math.max(bounds.east - bounds.west, Number.EPSILON);
+    const latSpan = Math.max(bounds.north - bounds.south, Number.EPSILON);
+    const horizontalPaddingFactor = (padding.left + padding.right) / Math.max(mapRect.width, 1);
+    const verticalPaddingFactor = (padding.top + padding.bottom) / Math.max(mapRect.height, 1);
+    const lngMargin = lngSpan * Math.max(MAP_MIN_BOUNDS_MARGIN_FACTOR, horizontalPaddingFactor);
+    const latMargin = latSpan * Math.max(MAP_MIN_BOUNDS_MARGIN_FACTOR, verticalPaddingFactor);
+
+    return {
+      west: bounds.west - lngMargin,
+      south: Math.max(bounds.south - latMargin, -MAP_MAX_LATITUDE_BOUND),
+      east: bounds.east + lngMargin,
+      north: Math.min(bounds.north + latMargin, MAP_MAX_LATITUDE_BOUND),
+    };
   }
 
   private getLevelAboveOrSelf(level: number): number {

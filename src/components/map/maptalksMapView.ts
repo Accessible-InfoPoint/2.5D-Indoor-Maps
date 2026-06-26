@@ -12,7 +12,7 @@ import { MaptalksIndoorLevelView } from "../indoorLevel/maptalksIndoorLevelView"
 import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
 import { MapCamera } from "./mapCamera";
 import { MaptalksMapCamera } from "./maptalksMapCamera";
-import { MapView } from "./mapView";
+import { MapBounds, MapView } from "./mapView";
 import { getRequiredElement } from "../../utils/domHelpers";
 
 interface MaptalksMapViewOptions {
@@ -70,6 +70,19 @@ export class MaptalksMapView implements MapView {
   setBaseLayerOpacity(opacity: number): void {
     this.map.getBaseLayer().setOpacity(opacity);
   }
+
+  setMaxBounds(bounds: MapBounds): void {
+    const extent = new Maptalks.Extent(
+      bounds.west,
+      bounds.south,
+      bounds.east,
+      bounds.north
+    );
+    this.map.setMaxExtent(extent);
+    this.flatMap.setMaxExtent(extent);
+  }
+
+  setViewportPadding(): void {}
 
   setSaturation(saturation: number): void {
     getRequiredElement("map").style.filter = `saturate(${saturation})`;

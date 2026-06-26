@@ -1,5 +1,4 @@
-// @import "../node_modules/leaflet/dist/leaflet.css";
-@import "../node_modules/maptalks/dist/maptalks.css";
+@import "../node_modules/maplibre-gl/dist/maplibre-gl.css";
 
 $mapBottom: 222px;
 
@@ -21,26 +20,3 @@ $mapBottom: 222px;
   z-index: 1
 }
 
-.maptalks-zoom .maptalks-zoom-zoomlevel {
-  color: #000;
-  border: 1px solid #000;
-}
-
-.maptalks-zoom .maptalks-zoom-zoomlevel .maptalks-zoom-zoomlevel-text {
-  font-size: 13px;
-  transform: none;
-  -webkit-transform: none;
-  -moz-transform: none;
-  -ms-transform: none;
-  -o-transform: none;
-}
-
-.maptalks-zoom-slider a.maptalks-zoom-zoomin, .maptalks-zoom-slider a.maptalks-zoom-zoomout {
-  border: 1px solid #000;
-}
-
-.maptalks-layer-switcher {
-  position: absolute;
-  top: 40px;
-  right: 0px;
-}

@@ -6,10 +6,10 @@
         "BEARING_CALC_NODE2": "8109446619",
         "STANDARD_ZOOM": 19.926,
         "MAX_ZOOM": 21,
-        "MIN_ZOOM": 19.5,
+        "MIN_ZOOM": 18.75,
         "STANDARD_BEARING_3D_MODE": -130,
         "STANDARD_PITCH_3D_MODE": 72,
-        "STANDARD_ZOOM_3D_MODE": 20.1
+        "STANDARD_ZOOM_3D_MODE": 19.2
     },
     "hsz": {
         "SEARCH_STRING": "HSZ",

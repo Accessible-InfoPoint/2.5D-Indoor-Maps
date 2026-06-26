@@ -14,11 +14,16 @@ export function setupUi(geoMap: GeoMap): void {
     SearchForm.updateLabels();
     UserProfileModal.render(refreshSettings);
     translate();
+    geoMap.refreshMapViewportConstraints();
   };
 
   SearchForm.render(geoMap);
   UserProfileModal.render(refreshSettings);
   ZoomControl.setup(geoMap);
-  WheelchairModeControl.setup(refreshSettings);
+  WheelchairModeControl.setup(
+    refreshSettings,
+    () => geoMap.refreshMapViewportConstraints()
+  );
   Switch2DControl.setup(geoMap);
+  geoMap.refreshMapViewportConstraints();
 }

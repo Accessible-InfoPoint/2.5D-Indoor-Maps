@@ -34,6 +34,7 @@
     "geojson-bounds": "^1.0.4",
     "geojson-polygon-center": "^0.0.0",
     "jimp": "^1.6.1",
+    "maplibre-gl": "^5.24.0",
     "maptalks": "^1.0.5",
     "maptalks.three": "^0.40.1",
     "osm2geojson-ultra": "^4.0.1",
