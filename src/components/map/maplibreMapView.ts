@@ -44,7 +44,7 @@ export class MapLibreMapView implements MapView {
       attributionControl: {},
     });
 
-    this.camera = new MapLibreMapCamera(this.map);
+    this.camera = new MapLibreMapCamera(this.map, options.configMode);
     this.syncDebugLogging(options.configMode);
   }
 

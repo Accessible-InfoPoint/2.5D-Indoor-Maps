@@ -16,7 +16,10 @@ export class MapLibreLeftButtonRotateHandler {
     cursor: string;
   } | undefined;
 
-  constructor(private readonly map: MapLibreMap) {}
+  constructor(
+    private readonly map: MapLibreMap,
+    private readonly allowPitch: boolean
+  ) {}
 
   enable(): void {
     if (this.enabled) {
@@ -79,7 +82,10 @@ export class MapLibreLeftButtonRotateHandler {
     this.dragState.lastY = event.clientY;
 
     this.map.setBearing(this.map.getBearing() + deltaX * ROTATE_DEGREES_PER_PIXEL);
-    this.map.setPitch(this.map.getPitch() + deltaY * PITCH_DEGREES_PER_PIXEL);
+
+    if (this.allowPitch) {
+      this.map.setPitch(this.map.getPitch() + deltaY * PITCH_DEGREES_PER_PIXEL);
+    }
   };
 
   private handleMouseUp = (): void => {

@@ -10,8 +10,14 @@ import { MapLibreLeftButtonRotateHandler } from "./maplibreLeftButtonRotateHandl
 export class MapLibreMapCamera implements MapCamera {
   private readonly leftButtonRotateHandler: MapLibreLeftButtonRotateHandler;
 
-  constructor(private readonly map: MapLibreMap) {
-    this.leftButtonRotateHandler = new MapLibreLeftButtonRotateHandler(map);
+  constructor(
+    private readonly map: MapLibreMap,
+    configMode: boolean
+  ) {
+    this.leftButtonRotateHandler = new MapLibreLeftButtonRotateHandler(
+      map,
+      configMode
+    );
   }
 
   getPosition(): MapCameraPosition {
