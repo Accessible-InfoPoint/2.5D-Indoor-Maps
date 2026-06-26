@@ -60,6 +60,17 @@ npm run build
 npm run serve
 ```
 
+## Development workflow
+
+Development uses a lightweight feature-branch workflow: keep `main` stable and
+do larger changes on branches such as `feature/...`, `fix/...`, or
+`migration/...`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, branch naming, and
+release steps. Planned work and larger refactoring ideas are tracked in
+[ROADMAP.md](ROADMAP.md). Release notes are collected in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Project structure
 
 ### _public_
