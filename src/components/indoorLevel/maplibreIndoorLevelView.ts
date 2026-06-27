@@ -308,6 +308,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private renderRooms(rooms: RoomRenderItem[]): void {
     this.roomFeaturesById.clear();
+    this.threeLayer.setRooms(rooms);
     this.registerRoomPatternImages(rooms);
     const roomFeatures = rooms.map((room) => buildMapLibreRoomFeature(room));
     roomFeatures.forEach((roomFeature) => {

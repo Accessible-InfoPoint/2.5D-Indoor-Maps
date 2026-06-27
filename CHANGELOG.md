@@ -28,6 +28,7 @@ useful for the project.
 - MapLibre 2D door rendering based on the existing door orientation and style data.
 - Temporary MapLibre door orientation debug overlay showing the source wall points used for door calculations.
 - Initial MapLibre Three.js indoor layer scaffold with grouped 3D outline rendering.
+- MapLibre Three.js rendering for indoor rooms that are visible in 3D mode.
 
 ### Changed
 
@@ -53,6 +54,7 @@ useful for the project.
 - Preserved current MapLibre bearing and pitch when zooming to accessibility marker clusters.
 - Prevented MapLibre room selection from also firing when clicking an accessibility marker above a room.
 - Prevented rooms from connecting to same-coordinate doors on different levels when calculating door orientation.
+- Stabilized MapLibre Three.js room rendering during rotation by drawing 3D rooms as single elevated surfaces.
 
 ### Removed
 

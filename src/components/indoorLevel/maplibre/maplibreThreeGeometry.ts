@@ -3,19 +3,25 @@ import * as THREE from "three";
 
 export function createPolygonSlabGeometry(
   origin: maplibregl.MercatorCoordinate,
-  ring: GeoJSON.Position[],
-  thicknessMeters: number
+  rings: GeoJSON.Position[][],
+  thicknessMeters: number,
+  baseElevationMeters = 0
 ): THREE.BufferGeometry {
   const vertices: number[] = [];
+  const openRings = rings
+    .map((ring) => getOpenRing(ring))
+    .filter((ring) => ring.length >= 3);
+  const flatRings = openRings.flat();
 
-  ring.forEach((coordinate) => addMercatorVertex(vertices, origin, coordinate, 0));
-  ring.forEach((coordinate) => addMercatorVertex(vertices, origin, coordinate, thicknessMeters));
+  flatRings.forEach((coordinate) => addMercatorVertex(vertices, origin, coordinate, baseElevationMeters));
+  flatRings.forEach((coordinate) => addMercatorVertex(vertices, origin, coordinate, baseElevationMeters + thicknessMeters));
 
   const bottomOffset = 0;
-  const topOffset = ring.length;
+  const topOffset = flatRings.length;
+  const [outerRing, ...innerRings] = openRings;
   const topTriangles = THREE.ShapeUtils.triangulateShape(
-    createLocalShapePoints(origin, ring),
-    []
+    createLocalShapePoints(origin, outerRing),
+    innerRings.map((ring) => createLocalShapePoints(origin, ring))
   );
   const indices: number[] = [];
 
@@ -24,18 +30,41 @@ export function createPolygonSlabGeometry(
     indices.push(bottomOffset + c, bottomOffset + b, bottomOffset + a);
   });
 
-  for (let i = 0; i < ring.length; i++) {
-    const next = (i + 1) % ring.length;
+  addSideIndices(indices, openRings, bottomOffset, topOffset);
 
-    indices.push(
-      bottomOffset + i,
-      bottomOffset + next,
-      topOffset + next,
-      bottomOffset + i,
-      topOffset + next,
-      topOffset + i
-    );
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
+export function createPolygonSurfaceGeometry(
+  origin: maplibregl.MercatorCoordinate,
+  rings: GeoJSON.Position[][],
+  elevationMeters: number
+): THREE.BufferGeometry {
+  const openRings = rings
+    .map((ring) => getOpenRing(ring))
+    .filter((ring) => ring.length >= 3);
+  const [outerRing, ...innerRings] = openRings;
+  const vertices: number[] = [];
+
+  if (!outerRing) {
+    return new THREE.BufferGeometry();
   }
+
+  openRings
+    .flat()
+    .forEach((coordinate) => addMercatorVertex(vertices, origin, coordinate, elevationMeters));
+
+  const indices = THREE.ShapeUtils
+    .triangulateShape(
+      createLocalShapePoints(origin, outerRing),
+      innerRings.map((ring) => createLocalShapePoints(origin, ring))
+    )
+    .flat();
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
@@ -112,5 +141,32 @@ function createLocalShapePoints(
       mercatorCoordinate.x - origin.x,
       mercatorCoordinate.y - origin.y
     );
+  });
+}
+
+function addSideIndices(
+  indices: number[],
+  rings: GeoJSON.Position[][],
+  bottomOffset: number,
+  topOffset: number
+): void {
+  let vertexOffset = 0;
+
+  rings.forEach((ring) => {
+    for (let i = 0; i < ring.length; i++) {
+      const current = vertexOffset + i;
+      const next = vertexOffset + ((i + 1) % ring.length);
+
+      indices.push(
+        bottomOffset + current,
+        bottomOffset + next,
+        topOffset + next,
+        bottomOffset + current,
+        topOffset + next,
+        topOffset + current
+      );
+    }
+
+    vertexOffset += ring.length;
   });
 }
