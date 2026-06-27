@@ -39,6 +39,7 @@ useful for the project.
 - Restored the saved wheelchair layout before the initial level control render so it starts with the correct orientation.
 - Replaced axis-aligned MapLibre max bounds with a circular `transformConstrain` center constraint around the configured building center, including explicit zoom clamping.
 - Made the MapLibre `transformConstrain` zoom clamp use the adapter's configured zoom bounds directly instead of reading them back from the map instance.
+- Avoided blanking MapLibre indoor layer sources before selection/style rerenders, reducing full-screen flashes when selecting rooms.
 
 ### Removed
 

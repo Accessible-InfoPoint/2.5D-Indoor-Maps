@@ -157,6 +157,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   }
 
   render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
+    this.clear();
     this.markers.clear();
     this.renderOutline(renderModel.outlineCoordinates);
 

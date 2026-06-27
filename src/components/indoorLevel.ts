@@ -34,7 +34,6 @@ export class IndoorLevel {
    * Redraws all layers
    */
   updateLayer(): void {
-    this.clear();
     this.render(LevelService.getLevelGeoJSON(this.level));
   }
 
