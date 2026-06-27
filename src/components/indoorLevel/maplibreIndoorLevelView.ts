@@ -6,7 +6,18 @@ import type {
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
+import { ICONS, MARKERS_IMG_DIR } from "../../../public/strings/constants.json";
+import FeatureService from "../../services/featureService";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
+import {
+  buildMarkerClusters,
+  ClusterableMarker,
+  getMarkerFile,
+  MarkerCluster,
+  MarkerSymbol,
+  ResolvedMarkerClusterOptions,
+  resolveMarkerClusterOptions,
+} from "../markerCluster/markerClusterModel";
 import {
   IndoorLevelRenderModel,
   RoomRenderItem,
@@ -32,6 +43,11 @@ const ROOM_NUMBER_FADE_END_ZOOM = 20.3;
 const ROOM_NUMBER_BACKGROUND_IMAGE_ID = "room-number-background";
 const ROOM_NUMBER_BACKGROUND_SIZE = 24;
 const ROOM_NUMBER_BACKGROUND_BORDER = 6;
+const ACCESSIBILITY_MARKER_IMAGE_SIZE = 48;
+
+interface AccessibilityMarkerCluster extends MarkerCluster {
+  id: number;
+}
 
 interface MapLibreIndoorLevelLayerSet {
   sourceId: string;
@@ -46,8 +62,14 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
   private pendingRenderModel?: IndoorLevelRenderModel;
   private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
+  private readonly accessibilityMarkerFeaturesById = new Map<string | number, GeoJSON.Feature>();
+  private readonly accessibilityMarkerClustersById = new Map<number, AccessibilityMarkerCluster>();
+  private readonly accessibilityMarkerClusterOptions: ResolvedMarkerClusterOptions;
   private readonly loadingPatternImageIds = new Set<string>();
+  private readonly loadingMarkerImageIds = new Set<string>();
   private readonly pendingLayerOperations: (() => void)[] = [];
+  private accessibilityMarkerItems: ClusterableMarker[] = [];
+  private pendingAccessibilityMarkerClusterFrame?: number;
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
   private opacity = 1;
@@ -62,6 +84,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.tactilePaving = this.createLayerSet("tactile-paving", ["line"]);
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
+    this.accessibilityMarkerClusterOptions = resolveMarkerClusterOptions({
+      symbol: {
+        markerFile: MARKERS_IMG_DIR + ICONS.ADDITIONAL,
+      },
+    });
 
     this.whenMapStyleReady(() => this.initializeLayers());
   }
@@ -71,6 +98,9 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   clear(): void {
     this.whenLayersInitialized(() => {
       this.roomFeaturesById.clear();
+      this.accessibilityMarkerFeaturesById.clear();
+      this.accessibilityMarkerClustersById.clear();
+      this.accessibilityMarkerItems = [];
       this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
@@ -280,14 +310,19 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private addAccessibilityMarkerLayers(): void {
     this.addLayer({
       id: this.getLayerId("accessibility-markers", "icon"),
-      type: "circle",
+      type: "symbol",
       source: this.accessibilityMarkers.sourceId,
+      layout: {
+        "icon-image": ["get", "iconImageId"],
+        "icon-size": ["coalesce", ["get", "iconScale"], 1],
+        "icon-allow-overlap": true,
+        "icon-anchor": "center",
+      },
       paint: {
-        "circle-color": "#ffffff",
-        "circle-radius": 0,
-        "circle-opacity": 0,
+        "icon-opacity": this.opacity,
       },
     });
+    this.bindAccessibilityMarkerEvents();
   }
 
   // ===== Render pipelines ===================================================
@@ -351,8 +386,17 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderAccessibilityMarkers(renderModel: IndoorLevelRenderModel): void {
-    void renderModel;
-    this.setSourceData(this.accessibilityMarkers.sourceId, this.emptyFeatureCollection());
+    this.accessibilityMarkerFeaturesById.clear();
+    this.accessibilityMarkerClustersById.clear();
+    this.accessibilityMarkerItems = [
+      ...renderModel.rooms.map((room) => room.feature),
+      ...renderModel.pointMarkerFeatures,
+    ]
+      .map((feature) => this.buildAccessibilityMarkerItem(feature))
+      .filter((marker): marker is ClusterableMarker => marker != undefined);
+
+    this.registerAccessibilityMarkerImages(this.accessibilityMarkerItems);
+    this.updateAccessibilityMarkerClusters();
   }
 
   // ===== MapLibre sources and layers ========================================
@@ -424,6 +468,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setPaintProperty(this.getLayerId("tactile-paving", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
     this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", this.getZoomOpacityExpression());
     this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", this.getZoomOpacityExpression());
+    this.setPaintProperty(this.getLayerId("accessibility-markers", "icon"), "icon-opacity", this.opacity);
   }
 
   private setPaintProperty(layerId: string, property: string, value: unknown): void {
@@ -499,6 +544,91 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
         lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
         lineDasharray: this.getStyleNumberArray(item.style, "lineDasharray", [10, 10]),
       },
+    };
+  }
+
+  private buildAccessibilityMarkerItem(feature: GeoJSON.Feature): ClusterableMarker | undefined {
+    const markerData = FeatureService.getAccessibilityMarkerData(feature);
+
+    if (!markerData) {
+      return undefined;
+    }
+
+    const id = getRequiredFeatureId(feature);
+    const symbol: MarkerSymbol = markerData.symbol;
+
+    this.accessibilityMarkerFeaturesById.set(id, feature);
+
+    return {
+      id,
+      center: {
+        x: markerData.coordinates[0],
+        y: markerData.coordinates[1],
+      },
+      projectedCenter: {
+        x: 0,
+        y: 0,
+      },
+      symbol,
+      markerFile: getMarkerFile(symbol),
+    };
+  }
+
+  private updateAccessibilityMarkerClusters(): void {
+    if (!this.layersInitialized) {
+      return;
+    }
+
+    this.accessibilityMarkerClustersById.clear();
+
+    const clusters = buildMarkerClusters(
+      this.accessibilityMarkerItems.map((marker) => ({
+        ...marker,
+        projectedCenter: this.projectMarkerCenter(marker.center),
+      })),
+      this.accessibilityMarkerClusterOptions
+    ).map((cluster, index) => ({
+      ...cluster,
+      id: index,
+    }));
+
+    clusters.forEach((cluster) => {
+      this.accessibilityMarkerClustersById.set(cluster.id, cluster);
+    });
+
+    this.registerAccessibilityClusterImages(clusters);
+    this.setSourceData(this.accessibilityMarkers.sourceId, {
+      type: "FeatureCollection",
+      features: clusters.map((cluster) => this.buildAccessibilityMarkerClusterFeature(cluster)),
+    });
+  }
+
+  private buildAccessibilityMarkerClusterFeature(
+    cluster: AccessibilityMarkerCluster
+  ): GeoJSON.Feature<GeoJSON.Point> {
+    return {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [
+          cluster.center.x,
+          cluster.center.y,
+        ],
+      },
+      properties: {
+        clusterId: cluster.id,
+        iconImageId: this.getMarkerImageId(this.getClusterMarkerFile(cluster)),
+        iconScale: 1,
+      },
+    };
+  }
+
+  private projectMarkerCenter(center: { x: number; y: number }): { x: number; y: number } {
+    const point = this.map.project([center.x, center.y]);
+
+    return {
+      x: point.x,
+      y: point.y,
     };
   }
 
@@ -585,6 +715,69 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       });
   }
 
+  private registerAccessibilityMarkerImages(markers: ClusterableMarker[]): void {
+    markers
+      .map((marker) => marker.markerFile)
+      .filter((markerFile): markerFile is string => markerFile != undefined)
+      .forEach((markerFile) => this.registerMarkerImage(markerFile));
+    this.registerMarkerImage(MARKERS_IMG_DIR + ICONS.ADDITIONAL);
+  }
+
+  private registerAccessibilityClusterImages(clusters: AccessibilityMarkerCluster[]): void {
+    clusters.forEach((cluster) => this.registerMarkerImage(this.getClusterMarkerFile(cluster)));
+  }
+
+  private registerMarkerImage(markerFile: string): void {
+    const imageId = this.getMarkerImageId(markerFile);
+
+    if (this.map.hasImage(imageId) || this.loadingMarkerImageIds.has(imageId)) {
+      return;
+    }
+
+    this.loadingMarkerImageIds.add(imageId);
+    this.loadMarkerImage(markerFile)
+      .then((imageData) => {
+        if (!this.map.hasImage(imageId)) {
+          this.map.addImage(imageId, imageData);
+          this.map.triggerRepaint();
+        }
+      })
+      .catch((error: unknown) => {
+        console.warn(`Could not load MapLibre marker image "${markerFile}".`, error);
+      })
+      .finally(() => {
+        this.loadingMarkerImageIds.delete(imageId);
+      });
+  }
+
+  private getClusterMarkerFile(cluster: MarkerCluster): string {
+    return getMarkerFile(cluster.symbol) ?? MARKERS_IMG_DIR + ICONS.ADDITIONAL;
+  }
+
+  private loadMarkerImage(markerFile: string): Promise<ImageData> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = ACCESSIBILITY_MARKER_IMAGE_SIZE;
+        canvas.height = ACCESSIBILITY_MARKER_IMAGE_SIZE;
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Could not create marker image canvas context."));
+          return;
+        }
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(context.getImageData(0, 0, canvas.width, canvas.height));
+      };
+      image.onerror = () => reject(new Error(`Could not decode marker image "${markerFile}".`));
+      image.src = markerFile;
+    });
+  }
+
   private registerRoomNumberBackgroundImage(): void {
     if (this.map.hasImage(ROOM_NUMBER_BACKGROUND_IMAGE_ID)) {
       return;
@@ -645,7 +838,24 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
+  private bindAccessibilityMarkerEvents(): void {
+    const iconLayerId = this.getLayerId("accessibility-markers", "icon");
+
+    this.map.on("move", () => this.scheduleAccessibilityMarkerClusterUpdate());
+    this.map.on("click", iconLayerId, (event) => this.handleAccessibilityMarkerClick(event));
+    this.map.on("mouseenter", iconLayerId, () => {
+      this.map.getCanvas().style.cursor = "pointer";
+    });
+    this.map.on("mouseleave", iconLayerId, () => {
+      this.map.getCanvas().style.cursor = "";
+    });
+  }
+
   private handleRoomClick(event: MapLayerMouseEvent): void {
+    if (this.hasAccessibilityMarkerAtClickPoint(event)) {
+      return;
+    }
+
     const featureId = event.features?.[0]?.properties?.__featureId;
 
     if (typeof featureId != "string") {
@@ -657,6 +867,104 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     if (feature) {
       this.events.onFeatureSelected(feature);
     }
+  }
+
+  private hasAccessibilityMarkerAtClickPoint(event: MapLayerMouseEvent): boolean {
+    return this.map.queryRenderedFeatures(event.point, {
+      layers: [this.getLayerId("accessibility-markers", "icon")],
+    }).length > 0;
+  }
+
+  private handleAccessibilityMarkerClick(event: MapLayerMouseEvent): void {
+    const clusterId = this.getNumberProperty(event.features?.[0]?.properties?.clusterId);
+
+    if (clusterId == undefined) {
+      return;
+    }
+
+    const cluster = this.accessibilityMarkerClustersById.get(clusterId);
+
+    if (!cluster) {
+      return;
+    }
+
+    if (cluster.markers.length > 1) {
+      this.fitMapToAccessibilityCluster(cluster);
+      return;
+    }
+
+    const feature = this.accessibilityMarkerFeaturesById.get(cluster.markers[0].id);
+
+    if (feature) {
+      this.events.onFeatureSelected(feature);
+    }
+  }
+
+  private fitMapToAccessibilityCluster(cluster: MarkerCluster): void {
+    const bounds = this.getMarkerClusterBounds(cluster);
+
+    if (!bounds) {
+      return;
+    }
+
+    const [[west, south], [east, north]] = bounds;
+
+    if (west == east && south == north) {
+      this.map.easeTo({
+        center: [west, south],
+        zoom: this.map.getZoom() + 1,
+        bearing: this.map.getBearing(),
+        pitch: this.map.getPitch(),
+        duration: 350,
+      });
+      return;
+    }
+
+    this.map.fitBounds(bounds, {
+      bearing: this.map.getBearing(),
+      duration: 350,
+      padding: 80,
+      pitch: this.map.getPitch(),
+    });
+  }
+
+  private getMarkerClusterBounds(
+    cluster: MarkerCluster
+  ): [[number, number], [number, number]] | undefined {
+    if (cluster.markers.length == 0) {
+      return undefined;
+    }
+
+    const bounds = cluster.markers.reduce(
+      (currentBounds, marker) => ({
+        west: Math.min(currentBounds.west, marker.center.x),
+        south: Math.min(currentBounds.south, marker.center.y),
+        east: Math.max(currentBounds.east, marker.center.x),
+        north: Math.max(currentBounds.north, marker.center.y),
+      }),
+      {
+        west: cluster.markers[0].center.x,
+        south: cluster.markers[0].center.y,
+        east: cluster.markers[0].center.x,
+        north: cluster.markers[0].center.y,
+      }
+    );
+
+    return [
+      [bounds.west, bounds.south],
+      [bounds.east, bounds.north],
+    ];
+  }
+
+  private scheduleAccessibilityMarkerClusterUpdate(): void {
+    if (this.pendingAccessibilityMarkerClusterFrame != undefined) {
+      return;
+    }
+
+    this.pendingAccessibilityMarkerClusterFrame = requestAnimationFrame(() => {
+      this.pendingAccessibilityMarkerClusterFrame = undefined;
+      this.updateAccessibilityMarkerClusters();
+    });
   }
 
   // ===== Style helpers =======================================================
@@ -750,6 +1058,24 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private getPatternImageId(patternFile: string): string {
     return `pattern-${patternFile.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  }
+
+  private getMarkerImageId(markerFile: string): string {
+    return `marker-${markerFile.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  }
+
+  private getNumberProperty(value: unknown): number | undefined {
+    if (typeof value == "number") {
+      return value;
+    }
+
+    if (typeof value != "string") {
+      return undefined;
+    }
+
+    const parsedValue = Number(value);
+
+    return Number.isNaN(parsedValue) ? undefined : parsedValue;
   }
 
   private emptyFeatureCollection(): GeoJSON.FeatureCollection {

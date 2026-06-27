@@ -24,6 +24,7 @@ useful for the project.
 - MapLibre room fill-pattern support for wheelchair-accessible patterned room backgrounds.
 - MapLibre room-number labels with zoom fade-in and stretchable rounded rectangle backgrounds.
 - MapLibre tactile paving line rendering with dashed styling from the indoor level render model.
+- MapLibre accessibility marker rendering with custom clustering, same-symbol cluster preservation, and cluster/single-marker click behavior.
 
 ### Changed
 
@@ -40,6 +41,9 @@ useful for the project.
 - Replaced axis-aligned MapLibre max bounds with a circular `transformConstrain` center constraint around the configured building center, including explicit zoom clamping.
 - Made the MapLibre `transformConstrain` zoom clamp use the adapter's configured zoom bounds directly instead of reading them back from the map instance.
 - Avoided blanking MapLibre indoor layer sources before selection/style rerenders, reducing full-screen flashes when selecting rooms.
+- Rasterized SVG accessibility marker icons before registering them with MapLibre to avoid marker image decode warnings.
+- Preserved current MapLibre bearing and pitch when zooming to accessibility marker clusters.
+- Prevented MapLibre room selection from also firing when clicking an accessibility marker above a room.
 
 ### Removed
 
