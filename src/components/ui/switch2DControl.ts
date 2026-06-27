@@ -19,6 +19,7 @@ function setup(geoMap: GeoMap): void {
         switchDragButton: false,
         zoomInCenter: false,
       });
+      geoMap.refreshMapViewportConstraints();
       let offset = 0;
       // if we are on the highest level, don't show anything above
       // TODO: move to own function, like "isTopLevel" and "isBottomLevel"
@@ -107,7 +108,9 @@ function setup(geoMap: GeoMap): void {
         pitchEnd: geoMap.standardPitch3DMode,
         zoomStart: currentCameraPosition.zoom,
         zoomEnd: geoMap.standardZoom3DMode
-      }, 0.5)
+      }, 0.5).then(() => {
+        geoMap.lockMapCenterToStandardCenter();
+      })
     }
   };
 }
@@ -146,7 +149,7 @@ function getAdjacentLevel(geoMap: GeoMap, offset: number): number {
   );
 }
 
-function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): void {
+function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): Promise<void> {
   let startTime: number | null = null;
   const dir = ((options.bearingStart + 360) % 360) - ((options.bearingEnd + 360) % 360); // neg = clockwise, pos = counter-clockwise
   let bearingEnd = options.bearingEnd;
@@ -161,7 +164,8 @@ function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): 
       return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
-  function animateStep(time: number) {
+  return new Promise((resolve) => {
+    function animateStep(time: number) {
       if (!startTime) startTime = time;
       const elapsed = (time - startTime) / 1000; // convert to seconds
       const progress = Math.min(elapsed / duration, 1);
@@ -183,10 +187,12 @@ function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): 
           camera.setBearing(options.bearingEnd);
           camera.setPitch(options.pitchEnd);
           camera.setCenterAndZoom(options.centerEnd, options.zoomEnd);
+          resolve();
       }
-  }
+    }
 
-  requestAnimationFrame(animateStep);
+    requestAnimationFrame(animateStep);
+  });
 }
 
 

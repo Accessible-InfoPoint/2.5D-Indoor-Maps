@@ -12,7 +12,7 @@ export class MapLibreMapCamera implements MapCamera {
 
   constructor(
     private readonly map: MapLibreMap,
-    configMode: boolean
+    private readonly configMode: boolean
   ) {
     this.leftButtonRotateHandler = new MapLibreLeftButtonRotateHandler(
       map,
@@ -41,8 +41,15 @@ export class MapLibreMapCamera implements MapCamera {
 
     if (options.dragRotate === false) {
       this.map.touchZoomRotate.disableRotation();
+      this.map.touchPitch.disable();
     } else if (options.dragRotate === true) {
       this.map.touchZoomRotate.enableRotation();
+
+      if (this.configMode) {
+        this.map.touchPitch.enable();
+      } else {
+        this.map.touchPitch.disable();
+      }
     }
   }
 

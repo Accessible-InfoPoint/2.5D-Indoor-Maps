@@ -206,11 +206,20 @@ export class GeoMap {
       left: 0,
     });
     this.mapView.setMaxBounds(bounds);
-    this.mapView.setCenterConstraint(this.getCircularCenterConstraint(bounds));
+    this.mapView.setCenterConstraint(
+      this.flatMode
+        ? this.getCircularCenterConstraint(bounds)
+        : this.getLockedCenterConstraint()
+    );
 
     if (recenterToStandardCenter) {
       this.centerCameraOnStandardCenter();
     }
+  }
+
+  lockMapCenterToStandardCenter(): void {
+    this.updateStandardCenter();
+    this.mapView.setCenterConstraint(this.getLockedCenterConstraint());
   }
 
   centerCameraOnStandardCenter(): void {
@@ -409,6 +418,16 @@ export class GeoMap {
     return {
       center,
       radius,
+    };
+  }
+
+  private getLockedCenterConstraint(): MapCenterConstraint {
+    return {
+      center: {
+        x: this.standardCenter[0],
+        y: this.standardCenter[1],
+      },
+      radius: 0,
     };
   }
 

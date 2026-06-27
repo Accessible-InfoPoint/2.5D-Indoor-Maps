@@ -55,6 +55,7 @@ useful for the project.
 - Prevented MapLibre room selection from also firing when clicking an accessibility marker above a room.
 - Prevented rooms from connecting to same-coordinate doors on different levels when calculating door orientation.
 - Stabilized MapLibre Three.js room rendering during rotation by drawing 3D rooms as single elevated surfaces.
+- Locked the MapLibre center constraint in 3D mode so only rotation and zoom can change the view.
 
 ### Removed
 
