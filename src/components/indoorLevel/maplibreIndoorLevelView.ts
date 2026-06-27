@@ -3,6 +3,9 @@ import type {
   Map as MapLibreMap,
   MapLayerMouseEvent,
 } from "maplibre-gl";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import polygonCenter from "geojson-polygon-center";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import {
   IndoorLevelRenderModel,
@@ -14,6 +17,21 @@ import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 type LayerVisibility = "visible" | "none";
 type OpacityExpression = ["*", ["coalesce", ["get", string], number], number];
 type PatternExpression = ["get", string];
+type ZoomOpacityExpression = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  number,
+  number,
+  number,
+  number
+];
+
+const ROOM_NUMBER_FADE_START_ZOOM = 19.8;
+const ROOM_NUMBER_FADE_END_ZOOM = 20.3;
+const ROOM_NUMBER_BACKGROUND_IMAGE_ID = "room-number-background";
+const ROOM_NUMBER_BACKGROUND_SIZE = 24;
+const ROOM_NUMBER_BACKGROUND_BORDER = 6;
 
 interface MapLibreIndoorLevelLayerSet {
   sourceId: string;
@@ -137,6 +155,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.addGeoJsonSource(this.roomNumbers.sourceId);
     this.addGeoJsonSource(this.accessibilityMarkers.sourceId);
 
+    this.registerRoomNumberBackgroundImage();
     this.addRoomLayers();
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
@@ -230,13 +249,24 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       id: this.getLayerId("room-numbers", "label"),
       type: "symbol",
       source: this.roomNumbers.sourceId,
+      minzoom: ROOM_NUMBER_FADE_START_ZOOM,
       layout: {
+        "icon-image": ROOM_NUMBER_BACKGROUND_IMAGE_ID,
+        "icon-text-fit": "both",
+        "icon-text-fit-padding": [4, 7, 4, 7],
+        "icon-allow-overlap": true,
         "text-field": ["get", "label"],
         "text-size": 14,
+        "text-anchor": "center",
+        "text-justify": "center",
+        "text-allow-overlap": true,
       },
       paint: {
         "text-color": "#000000",
-        "text-opacity": 0,
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1,
+        "text-opacity": this.getZoomOpacityExpression(),
+        "icon-opacity": this.getZoomOpacityExpression(),
       },
     });
   }
@@ -304,8 +334,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderRoomNumbers(rooms: RoomRenderItem[]): void {
-    void rooms;
-    this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
+    this.setSourceData(this.roomNumbers.sourceId, {
+      type: "FeatureCollection",
+      features: rooms
+        .map((room) => this.buildRoomNumberFeature(room))
+        .filter((feature): feature is GeoJSON.Feature<GeoJSON.Point> => feature != undefined),
+    });
   }
 
   private renderAccessibilityMarkers(renderModel: IndoorLevelRenderModel): void {
@@ -379,6 +413,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
     this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
     this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
+    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", this.getZoomOpacityExpression());
+    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", this.getZoomOpacityExpression());
   }
 
   private setPaintProperty(layerId: string, property: string, value: unknown): void {
@@ -421,6 +457,82 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     };
   }
 
+  private buildRoomNumberFeature(item: RoomRenderItem): GeoJSON.Feature<GeoJSON.Point> | undefined {
+    if (!item.label) {
+      return undefined;
+    }
+
+    const coordinates = this.getGeometryLabelCenter(item.feature.geometry);
+
+    if (!coordinates) {
+      return undefined;
+    }
+
+    return {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates,
+      },
+      properties: {
+        label: item.label,
+      },
+    };
+  }
+
+  private getGeometryLabelCenter(geometry: GeoJSON.Geometry): GeoJSON.Position | undefined {
+    if (geometry.type == "Polygon") {
+      return this.getPolygonCenter(geometry);
+    }
+
+    if (geometry.type == "MultiPolygon") {
+      const largestPolygonCoordinates = geometry.coordinates
+        .map((coordinates) => ({
+          coordinates,
+          area: this.getBoundingBoxArea(coordinates[0] ?? []),
+        }))
+        .sort((a, b) => b.area - a.area)[0]?.coordinates;
+
+      return largestPolygonCoordinates
+        ? this.getPolygonCenter({
+            type: "Polygon",
+            coordinates: largestPolygonCoordinates,
+          })
+        : undefined;
+    }
+
+    return undefined;
+  }
+
+  private getPolygonCenter(geometry: GeoJSON.Polygon): GeoJSON.Position | undefined {
+    const center = polygonCenter(geometry) as GeoJSON.Point;
+
+    return center.coordinates;
+  }
+
+  private getBoundingBoxArea(positions: GeoJSON.Position[]): number {
+    if (positions.length == 0) {
+      return 0;
+    }
+
+    const bounds = positions.reduce(
+      (currentBounds, position) => ({
+        minX: Math.min(currentBounds.minX, position[0]),
+        minY: Math.min(currentBounds.minY, position[1]),
+        maxX: Math.max(currentBounds.maxX, position[0]),
+        maxY: Math.max(currentBounds.maxY, position[1]),
+      }),
+      {
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity,
+      }
+    );
+
+    return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
+  }
+
   private registerRoomPatternImages(rooms: RoomRenderItem[]): void {
     rooms
       .map((room) => this.getStyleString(room.style, "polygonPatternFile", ""))
@@ -449,6 +561,52 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       .finally(() => {
         this.loadingPatternImageIds.delete(imageId);
       });
+  }
+
+  private registerRoomNumberBackgroundImage(): void {
+    if (this.map.hasImage(ROOM_NUMBER_BACKGROUND_IMAGE_ID)) {
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = ROOM_NUMBER_BACKGROUND_SIZE;
+    canvas.height = ROOM_NUMBER_BACKGROUND_SIZE;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "rgba(255, 255, 255, 0.9)";
+    context.strokeStyle = "rgba(0, 0, 0, 0.75)";
+    context.lineWidth = 2;
+    this.drawRoundedRectangle(
+      context,
+      1,
+      1,
+      canvas.width - 2,
+      canvas.height - 2,
+      ROOM_NUMBER_BACKGROUND_BORDER
+    );
+    context.fill();
+    context.stroke();
+
+    this.map.addImage(
+      ROOM_NUMBER_BACKGROUND_IMAGE_ID,
+      context.getImageData(0, 0, canvas.width, canvas.height),
+      {
+        content: [
+          ROOM_NUMBER_BACKGROUND_BORDER,
+          ROOM_NUMBER_BACKGROUND_BORDER,
+          canvas.width - ROOM_NUMBER_BACKGROUND_BORDER,
+          canvas.height - ROOM_NUMBER_BACKGROUND_BORDER,
+        ],
+        stretchX: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.width - ROOM_NUMBER_BACKGROUND_BORDER]],
+        stretchY: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.height - ROOM_NUMBER_BACKGROUND_BORDER]],
+      }
+    );
   }
 
   // ===== Interaction =========================================================
@@ -511,6 +669,39 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private getPatternExpression(propertyName: string): PatternExpression {
     return ["get", propertyName];
+  }
+
+  private getZoomOpacityExpression(): ZoomOpacityExpression {
+    return [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ROOM_NUMBER_FADE_START_ZOOM,
+      0,
+      ROOM_NUMBER_FADE_END_ZOOM,
+      this.opacity,
+    ];
+  }
+
+  private drawRoundedRectangle(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): void {
+    context.beginPath();
+    context.moveTo(x + radius, y);
+    context.lineTo(x + width - radius, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + radius);
+    context.lineTo(x + width, y + height - radius);
+    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    context.lineTo(x + radius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - radius);
+    context.lineTo(x, y + radius);
+    context.quadraticCurveTo(x, y, x + radius, y);
+    context.closePath();
   }
 
   // ===== Id helpers ==========================================================

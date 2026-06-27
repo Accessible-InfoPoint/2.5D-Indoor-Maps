@@ -22,12 +22,14 @@ useful for the project.
 - Section dividers in the MapLibre indoor level view to make the rendering scaffold easier to navigate.
 - Optional per-building `STANDARD_CENTER` and `STANDARD_CENTER_WHEELCHAIR_MODE` settings for layout-aware map centering.
 - MapLibre room fill-pattern support for wheelchair-accessible patterned room backgrounds.
+- MapLibre room-number labels with zoom fade-in and stretchable rounded rectangle backgrounds.
 
 ### Changed
 
 - Updated APB MapLibre zoom settings and allowed MapLibre pitch above the default 60 degree limit for the 2.5D view.
 - Switched the base map stylesheet from maptalks to MapLibre while keeping the rendering adapter boundary in place.
 - Disabled UI-aware MapLibre viewport padding so configured map centers behave predictably across layouts.
+- Reused the existing GeoJSON polygon-center helper for MapLibre room-number placement instead of custom centroid math.
 
 ### Fixed
 
