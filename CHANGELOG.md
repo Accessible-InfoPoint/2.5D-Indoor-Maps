@@ -21,6 +21,7 @@ useful for the project.
 - MapLibre indoor level rendering scaffold with room fill and border layers.
 - Section dividers in the MapLibre indoor level view to make the rendering scaffold easier to navigate.
 - Optional per-building `STANDARD_CENTER` and `STANDARD_CENTER_WHEELCHAIR_MODE` settings for layout-aware map centering.
+- MapLibre room fill-pattern support for wheelchair-accessible patterned room backgrounds.
 
 ### Changed
 

@@ -15,6 +15,7 @@ mixed into unrelated refactors.
 ### Accessibility and Controls
 
 - Review keyboard navigation for map controls, level controls, and settings.
+- Tune map bounds constraints to work with rotated bounding box
 
 ## Larger Features
 

@@ -13,6 +13,7 @@ import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 
 type LayerVisibility = "visible" | "none";
 type OpacityExpression = ["*", ["coalesce", ["get", string], number], number];
+type PatternExpression = ["get", string];
 
 interface MapLibreIndoorLevelLayerSet {
   sourceId: string;
@@ -27,6 +28,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
   private pendingRenderModel?: IndoorLevelRenderModel;
   private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
+  private readonly loadingPatternImageIds = new Set<string>();
   private readonly pendingLayerOperations: (() => void)[] = [];
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
@@ -38,7 +40,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     private readonly events: IndoorLevelViewEvents
   ) {
     this.infoPoint = this.createLayerSet("info-point", ["circle", "label"]);
-    this.rooms = this.createLayerSet("rooms", ["fill", "line"]);
+    this.rooms = this.createLayerSet("rooms", ["fill", "pattern", "line"]);
     this.tactilePaving = this.createLayerSet("tactile-paving", ["line"]);
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
@@ -189,6 +191,16 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       },
     });
     this.addLayer({
+      id: this.getLayerId("rooms", "pattern"),
+      type: "fill",
+      source: this.rooms.sourceId,
+      filter: ["has", "patternImageId"],
+      paint: {
+        "fill-pattern": this.getPatternExpression("patternImageId"),
+        "fill-opacity": this.getOpacityExpression("fillOpacity"),
+      },
+    });
+    this.addLayer({
       id: this.getLayerId("rooms", "line"),
       type: "line",
       source: this.rooms.sourceId,
@@ -279,6 +291,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private renderRooms(rooms: RoomRenderItem[]): void {
     this.roomFeaturesById.clear();
+    this.registerRoomPatternImages(rooms);
     this.setSourceData(this.rooms.sourceId, {
       type: "FeatureCollection",
       features: rooms.map((room) => this.buildRoomFeature(room)),
@@ -364,6 +377,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setPaintProperty(this.getLayerId("info-point", "circle"), "circle-opacity", this.opacity);
     this.setPaintProperty(this.getLayerId("info-point", "label"), "text-opacity", this.opacity);
     this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
+    this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
     this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
   }
 
@@ -384,6 +398,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private buildRoomFeature(item: RoomRenderItem): GeoJSON.Feature {
     const featureId = getRequiredFeatureId(item.feature);
+    const patternFile = this.getStyleString(item.style, "polygonPatternFile", "");
     this.roomFeaturesById.set(featureId, item.feature);
 
     return {
@@ -396,9 +411,44 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
         lineColor: this.getStyleString(item.style, "lineColor", "#000000"),
         lineWidth: this.getStyleNumber(item.style, "lineWidth", 1),
         lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
-        patternFile: this.getStyleString(item.style, "polygonPatternFile", ""),
+        patternFile,
+        ...(patternFile
+          ? {
+              patternImageId: this.getPatternImageId(patternFile),
+            }
+          : {}),
       },
     };
+  }
+
+  private registerRoomPatternImages(rooms: RoomRenderItem[]): void {
+    rooms
+      .map((room) => this.getStyleString(room.style, "polygonPatternFile", ""))
+      .filter((patternFile) => patternFile.length > 0)
+      .forEach((patternFile) => this.registerPatternImage(patternFile));
+  }
+
+  private registerPatternImage(patternFile: string): void {
+    const imageId = this.getPatternImageId(patternFile);
+
+    if (this.map.hasImage(imageId) || this.loadingPatternImageIds.has(imageId)) {
+      return;
+    }
+
+    this.loadingPatternImageIds.add(imageId);
+    this.map.loadImage(patternFile)
+      .then((image) => {
+        if (!this.map.hasImage(imageId)) {
+          this.map.addImage(imageId, image.data);
+          this.map.triggerRepaint();
+        }
+      })
+      .catch((error: unknown) => {
+        console.warn(`Could not load MapLibre fill pattern "${patternFile}".`, error);
+      })
+      .finally(() => {
+        this.loadingPatternImageIds.delete(imageId);
+      });
   }
 
   // ===== Interaction =========================================================
@@ -459,6 +509,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     ];
   }
 
+  private getPatternExpression(propertyName: string): PatternExpression {
+    return ["get", propertyName];
+  }
+
   // ===== Id helpers ==========================================================
 
   private getSourceId(name: string): string {
@@ -467,6 +521,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private getLayerId(name: string, layerName: string): string {
     return `${this.getSourceId(name)}-${layerName}`;
+  }
+
+  private getPatternImageId(patternFile: string): string {
+    return `pattern-${patternFile.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   }
 
   private emptyFeatureCollection(): GeoJSON.FeatureCollection {
