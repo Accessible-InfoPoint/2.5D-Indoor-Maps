@@ -1,58 +1,41 @@
 import type {
+  AddLayerObject,
   GeoJSONSource,
   Map as MapLibreMap,
   MapLayerMouseEvent,
 } from "maplibre-gl";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import polygonCenter from "geojson-polygon-center";
-import { ICONS, MARKERS_IMG_DIR } from "../../../public/strings/constants.json";
-import FeatureService from "../../services/featureService";
-import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
-import {
-  buildMarkerClusters,
-  ClusterableMarker,
-  getMarkerFile,
-  MarkerCluster,
-  MarkerSymbol,
-  ResolvedMarkerClusterOptions,
-  resolveMarkerClusterOptions,
-} from "../markerCluster/markerClusterModel";
 import {
   IndoorLevelRenderModel,
   RoomRenderItem,
   StyledFeatureRenderItem,
 } from "./indoorLevelRenderModel";
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
-
-type LayerVisibility = "visible" | "none";
-type OpacityExpression = ["*", ["coalesce", ["get", string], number], number];
-type PatternExpression = ["get", string];
-type ZoomOpacityExpression = [
-  "interpolate",
-  ["linear"],
-  ["zoom"],
-  number,
-  number,
-  number,
-  number
-];
-
-const ROOM_NUMBER_FADE_START_ZOOM = 19.8;
-const ROOM_NUMBER_FADE_END_ZOOM = 20.3;
-const ROOM_NUMBER_BACKGROUND_IMAGE_ID = "room-number-background";
-const ROOM_NUMBER_BACKGROUND_SIZE = 24;
-const ROOM_NUMBER_BACKGROUND_BORDER = 6;
-const ACCESSIBILITY_MARKER_IMAGE_SIZE = 48;
-
-interface AccessibilityMarkerCluster extends MarkerCluster {
-  id: number;
-}
-
-interface MapLibreIndoorLevelLayerSet {
-  sourceId: string;
-  layerIds: string[];
-}
+import { MapLibreAccessibilityMarkerRenderer } from "./maplibre/maplibreAccessibilityMarkerRenderer";
+import {
+  buildMapLibreRoomFeature,
+  buildMapLibreRoomNumberFeature,
+  buildMapLibreStyledLineFeature,
+  getRoomPatternFile,
+} from "./maplibre/maplibreFeatureConverters";
+import {
+  createLayerSet as createMapLibreLayerSet,
+  getLayerId as getMapLibreLayerId,
+  getSourceId as getMapLibreSourceId,
+  getPatternImageId,
+  LayerVisibility,
+  MapLibreIndoorLevelLayerSet,
+} from "./maplibre/maplibreIndoorLevelTypes";
+import { registerRoomNumberBackgroundImage } from "./maplibre/maplibreImageRegistry";
+import {
+  getOpacityExpression,
+  getZoomOpacityExpression,
+} from "./maplibre/maplibreStyleHelpers";
+import {
+  createInfoPointLayers,
+  createRoomLayers,
+  createRoomNumberLayers,
+  createTactilePavingLayers,
+} from "./maplibre/maplibreLayerDefinitions";
 
 export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly infoPoint: MapLibreIndoorLevelLayerSet;
@@ -60,16 +43,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly tactilePaving: MapLibreIndoorLevelLayerSet;
   private readonly roomNumbers: MapLibreIndoorLevelLayerSet;
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
+  private readonly accessibilityMarkerRenderer: MapLibreAccessibilityMarkerRenderer;
   private pendingRenderModel?: IndoorLevelRenderModel;
   private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
-  private readonly accessibilityMarkerFeaturesById = new Map<string | number, GeoJSON.Feature>();
-  private readonly accessibilityMarkerClustersById = new Map<number, AccessibilityMarkerCluster>();
-  private readonly accessibilityMarkerClusterOptions: ResolvedMarkerClusterOptions;
   private readonly loadingPatternImageIds = new Set<string>();
-  private readonly loadingMarkerImageIds = new Set<string>();
   private readonly pendingLayerOperations: (() => void)[] = [];
-  private accessibilityMarkerItems: ClusterableMarker[] = [];
-  private pendingAccessibilityMarkerClusterFrame?: number;
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
   private opacity = 1;
@@ -84,11 +62,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.tactilePaving = this.createLayerSet("tactile-paving", ["line"]);
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
-    this.accessibilityMarkerClusterOptions = resolveMarkerClusterOptions({
-      symbol: {
-        markerFile: MARKERS_IMG_DIR + ICONS.ADDITIONAL,
-      },
-    });
+    this.accessibilityMarkerRenderer = new MapLibreAccessibilityMarkerRenderer(
+      this.map,
+      this.accessibilityMarkers.sourceId,
+      getMapLibreLayerId(this.level, "accessibility-markers", "icon"),
+      events
+    );
 
     this.whenMapStyleReady(() => this.initializeLayers());
   }
@@ -98,14 +77,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   clear(): void {
     this.whenLayersInitialized(() => {
       this.roomFeaturesById.clear();
-      this.accessibilityMarkerFeaturesById.clear();
-      this.accessibilityMarkerClustersById.clear();
-      this.accessibilityMarkerItems = [];
+      this.accessibilityMarkerRenderer.clear();
       this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
-      this.setSourceData(this.accessibilityMarkers.sourceId, this.emptyFeatureCollection());
     });
   }
 
@@ -185,7 +161,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.addGeoJsonSource(this.roomNumbers.sourceId);
     this.addGeoJsonSource(this.accessibilityMarkers.sourceId);
 
-    this.registerRoomNumberBackgroundImage();
+    registerRoomNumberBackgroundImage(this.map);
     this.addRoomLayers();
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
@@ -201,128 +177,25 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private addInfoPointLayers(): void {
-    this.addLayer({
-      id: this.getLayerId("info-point", "circle"),
-      type: "circle",
-      source: this.infoPoint.sourceId,
-      paint: {
-        "circle-color": "rgb(255, 195, 195)",
-        "circle-radius": 18,
-        "circle-stroke-color": "#000000",
-        "circle-stroke-width": 2,
-        "circle-opacity": this.opacity,
-      },
-    });
-    this.addLayer({
-      id: this.getLayerId("info-point", "label"),
-      type: "symbol",
-      source: this.infoPoint.sourceId,
-      layout: {
-        "text-field": ["get", "label"],
-        "text-size": 18,
-        "text-allow-overlap": true,
-      },
-      paint: {
-        "text-color": "#000000",
-        "text-opacity": this.opacity,
-      },
-    });
+    this.addLayers(createInfoPointLayers(this.getLayerDefinitionOptions()));
   }
 
   private addRoomLayers(): void {
-    this.addLayer({
-      id: this.getLayerId("rooms", "fill"),
-      type: "fill",
-      source: this.rooms.sourceId,
-      paint: {
-        "fill-color": ["coalesce", ["get", "fillColor"], "#ffffff"],
-        "fill-opacity": this.getOpacityExpression("fillOpacity"),
-      },
-    });
-    this.addLayer({
-      id: this.getLayerId("rooms", "pattern"),
-      type: "fill",
-      source: this.rooms.sourceId,
-      filter: ["has", "patternImageId"],
-      paint: {
-        "fill-pattern": this.getPatternExpression("patternImageId"),
-        "fill-opacity": this.getOpacityExpression("fillOpacity"),
-      },
-    });
-    this.addLayer({
-      id: this.getLayerId("rooms", "line"),
-      type: "line",
-      source: this.rooms.sourceId,
-      paint: {
-        "line-color": ["coalesce", ["get", "lineColor"], "#000000"],
-        "line-width": ["coalesce", ["get", "lineWidth"], 1],
-        "line-opacity": this.getOpacityExpression("lineOpacity"),
-      },
-    });
+    this.addLayers(createRoomLayers(this.getLayerDefinitionOptions()));
     this.bindRoomEvents();
   }
 
   private addTactilePavingLayers(): void {
-    this.addLayer({
-      id: this.getLayerId("tactile-paving", "line"),
-      type: "line",
-      source: this.tactilePaving.sourceId,
-      layout: {
-        "line-cap": "round",
-        "line-join": "round",
-      },
-      paint: {
-        "line-color": ["coalesce", ["get", "lineColor"], "#000000"],
-        "line-width": ["coalesce", ["get", "lineWidth"], 1],
-        "line-opacity": this.getOpacityExpression("lineOpacity"),
-        "line-dasharray": ["coalesce", ["get", "lineDasharray"], ["literal", [10, 10]]],
-      },
-    });
+    this.addLayers(createTactilePavingLayers(this.getLayerDefinitionOptions()));
   }
 
   private addRoomNumberLayers(): void {
-    this.addLayer({
-      id: this.getLayerId("room-numbers", "label"),
-      type: "symbol",
-      source: this.roomNumbers.sourceId,
-      minzoom: ROOM_NUMBER_FADE_START_ZOOM,
-      layout: {
-        "icon-image": ROOM_NUMBER_BACKGROUND_IMAGE_ID,
-        "icon-text-fit": "both",
-        "icon-text-fit-padding": [4, 7, 4, 7],
-        "icon-allow-overlap": true,
-        "text-field": ["get", "label"],
-        "text-size": 14,
-        "text-anchor": "center",
-        "text-justify": "center",
-        "text-allow-overlap": true,
-      },
-      paint: {
-        "text-color": "#000000",
-        "text-halo-color": "#ffffff",
-        "text-halo-width": 1,
-        "text-opacity": this.getZoomOpacityExpression(),
-        "icon-opacity": this.getZoomOpacityExpression(),
-      },
-    });
+    this.addLayers(createRoomNumberLayers(this.getLayerDefinitionOptions()));
   }
 
   private addAccessibilityMarkerLayers(): void {
-    this.addLayer({
-      id: this.getLayerId("accessibility-markers", "icon"),
-      type: "symbol",
-      source: this.accessibilityMarkers.sourceId,
-      layout: {
-        "icon-image": ["get", "iconImageId"],
-        "icon-size": ["coalesce", ["get", "iconScale"], 1],
-        "icon-allow-overlap": true,
-        "icon-anchor": "center",
-      },
-      paint: {
-        "icon-opacity": this.opacity,
-      },
-    });
-    this.bindAccessibilityMarkerEvents();
+    this.addLayer(this.accessibilityMarkerRenderer.createLayer());
+    this.accessibilityMarkerRenderer.bindEvents();
   }
 
   // ===== Render pipelines ===================================================
@@ -363,16 +236,20 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private renderRooms(rooms: RoomRenderItem[]): void {
     this.roomFeaturesById.clear();
     this.registerRoomPatternImages(rooms);
+    const roomFeatures = rooms.map((room) => buildMapLibreRoomFeature(room));
+    roomFeatures.forEach((roomFeature) => {
+      this.roomFeaturesById.set(roomFeature.featureId, roomFeature.sourceFeature);
+    });
     this.setSourceData(this.rooms.sourceId, {
       type: "FeatureCollection",
-      features: rooms.map((room) => this.buildRoomFeature(room)),
+      features: roomFeatures.map((roomFeature) => roomFeature.feature),
     });
   }
 
   private renderTactilePaving(items: StyledFeatureRenderItem[]): void {
     this.setSourceData(this.tactilePaving.sourceId, {
       type: "FeatureCollection",
-      features: items.map((item) => this.buildStyledLineFeature(item)),
+      features: items.map((item) => buildMapLibreStyledLineFeature(item)),
     });
   }
 
@@ -380,23 +257,13 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setSourceData(this.roomNumbers.sourceId, {
       type: "FeatureCollection",
       features: rooms
-        .map((room) => this.buildRoomNumberFeature(room))
+        .map((room) => buildMapLibreRoomNumberFeature(room))
         .filter((feature): feature is GeoJSON.Feature<GeoJSON.Point> => feature != undefined),
     });
   }
 
   private renderAccessibilityMarkers(renderModel: IndoorLevelRenderModel): void {
-    this.accessibilityMarkerFeaturesById.clear();
-    this.accessibilityMarkerClustersById.clear();
-    this.accessibilityMarkerItems = [
-      ...renderModel.rooms.map((room) => room.feature),
-      ...renderModel.pointMarkerFeatures,
-    ]
-      .map((feature) => this.buildAccessibilityMarkerItem(feature))
-      .filter((marker): marker is ClusterableMarker => marker != undefined);
-
-    this.registerAccessibilityMarkerImages(this.accessibilityMarkerItems);
-    this.updateAccessibilityMarkerClusters();
+    this.accessibilityMarkerRenderer.render(renderModel);
   }
 
   // ===== MapLibre sources and layers ========================================
@@ -412,10 +279,22 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
-  private addLayer(layer: maplibregl.AddLayerObject): void {
+  private addLayer(layer: AddLayerObject): void {
     if (!this.map.getLayer(layer.id)) {
       this.map.addLayer(layer);
     }
+  }
+
+  private addLayers(layers: AddLayerObject[]): void {
+    layers.forEach((layer) => this.addLayer(layer));
+  }
+
+  private getLayerDefinitionOptions() {
+    return {
+      layerId: (name: string, layerName: string) => this.getLayerId(name, layerName),
+      sourceId: (name: string) => getMapLibreSourceId(this.level, name),
+      opacity: this.opacity,
+    };
   }
 
   private setSourceData(sourceId: string, data: GeoJSON.FeatureCollection): void {
@@ -462,13 +341,13 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private applyOpacity(): void {
     this.setPaintProperty(this.getLayerId("info-point", "circle"), "circle-opacity", this.opacity);
     this.setPaintProperty(this.getLayerId("info-point", "label"), "text-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
-    this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
-    this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
-    this.setPaintProperty(this.getLayerId("tactile-paving", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
-    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", this.getZoomOpacityExpression());
-    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", this.getZoomOpacityExpression());
-    this.setPaintProperty(this.getLayerId("accessibility-markers", "icon"), "icon-opacity", this.opacity);
+    this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", getOpacityExpression("fillOpacity", this.opacity));
+    this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", getOpacityExpression("fillOpacity", this.opacity));
+    this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", getOpacityExpression("lineOpacity", this.opacity));
+    this.setPaintProperty(this.getLayerId("tactile-paving", "line"), "line-opacity", getOpacityExpression("lineOpacity", this.opacity));
+    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", getZoomOpacityExpression(this.opacity));
+    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", getZoomOpacityExpression(this.opacity));
+    this.accessibilityMarkerRenderer.applyOpacity(this.opacity);
   }
 
   private setPaintProperty(layerId: string, property: string, value: unknown): void {
@@ -477,223 +356,21 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     }
   }
 
-  // ===== Feature conversion ==================================================
+  // ===== Feature assets ======================================================
 
   private createLayerSet(name: string, layerNames: string[]): MapLibreIndoorLevelLayerSet {
-    return {
-      sourceId: this.getSourceId(name),
-      layerIds: layerNames.map((layerName) => this.getLayerId(name, layerName)),
-    };
-  }
-
-  private buildRoomFeature(item: RoomRenderItem): GeoJSON.Feature {
-    const featureId = getRequiredFeatureId(item.feature);
-    const patternFile = this.getStyleString(item.style, "polygonPatternFile", "");
-    this.roomFeaturesById.set(featureId, item.feature);
-
-    return {
-      ...item.feature,
-      properties: {
-        ...item.feature.properties,
-        __featureId: featureId,
-        fillColor: this.getStyleString(item.style, "polygonFill", "#ffffff"),
-        fillOpacity: this.getStyleNumber(item.style, "polygonOpacity", 1),
-        lineColor: this.getStyleString(item.style, "lineColor", "#000000"),
-        lineWidth: this.getStyleNumber(item.style, "lineWidth", 1),
-        lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
-        patternFile,
-        ...(patternFile
-          ? {
-              patternImageId: this.getPatternImageId(patternFile),
-            }
-          : {}),
-      },
-    };
-  }
-
-  private buildRoomNumberFeature(item: RoomRenderItem): GeoJSON.Feature<GeoJSON.Point> | undefined {
-    if (!item.label) {
-      return undefined;
-    }
-
-    const coordinates = this.getGeometryLabelCenter(item.feature.geometry);
-
-    if (!coordinates) {
-      return undefined;
-    }
-
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates,
-      },
-      properties: {
-        label: item.label,
-      },
-    };
-  }
-
-  private buildStyledLineFeature(item: StyledFeatureRenderItem): GeoJSON.Feature {
-    return {
-      ...item.feature,
-      properties: {
-        ...item.feature.properties,
-        lineColor: this.getStyleString(item.style, "lineColor", "#000000"),
-        lineWidth: this.getStyleNumber(item.style, "lineWidth", 1),
-        lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
-        lineDasharray: this.getStyleNumberArray(item.style, "lineDasharray", [10, 10]),
-      },
-    };
-  }
-
-  private buildAccessibilityMarkerItem(feature: GeoJSON.Feature): ClusterableMarker | undefined {
-    const markerData = FeatureService.getAccessibilityMarkerData(feature);
-
-    if (!markerData) {
-      return undefined;
-    }
-
-    const id = getRequiredFeatureId(feature);
-    const symbol: MarkerSymbol = markerData.symbol;
-
-    this.accessibilityMarkerFeaturesById.set(id, feature);
-
-    return {
-      id,
-      center: {
-        x: markerData.coordinates[0],
-        y: markerData.coordinates[1],
-      },
-      projectedCenter: {
-        x: 0,
-        y: 0,
-      },
-      symbol,
-      markerFile: getMarkerFile(symbol),
-    };
-  }
-
-  private updateAccessibilityMarkerClusters(): void {
-    if (!this.layersInitialized) {
-      return;
-    }
-
-    this.accessibilityMarkerClustersById.clear();
-
-    const clusters = buildMarkerClusters(
-      this.accessibilityMarkerItems.map((marker) => ({
-        ...marker,
-        projectedCenter: this.projectMarkerCenter(marker.center),
-      })),
-      this.accessibilityMarkerClusterOptions
-    ).map((cluster, index) => ({
-      ...cluster,
-      id: index,
-    }));
-
-    clusters.forEach((cluster) => {
-      this.accessibilityMarkerClustersById.set(cluster.id, cluster);
-    });
-
-    this.registerAccessibilityClusterImages(clusters);
-    this.setSourceData(this.accessibilityMarkers.sourceId, {
-      type: "FeatureCollection",
-      features: clusters.map((cluster) => this.buildAccessibilityMarkerClusterFeature(cluster)),
-    });
-  }
-
-  private buildAccessibilityMarkerClusterFeature(
-    cluster: AccessibilityMarkerCluster
-  ): GeoJSON.Feature<GeoJSON.Point> {
-    return {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [
-          cluster.center.x,
-          cluster.center.y,
-        ],
-      },
-      properties: {
-        clusterId: cluster.id,
-        iconImageId: this.getMarkerImageId(this.getClusterMarkerFile(cluster)),
-        iconScale: 1,
-      },
-    };
-  }
-
-  private projectMarkerCenter(center: { x: number; y: number }): { x: number; y: number } {
-    const point = this.map.project([center.x, center.y]);
-
-    return {
-      x: point.x,
-      y: point.y,
-    };
-  }
-
-  private getGeometryLabelCenter(geometry: GeoJSON.Geometry): GeoJSON.Position | undefined {
-    if (geometry.type == "Polygon") {
-      return this.getPolygonCenter(geometry);
-    }
-
-    if (geometry.type == "MultiPolygon") {
-      const largestPolygonCoordinates = geometry.coordinates
-        .map((coordinates) => ({
-          coordinates,
-          area: this.getBoundingBoxArea(coordinates[0] ?? []),
-        }))
-        .sort((a, b) => b.area - a.area)[0]?.coordinates;
-
-      return largestPolygonCoordinates
-        ? this.getPolygonCenter({
-            type: "Polygon",
-            coordinates: largestPolygonCoordinates,
-          })
-        : undefined;
-    }
-
-    return undefined;
-  }
-
-  private getPolygonCenter(geometry: GeoJSON.Polygon): GeoJSON.Position | undefined {
-    const center = polygonCenter(geometry) as GeoJSON.Point;
-
-    return center.coordinates;
-  }
-
-  private getBoundingBoxArea(positions: GeoJSON.Position[]): number {
-    if (positions.length == 0) {
-      return 0;
-    }
-
-    const bounds = positions.reduce(
-      (currentBounds, position) => ({
-        minX: Math.min(currentBounds.minX, position[0]),
-        minY: Math.min(currentBounds.minY, position[1]),
-        maxX: Math.max(currentBounds.maxX, position[0]),
-        maxY: Math.max(currentBounds.maxY, position[1]),
-      }),
-      {
-        minX: Infinity,
-        minY: Infinity,
-        maxX: -Infinity,
-        maxY: -Infinity,
-      }
-    );
-
-    return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
+    return createMapLibreLayerSet(this.level, name, layerNames);
   }
 
   private registerRoomPatternImages(rooms: RoomRenderItem[]): void {
     rooms
-      .map((room) => this.getStyleString(room.style, "polygonPatternFile", ""))
+      .map((room) => getRoomPatternFile(room))
       .filter((patternFile) => patternFile.length > 0)
       .forEach((patternFile) => this.registerPatternImage(patternFile));
   }
 
   private registerPatternImage(patternFile: string): void {
-    const imageId = this.getPatternImageId(patternFile);
+    const imageId = getPatternImageId(patternFile);
 
     if (this.map.hasImage(imageId) || this.loadingPatternImageIds.has(imageId)) {
       return;
@@ -715,115 +392,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       });
   }
 
-  private registerAccessibilityMarkerImages(markers: ClusterableMarker[]): void {
-    markers
-      .map((marker) => marker.markerFile)
-      .filter((markerFile): markerFile is string => markerFile != undefined)
-      .forEach((markerFile) => this.registerMarkerImage(markerFile));
-    this.registerMarkerImage(MARKERS_IMG_DIR + ICONS.ADDITIONAL);
-  }
-
-  private registerAccessibilityClusterImages(clusters: AccessibilityMarkerCluster[]): void {
-    clusters.forEach((cluster) => this.registerMarkerImage(this.getClusterMarkerFile(cluster)));
-  }
-
-  private registerMarkerImage(markerFile: string): void {
-    const imageId = this.getMarkerImageId(markerFile);
-
-    if (this.map.hasImage(imageId) || this.loadingMarkerImageIds.has(imageId)) {
-      return;
-    }
-
-    this.loadingMarkerImageIds.add(imageId);
-    this.loadMarkerImage(markerFile)
-      .then((imageData) => {
-        if (!this.map.hasImage(imageId)) {
-          this.map.addImage(imageId, imageData);
-          this.map.triggerRepaint();
-        }
-      })
-      .catch((error: unknown) => {
-        console.warn(`Could not load MapLibre marker image "${markerFile}".`, error);
-      })
-      .finally(() => {
-        this.loadingMarkerImageIds.delete(imageId);
-      });
-  }
-
-  private getClusterMarkerFile(cluster: MarkerCluster): string {
-    return getMarkerFile(cluster.symbol) ?? MARKERS_IMG_DIR + ICONS.ADDITIONAL;
-  }
-
-  private loadMarkerImage(markerFile: string): Promise<ImageData> {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = ACCESSIBILITY_MARKER_IMAGE_SIZE;
-        canvas.height = ACCESSIBILITY_MARKER_IMAGE_SIZE;
-
-        const context = canvas.getContext("2d");
-
-        if (!context) {
-          reject(new Error("Could not create marker image canvas context."));
-          return;
-        }
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(context.getImageData(0, 0, canvas.width, canvas.height));
-      };
-      image.onerror = () => reject(new Error(`Could not decode marker image "${markerFile}".`));
-      image.src = markerFile;
-    });
-  }
-
-  private registerRoomNumberBackgroundImage(): void {
-    if (this.map.hasImage(ROOM_NUMBER_BACKGROUND_IMAGE_ID)) {
-      return;
-    }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = ROOM_NUMBER_BACKGROUND_SIZE;
-    canvas.height = ROOM_NUMBER_BACKGROUND_SIZE;
-
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "rgba(255, 255, 255, 0.9)";
-    context.strokeStyle = "rgba(0, 0, 0, 0.75)";
-    context.lineWidth = 2;
-    this.drawRoundedRectangle(
-      context,
-      1,
-      1,
-      canvas.width - 2,
-      canvas.height - 2,
-      ROOM_NUMBER_BACKGROUND_BORDER
-    );
-    context.fill();
-    context.stroke();
-
-    this.map.addImage(
-      ROOM_NUMBER_BACKGROUND_IMAGE_ID,
-      context.getImageData(0, 0, canvas.width, canvas.height),
-      {
-        content: [
-          ROOM_NUMBER_BACKGROUND_BORDER,
-          ROOM_NUMBER_BACKGROUND_BORDER,
-          canvas.width - ROOM_NUMBER_BACKGROUND_BORDER,
-          canvas.height - ROOM_NUMBER_BACKGROUND_BORDER,
-        ],
-        stretchX: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.width - ROOM_NUMBER_BACKGROUND_BORDER]],
-        stretchY: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.height - ROOM_NUMBER_BACKGROUND_BORDER]],
-      }
-    );
-  }
-
   // ===== Interaction =========================================================
 
   private bindRoomEvents(): void {
@@ -834,19 +402,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.map.getCanvas().style.cursor = "pointer";
     });
     this.map.on("mouseleave", fillLayerId, () => {
-      this.map.getCanvas().style.cursor = "";
-    });
-  }
-
-  private bindAccessibilityMarkerEvents(): void {
-    const iconLayerId = this.getLayerId("accessibility-markers", "icon");
-
-    this.map.on("move", () => this.scheduleAccessibilityMarkerClusterUpdate());
-    this.map.on("click", iconLayerId, (event) => this.handleAccessibilityMarkerClick(event));
-    this.map.on("mouseenter", iconLayerId, () => {
-      this.map.getCanvas().style.cursor = "pointer";
-    });
-    this.map.on("mouseleave", iconLayerId, () => {
       this.map.getCanvas().style.cursor = "";
     });
   }
@@ -870,212 +425,13 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private hasAccessibilityMarkerAtClickPoint(event: MapLayerMouseEvent): boolean {
-    return this.map.queryRenderedFeatures(event.point, {
-      layers: [this.getLayerId("accessibility-markers", "icon")],
-    }).length > 0;
-  }
-
-  private handleAccessibilityMarkerClick(event: MapLayerMouseEvent): void {
-    const clusterId = this.getNumberProperty(event.features?.[0]?.properties?.clusterId);
-
-    if (clusterId == undefined) {
-      return;
-    }
-
-    const cluster = this.accessibilityMarkerClustersById.get(clusterId);
-
-    if (!cluster) {
-      return;
-    }
-
-    if (cluster.markers.length > 1) {
-      this.fitMapToAccessibilityCluster(cluster);
-      return;
-    }
-
-    const feature = this.accessibilityMarkerFeaturesById.get(cluster.markers[0].id);
-
-    if (feature) {
-      this.events.onFeatureSelected(feature);
-    }
-  }
-
-  private fitMapToAccessibilityCluster(cluster: MarkerCluster): void {
-    const bounds = this.getMarkerClusterBounds(cluster);
-
-    if (!bounds) {
-      return;
-    }
-
-    const [[west, south], [east, north]] = bounds;
-
-    if (west == east && south == north) {
-      this.map.easeTo({
-        center: [west, south],
-        zoom: this.map.getZoom() + 1,
-        bearing: this.map.getBearing(),
-        pitch: this.map.getPitch(),
-        duration: 350,
-      });
-      return;
-    }
-
-    this.map.fitBounds(bounds, {
-      bearing: this.map.getBearing(),
-      duration: 350,
-      padding: 80,
-      pitch: this.map.getPitch(),
-    });
-  }
-
-  private getMarkerClusterBounds(
-    cluster: MarkerCluster
-  ): [[number, number], [number, number]] | undefined {
-    if (cluster.markers.length == 0) {
-      return undefined;
-    }
-
-    const bounds = cluster.markers.reduce(
-      (currentBounds, marker) => ({
-        west: Math.min(currentBounds.west, marker.center.x),
-        south: Math.min(currentBounds.south, marker.center.y),
-        east: Math.max(currentBounds.east, marker.center.x),
-        north: Math.max(currentBounds.north, marker.center.y),
-      }),
-      {
-        west: cluster.markers[0].center.x,
-        south: cluster.markers[0].center.y,
-        east: cluster.markers[0].center.x,
-        north: cluster.markers[0].center.y,
-      }
-    );
-
-    return [
-      [bounds.west, bounds.south],
-      [bounds.east, bounds.north],
-    ];
-  }
-
-  private scheduleAccessibilityMarkerClusterUpdate(): void {
-    if (this.pendingAccessibilityMarkerClusterFrame != undefined) {
-      return;
-    }
-
-    this.pendingAccessibilityMarkerClusterFrame = requestAnimationFrame(() => {
-      this.pendingAccessibilityMarkerClusterFrame = undefined;
-      this.updateAccessibilityMarkerClusters();
-    });
-  }
-
-  // ===== Style helpers =======================================================
-
-  private getStyleString(
-    style: Record<string, unknown>,
-    key: string,
-    fallback: string
-  ): string {
-    const value = style[key];
-
-    return typeof value == "string" ? value : fallback;
-  }
-
-  private getStyleNumber(
-    style: Record<string, unknown>,
-    key: string,
-    fallback: number
-  ): number {
-    const value = style[key];
-
-    return typeof value == "number" ? value : fallback;
-  }
-
-  private getStyleNumberArray(
-    style: Record<string, unknown>,
-    key: string,
-    fallback: number[]
-  ): number[] {
-    const value = style[key];
-
-    return Array.isArray(value) && value.every((item) => typeof item == "number")
-      ? value
-      : fallback;
-  }
-
-  private getOpacityExpression(propertyName: string): OpacityExpression {
-    return [
-      "*",
-      ["coalesce", ["get", propertyName], 1],
-      this.opacity,
-    ];
-  }
-
-  private getPatternExpression(propertyName: string): PatternExpression {
-    return ["get", propertyName];
-  }
-
-  private getZoomOpacityExpression(): ZoomOpacityExpression {
-    return [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      ROOM_NUMBER_FADE_START_ZOOM,
-      0,
-      ROOM_NUMBER_FADE_END_ZOOM,
-      this.opacity,
-    ];
-  }
-
-  private drawRoundedRectangle(
-    context: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    radius: number
-  ): void {
-    context.beginPath();
-    context.moveTo(x + radius, y);
-    context.lineTo(x + width - radius, y);
-    context.quadraticCurveTo(x + width, y, x + width, y + radius);
-    context.lineTo(x + width, y + height - radius);
-    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    context.lineTo(x + radius, y + height);
-    context.quadraticCurveTo(x, y + height, x, y + height - radius);
-    context.lineTo(x, y + radius);
-    context.quadraticCurveTo(x, y, x + radius, y);
-    context.closePath();
+    return this.accessibilityMarkerRenderer.hasMarkerAtClickPoint(event);
   }
 
   // ===== Id helpers ==========================================================
 
-  private getSourceId(name: string): string {
-    return `indoor-level-${this.level}-${name}`;
-  }
-
   private getLayerId(name: string, layerName: string): string {
-    return `${this.getSourceId(name)}-${layerName}`;
-  }
-
-  private getPatternImageId(patternFile: string): string {
-    return `pattern-${patternFile.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-  }
-
-  private getMarkerImageId(markerFile: string): string {
-    return `marker-${markerFile.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-  }
-
-  private getNumberProperty(value: unknown): number | undefined {
-    if (typeof value == "number") {
-      return value;
-    }
-
-    if (typeof value != "string") {
-      return undefined;
-    }
-
-    const parsedValue = Number(value);
-
-    return Number.isNaN(parsedValue) ? undefined : parsedValue;
+    return getMapLibreLayerId(this.level, name, layerName);
   }
 
   private emptyFeatureCollection(): GeoJSON.FeatureCollection {

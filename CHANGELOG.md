@@ -32,6 +32,9 @@ useful for the project.
 - Switched the base map stylesheet from maptalks to MapLibre while keeping the rendering adapter boundary in place.
 - Disabled UI-aware MapLibre viewport padding so configured map centers behave predictably across layouts.
 - Reused the existing GeoJSON polygon-center helper for MapLibre room-number placement instead of custom centroid math.
+- Split MapLibre indoor level rendering helpers and accessibility marker clustering into dedicated `indoorLevel/maplibre` modules.
+- Moved MapLibre indoor feature conversion for rooms, room numbers, and styled lines into a dedicated converter module.
+- Moved MapLibre indoor layer definitions for rooms, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
 
 ### Fixed
 
