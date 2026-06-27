@@ -39,6 +39,7 @@ useful for the project.
 - Moved MapLibre indoor feature conversion for rooms, room numbers, and styled lines into a dedicated converter module.
 - Moved MapLibre indoor layer definitions for rooms, doors, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
 - Moved MapLibre Three.js Mercator-local geometry creation into a dedicated geometry module.
+- Reduced MapLibre room-number background padding and hid the 2D infopoint layer in 3D mode.
 
 ### Fixed
 

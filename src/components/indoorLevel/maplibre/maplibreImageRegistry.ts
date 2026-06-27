@@ -2,8 +2,8 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { getMarkerImageId } from "./maplibreIndoorLevelTypes";
 
 const ROOM_NUMBER_BACKGROUND_IMAGE_ID = "room-number-background";
-const ROOM_NUMBER_BACKGROUND_SIZE = 24;
-const ROOM_NUMBER_BACKGROUND_BORDER = 6;
+const ROOM_NUMBER_BACKGROUND_SIZE = 10;
+const ROOM_NUMBER_BACKGROUND_BORDER = 4;
 const ACCESSIBILITY_MARKER_IMAGE_SIZE = 48;
 
 export { ROOM_NUMBER_BACKGROUND_IMAGE_ID };

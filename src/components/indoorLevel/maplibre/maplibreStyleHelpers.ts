@@ -11,7 +11,7 @@ export type ZoomOpacityExpression = [
 ];
 
 export const ROOM_NUMBER_FADE_START_ZOOM = 18.8;
-export const ROOM_NUMBER_FADE_END_ZOOM = 19.3;
+export const ROOM_NUMBER_FADE_END_ZOOM = 19.0;
 
 export function getStyleString(
   style: Record<string, unknown>,

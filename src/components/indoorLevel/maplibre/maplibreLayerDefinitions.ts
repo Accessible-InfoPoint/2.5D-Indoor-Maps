@@ -216,7 +216,7 @@ export function createRoomNumberLayers(options: LayerDefinitionOptions): AddLaye
       layout: {
         "icon-image": ROOM_NUMBER_BACKGROUND_IMAGE_ID,
         "icon-text-fit": "both",
-        "icon-text-fit-padding": [4, 7, 4, 7],
+        "icon-text-fit-padding": [2, 4, 2, 4],
         "icon-allow-overlap": true,
         "text-field": ["get", "label"],
         "text-size": 14,

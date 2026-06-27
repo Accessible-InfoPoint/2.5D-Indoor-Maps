@@ -180,7 +180,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   show3DView(): void {
     this.setVisibleLayerSets([
       this.threeLayerSet,
-      this.infoPoint,
     ]);
     this.setAltitudeAndOpacity(0, 1);
   }
