@@ -1,5 +1,5 @@
 import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
-import { MapCamera } from "./mapCamera";
+import { MapCamera, MapCenter } from "./mapCamera";
 
 export interface MapBounds {
   west: number;
@@ -15,6 +15,11 @@ export interface MapViewportPadding {
   left: number;
 }
 
+export interface MapCenterConstraint {
+  center: MapCenter;
+  radius: number;
+}
+
 export interface MapView {
   camera: MapCamera;
   createIndoorLevelView(
@@ -23,6 +28,7 @@ export interface MapView {
     events: IndoorLevelViewEvents
   ): IndoorLevelView;
   setMaxBounds(bounds: MapBounds): void;
+  setCenterConstraint(constraint?: MapCenterConstraint): void;
   setViewportPadding(padding: MapViewportPadding): void;
   setBaseLayerOpacity(opacity: number): void;
   setSaturation(saturation: number): void;

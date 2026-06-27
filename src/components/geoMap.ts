@@ -19,11 +19,12 @@ import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import BackendService, { type BuildingCenter } from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapBounds, MapView } from "./map/mapView";
+import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
+import CoordinateHelpers from "../utils/coordinateHelpers";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -42,7 +43,7 @@ export class GeoMap {
   standardBearing3DMode = 0;
   infoPoint: GeoJSON.Feature;
   infoPointLevel = INDOOR_LEVEL;
-  configMode = true; // set only during configuration of building constants
+  configMode = false; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
 
   constructor() {
@@ -195,16 +196,17 @@ export class GeoMap {
   }
 
   refreshMapViewportConstraints(recenterToStandardCenter = false): void {
+    this.updateStandardCenter();
+    const bounds = this.expandBuildingBounds(this.getBuildingBounds());
+
     this.mapView.setViewportPadding({
       top: 0,
       right: 0,
       bottom: 0,
       left: 0,
     });
-    this.mapView.setMaxBounds(
-      this.expandBuildingBounds(this.getBuildingBounds())
-    );
-    this.updateStandardCenter();
+    this.mapView.setMaxBounds(bounds);
+    this.mapView.setCenterConstraint(this.getCircularCenterConstraint(bounds));
 
     if (recenterToStandardCenter) {
       this.centerCameraOnStandardCenter();
@@ -380,6 +382,33 @@ export class GeoMap {
       south: getRequiredArrayValue(boundingBox, 1, "Building bounding box"),
       east: getRequiredArrayValue(boundingBox, 2, "Building bounding box"),
       north: getRequiredArrayValue(boundingBox, 3, "Building bounding box"),
+    };
+  }
+
+  private getCircularCenterConstraint(bounds: MapBounds): MapCenterConstraint {
+    const center = {
+      x: this.standardCenter[0],
+      y: this.standardCenter[1],
+    };
+    const projectedCenter = {
+      x: center.x,
+      y: CoordinateHelpers.lat2y(center.y),
+    };
+    const radius = [
+      [bounds.west, bounds.south],
+      [bounds.west, bounds.north],
+      [bounds.east, bounds.south],
+      [bounds.east, bounds.north],
+    ]
+      .map(([x, y]) => Math.hypot(
+        x - projectedCenter.x,
+        CoordinateHelpers.lat2y(y) - projectedCenter.y
+      ))
+      .reduce((max, distance) => Math.max(max, distance), Number.EPSILON);
+
+    return {
+      center,
+      radius,
     };
   }
 

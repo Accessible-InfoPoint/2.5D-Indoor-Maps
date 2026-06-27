@@ -34,6 +34,8 @@ useful for the project.
 - Prevented MapLibre indoor levels from staying empty after profile/settings changes by rerendering against initialized layer sources instead of waiting for a second map `load` event.
 - Reapplied configured map centers after UI layout changes so saved MapLibre `getCenter()` values stay aligned across regular and wheelchair layouts.
 - Restored the saved wheelchair layout before the initial level control render so it starts with the correct orientation.
+- Replaced axis-aligned MapLibre max bounds with a circular `transformConstrain` center constraint around the configured building center, including explicit zoom clamping.
+- Made the MapLibre `transformConstrain` zoom clamp use the adapter's configured zoom bounds directly instead of reading them back from the map instance.
 
 ### Removed
 

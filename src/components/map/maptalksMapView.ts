@@ -82,6 +82,8 @@ export class MaptalksMapView implements MapView {
     this.flatMap.setMaxExtent(extent);
   }
 
+  setCenterConstraint(): void {}
+
   setViewportPadding(): void {}
 
   setSaturation(saturation: number): void {
