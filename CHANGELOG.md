@@ -23,6 +23,7 @@ useful for the project.
 - Optional per-building `STANDARD_CENTER` and `STANDARD_CENTER_WHEELCHAIR_MODE` settings for layout-aware map centering.
 - MapLibre room fill-pattern support for wheelchair-accessible patterned room backgrounds.
 - MapLibre room-number labels with zoom fade-in and stretchable rounded rectangle backgrounds.
+- MapLibre tactile paving line rendering with dashed styling from the indoor level render model.
 
 ### Changed
 

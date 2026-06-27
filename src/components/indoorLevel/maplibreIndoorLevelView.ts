@@ -237,9 +237,15 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       id: this.getLayerId("tactile-paving", "line"),
       type: "line",
       source: this.tactilePaving.sourceId,
+      layout: {
+        "line-cap": "round",
+        "line-join": "round",
+      },
       paint: {
-        "line-color": "#000000",
-        "line-opacity": 0,
+        "line-color": ["coalesce", ["get", "lineColor"], "#000000"],
+        "line-width": ["coalesce", ["get", "lineWidth"], 1],
+        "line-opacity": this.getOpacityExpression("lineOpacity"),
+        "line-dasharray": ["coalesce", ["get", "lineDasharray"], ["literal", [10, 10]]],
       },
     });
   }
@@ -329,8 +335,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderTactilePaving(items: StyledFeatureRenderItem[]): void {
-    void items;
-    this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
+    this.setSourceData(this.tactilePaving.sourceId, {
+      type: "FeatureCollection",
+      features: items.map((item) => this.buildStyledLineFeature(item)),
+    });
   }
 
   private renderRoomNumbers(rooms: RoomRenderItem[]): void {
@@ -413,6 +421,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
     this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", this.getOpacityExpression("fillOpacity"));
     this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
+    this.setPaintProperty(this.getLayerId("tactile-paving", "line"), "line-opacity", this.getOpacityExpression("lineOpacity"));
     this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", this.getZoomOpacityExpression());
     this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", this.getZoomOpacityExpression());
   }
@@ -476,6 +485,19 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       },
       properties: {
         label: item.label,
+      },
+    };
+  }
+
+  private buildStyledLineFeature(item: StyledFeatureRenderItem): GeoJSON.Feature {
+    return {
+      ...item.feature,
+      properties: {
+        ...item.feature.properties,
+        lineColor: this.getStyleString(item.style, "lineColor", "#000000"),
+        lineWidth: this.getStyleNumber(item.style, "lineWidth", 1),
+        lineOpacity: this.getStyleNumber(item.style, "lineOpacity", 1),
+        lineDasharray: this.getStyleNumberArray(item.style, "lineDasharray", [10, 10]),
       },
     };
   }
@@ -657,6 +679,18 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     const value = style[key];
 
     return typeof value == "number" ? value : fallback;
+  }
+
+  private getStyleNumberArray(
+    style: Record<string, unknown>,
+    key: string,
+    fallback: number[]
+  ): number[] {
+    const value = style[key];
+
+    return Array.isArray(value) && value.every((item) => typeof item == "number")
+      ? value
+      : fallback;
   }
 
   private getOpacityExpression(propertyName: string): OpacityExpression {
