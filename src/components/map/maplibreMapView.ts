@@ -71,6 +71,9 @@ export class MapLibreMapView implements MapView {
       maxPitch: MAX_PITCH,
       pitchWithRotate: options.configMode,
       dragRotate: options.configMode,
+      canvasContextAttributes: {
+        antialias: true,
+      },
       attributionControl: {},
     });
 

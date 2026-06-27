@@ -42,6 +42,7 @@ import {
   createRoomNumberLayers,
   createTactilePavingLayers,
 } from "./maplibre/maplibreLayerDefinitions";
+import { MapLibreThreeIndoorLayer } from "./maplibre/maplibreThreeIndoorLayer";
 
 const SHOW_DOOR_ORIENTATION_DEBUG = false;
 
@@ -53,6 +54,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly tactilePaving: MapLibreIndoorLevelLayerSet;
   private readonly roomNumbers: MapLibreIndoorLevelLayerSet;
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
+  private readonly threeLayerSet: MapLibreIndoorLevelLayerSet;
+  private readonly threeLayer: MapLibreThreeIndoorLayer;
   private readonly accessibilityMarkerRenderer: MapLibreAccessibilityMarkerRenderer;
   private pendingRenderModel?: IndoorLevelRenderModel;
   private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
@@ -81,6 +84,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.tactilePaving = this.createLayerSet("tactile-paving", ["line"]);
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
+    this.threeLayerSet = this.createLayerSet("three", ["custom"]);
+    this.threeLayer = new MapLibreThreeIndoorLayer(
+      getMapLibreLayerId(this.level, "three", "custom")
+    );
     this.accessibilityMarkerRenderer = new MapLibreAccessibilityMarkerRenderer(
       this.map,
       this.accessibilityMarkers.sourceId,
@@ -103,6 +110,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.setSourceData(this.doorDebug.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
+      this.threeLayer.clear();
     });
   }
 
@@ -144,6 +152,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   showAll(): void {
     this.setVisibleLayerSets([
+      this.threeLayerSet,
       this.infoPoint,
       this.rooms,
       this.doors,
@@ -170,23 +179,27 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   show3DView(): void {
     this.setVisibleLayerSets([
+      this.threeLayerSet,
       this.infoPoint,
     ]);
     this.setAltitudeAndOpacity(0, 1);
   }
 
   animateAltitude(
-    _start: number,
-    _end: number,
-    _opacityStart: number,
-    opacityEnd: number
+    start: number,
+    end: number,
+    opacityStart: number,
+    opacityEnd: number,
+    duration = 0.5
   ): Promise<void> {
-    this.setAltitudeAndOpacity(0, opacityEnd);
-    return Promise.resolve();
+    this.opacity = opacityEnd;
+    this.whenLayersInitialized(() => this.applyOpacity());
+    return this.threeLayer.animateAltitude(start, end, opacityStart, opacityEnd, duration);
   }
 
-  setAltitudeAndOpacity(_altitude: number, opacity: number): void {
+  setAltitudeAndOpacity(altitude: number, opacity: number): void {
     this.opacity = opacity;
+    this.threeLayer.setAltitudeAndOpacity(altitude, opacity);
     this.whenLayersInitialized(() => this.applyOpacity());
   }
 
@@ -212,6 +225,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
     this.addAccessibilityMarkerLayers();
+    this.addThreeLayer();
     this.addInfoPointLayers();
 
     this.applyOpacity();
@@ -252,6 +266,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.accessibilityMarkerRenderer.bindEvents();
   }
 
+  private addThreeLayer(): void {
+    if (!this.map.getLayer(this.threeLayer.id)) {
+      this.map.addLayer(this.threeLayer);
+    }
+  }
+
   // ===== Render pipelines ===================================================
 
   private renderLayerData(renderModel: IndoorLevelRenderModel): void {
@@ -264,7 +284,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderOutline(outlineCoordinates: number[][]): void {
-    void outlineCoordinates;
+    this.threeLayer.setOutline(outlineCoordinates);
   }
 
   private renderInfoPoint(renderModel: IndoorLevelRenderModel): void {
@@ -383,6 +403,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.tactilePaving,
       this.roomNumbers,
       this.accessibilityMarkers,
+      this.threeLayerSet,
     ].forEach((layerSet) => {
       layerSet.layerIds.forEach((layerId) => this.setLayerVisibility(layerId, visibility));
     });

@@ -27,6 +27,7 @@ useful for the project.
 - MapLibre accessibility marker rendering with custom clustering, same-symbol cluster preservation, and cluster/single-marker click behavior.
 - MapLibre 2D door rendering based on the existing door orientation and style data.
 - Temporary MapLibre door orientation debug overlay showing the source wall points used for door calculations.
+- Initial MapLibre Three.js indoor layer scaffold with grouped 3D outline rendering.
 
 ### Changed
 
@@ -37,6 +38,7 @@ useful for the project.
 - Split MapLibre indoor level rendering helpers and accessibility marker clustering into dedicated `indoorLevel/maplibre` modules.
 - Moved MapLibre indoor feature conversion for rooms, room numbers, and styled lines into a dedicated converter module.
 - Moved MapLibre indoor layer definitions for rooms, doors, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
+- Moved MapLibre Three.js Mercator-local geometry creation into a dedicated geometry module.
 
 ### Fixed
 
