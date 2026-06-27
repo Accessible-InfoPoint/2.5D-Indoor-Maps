@@ -26,6 +26,7 @@ useful for the project.
 - MapLibre tactile paving line rendering with dashed styling from the indoor level render model.
 - MapLibre accessibility marker rendering with custom clustering, same-symbol cluster preservation, and cluster/single-marker click behavior.
 - MapLibre 2D door rendering based on the existing door orientation and style data.
+- Temporary MapLibre door orientation debug overlay showing the source wall points used for door calculations.
 
 ### Changed
 
@@ -48,6 +49,7 @@ useful for the project.
 - Rasterized SVG accessibility marker icons before registering them with MapLibre to avoid marker image decode warnings.
 - Preserved current MapLibre bearing and pitch when zooming to accessibility marker clusters.
 - Prevented MapLibre room selection from also firing when clicking an accessibility marker above a room.
+- Prevented rooms from connecting to same-coordinate doors on different levels when calculating door orientation.
 
 ### Removed
 

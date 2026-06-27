@@ -97,6 +97,95 @@ export function createDoorLayers(options: LayerDefinitionOptions): AddLayerObjec
   ];
 }
 
+export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayerObject[] {
+  return [
+    {
+      id: options.layerId("door-debug", "wall-context"),
+      type: "line",
+      source: options.sourceId("door-debug"),
+      filter: ["==", ["get", "debugType"], "wall-context"],
+      paint: {
+        "line-color": "#ef4444",
+        "line-width": 1.5,
+        "line-opacity": options.opacity,
+        "line-dasharray": [2, 1],
+      },
+    },
+    {
+      id: options.layerId("door-debug", "calculated-door"),
+      type: "line",
+      source: options.sourceId("door-debug"),
+      filter: ["==", ["get", "debugType"], "calculated-door"],
+      paint: {
+        "line-color": "#22c55e",
+        "line-width": 4,
+        "line-opacity": options.opacity,
+      },
+    },
+    {
+      id: options.layerId("door-debug", "previous-point"),
+      type: "circle",
+      source: options.sourceId("door-debug"),
+      filter: ["==", ["get", "debugType"], "previous"],
+      paint: {
+        "circle-color": "#2563eb",
+        "circle-radius": 5,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+        "circle-opacity": options.opacity,
+        "circle-stroke-opacity": options.opacity,
+      },
+    },
+    {
+      id: options.layerId("door-debug", "door-point"),
+      type: "circle",
+      source: options.sourceId("door-debug"),
+      filter: ["==", ["get", "debugType"], "door"],
+      paint: {
+        "circle-color": "#111827",
+        "circle-radius": 6,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+        "circle-opacity": options.opacity,
+        "circle-stroke-opacity": options.opacity,
+      },
+    },
+    {
+      id: options.layerId("door-debug", "after-point"),
+      type: "circle",
+      source: options.sourceId("door-debug"),
+      filter: ["==", ["get", "debugType"], "after"],
+      paint: {
+        "circle-color": "#f97316",
+        "circle-radius": 5,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+        "circle-opacity": options.opacity,
+        "circle-stroke-opacity": options.opacity,
+      },
+    },
+    {
+      id: options.layerId("door-debug", "label"),
+      type: "symbol",
+      source: options.sourceId("door-debug"),
+      filter: ["has", "label"],
+      layout: {
+        "text-field": ["get", "label"],
+        "text-size": 12,
+        "text-offset": [0, -1],
+        "text-allow-overlap": true,
+        "text-ignore-placement": true,
+      },
+      paint: {
+        "text-color": "#000000",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1.5,
+        "text-opacity": options.opacity,
+      },
+    },
+  ];
+}
+
 export function createTactilePavingLayers(options: LayerDefinitionOptions): AddLayerObject[] {
   return [
     {

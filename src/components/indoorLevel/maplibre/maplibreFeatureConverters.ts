@@ -1,5 +1,6 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
 import type { DoorRenderData } from "../../../services/doorService";
+import type { DoorDataInterface } from "../../../models/doorDataInterface";
 import {
   RoomRenderItem,
   StyledFeatureRenderItem,
@@ -107,6 +108,70 @@ export function buildMapLibreDoorFeature(
   };
 }
 
+export function buildMapLibreDoorDebugFeatures(
+  door: DoorDataInterface
+): GeoJSON.Feature[] {
+  const debug = door.orientationDebug;
+
+  if (!debug) {
+    return [];
+  }
+
+  return [
+    {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [debug.previous, debug.door, debug.after],
+      },
+      properties: {
+        debugType: "wall-context",
+      },
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [debug.calculatedPrevious, debug.calculatedAfter],
+      },
+      properties: {
+        debugType: "calculated-door",
+      },
+    },
+    buildDoorDebugPoint("previous", "P", debug.previous, {
+      distanceM: debug.previousDistanceM,
+      widthM: debug.widthM,
+    }),
+    buildDoorDebugPoint("door", "D", debug.door, {
+      widthM: debug.widthM,
+    }),
+    buildDoorDebugPoint("after", "A", debug.after, {
+      distanceM: debug.afterDistanceM,
+      widthM: debug.widthM,
+    }),
+  ];
+}
+
 export function getRoomPatternFile(item: RoomRenderItem): string {
   return getStyleString(item.style, "polygonPatternFile", "");
+}
+
+function buildDoorDebugPoint(
+  debugType: string,
+  label: string,
+  coordinates: GeoJSON.Position,
+  properties: Record<string, unknown>
+): GeoJSON.Feature<GeoJSON.Point> {
+  return {
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates,
+    },
+    properties: {
+      ...properties,
+      debugType,
+      label,
+    },
+  };
 }
