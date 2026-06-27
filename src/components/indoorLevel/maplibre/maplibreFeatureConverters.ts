@@ -1,4 +1,5 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
+import type { DoorRenderData } from "../../../services/doorService";
 import {
   RoomRenderItem,
   StyledFeatureRenderItem,
@@ -85,6 +86,23 @@ export function buildMapLibreStyledLineFeature(
       lineWidth: getStyleNumber(item.style, "lineWidth", 1),
       lineOpacity: getStyleNumber(item.style, "lineOpacity", 1),
       lineDasharray: getStyleNumberArray(item.style, "lineDasharray", [10, 10]),
+    },
+  };
+}
+
+export function buildMapLibreDoorFeature(
+  item: DoorRenderData
+): GeoJSON.Feature<GeoJSON.LineString> {
+  return {
+    type: "Feature",
+    geometry: {
+      type: "LineString",
+      coordinates: item.coordinates,
+    },
+    properties: {
+      lineColor: item.symbol.lineColor,
+      lineWidth: item.symbol.lineWidth,
+      lineOpacity: 1,
     },
   };
 }

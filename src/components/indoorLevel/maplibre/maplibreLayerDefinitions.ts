@@ -78,6 +78,25 @@ export function createRoomLayers(options: LayerDefinitionOptions): AddLayerObjec
   ];
 }
 
+export function createDoorLayers(options: LayerDefinitionOptions): AddLayerObject[] {
+  return [
+    {
+      id: options.layerId("doors", "line"),
+      type: "line",
+      source: options.sourceId("doors"),
+      layout: {
+        "line-cap": "butt",
+        "line-join": "miter",
+      },
+      paint: {
+        "line-color": ["coalesce", ["get", "lineColor"], "#ffffff"],
+        "line-width": ["coalesce", ["get", "lineWidth"], 1],
+        "line-opacity": getOpacityExpression("lineOpacity", options.opacity),
+      },
+    },
+  ];
+}
+
 export function createTactilePavingLayers(options: LayerDefinitionOptions): AddLayerObject[] {
   return [
     {

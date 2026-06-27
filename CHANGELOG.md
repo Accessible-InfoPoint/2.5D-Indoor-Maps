@@ -25,6 +25,7 @@ useful for the project.
 - MapLibre room-number labels with zoom fade-in and stretchable rounded rectangle backgrounds.
 - MapLibre tactile paving line rendering with dashed styling from the indoor level render model.
 - MapLibre accessibility marker rendering with custom clustering, same-symbol cluster preservation, and cluster/single-marker click behavior.
+- MapLibre 2D door rendering based on the existing door orientation and style data.
 
 ### Changed
 
@@ -34,7 +35,7 @@ useful for the project.
 - Reused the existing GeoJSON polygon-center helper for MapLibre room-number placement instead of custom centroid math.
 - Split MapLibre indoor level rendering helpers and accessibility marker clustering into dedicated `indoorLevel/maplibre` modules.
 - Moved MapLibre indoor feature conversion for rooms, room numbers, and styled lines into a dedicated converter module.
-- Moved MapLibre indoor layer definitions for rooms, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
+- Moved MapLibre indoor layer definitions for rooms, doors, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
 
 ### Fixed
 
