@@ -29,6 +29,8 @@ useful for the project.
 - Temporary MapLibre door orientation debug overlay showing the source wall points used for door calculations.
 - Initial MapLibre Three.js indoor layer scaffold with grouped 3D outline rendering.
 - MapLibre Three.js rendering for indoor rooms that are visible in 3D mode.
+- MapLibre Three.js infopoint and selected-position markers with canvas-text labels and switchable camera-facing billboards.
+- Added a minimal Three.js SpriteMaterial/Sprite marker mode for debugging billboard rendering in the MapLibre custom layer.
 
 ### Changed
 
@@ -40,6 +42,7 @@ useful for the project.
 - Moved MapLibre indoor feature conversion for rooms, room numbers, and styled lines into a dedicated converter module.
 - Moved MapLibre indoor layer definitions for rooms, doors, infopoints, tactile paving, and room numbers into a dedicated layer-definition module.
 - Moved MapLibre Three.js Mercator-local geometry creation into a dedicated geometry module.
+- Moved MapLibre Three.js marker creation, shader billboard handling, and marker texture rendering into a dedicated marker module.
 - Reduced MapLibre room-number background padding and hid the 2D infopoint layer in 3D mode.
 
 ### Fixed
@@ -56,6 +59,11 @@ useful for the project.
 - Prevented rooms from connecting to same-coordinate doors on different levels when calculating door orientation.
 - Stabilized MapLibre Three.js room rendering during rotation by drawing 3D rooms as single elevated surfaces.
 - Locked the MapLibre center constraint in 3D mode so only rotation and zoom can change the view.
+- Switched the experimental Three.js billboard markers to opaque alpha-tested rendering.
+- Made the experimental Three.js sprite markers double-sided so the debug sprite is visible from the normal 3D map camera side.
+- Replaced the active experimental Three.js marker billboard with a screen-aligned shader quad so marker facing no longer depends on `THREE.Sprite` camera assumptions.
+- Kept selected-room markers visible in the MapLibre Three.js layer even when the older selected-position marker label data is suppressed.
+- Restored selected-position marker labels for rooms above or below the infopoint level by comparing level distances numerically.
 
 ### Removed
 

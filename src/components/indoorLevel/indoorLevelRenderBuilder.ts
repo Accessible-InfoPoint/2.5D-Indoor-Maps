@@ -126,7 +126,7 @@ function buildSelectedPositionMarker(
 
   if (
     Array.isArray(properties["level"]) &&
-    Math.min(...(properties["level"] as number[]).map(level => Math.abs(level - options.infoPointLevel))).toString() != label
+    Math.min(...(properties["level"] as number[]).map(level => Math.abs(level - options.infoPointLevel))) != Math.abs(diff)
   ) {
     return undefined;
   }

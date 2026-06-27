@@ -92,6 +92,23 @@ export function addMercatorVertex(
   );
 }
 
+export function createLocalMercatorVector(
+  origin: maplibregl.MercatorCoordinate,
+  coordinate: GeoJSON.Position,
+  elevationMeters: number
+): THREE.Vector3 {
+  const mercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat(
+    { lng: coordinate[0], lat: coordinate[1] },
+    elevationMeters
+  );
+
+  return new THREE.Vector3(
+    mercatorCoordinate.x - origin.x,
+    mercatorCoordinate.y - origin.y,
+    mercatorCoordinate.z - origin.z
+  );
+}
+
 export function createMercatorOrigin(
   ring: GeoJSON.Position[]
 ): maplibregl.MercatorCoordinate {

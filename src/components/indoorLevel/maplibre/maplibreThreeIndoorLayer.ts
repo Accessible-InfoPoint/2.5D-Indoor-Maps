@@ -5,17 +5,30 @@ import type {
   Map as MapLibreMap,
 } from "maplibre-gl";
 import * as THREE from "three";
-import { RoomRenderItem } from "../indoorLevelRenderModel";
 import {
+  InfoPointRenderItem,
+  RoomRenderItem,
+} from "../indoorLevelRenderModel";
+import {
+  createLocalMercatorVector,
   createMercatorOrigin,
   createPolygonSlabGeometry,
   createPolygonSurfaceGeometry,
   getOpenRing,
 } from "./maplibreThreeGeometry";
+import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
 import {
   getStyleNumber,
   getStyleString,
 } from "./maplibreStyleHelpers";
+import {
+  createMapLibreThreeMarker,
+  getMapLibreThreeMarkerElevationMeters,
+  getMapLibreThreeMaterialTexture,
+  MAPLIBRE_THREE_INFO_POINT_FILL,
+  MAPLIBRE_THREE_SELECTED_POSITION_FILL,
+  updateMapLibreThreeMarkerViewport,
+} from "./maplibreThreeMarkers";
 
 const OUTLINE_THICKNESS_METERS = 0.08;
 const ROOM_BASE_ELEVATION_METERS = 0.1;
@@ -55,10 +68,12 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private origin?: maplibregl.MercatorCoordinate;
   private outlineCoordinates: GeoJSON.Position[] = [];
   private rooms: RoomRenderItem[] = [];
+  private infoPoint?: InfoPointRenderItem;
   private altitudeMeters = 0;
   private opacity = 1;
 
   constructor(readonly id: string) {
+    this.markersGroup.renderOrder = 1000;
     this.surfacesGroup.add(this.outlineGroup, this.roomsGroup);
     this.rootGroup.add(this.surfacesGroup, this.markersGroup, this.staircasesGroup);
   }
@@ -89,6 +104,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.camera.projectionMatrix = this.cameraMatrix
       .fromArray(defaultProjectionData.mainMatrix)
       .multiply(this.modelMatrix);
+    this.updateMarkerViewport();
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
   }
@@ -108,11 +124,18 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.outlineCoordinates = outlineCoordinates;
     this.rebuildOutline();
     this.rebuildRooms();
+    this.rebuildMarkers();
   }
 
   setRooms(rooms: RoomRenderItem[]): void {
     this.rooms = rooms;
     this.rebuildRooms();
+    this.rebuildMarkers();
+  }
+
+  setInfoPoint(infoPoint: InfoPointRenderItem | undefined): void {
+    this.infoPoint = infoPoint;
+    this.rebuildMarkers();
   }
 
   setAltitudeAndOpacity(altitudeMeters: number, opacity: number): void {
@@ -158,8 +181,10 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   clear(): void {
     this.outlineCoordinates = [];
     this.rooms = [];
+    this.infoPoint = undefined;
     this.clearGroup(this.outlineGroup);
     this.clearGroup(this.roomsGroup);
+    this.clearGroup(this.markersGroup);
     this.map?.triggerRepaint();
   }
 
@@ -234,6 +259,75 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.roomsGroup.add(mesh, edges);
   }
 
+  private rebuildMarkers(): void {
+    this.clearGroup(this.markersGroup);
+
+    if (!this.scene || !this.origin) {
+      return;
+    }
+
+    this.addInfoPointMarker();
+    this.addSelectedPositionMarkers();
+    this.applyOpacity();
+    this.map?.triggerRepaint();
+  }
+
+  private addInfoPointMarker(): void {
+    if (!this.origin || !this.infoPoint || this.infoPoint.feature.geometry.type != "Point") {
+      return;
+    }
+
+    this.addMarker(
+      this.infoPoint.feature.geometry.coordinates,
+      "i",
+      MAPLIBRE_THREE_INFO_POINT_FILL
+    );
+  }
+
+  private addSelectedPositionMarkers(): void {
+    this.rooms
+      .filter((room) => room.isSelected || room.selectedPositionMarker != undefined)
+      .forEach((room) => {
+        const marker = room.selectedPositionMarker;
+        const coordinates = getGeometryLabelCenter(
+          marker?.feature.geometry ?? room.feature.geometry
+        );
+
+        if (coordinates) {
+          this.addMarker(
+            coordinates,
+            marker?.label ?? "",
+            MAPLIBRE_THREE_SELECTED_POSITION_FILL
+          );
+        }
+      });
+  }
+
+  private addMarker(
+    coordinates: GeoJSON.Position,
+    label: string,
+    fillColor: string
+  ): void {
+    if (!this.origin) {
+      return;
+    }
+
+    const position = createLocalMercatorVector(
+      this.origin,
+      coordinates,
+      getMapLibreThreeMarkerElevationMeters()
+    );
+    const marker = createMapLibreThreeMarker({
+      label,
+      fillColor,
+      origin: this.origin,
+      anisotropy: this.renderer?.capabilities.getMaxAnisotropy() ?? 1,
+    });
+
+    marker.position.copy(position);
+    this.markersGroup.add(marker);
+  }
+
   private applyAltitude(): void {
     if (!this.origin) {
       return;
@@ -247,6 +341,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.outlineFillMaterial.opacity = OUTLINE_FILL_OPACITY * this.opacity;
     this.outlineEdgeMaterial.opacity = OUTLINE_EDGE_OPACITY * this.opacity;
     this.applyGroupOpacity(this.roomsGroup);
+    this.applyGroupOpacity(this.markersGroup);
   }
 
   private clearGroup(group: THREE.Group): void {
@@ -267,6 +362,12 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       }
 
       if (material instanceof THREE.Material && material.userData.disposeWithObject) {
+        const texture = getMapLibreThreeMaterialTexture(material);
+
+        if (texture instanceof THREE.Texture) {
+          texture.dispose();
+        }
+
         material.dispose();
       }
     });
@@ -278,9 +379,17 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
 
       if (material instanceof THREE.Material && typeof material.userData.baseOpacity == "number") {
         const opacity = material.userData.baseOpacity * this.opacity;
-        const transparent = opacity < 1;
+        const transparent = material.userData.alwaysTransparent === true || opacity < 1;
 
         material.opacity = opacity;
+
+        if (material instanceof THREE.ShaderMaterial) {
+          const opacityUniform = material.uniforms.opacity;
+
+          if (opacityUniform) {
+            opacityUniform.value = opacity;
+          }
+        }
 
         if (material.transparent != transparent) {
           material.transparent = transparent;
@@ -288,6 +397,16 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
         }
       }
     });
+  }
+
+  private updateMarkerViewport(): void {
+    const canvas = this.map?.getCanvas();
+
+    if (!canvas) {
+      return;
+    }
+
+    updateMapLibreThreeMarkerViewport(this.markersGroup, canvas);
   }
 }
 

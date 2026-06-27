@@ -287,6 +287,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderInfoPoint(renderModel: IndoorLevelRenderModel): void {
+    this.threeLayer.setInfoPoint(renderModel.infoPoint);
     this.setSourceData(
       this.infoPoint.sourceId,
       renderModel.infoPoint
