@@ -22,7 +22,7 @@ useful for the project.
 
 ### Fixed
 
-- 
+- Made SVG user-profile quick-switch icons inherit the button color via CSS masks so active and inactive states match Material icons.
 
 ### Removed
 

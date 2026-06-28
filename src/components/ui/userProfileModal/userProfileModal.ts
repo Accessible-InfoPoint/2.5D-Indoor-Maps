@@ -35,11 +35,9 @@ function renderProfiles(onSettingsChanged: SettingsChangeHandler): void {
     const button = document.createElement("button");
     button.className = "square";
     const name = getUserProfileName(k);
-    if (v.icon.startsWith("\\")) {
-      button.innerHTML = '<img aria-label="' + name + '" title="' + name + '" src="' + v.icon + '" width="35" height="35" ></span>';
-    } else {
-      button.innerHTML = '<span aria-label="' + name + '" title="' + name + '"><i class="material-icons">' + v.icon + "</i></span>";
-    }
+    button.ariaLabel = name;
+    button.title = name;
+    button.appendChild(createProfileIcon(v.icon));
     button.onclick = () => setUserProfile(k, onSettingsChanged);
 
     if (UserService.getCurrentProfile() === k) {
@@ -51,6 +49,27 @@ function renderProfiles(onSettingsChanged: SettingsChangeHandler): void {
     userProfileList.appendChild(li);
   });
 }
+
+function createProfileIcon(icon: string): HTMLElement {
+  const iconElement = document.createElement("span");
+  iconElement.ariaHidden = "true";
+
+  if (icon.endsWith(".svg")) {
+    iconElement.className = "profile-icon profile-svg-icon";
+    iconElement.style.setProperty("--profile-icon-url", `url("${icon}")`);
+
+    return iconElement;
+  }
+
+  const materialIcon = document.createElement("i");
+  iconElement.className = "profile-icon";
+  materialIcon.className = "material-icons";
+  materialIcon.innerText = icon;
+  iconElement.appendChild(materialIcon);
+
+  return iconElement;
+}
+
 function renderSettings(): void {
   const userSettingsList = getRequiredElement("userSettingsList");
   userSettingsList.innerHTML = "";
