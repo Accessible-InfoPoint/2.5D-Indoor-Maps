@@ -166,12 +166,55 @@ nav {
     -moz-transform: translate(-50%, 0);
     -ms-transform: translate(-50%, 0);
     -o-transform: translate(-50%, 0);
+    display: flex;
+    flex-direction: column;
 
     #indoorSearchSubmit {
       color: var(--button-active-color);
       background-color: var(--button-active-bg);
       text-decoration: none;
       border: var(--button-border-width) solid var(--button-active-border-color);
+    }
+
+    #searchSuggestionsList {
+      display: none;
+      list-style: none;
+      margin: 0 0 6px 0;
+      padding: 0;
+
+      &.visible {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .search-suggestion-card {
+        background: #fffffff0;
+        border: 1px solid var(--button-border-color);
+        border-radius: var(--button-border-radius);
+        padding: 8px 12px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+
+        &:hover {
+          background: var(--button-hover-bg);
+        }
+
+        .suggestion-name {
+          display: block;
+          font-weight: 600;
+          color: var(--button-color);
+        }
+
+        .suggestion-levels {
+          display: block;
+          font-size: 0.8em;
+          color: #666;
+          margin-top: 2px;
+        }
+      }
     }
   }
 
