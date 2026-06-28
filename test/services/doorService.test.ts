@@ -27,17 +27,24 @@ const levelB = 1;
 const mockProps = { width: 2 };
 
 describe('doorService', () => {
+  beforeEach(() => doorService.clearDoorIndex());
+
   describe('addDoor', () => {
     it('adds a new door to the index', () => {
       doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
       expect(doorService.checkIfDoorExists(sampleCoord)).toBe(true);
     });
 
-    it('does not overwrite an existing door', () => {
+    it('stores same-coordinate doors on different levels separately', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
       doorService.addDoor(sampleCoord, new Set([levelB]), { width: 5 });
-      const doors = doorService.getDoorsByLevel(levelA);
-      expect(doors[0].properties.width).toBe(2); // should not be overwritten
-      expect(doors[0].levels.has(levelA)).toBe(true);
+      const levelADoors = doorService.getDoorsByLevel(levelA);
+      const levelBDoors = doorService.getDoorsByLevel(levelB);
+
+      expect(levelADoors).toHaveLength(1);
+      expect(levelBDoors).toHaveLength(1);
+      expect(levelADoors[0].properties.width).toBe(2);
+      expect(levelBDoors[0].properties.width).toBe(5);
     });
   });
 
@@ -92,6 +99,16 @@ describe('doorService', () => {
       expect(door.rooms.length).toBe(1);
       expect(door.rooms[0].properties!.name).toBe('Room 1');
     });
+
+    it('adds a room to the same-coordinate door matching the room level', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      doorService.addDoor(sampleCoord, new Set([levelB]), { width: 5 });
+
+      doorService.addRoomToDoor(sampleCoord, roomFeature, [levelB]);
+
+      expect(doorService.getDoorsByLevel(levelA)[0].rooms).toHaveLength(0);
+      expect(doorService.getDoorsByLevel(levelB)[0].rooms).toHaveLength(1);
+    });
   });
 
   describe('calculateDoorOrientation', () => {
@@ -142,6 +159,16 @@ describe('doorService', () => {
       doorService.calculateDoorOrientation(sampleCoord, prev, after);
       expect(door.orientation).toBe(original); // still same reference
     });
+
+    it('calculates orientation for the same-coordinate door matching the room level', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      doorService.addDoor(sampleCoord, new Set([levelB]), { width: 5 });
+
+      doorService.calculateDoorOrientation(sampleCoord, prev, after, [levelB]);
+
+      expect(doorService.getDoorsByLevel(levelA)[0].orientation).toBeUndefined();
+      expect(doorService.getDoorsByLevel(levelB)[0].orientation).toBeDefined();
+    });
   });
 
   describe('getDoorsByLevel', () => {
@@ -154,6 +181,14 @@ describe('doorService', () => {
       expect(levelADoors.length).toBeGreaterThan(0);
       expect(levelBDoors.length).toBe(1);
       expect(levelBDoors[0].coord).toEqual(otherCoord);
+    });
+
+    it('returns stacked same-coordinate doors for their individual levels', () => {
+      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
+      doorService.addDoor(sampleCoord, new Set([levelB]), { width: 5 });
+
+      expect(doorService.getDoorsByLevel(levelA)[0].properties.width).toBe(2);
+      expect(doorService.getDoorsByLevel(levelB)[0].properties.width).toBe(5);
     });
   });
 

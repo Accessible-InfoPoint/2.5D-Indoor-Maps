@@ -210,6 +210,7 @@ function connectRoomsToDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
 }
 
 function connectRoomToDoors(feature: GeoJSON.Feature): void {
+  const roomLevels = extractLevels(getRequiredFeatureProperties(feature).level);
   const coords = getRequiredArrayValue(
     (feature.geometry as GeoJSON.Polygon).coordinates,
     0,
@@ -218,14 +219,20 @@ function connectRoomToDoors(feature: GeoJSON.Feature): void {
 
   for (let i = 0; i < coords.length; i++) {
     const coord = getRequiredArrayValue(coords, i, "Room coordinates");
-    if (DoorService.checkIfDoorExists(coord)) {
-      DoorService.addRoomToDoor(coord, feature);
+    const door = DoorService.findDoorByCoordinate(coord, roomLevels);
+
+    if (door && hasSharedLevel(door.levels, roomLevels)) {
+      DoorService.addRoomToDoor(coord, feature, roomLevels);
       // to correctly rotate door, it must be in line with previous and next coordinate
       const prev = getRequiredArrayValue(coords, i - 1, "Room coordinates");
       const after = getRequiredArrayValue(coords, (i + 1) % coords.length, "Room coordinates");
-      DoorService.calculateDoorOrientation(coord, prev, after);
+      DoorService.calculateDoorOrientation(coord, prev, after, roomLevels);
     }
   }
+}
+
+function hasSharedLevel(doorLevels: Set<number>, roomLevels: number[]): boolean {
+  return roomLevels.some((level) => doorLevels.has(level));
 }
 
 function buildBuildingDescription(currentBuildingInterface: BuildingInterface): string {
