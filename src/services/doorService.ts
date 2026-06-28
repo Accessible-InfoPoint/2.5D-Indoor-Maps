@@ -5,7 +5,7 @@ import FeatureService from "../services/featureService";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
-const doorIndex = new Map<string, DoorDataInterface>();
+const doorIndex = new Map<string, DoorDataInterface[]>();
 
 export interface DoorRenderData {
   coordinates: GeoJSON.Position[];
@@ -19,8 +19,12 @@ function coordKey(coord: GeoJSON.Position): string {
   return coord.join(',');
 }
 
-function findDoorByCoordinate(coord: GeoJSON.Position): DoorDataInterface | null {
-  const exactMatch = doorIndex.get(coordKey(coord));
+function findDoorByCoordinate(
+  coord: GeoJSON.Position,
+  levels: number[] = []
+): DoorDataInterface | null {
+  const exactMatches = doorIndex.get(coordKey(coord)) ?? [];
+  const exactMatch = findBestLevelMatch(exactMatches, levels);
 
   if (exactMatch)
     return exactMatch;
@@ -28,10 +32,10 @@ function findDoorByCoordinate(coord: GeoJSON.Position): DoorDataInterface | null
   let nearestDoor: DoorDataInterface | null = null;
   let nearestDistance = DOOR_MATCH_TOLERANCE_M;
 
-  doorIndex.forEach((door) => {
+  getAllDoors().forEach((door) => {
     const distance = CoordinateHelpers.getDistanceBetweenCoordinatesInM(coord, door.coord);
 
-    if (distance <= nearestDistance) {
+    if (distance <= nearestDistance && hasSharedDoorLevel(door, levels)) {
       nearestDoor = door;
       nearestDistance = distance;
     }
@@ -50,16 +54,19 @@ function addDoor(
   geojsonProps: Record<string, any>
 ) {
   const key = coordKey(coord);
-  let door = doorIndex.get(key);
+  const doors = doorIndex.get(key) ?? [];
+  const existingDoor = doors.find((door) => hasSameLevelSet(door.levels, levels));
 
-  if (!door) {
-    door = {
+  if (!existingDoor) {
+    const door: DoorDataInterface = {
       coord,
       rooms: [],
       levels: levels,
       properties: { ...geojsonProps }
     };
-    doorIndex.set(key, door);
+    doorIndex.set(key, [...doors, door]);
+  } else {
+    console.info("duplicate door", coord, levels, geojsonProps, existingDoor)
   }
 }
 
@@ -69,9 +76,10 @@ function checkIfDoorExists(doorCoord: GeoJSON.Position): boolean {
 
 function addRoomToDoor(
   doorCoord: GeoJSON.Position,
-  roomFeature: GeoJSON.Feature
+  roomFeature: GeoJSON.Feature,
+  levels: number[] = []
 ) {
-  const door = findDoorByCoordinate(doorCoord);
+  const door = findDoorByCoordinate(doorCoord, levels);
 
   if (door)
     door.rooms.push(roomFeature);
@@ -80,9 +88,10 @@ function addRoomToDoor(
 function calculateDoorOrientation(
   doorCoord: GeoJSON.Position,
   previous: GeoJSON.Position,
-  after: GeoJSON.Position
+  after: GeoJSON.Position,
+  levels: number[] = []
 ) {
-  const door = findDoorByCoordinate(doorCoord);
+  const door = findDoorByCoordinate(doorCoord, levels);
 
   if (door && door.orientation == undefined) {
     const matchedDoorCoord = door.coord;
@@ -127,7 +136,30 @@ function calculateDoorOrientation(
 }
 
 function getDoorsByLevel(level: number): DoorDataInterface[] {
-  return Array.from(doorIndex.values()).filter(door => door.levels.has(level));
+  return getAllDoors().filter(door => door.levels.has(level));
+}
+
+function getAllDoors(): DoorDataInterface[] {
+  return Array.from(doorIndex.values()).flat();
+}
+
+function findBestLevelMatch(
+  doors: DoorDataInterface[],
+  levels: number[]
+): DoorDataInterface | undefined {
+  if (levels.length == 0) {
+    return doors[0];
+  }
+
+  return doors.find((door) => hasSharedDoorLevel(door, levels));
+}
+
+function hasSharedDoorLevel(door: DoorDataInterface, levels: number[]): boolean {
+  return levels.length == 0 || levels.some((level) => door.levels.has(level));
+}
+
+function hasSameLevelSet(a: Set<number>, b: Set<number>): boolean {
+  return a.size == b.size && Array.from(a).every((level) => b.has(level));
 }
 
 function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): DoorRenderData[] {

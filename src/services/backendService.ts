@@ -237,14 +237,14 @@ function connectRoomToDoors(feature: GeoJSON.Feature): void {
 
   for (let i = 0; i < coords.length; i++) {
     const coord = getRequiredArrayValue(coords, i, "Room coordinates");
-    const door = DoorService.findDoorByCoordinate(coord);
+    const door = DoorService.findDoorByCoordinate(coord, roomLevels);
 
     if (door && hasSharedLevel(door.levels, roomLevels)) {
-      DoorService.addRoomToDoor(coord, feature);
+      DoorService.addRoomToDoor(coord, feature, roomLevels);
       // to correctly rotate door, it must be in line with previous and next coordinate
       const prev = getRequiredArrayValue(coords, i - 1, "Room coordinates");
       const after = getRequiredArrayValue(coords, (i + 1) % coords.length, "Room coordinates");
-      DoorService.calculateDoorOrientation(coord, prev, after);
+      DoorService.calculateDoorOrientation(coord, prev, after, roomLevels);
     }
   }
 }
