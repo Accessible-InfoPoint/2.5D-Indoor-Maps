@@ -29,6 +29,10 @@ import {
   MAPLIBRE_THREE_SELECTED_POSITION_FILL,
   updateMapLibreThreeMarkerViewport,
 } from "./maplibreThreeMarkers";
+import {
+  createMapLibreThreeStaircaseObjects,
+  MapLibreThreeStaircaseRenderItem,
+} from "./maplibreThreeStaircases";
 
 const OUTLINE_THICKNESS_METERS = 0.04;
 const ROOM_BASE_ELEVATION_METERS = 0.05;
@@ -73,6 +77,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private origin?: maplibregl.MercatorCoordinate;
   private outlineCoordinates: GeoJSON.Position[] = [];
   private rooms: RoomRenderItem[] = [];
+  private staircases: MapLibreThreeStaircaseRenderItem[] = [];
   private infoPoint?: InfoPointRenderItem;
   private altitudeMeters = 0;
   private opacity = 1;
@@ -131,6 +136,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.rebuildOutline();
     this.rebuildRooms();
     this.rebuildMarkers();
+    this.rebuildStaircases();
   }
 
   setRooms(rooms: RoomRenderItem[]): void {
@@ -142,6 +148,11 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   setInfoPoint(infoPoint: InfoPointRenderItem | undefined): void {
     this.infoPoint = infoPoint;
     this.rebuildMarkers();
+  }
+
+  setStaircases(staircases: MapLibreThreeStaircaseRenderItem[]): void {
+    this.staircases = staircases;
+    this.rebuildStaircases();
   }
 
   setAltitudeAndOpacity(altitudeMeters: number, opacity: number): void {
@@ -187,10 +198,12 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   clear(): void {
     this.outlineCoordinates = [];
     this.rooms = [];
+    this.staircases = [];
     this.infoPoint = undefined;
     this.clearGroup(this.outlineGroup);
     this.clearGroup(this.roomsGroup);
     this.clearGroup(this.markersGroup);
+    this.clearGroup(this.staircasesGroup);
     this.map?.triggerRepaint();
   }
 
@@ -338,6 +351,20 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.markersGroup.add(marker);
   }
 
+  private rebuildStaircases(): void {
+    this.clearGroup(this.staircasesGroup);
+
+    if (!this.scene || !this.origin) {
+      return;
+    }
+
+    this.staircasesGroup.add(
+      ...createMapLibreThreeStaircaseObjects(this.staircases, this.origin)
+    );
+    this.applyOpacity();
+    this.map?.triggerRepaint();
+  }
+
   private applyAltitude(): void {
     if (!this.origin) {
       return;
@@ -352,6 +379,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.outlineEdgeMaterial.opacity = OUTLINE_EDGE_OPACITY * this.opacity;
     this.applyGroupOpacity(this.roomsGroup);
     this.applyGroupOpacity(this.markersGroup);
+    this.applyGroupOpacity(this.staircasesGroup);
   }
 
   private clearGroup(group: THREE.Group): void {

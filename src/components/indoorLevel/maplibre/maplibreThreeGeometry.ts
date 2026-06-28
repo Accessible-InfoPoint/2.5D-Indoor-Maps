@@ -74,6 +74,86 @@ export function createPolygonSurfaceGeometry(
   return geometry;
 }
 
+export function createSlopedPrismGeometry(
+  origin: maplibregl.MercatorCoordinate,
+  coordinates: GeoJSON.Position[],
+  heightMeters: number,
+  altitudeMeters: number
+): THREE.BufferGeometry {
+  const ring = getOpenRing(coordinates);
+  const vertices: number[] = [];
+  const indices: number[] = [];
+
+  if (ring.length < 3) {
+    return new THREE.BufferGeometry();
+  }
+
+  ring.forEach((coordinate) =>
+    addMercatorVertex(
+      vertices,
+      origin,
+      coordinate,
+      altitudeMeters + getCoordinateElevationMeters(coordinate)
+    )
+  );
+  ring.forEach((coordinate) =>
+    addMercatorVertex(
+      vertices,
+      origin,
+      coordinate,
+      altitudeMeters + getCoordinateElevationMeters(coordinate) + heightMeters
+    )
+  );
+
+  const topOffset = ring.length;
+  const topTriangles = THREE.ShapeUtils.triangulateShape(
+    createLocalShapePoints(origin, ring),
+    []
+  );
+
+  topTriangles.forEach(([a, b, c]) => {
+    indices.push(topOffset + a, topOffset + b, topOffset + c);
+    indices.push(c, b, a);
+  });
+
+  addSideIndices(indices, [ring], 0, topOffset);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
+export function createVerticalCylinderGeometry(
+  origin: maplibregl.MercatorCoordinate,
+  coordinate: GeoJSON.Position,
+  radiusMeters: number,
+  heightMeters: number,
+  altitudeMeters: number,
+  radialSegments: number
+): THREE.BufferGeometry {
+  const scale = origin.meterInMercatorCoordinateUnits();
+  const geometry = new THREE.CylinderGeometry(
+    radiusMeters * scale,
+    radiusMeters * scale,
+    heightMeters * scale,
+    radialSegments
+  );
+  const position = createLocalMercatorVector(
+    origin,
+    coordinate,
+    altitudeMeters + heightMeters / 2
+  );
+
+  geometry.rotateX(Math.PI / 2);
+  geometry.translate(position.x, position.y, position.z);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
 export function addMercatorVertex(
   vertices: number[],
   origin: maplibregl.MercatorCoordinate,
@@ -186,4 +266,8 @@ function addSideIndices(
 
     vertexOffset += ring.length;
   });
+}
+
+function getCoordinateElevationMeters(coordinate: GeoJSON.Position): number {
+  return typeof coordinate[2] == "number" ? coordinate[2] : 0;
 }
