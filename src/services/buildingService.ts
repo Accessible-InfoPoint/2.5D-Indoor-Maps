@@ -119,7 +119,9 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
   });
 }
 
-function runIndoorSearch(searchString: string): GeoJSON.Feature[] {
+function runIndoorSearch(
+  searchString: string
+): GeoJSON.Feature[] {
   const geoJSON = getBuildingGeoJSON();
 
   const results = geoJSON.features.filter((f) =>
@@ -129,7 +131,10 @@ function runIndoorSearch(searchString: string): GeoJSON.Feature[] {
   return results;
 }
 
-function filterByString(f: GeoJSON.Feature, searchString: string) {
+function filterByString(
+  f: GeoJSON.Feature,
+  searchString: string
+) {
   const properties = getRequiredFeatureProperties(f);
   const s = searchString.toLowerCase();
 
@@ -143,13 +148,18 @@ function filterByString(f: GeoJSON.Feature, searchString: string) {
 const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 
-function getValidName(p: Record<string, unknown>): string | undefined {
+function getValidName(
+  p: Record<string, unknown>
+): string | undefined {
   const name = p.name;
   if (typeof name !== "string" || OSM_NAME_ARTIFACTS.has(name.toLowerCase())) return undefined;
   return name;
 }
 
-function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
+function filterForSuggestions(
+  f: GeoJSON.Feature,
+  searchString: string
+): boolean {
   const p = getRequiredFeatureProperties(f);
   if (!Array.isArray(p.level) || p.level.length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
@@ -161,7 +171,9 @@ function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean
   );
 }
 
-function getFeatureCentroid(feature: GeoJSON.Feature): [number, number] | undefined {
+function getFeatureCentroid(
+  feature: GeoJSON.Feature
+): [number, number] | undefined {
   const geom = feature.geometry;
   if (geom.type === "Polygon" && geom.coordinates[0]?.length > 0) {
     const ring = geom.coordinates[0];
@@ -180,7 +192,10 @@ function getFeatureCentroid(feature: GeoJSON.Feature): [number, number] | undefi
   return undefined;
 }
 
-function matchScore(displayName: string, query: string): number {
+function matchScore(
+  displayName: string,
+  query: string
+): number {
   const name = displayName.toLowerCase();
   const q = query.toLowerCase();
   if (name === q) return 0;
@@ -189,11 +204,17 @@ function matchScore(displayName: string, query: string): number {
   return 3;
 }
 
-function minLevelDistance(levels: number[], currentLevel: number): number {
+function minLevelDistance(
+  levels: number[],
+  currentLevel: number
+): number {
   return Math.min(...levels.map((l) => Math.abs(l - currentLevel)));
 }
 
-function searchSuggestions(searchString: string, context: SuggestionSortContext): SearchSuggestion[] {
+function searchSuggestions(
+  searchString: string,
+  context: SuggestionSortContext
+): SearchSuggestion[] {
   if (!searchString) return [];
   const geoJSON = getBuildingGeoJSON();
   const suggestions = geoJSON.features

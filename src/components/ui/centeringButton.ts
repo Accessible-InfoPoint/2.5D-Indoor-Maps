@@ -2,7 +2,9 @@ import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 
-function create(geoMap: GeoMap): void {
+function create(
+  geoMap: GeoMap
+): void {
   const button = document.createElement("button");
   button.className = "square";
   button.id = "centeringButton";
