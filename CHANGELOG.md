@@ -28,6 +28,14 @@ useful for the project.
 
 - 
 
+## 1.0.2 - 2026-06-28
+
+### Fixed
+
+- Prevented same-coordinate doors on different levels from replacing each other in the door index.
+- Made SVG user-profile quick-switch icons inherit the button color via CSS masks so active and inactive states match Material icons.
+- Made staircase pathway geometry handling fail-safe so unsupported geometries are logged and skipped instead of crashing the map render.
+
 ## 1.0.1 - 2026-06-28
 
 ### Fixed
