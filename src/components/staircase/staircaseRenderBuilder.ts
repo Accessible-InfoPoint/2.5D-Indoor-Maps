@@ -4,7 +4,7 @@ import {
 } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import { extractLevels } from "../../utils/extractLevels";
-import { getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import { getRequiredArrayValue } from "../../utils/requiredHelpers";
 import { StaircaseRenderItem } from "./staircaseRenderModel";
 
@@ -126,13 +126,23 @@ export function filterConnectedPathways(
   level: number
 ): StaircasePath[] {
   const connectedPathways = new Set<GeoJSON.Feature>();
-  const specialNodes = getFeaturePathCoordinates(feature).filter(
-    (point) =>
-      doors.some((door) => isSamePosition(door, point)) ||
-      lowestPoints.some((lowestPoint) =>
-        isSamePosition((lowestPoint.geometry as GeoJSON.Point).coordinates, point)
-      )
+  const featurePathCoordinates = getFeaturePathCoordinates(feature);
+  const lowestNodes = featurePathCoordinates.filter((point) =>
+    lowestPoints.some((lowestPoint) => isFeatureAtPosition(lowestPoint, point))
   );
+  const lowestNodesOnCurrentLevel = featurePathCoordinates.filter((point) =>
+    lowestPoints.some(
+      (lowestPoint) =>
+        isFeatureAtPosition(lowestPoint, point) &&
+        isFeatureOnLevel(lowestPoint, level)
+    )
+  );
+  const doorNodes = featurePathCoordinates.filter((point) =>
+    doors.some((door) => isSamePosition(door, point))
+  );
+  const specialNodes = lowestNodes.length > 0
+    ? lowestNodesOnCurrentLevel
+    : doorNodes;
 
   specialNodes.forEach((specialNode) => {
     const paths = pathways.filter((path) => isRelevantPathway(path, specialNode, level));
@@ -163,12 +173,15 @@ export function filterConnectedPathways(
       const otherNodes = pathCoordinates.filter(
         (point) => point[0] != specialNode[0] || point[1] != specialNode[1]
       );
+      const connectedPathwayIds = new Set(
+        Array.from(connectedPathways, (connected) => connected.id)
+      );
       const secondDegreePaths = otherNodes.flatMap((otherNode) =>
         pathways.filter((pathway) =>
           getFeaturePathCoordinates(pathway).some(
             (pathwayPoint) =>
               pathwayPoint[0] == otherNode[0] && pathwayPoint[1] == otherNode[1]
-          )
+          ) && !connectedPathwayIds.has(getRequiredFeatureId(pathway))
         )
       );
       secondDegreePaths.forEach((secondDegreePath) => {
@@ -238,7 +251,7 @@ function isRelevantPathway(
       isSamePosition(lineStringPoint, specialNode)
     ) &&
     (
-      properties.level.at(-1) != level ||
+      properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
       extractLevels(properties.repeat_on).includes(level)
     )
   );
@@ -251,6 +264,17 @@ function findNodeAtPosition(
   return allNodes.find((node) =>
     isSamePosition((node.geometry as GeoJSON.Point).coordinates, point)
   );
+}
+
+function isFeatureAtPosition(feature: GeoJSON.Feature, point: GeoJSON.Position): boolean {
+  return isSamePosition((feature.geometry as GeoJSON.Point).coordinates, point);
+}
+
+function isFeatureOnLevel(feature: GeoJSON.Feature, level: number): boolean {
+  const properties = getRequiredFeatureProperties(feature);
+
+  return extractLevels(properties.level).includes(level) ||
+  extractLevels(properties.repeat_on).includes(level);
 }
 
 function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[] {

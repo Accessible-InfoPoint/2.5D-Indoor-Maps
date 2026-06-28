@@ -28,6 +28,13 @@ useful for the project.
 
 - 
 
+## 1.0.1 - 2026-06-28
+
+### Fixed
+
+- Fixed complex staircases being rendered multiple times.
+- Kept ignored local `tmp` prototypes out of lint checks.
+
 ## Release Template
 
 ```md
