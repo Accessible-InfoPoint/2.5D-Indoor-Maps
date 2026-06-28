@@ -364,6 +364,24 @@ export class GeoMap {
     } else LoadingIndicator.error(lang.searchEmpty);
   }
 
+  selectIndoorFeature(feature: GeoJSON.Feature): void {
+    this.selectedFeatures = [getRequiredFeatureId(feature)];
+    this.indoorLayers.forEach((layer) => layer.updateLayer());
+
+    const levels = getRequiredFeatureProperties(feature).level as number[];
+    if (levels && levels.length > 0) {
+      const selectedLevel = [...levels].sort(
+        (a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)
+      )[0];
+      if (this.handleLevelChange(selectedLevel)) {
+        LevelControl.focusOnLevel(selectedLevel);
+      }
+    }
+
+    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
+    DescriptionArea.update(accessibilityDescription);
+  }
+
   applyStyleFilters = (): void => {
     this.mapView.setBaseLayerOpacity(ColorService.getEnvOpacity() / 100);
     this.mapView.setSaturation((ColorService.getColorStrength() * 2) / 100);
