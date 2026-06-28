@@ -146,7 +146,7 @@ function getValidName(p: Record<string, unknown>): string | undefined {
 
 function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
   const p = getRequiredFeatureProperties(f);
-  if (p.level == null) return false;
+  if (!Array.isArray(p.level) || p.level.length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
   const s = searchString.toLowerCase();
   return !!(
