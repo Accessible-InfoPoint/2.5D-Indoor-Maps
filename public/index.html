@@ -35,16 +35,18 @@
     </aside>
 
     <!--           INDOOR ROOM SEARCH           -->
-    <div class="from-group row flex-nowrap" id="indoorSearchWrapper">
-        <ul id="searchSuggestionsList" aria-label="Search suggestions" role="listbox"></ul>
-        <div class="input-group" style="height:var(--button-size)">
-            <input class="form-control" type="text" placeholder="Search indoor"
-                   aria-label="Search indoor"
-                   id="indoorSearchInput" name="indoorSearchInput">
-            <button class="btn btn-secondary" id="indoorSearchSubmit"
-                    name="indoorSearchSubmit">
-                Search
-            </button>
+    <div id="indoorSearchWrapper">
+        <ul id="searchSuggestionsList" aria-label="Search suggestions"></ul>
+        <div class="from-group row flex-nowrap" id="indoorSearchBar">
+            <div class="input-group" style="height:var(--button-size)">
+                <input class="form-control" type="text" placeholder="Search indoor"
+                       aria-label="Search indoor"
+                       id="indoorSearchInput" name="indoorSearchInput">
+                <button class="btn btn-secondary" id="indoorSearchSubmit"
+                        name="indoorSearchSubmit">
+                    Search
+                </button>
+            </div>
         </div>
     </div>
 
