@@ -138,6 +138,21 @@ describe("BuildingService.searchSuggestions", () => {
     expect(results).toHaveLength(0);
   });
 
+  it("excludes features with no level", () => {
+    const noLevelFeature: GeoJSON.Feature = {
+      id: "way/7",
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [] },
+      properties: { name: "Lobby", ref: "L1" },
+    };
+    (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+      type: "FeatureCollection",
+      features: [noLevelFeature],
+    });
+    expect(BuildingService.searchSuggestions("lobby")).toHaveLength(0);
+    expect(BuildingService.searchSuggestions("L1")).toHaveLength(0);
+  });
+
   it("returns empty array when no features match", () => {
     const results = BuildingService.searchSuggestions("xyzzy");
     expect(results).toHaveLength(0);
