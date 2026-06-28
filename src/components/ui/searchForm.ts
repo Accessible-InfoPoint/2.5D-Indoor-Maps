@@ -18,7 +18,12 @@ function render(geoMap: GeoMap): void {
   indoorSearchInput.addEventListener("input", () => {
     const query = indoorSearchInput.value;
     if (query.length >= 1) {
-      SearchSuggestions.update(BuildingService.searchSuggestions(query));
+      SearchSuggestions.update(BuildingService.searchSuggestions(query, {
+        currentLevel: geoMap.currentLevel,
+        infoPointFeature: geoMap.infoPoint.geometry.type !== "GeometryCollection"
+          ? geoMap.infoPoint
+          : undefined,
+      }));
     } else {
       SearchSuggestions.clear();
     }

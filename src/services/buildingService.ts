@@ -22,6 +22,11 @@ export interface SearchSuggestion {
   feature: GeoJSON.Feature;
 }
 
+export interface SuggestionSortContext {
+  currentLevel: number;
+  infoPointFeature?: GeoJSON.Feature;
+}
+
 /**
  * Finding a building by search string:
  * 1) Iterate through all building Features if there is a Feature with the given name. If so, return the building Feature.
@@ -156,10 +161,42 @@ function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean
   );
 }
 
-function searchSuggestions(searchString: string): SearchSuggestion[] {
+function getFeatureCentroid(feature: GeoJSON.Feature): [number, number] | undefined {
+  const geom = feature.geometry;
+  if (geom.type === "Polygon" && geom.coordinates[0]?.length > 0) {
+    const ring = geom.coordinates[0];
+    return [
+      ring.reduce((s, c) => s + c[0], 0) / ring.length,
+      ring.reduce((s, c) => s + c[1], 0) / ring.length,
+    ];
+  }
+  if (geom.type === "LineString" && geom.coordinates.length > 0) {
+    const pts = geom.coordinates;
+    return [
+      pts.reduce((s, c) => s + c[0], 0) / pts.length,
+      pts.reduce((s, c) => s + c[1], 0) / pts.length,
+    ];
+  }
+  return undefined;
+}
+
+function matchScore(displayName: string, query: string): number {
+  const name = displayName.toLowerCase();
+  const q = query.toLowerCase();
+  if (name === q) return 0;
+  if (name.startsWith(q)) return 1;
+  if (name.includes(q)) return 2;
+  return 3;
+}
+
+function minLevelDistance(levels: number[], currentLevel: number): number {
+  return Math.min(...levels.map((l) => Math.abs(l - currentLevel)));
+}
+
+function searchSuggestions(searchString: string, context: SuggestionSortContext): SearchSuggestion[] {
   if (!searchString) return [];
   const geoJSON = getBuildingGeoJSON();
-  return geoJSON.features
+  const suggestions = geoJSON.features
     .filter((f) => filterForSuggestions(f, searchString))
     .map((f) => {
       const p = getRequiredFeatureProperties(f);
@@ -171,6 +208,27 @@ function searchSuggestions(searchString: string): SearchSuggestion[] {
         feature: f,
       };
     });
+
+  const infoCoords = context.infoPointFeature
+    ? getFeatureCentroid(context.infoPointFeature)
+    : undefined;
+
+  return suggestions.sort((a, b) => {
+    const matchDiff = matchScore(a.displayName, searchString) - matchScore(b.displayName, searchString);
+    if (matchDiff !== 0) return matchDiff;
+
+    if (infoCoords) {
+      const ca = getFeatureCentroid(a.feature);
+      const cb = getFeatureCentroid(b.feature);
+      if (ca && cb) {
+        const dx = (ca[0] - infoCoords[0]) ** 2 + (ca[1] - infoCoords[1]) ** 2;
+        const dy = (cb[0] - infoCoords[0]) ** 2 + (cb[1] - infoCoords[1]) ** 2;
+        if (dx !== dy) return dx - dy;
+      }
+    }
+
+    return minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
+  });
 }
 
 // /*Filter*/
