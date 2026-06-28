@@ -18,8 +18,13 @@ function render(geoMap: GeoMap): void {
   indoorSearchInput.addEventListener("input", () => {
     const query = indoorSearchInput.value;
     if (query.length >= 1) {
+      const selectedId = geoMap.selectedFeatures[0];
+      const selectedFeature = selectedId
+        ? BuildingService.getBuildingGeoJSON().features.find((f) => f.id?.toString() === selectedId)
+        : undefined;
       SearchSuggestions.update(BuildingService.searchSuggestions(query, {
         currentLevel: geoMap.currentLevel,
+        selectedFeature,
         infoPointFeature: geoMap.infoPoint.geometry.type !== "GeometryCollection"
           ? geoMap.infoPoint
           : undefined,

@@ -198,7 +198,7 @@ describe("BuildingService.searchSuggestions", () => {
       expect(results.map((r) => r.id)).toEqual(["way/10", "way/11", "way/12"]);
     });
 
-    it("uses level proximity as tiebreaker when match score is equal", () => {
+    it("ranks closer level before farther level when match score is equal", () => {
       const level2: GeoJSON.Feature = {
         id: "way/20", type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
@@ -216,6 +216,34 @@ describe("BuildingService.searchSuggestions", () => {
       const results = BuildingService.searchSuggestions("room", { currentLevel: 0 });
       expect(results[0].id).toBe("way/21");
       expect(results[1].id).toBe("way/20");
+    });
+
+    it("ranks closer to selected feature before farther when match and level are equal", () => {
+      const near: GeoJSON.Feature = {
+        id: "way/30", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { name: "room C", level: [0] },
+      };
+      const far: GeoJSON.Feature = {
+        id: "way/31", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        properties: { name: "room D", level: [0] },
+      };
+      const selected: GeoJSON.Feature = {
+        id: "way/99", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [far, near],
+      });
+      const results = BuildingService.searchSuggestions("room", {
+        currentLevel: 0,
+        selectedFeature: selected,
+      });
+      expect(results[0].id).toBe("way/30");
+      expect(results[1].id).toBe("way/31");
     });
   });
 });

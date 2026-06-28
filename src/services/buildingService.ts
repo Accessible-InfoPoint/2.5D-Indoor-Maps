@@ -24,6 +24,7 @@ export interface SearchSuggestion {
 
 export interface SuggestionSortContext {
   currentLevel: number;
+  selectedFeature?: GeoJSON.Feature;
   infoPointFeature?: GeoJSON.Feature;
 }
 
@@ -230,25 +231,45 @@ function searchSuggestions(
       };
     });
 
+  const centroids = new Map<string, [number, number] | undefined>(
+    suggestions.map((s) => [s.id, getFeatureCentroid(s.feature)])
+  );
+  const selectedCoords = context.selectedFeature
+    ? getFeatureCentroid(context.selectedFeature)
+    : undefined;
   const infoCoords = context.infoPointFeature
     ? getFeatureCentroid(context.infoPointFeature)
     : undefined;
+
+  const squaredDist = (a: [number, number], b: [number, number]): number =>
+    (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 
   return suggestions.sort((a, b) => {
     const matchDiff = matchScore(a.displayName, searchString) - matchScore(b.displayName, searchString);
     if (matchDiff !== 0) return matchDiff;
 
-    if (infoCoords) {
-      const ca = getFeatureCentroid(a.feature);
-      const cb = getFeatureCentroid(b.feature);
+    const levelDiff = minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
+    if (levelDiff !== 0) return levelDiff;
+
+    if (selectedCoords) {
+      const ca = centroids.get(a.id);
+      const cb = centroids.get(b.id);
       if (ca && cb) {
-        const dx = (ca[0] - infoCoords[0]) ** 2 + (ca[1] - infoCoords[1]) ** 2;
-        const dy = (cb[0] - infoCoords[0]) ** 2 + (cb[1] - infoCoords[1]) ** 2;
-        if (dx !== dy) return dx - dy;
+        const diff = squaredDist(ca, selectedCoords) - squaredDist(cb, selectedCoords);
+        if (diff !== 0) return diff;
       }
     }
 
-    return minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
+    if (infoCoords) {
+      const ca = centroids.get(a.id);
+      const cb = centroids.get(b.id);
+      if (ca && cb) {
+        const diff = squaredDist(ca, infoCoords) - squaredDist(cb, infoCoords);
+        if (diff !== 0) return diff;
+      }
+    }
+
+    return 0;
   });
 }
 
