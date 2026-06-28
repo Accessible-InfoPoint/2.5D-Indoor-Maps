@@ -136,6 +136,7 @@ function filterByString(f: GeoJSON.Feature, searchString: string) {
 }
 
 const OSM_NAME_ARTIFACTS = new Set(["yes", "no"]);
+const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 
 function getValidName(p: Record<string, unknown>): string | undefined {
   const name = p.name;
@@ -145,6 +146,7 @@ function getValidName(p: Record<string, unknown>): string | undefined {
 
 function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
   const p = getRequiredFeatureProperties(f);
+  if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
   const s = searchString.toLowerCase();
   return !!(
     getValidName(p)?.toLowerCase().includes(s) ||

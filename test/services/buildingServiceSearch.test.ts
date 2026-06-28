@@ -118,7 +118,7 @@ describe("BuildingService.searchSuggestions", () => {
     expect(results[0].feature).toBe(mockFeatureWithName);
   });
 
-  it("ignores name=yes (OSM artifact) and does not match or display it", () => {
+  it("ignores name=yes (OSM artifact) and excludes waste_basket amenity", () => {
     const artifactFeature: GeoJSON.Feature = {
       id: "way/6",
       type: "Feature",
@@ -130,8 +130,7 @@ describe("BuildingService.searchSuggestions", () => {
       features: [artifactFeature],
     });
     expect(BuildingService.searchSuggestions("yes")).toHaveLength(0);
-    expect(BuildingService.searchSuggestions("waste")).toHaveLength(1);
-    expect(BuildingService.searchSuggestions("waste")[0].displayName).toBe("waste_basket");
+    expect(BuildingService.searchSuggestions("waste")).toHaveLength(0);
   });
 
   it("does not match features by indoor type alone", () => {
