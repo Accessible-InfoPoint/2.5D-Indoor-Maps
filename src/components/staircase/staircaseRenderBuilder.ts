@@ -192,10 +192,13 @@ export function filterConnectedPathways(
 
   return Array.from(connectedPathways).map((feature) => {
     const properties = getRequiredFeatureProperties(feature);
+    const width = "width" in properties
+      ? parseFloat(properties.width)
+      : defaultStaircaseWidth;
 
     return [
       getFeaturePathCoordinates(feature),
-      "width" in properties ? parseFloat(properties.width) : defaultStaircaseWidth,
+      Number.isFinite(width) && width > 0 ? width : defaultStaircaseWidth,
     ];
   });
 }
@@ -214,22 +217,30 @@ function getLineStringAltitudes(
   });
 
   if (nodeLevels.every((level) => level != undefined)) {
-    const min = Math.min(...nodeLevels.map(parseFloat));
-    const max = Math.max(...nodeLevels.map(parseFloat));
+    const parsedNodeLevels = nodeLevels.map(parseFloat);
 
-    return lineString.map((point) => {
-      const node = findNodeAtPosition(point, allNodes);
+    if (parsedNodeLevels.every(Number.isFinite)) {
+      const min = Math.min(...parsedNodeLevels);
+      const max = Math.max(...parsedNodeLevels);
 
-      if (!node) {
-        throw new Error(`Staircase node for coordinate "${point.toString()}" was not found.`);
+      if (max == min) {
+        return lineString.map(() => 0);
       }
 
-      return (
-        ((parseFloat(getRequiredFeatureProperties(node)["level"]) - min) /
-          (max - min)) *
-        (LEVEL_HEIGHT - complexStaircaseThickness)
-      );
-    });
+      return lineString.map((point) => {
+        const node = findNodeAtPosition(point, allNodes);
+
+        if (!node) {
+          throw new Error(`Staircase node for coordinate "${point.toString()}" was not found.`);
+        }
+
+        return (
+          ((parseFloat(getRequiredFeatureProperties(node)["level"]) - min) /
+            (max - min)) *
+          (LEVEL_HEIGHT - complexStaircaseThickness)
+        );
+      });
+    }
   }
 
   return lineString.map(

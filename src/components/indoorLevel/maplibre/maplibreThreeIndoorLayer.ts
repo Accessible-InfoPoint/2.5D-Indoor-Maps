@@ -358,9 +358,15 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       return;
     }
 
-    this.staircasesGroup.add(
-      ...createMapLibreThreeStaircaseObjects(this.staircases, this.origin)
+    const staircaseObjects = createMapLibreThreeStaircaseObjects(
+      this.staircases,
+      this.origin
     );
+
+    if (staircaseObjects.length > 0) {
+      this.staircasesGroup.add(...staircaseObjects);
+    }
+
     this.applyOpacity();
     this.map?.triggerRepaint();
   }

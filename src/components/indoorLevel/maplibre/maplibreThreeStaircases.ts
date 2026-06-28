@@ -22,31 +22,64 @@ export function createMapLibreThreeStaircaseObjects(
   items: MapLibreThreeStaircaseRenderItem[],
   origin: maplibregl.MercatorCoordinate
 ): THREE.Object3D[] {
-  return items.map(({ item, color }) => {
-    const geometry = item.type == "prism"
-      ? createSlopedPrismGeometry(
-          origin,
-          item.coordinates,
-          item.height,
-          item.altitude
-        )
-      : createVerticalCylinderGeometry(
-          origin,
-          item.coordinate,
-          item.radius,
-          item.height,
-          item.altitude,
-          item.radialSegments
-        );
+  return items.flatMap(({ item, color }) => {
+    const geometry = createStaircaseGeometry(item, origin);
+
+    if (!isRenderableGeometry(geometry)) {
+      geometry.dispose();
+      console.warn("Skipping invalid staircase geometry.", item);
+      return [];
+    }
+
     const material = createStaircaseMaterial(color, getBaseOpacity(item));
     const mesh = new THREE.Mesh(geometry, material);
-
     mesh.renderOrder = item.materialRole == "outline"
       ? STAIRCASE_OUTLINE_RENDER_ORDER
       : STAIRCASE_MAIN_RENDER_ORDER;
 
-    return mesh;
+    return [mesh];
   });
+}
+
+function createStaircaseGeometry(
+  item: StaircaseRenderItem,
+  origin: maplibregl.MercatorCoordinate
+): THREE.BufferGeometry {
+  return item.type == "prism"
+    ? createSlopedPrismGeometry(
+        origin,
+        item.coordinates,
+        item.height,
+        item.altitude
+      )
+    : createVerticalCylinderGeometry(
+        origin,
+        item.coordinate,
+        item.radius,
+        item.height,
+        item.altitude,
+        item.radialSegments
+      );
+}
+
+function isRenderableGeometry(geometry: THREE.BufferGeometry): boolean {
+  const positions = geometry.getAttribute("position");
+
+  if (!positions || positions.count == 0) {
+    return false;
+  }
+
+  for (let i = 0; i < positions.count; i++) {
+    if (
+      !Number.isFinite(positions.getX(i)) ||
+      !Number.isFinite(positions.getY(i)) ||
+      !Number.isFinite(positions.getZ(i))
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function createStaircaseMaterial(

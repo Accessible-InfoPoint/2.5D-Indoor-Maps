@@ -68,6 +68,7 @@ useful for the project.
 - Restored selected-position marker labels for rooms above or below the infopoint level by comparing level distances numerically.
 - Tried stabilizing translucent 3D room rendering with non-depth-writing room materials, depth testing, and explicit Three.js render ordering.
 - Prevented repeated complex staircases from rendering twice by starting pathway expansion only from lowest staircase nodes on the current level.
+- Prevented invalid MapLibre Three.js staircase geometries from reaching the scene by handling same-level pathway altitude interpolation and validating generated position buffers.
 
 ### Removed
 
