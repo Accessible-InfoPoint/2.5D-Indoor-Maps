@@ -140,7 +140,7 @@ function filterByString(f: GeoJSON.Feature, searchString: string) {
   );
 }
 
-const OSM_NAME_ARTIFACTS = new Set(["yes", "no"]);
+const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 
 function getValidName(p: Record<string, unknown>): string | undefined {
