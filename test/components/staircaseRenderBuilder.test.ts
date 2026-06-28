@@ -139,6 +139,7 @@ function createLineStringFeature(
 ): GeoJSON.Feature {
   return {
     type: "Feature",
+    id: "way/1",
     geometry: {
       type: "LineString",
       coordinates,
