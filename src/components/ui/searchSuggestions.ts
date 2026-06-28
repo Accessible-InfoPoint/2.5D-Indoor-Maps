@@ -33,7 +33,6 @@ function update(suggestions: SearchSuggestion[]): void {
     const li = document.createElement("li");
     li.className = "search-suggestion-card";
     li.setAttribute("data-suggestion-index", index.toString());
-    li.setAttribute("role", "option");
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "suggestion-name";
@@ -41,9 +40,8 @@ function update(suggestions: SearchSuggestion[]): void {
 
     const levelsSpan = document.createElement("span");
     levelsSpan.className = "suggestion-levels";
-    levelsSpan.textContent = suggestion.levels
-      .map((l) => lang.searchSuggestionLevel + l)
-      .join(", ");
+    const levelText = suggestion.levels.map((l) => lang.searchSuggestionLevel + l).join(", ");
+    levelsSpan.textContent = suggestion.type ? `${levelText} · ${suggestion.type}` : levelText;
 
     li.appendChild(nameSpan);
     li.appendChild(levelsSpan);

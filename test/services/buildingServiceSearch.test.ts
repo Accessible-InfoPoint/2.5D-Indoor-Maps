@@ -88,6 +88,31 @@ describe("BuildingService.searchSuggestions", () => {
     expect(results[0].id).toBe("way/3");
   });
 
+  it("sets type from amenity when present", () => {
+    const results = BuildingService.searchSuggestions("toilet");
+    expect(results[0].type).toBe("toilets");
+  });
+
+  it("sets type from indoor when no amenity", () => {
+    const results = BuildingService.searchSuggestions("B307");
+    expect(results[0].type).toBe("room");
+  });
+
+  it("type is undefined when neither amenity nor indoor is set", () => {
+    const noTypeFeature: GeoJSON.Feature = {
+      id: "way/5",
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [] },
+      properties: { name: "Mystery Space", level: [0] },
+    };
+    (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+      type: "FeatureCollection",
+      features: [noTypeFeature],
+    });
+    const results = BuildingService.searchSuggestions("mystery");
+    expect(results[0].type).toBeUndefined();
+  });
+
   it("includes the original feature reference in suggestion", () => {
     const results = BuildingService.searchSuggestions("meeting");
     expect(results[0].feature).toBe(mockFeatureWithName);

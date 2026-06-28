@@ -18,6 +18,7 @@ export interface SearchSuggestion {
   id: string;
   displayName: string;
   levels: number[];
+  type: string | undefined;
   feature: GeoJSON.Feature;
 }
 
@@ -155,6 +156,7 @@ function searchSuggestions(searchString: string): SearchSuggestion[] {
         id: getRequiredFeatureId(f),
         displayName: (p.name ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
         levels: Array.isArray(p.level) ? (p.level as number[]) : [],
+        type: (p.amenity ?? p.indoor) as string | undefined,
         feature: f,
       };
     });
