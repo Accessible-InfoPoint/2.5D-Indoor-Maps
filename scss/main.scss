@@ -65,6 +65,22 @@ nav {
       line-height: 24px;
       vertical-align: text-bottom;
     }
+
+    .profile-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 35px;
+      height: 35px;
+      color: currentColor;
+      vertical-align: middle;
+    }
+
+    .profile-svg-icon {
+      background-color: currentColor;
+      mask: var(--profile-icon-url) center / contain no-repeat;
+      -webkit-mask: var(--profile-icon-url) center / contain no-repeat;
+    }
   }
 
   button.square:disabled {
