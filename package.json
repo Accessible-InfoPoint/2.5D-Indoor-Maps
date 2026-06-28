@@ -1,6 +1,6 @@
 {
   "name": "2.5d-indoor-maps",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A 2.5D indoor mapping tool using OpenStreetMap data for accessible and intuitive multi-floor navigation.",
   "main": "dist/server/index.js",
   "engines": {

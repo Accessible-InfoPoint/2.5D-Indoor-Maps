@@ -127,6 +127,10 @@ export function filterConnectedPathways(
 ): StaircasePath[] {
   const connectedPathways = new Set<GeoJSON.Feature>();
   const featurePathCoordinates = getFeaturePathCoordinates(feature);
+  if (!featurePathCoordinates) {
+    return [];
+  }
+
   const lowestNodes = featurePathCoordinates.filter((point) =>
     lowestPoints.some((lowestPoint) => isFeatureAtPosition(lowestPoint, point))
   );
@@ -149,6 +153,10 @@ export function filterConnectedPathways(
 
     paths.forEach((path) => {
       const pathCoordinates = getFeaturePathCoordinates(path);
+      if (!pathCoordinates) {
+        return;
+      }
+
       const lowestIndex = pathCoordinates.findIndex((point) =>
         lowestPoints.some((lowestPoint) =>
           isSamePosition((lowestPoint.geometry as GeoJSON.Point).coordinates, point)
@@ -177,12 +185,15 @@ export function filterConnectedPathways(
         Array.from(connectedPathways, (connected) => connected.id)
       );
       const secondDegreePaths = otherNodes.flatMap((otherNode) =>
-        pathways.filter((pathway) =>
-          getFeaturePathCoordinates(pathway).some(
+        pathways.filter((pathway) => {
+          const pathwayCoordinates = getFeaturePathCoordinates(pathway);
+
+          return pathwayCoordinates != undefined &&
+          pathwayCoordinates.some(
             (pathwayPoint) =>
               pathwayPoint[0] == otherNode[0] && pathwayPoint[1] == otherNode[1]
-          ) && !connectedPathwayIds.has(getRequiredFeatureId(pathway))
-        )
+          ) && !connectedPathwayIds.has(getRequiredFeatureId(pathway));
+        })
       );
       secondDegreePaths.forEach((secondDegreePath) => {
         connectedPathways.add(secondDegreePath);
@@ -190,15 +201,22 @@ export function filterConnectedPathways(
     });
   });
 
-  return Array.from(connectedPathways).map((feature) => {
+  return Array.from(connectedPathways).flatMap((feature): StaircasePath[] => {
+    const coordinates = getFeaturePathCoordinates(feature);
+    if (!coordinates) {
+      return [];
+    }
+
     const properties = getRequiredFeatureProperties(feature);
     const width = "width" in properties
       ? parseFloat(properties.width)
       : defaultStaircaseWidth;
 
     return [
-      getFeaturePathCoordinates(feature),
-      Number.isFinite(width) && width > 0 ? width : defaultStaircaseWidth,
+      [
+        coordinates,
+        Number.isFinite(width) && width > 0 ? width : defaultStaircaseWidth,
+      ],
     ];
   });
 }
@@ -255,10 +273,15 @@ function isRelevantPathway(
   specialNode: GeoJSON.Position,
   level: number
 ): boolean {
+  const pathCoordinates = getFeaturePathCoordinates(path);
+  if (!pathCoordinates) {
+    return false;
+  }
+
   const properties = getRequiredFeatureProperties(path);
 
   return (
-    getFeaturePathCoordinates(path).some((lineStringPoint) =>
+    pathCoordinates.some((lineStringPoint) =>
       isSamePosition(lineStringPoint, specialNode)
     ) &&
     (
@@ -288,20 +311,31 @@ function isFeatureOnLevel(feature: GeoJSON.Feature, level: number): boolean {
   extractLevels(properties.repeat_on).includes(level);
 }
 
-function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[] {
-  if (feature.geometry.type == "LineString") {
-    return feature.geometry.coordinates;
+function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[] | undefined {
+  const geometry = feature.geometry;
+
+  if (!geometry) {
+    console.error("Skipping staircase pathway without geometry.", feature);
+    return undefined;
   }
 
-  if (feature.geometry.type == "Polygon") {
+  if (geometry.type == "LineString") {
+    return geometry.coordinates;
+  }
+
+  if (geometry.type == "Polygon") {
     return getRequiredArrayValue(
-      feature.geometry.coordinates,
+      geometry.coordinates,
       0,
       "Staircase pathway polygon coordinates"
     );
   }
 
-  throw new Error(`Unsupported pathway geometry type "${feature.geometry.type}".`);
+  console.error(
+    `Skipping staircase pathway with unsupported geometry type "${geometry.type}".`,
+    feature
+  );
+  return undefined;
 }
 
 function isSamePosition(a: GeoJSON.Position, b: GeoJSON.Position): boolean {
