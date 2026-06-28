@@ -115,6 +115,57 @@ describe("staircaseRenderBuilder", () => {
       ],
     ]);
   });
+
+  it("skips unsupported staircase feature geometries instead of throwing", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const paths = filterConnectedPathways(
+      createPointFeature([0, 0], "0"),
+      [],
+      [],
+      [],
+      0
+    );
+
+    expect(paths).toEqual([]);
+    expect(consoleError).toHaveBeenCalledWith(
+      'Skipping staircase pathway with unsupported geometry type "Point".',
+      expect.objectContaining({
+        geometry: expect.objectContaining({ type: "Point" }),
+      })
+    );
+
+    consoleError.mockRestore();
+  });
+
+  it("skips unsupported connected pathway geometries instead of throwing", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const staircase = createPolygonFeature([
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [0, 0],
+    ]);
+
+    const paths = filterConnectedPathways(
+      staircase,
+      [[0, 0]],
+      [],
+      [createPointFeature([0, 0], "0")],
+      0
+    );
+
+    expect(paths).toEqual([]);
+    expect(consoleError).toHaveBeenCalledWith(
+      'Skipping staircase pathway with unsupported geometry type "Point".',
+      expect.objectContaining({
+        geometry: expect.objectContaining({ type: "Point" }),
+      })
+    );
+
+    consoleError.mockRestore();
+  });
 });
 
 function createPointFeature(

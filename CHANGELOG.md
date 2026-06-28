@@ -23,6 +23,7 @@ useful for the project.
 ### Fixed
 
 - Made SVG user-profile quick-switch icons inherit the button color via CSS masks so active and inactive states match Material icons.
+- Made staircase pathway geometry handling fail-safe so unsupported geometries are logged and skipped instead of crashing the map render.
 
 ### Removed
 
