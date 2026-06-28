@@ -271,8 +271,10 @@ function isFeatureAtPosition(feature: GeoJSON.Feature, point: GeoJSON.Position):
 }
 
 function isFeatureOnLevel(feature: GeoJSON.Feature, level: number): boolean {
-  return extractLevels(getRequiredFeatureProperties(feature).level).includes(level) ||
-  extractLevels(feature.properties.repeat_on).includes(level);
+  const properties = getRequiredFeatureProperties(feature);
+
+  return extractLevels(properties.level).includes(level) ||
+  extractLevels(properties.repeat_on).includes(level);
 }
 
 function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[] {

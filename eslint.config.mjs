@@ -16,7 +16,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-    globalIgnores(["**/node_modules", "**/dist", "**/coverage", "**/*.d.ts", "**/*.js"]),
+    globalIgnores(["**/node_modules", "**/dist", "**/coverage", "**/tmp", "**/tmp/**", "**/*.d.ts", "**/*.js"]),
     {
         files: ["src/**/*.ts", "test/**/*.ts", "server/**/*.ts", "index.ts"],
 
