@@ -30,12 +30,18 @@ const mockFeatureToilet: GeoJSON.Feature = {
   geometry: { type: "Polygon", coordinates: [] },
   properties: { amenity: "toilets", level: [2] },
 };
+const mockFeaturePathway: GeoJSON.Feature = {
+  id: "way/4",
+  type: "Feature",
+  geometry: { type: "LineString", coordinates: [] },
+  properties: { indoor: "pathway", level: [1] },
+};
 
 describe("BuildingService.searchSuggestions", () => {
   beforeEach(() => {
     (BackendService.getGeoJson as jest.Mock).mockReturnValue({
       type: "FeatureCollection",
-      features: [mockFeatureWithName, mockFeatureWithRef, mockFeatureToilet],
+      features: [mockFeatureWithName, mockFeatureWithRef, mockFeatureToilet, mockFeaturePathway],
     });
   });
 
@@ -85,6 +91,11 @@ describe("BuildingService.searchSuggestions", () => {
   it("includes the original feature reference in suggestion", () => {
     const results = BuildingService.searchSuggestions("meeting");
     expect(results[0].feature).toBe(mockFeatureWithName);
+  });
+
+  it("does not match features by indoor type alone", () => {
+    const results = BuildingService.searchSuggestions("pathway");
+    expect(results).toHaveLength(0);
   });
 
   it("returns empty array when no features match", () => {

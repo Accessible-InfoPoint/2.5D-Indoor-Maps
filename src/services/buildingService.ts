@@ -140,7 +140,6 @@ function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean
   return !!(
     p.name?.toLowerCase().includes(s) ||
     p.ref?.toLowerCase().startsWith(s) ||
-    p.indoor?.toLowerCase().startsWith(s) ||
     p.amenity?.toLowerCase().startsWith(s)
   );
 }
