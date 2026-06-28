@@ -122,6 +122,16 @@ function calculateDoorOrientation(
     ];
 
     door.orientation = [prevDoorCoord, afterDoorCoord];
+    door.orientationDebug = {
+      previous,
+      door: matchedDoorCoord,
+      after,
+      previousDistanceM: prevDist,
+      afterDistanceM: afterDist,
+      widthM: doorWidth,
+      calculatedPrevious: prevDoorCoord,
+      calculatedAfter: afterDoorCoord,
+    };
   }
 }
 

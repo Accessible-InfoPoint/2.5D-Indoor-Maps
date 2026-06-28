@@ -14,7 +14,21 @@ import {
   CURRENT_BUILDING,
 } from "../../public/strings/settings.json";
 
-let buildingConstants: Record<string, number> | undefined;
+export type BuildingCenter = [longitude: number, latitude: number];
+
+export interface BuildingConstants {
+  standardZoom: number;
+  maxZoom: number;
+  minZoom: number;
+  standardBearing: number;
+  standardBearing3DMode: number;
+  standardPitch3DMode: number;
+  standardZoom3DMode: number;
+  standardCenter?: BuildingCenter;
+  standardCenterWheelchairMode?: BuildingCenter;
+}
+
+let buildingConstants: BuildingConstants | undefined;
 let buildingDescription = "";
 let geoJson: GeoJSON.FeatureCollection | undefined;
 const allLevels = new Set<number>();
@@ -40,6 +54,10 @@ let backendConfig: BackendConfig = { ...defaultBackendConfig };
 
 type BuildingId = keyof typeof BuildingConstantsDefinition;
 type BuildingDefinition = typeof BuildingConstantsDefinition[BuildingId];
+type BuildingDefinitionWithCenters = BuildingDefinition & {
+  STANDARD_CENTER?: number[];
+  STANDARD_CENTER_WHEELCHAIR_MODE?: number[];
+};
 
 interface LoadedBackendData {
   buildingInterface: BuildingInterface;
@@ -250,8 +268,9 @@ function buildBuildingDescription(currentBuildingInterface: BuildingInterface): 
 function buildBuildingConstants(
   indoorGeoJson: GeoJSON.FeatureCollection,
   buildingDefinition: BuildingDefinition
-): Record<string, number> {
+): BuildingConstants {
   const standardBearing = calculateStandardBearing(indoorGeoJson, buildingDefinition);
+  const buildingDefinitionWithCenters = buildingDefinition as BuildingDefinitionWithCenters;
 
   return {
     "standardZoom": buildingDefinition.STANDARD_ZOOM,
@@ -260,8 +279,35 @@ function buildBuildingConstants(
     "standardBearing": standardBearing,
     "standardBearing3DMode": buildingDefinition.STANDARD_BEARING_3D_MODE,
     "standardPitch3DMode": buildingDefinition.STANDARD_PITCH_3D_MODE,
-    "standardZoom3DMode": buildingDefinition.STANDARD_ZOOM_3D_MODE
+    "standardZoom3DMode": buildingDefinition.STANDARD_ZOOM_3D_MODE,
+    "standardCenter": getOptionalBuildingCenter(
+      buildingDefinitionWithCenters.STANDARD_CENTER,
+      "STANDARD_CENTER"
+    ),
+    "standardCenterWheelchairMode": getOptionalBuildingCenter(
+      buildingDefinitionWithCenters.STANDARD_CENTER_WHEELCHAIR_MODE,
+      "STANDARD_CENTER_WHEELCHAIR_MODE"
+    ),
   }
+}
+
+function getOptionalBuildingCenter(
+  value: number[] | undefined,
+  fieldName: string
+): BuildingCenter | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (
+    !Array.isArray(value) ||
+    value.length != 2 ||
+    value.some((coordinate) => typeof coordinate != "number")
+  ) {
+    throw new Error(`${fieldName} must be [longitude, latitude].`);
+  }
+
+  return [value[0], value[1]];
 }
 
 function calculateStandardBearing(
@@ -306,7 +352,7 @@ function getOutline(): number[][] {
   );
 }
 
-function getBuildingConstants(): Record<string, number> {
+function getBuildingConstants(): BuildingConstants {
   if (buildingConstants === undefined) {
     throw new Error("Building constants have not been loaded.");
   }

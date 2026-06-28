@@ -5,7 +5,15 @@ import { getRequiredElement } from "../../utils/domHelpers";
 
 const wheelchairModeKey = "wheelchairMode";
 
-function setup(onSettingsChanged: () => void): void {
+function applyStoredLayout(): void {
+  getRequiredElement("uiWrapper")
+    .classList
+    .toggle("wheelchairMode", localStorage.getItem(wheelchairModeKey) == "true");
+}
+
+function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void {
+  applyStoredLayout();
+
   const uiWrapper = getRequiredElement("uiWrapper");
   const levelControl = getRequiredElement("levelControl");
   const indoorSearchWrapper = getRequiredElement("indoorSearchWrapper");
@@ -36,12 +44,13 @@ function setup(onSettingsChanged: () => void): void {
       indoorSearchWrapper.style.removeProperty("right");
     }
 
+    onLayoutChanged();
   };
 
   if (localStorage.getItem(wheelchairModeKey) == "true") {
-    uiWrapper.className = "wheelchairMode";
     setTimeout(() => {
       setIndoorSearchWheelchairLayout();
+      onLayoutChanged();
     }, 200)
   }
 
@@ -74,5 +83,6 @@ function setIndoorSearchWheelchairLayout(): void {
 }
 
 export default {
+  applyStoredLayout,
   setup,
 };

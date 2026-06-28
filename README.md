@@ -71,6 +71,10 @@ release steps. Planned work and larger refactoring ideas are tracked in
 [ROADMAP.md](ROADMAP.md). Release notes are collected in
 [CHANGELOG.md](CHANGELOG.md).
 
+Configuration fields in `public/strings/settings.json` and
+`public/strings/buildingConstants.json` are documented in
+[docs/configuration.md](docs/configuration.md).
+
 ## Project structure
 
 ### _public_

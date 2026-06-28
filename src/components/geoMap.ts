@@ -3,6 +3,8 @@ import {
   MAP_START_LAT,
   MAP_START_LNG,
   LEVEL_HEIGHT,
+  MAP_MAX_LATITUDE_BOUND,
+  MAP_MIN_BOUNDS_MARGIN_FACTOR,
   OPACITY_TRANSLUCENT_LAYER,
 } from "../../public/strings/settings.json";
 import LevelControl from "./ui/levelControl";
@@ -15,12 +17,14 @@ import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
-import BackendService from "../services/backendService";
+import BackendService, { type BuildingCenter } from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapView } from "./map/mapView";
-import { MaptalksMapView } from "./map/maptalksMapView";
+import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
+import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
+import { getRequiredElement } from "../utils/domHelpers";
+import CoordinateHelpers from "../utils/coordinateHelpers";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -29,7 +33,7 @@ export class GeoMap {
   indoorLayers: Map<number, IndoorLevel> = new Map();
   selectedFeatures: string[] = [];
   flatMode = true;
-  standardCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
+  standardCenter: BuildingCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
   standardBearing = 0;
   standardZoom = 0;
   maxZoom = 0;
@@ -64,7 +68,7 @@ export class GeoMap {
       }
     };
 
-    this.mapView = new MaptalksMapView({
+    this.mapView = new MapLibreMapView({
       configMode: this.configMode,
       standardZoom: this.standardZoom,
       maxZoom: this.maxZoom,
@@ -77,6 +81,7 @@ export class GeoMap {
 
   showBuilding(): string {
     this.handleBuildingLoad();
+    this.refreshMapViewportConstraints();
     this.centerMapToBuilding();
 
     return lang.searchBuildingFound;
@@ -131,12 +136,9 @@ export class GeoMap {
   }
 
   centerMapToBuilding(): void {
-    const boundingBox = BackendService.getBoundingBox();
-    const center = {
-      x: (boundingBox[0] + boundingBox[2]) / 2,
-      y: (boundingBox[1] + boundingBox[3]) / 2,
-    };
+    this.refreshMapViewportConstraints();
 
+    const center = this.getInitialMapCenter();
     this.standardCenter = [center.x, center.y];
 
     this.camera.animateToCenter(
@@ -150,6 +152,86 @@ export class GeoMap {
       // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
       console.log(this.camera.getPosition());
     }, 1000);
+  }
+
+  private getInitialMapCenter(): { x: number; y: number } {
+    const configuredCenter = this.getConfiguredStandardCenter();
+
+    if (configuredCenter) {
+      return {
+        x: configuredCenter[0],
+        y: configuredCenter[1],
+      };
+    }
+
+    const boundingBox = BackendService.getBoundingBox();
+
+    return {
+      x: (boundingBox[0] + boundingBox[2]) / 2,
+      y: (boundingBox[1] + boundingBox[3]) / 2,
+    };
+  }
+
+  private updateStandardCenter(): void {
+    const center = this.getInitialMapCenter();
+
+    this.standardCenter = [center.x, center.y];
+  }
+
+  private getConfiguredStandardCenter(): BuildingCenter | undefined {
+    const buildingConstants = BackendService.getBuildingConstants();
+
+    if (
+      this.isWheelchairLayoutActive() &&
+      buildingConstants.standardCenterWheelchairMode
+    ) {
+      return buildingConstants.standardCenterWheelchairMode;
+    }
+
+    return buildingConstants.standardCenter;
+  }
+
+  private isWheelchairLayoutActive(): boolean {
+    return getRequiredElement("uiWrapper").classList.contains("wheelchairMode");
+  }
+
+  refreshMapViewportConstraints(recenterToStandardCenter = false): void {
+    this.updateStandardCenter();
+    const bounds = this.expandBuildingBounds(this.getBuildingBounds());
+
+    this.mapView.setViewportPadding({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+    this.mapView.setMaxBounds(bounds);
+    this.mapView.setCenterConstraint(
+      this.flatMode
+        ? this.getCircularCenterConstraint(bounds)
+        : this.getLockedCenterConstraint()
+    );
+
+    if (recenterToStandardCenter) {
+      this.centerCameraOnStandardCenter();
+    }
+  }
+
+  lockMapCenterToStandardCenter(): void {
+    this.updateStandardCenter();
+    this.mapView.setCenterConstraint(this.getLockedCenterConstraint());
+  }
+
+  centerCameraOnStandardCenter(): void {
+    const currentCameraPosition = this.camera.getPosition();
+
+    this.camera.setCenterAndZoom(
+      {
+        x: this.standardCenter[0],
+        y: this.standardCenter[1],
+      },
+      currentCameraPosition.zoom
+    );
   }
 
   handleLevelChange(newLevel: number): boolean {
@@ -299,6 +381,68 @@ export class GeoMap {
 
   private getIndoorLevel(level: number): IndoorLevel {
     return getRequiredMapValue(this.indoorLayers, level, "Indoor layers");
+  }
+
+  private getBuildingBounds(): MapBounds {
+    const boundingBox = BackendService.getBoundingBox();
+
+    return {
+      west: getRequiredArrayValue(boundingBox, 0, "Building bounding box"),
+      south: getRequiredArrayValue(boundingBox, 1, "Building bounding box"),
+      east: getRequiredArrayValue(boundingBox, 2, "Building bounding box"),
+      north: getRequiredArrayValue(boundingBox, 3, "Building bounding box"),
+    };
+  }
+
+  private getCircularCenterConstraint(bounds: MapBounds): MapCenterConstraint {
+    const center = {
+      x: this.standardCenter[0],
+      y: this.standardCenter[1],
+    };
+    const projectedCenter = {
+      x: center.x,
+      y: CoordinateHelpers.lat2y(center.y),
+    };
+    const radius = [
+      [bounds.west, bounds.south],
+      [bounds.west, bounds.north],
+      [bounds.east, bounds.south],
+      [bounds.east, bounds.north],
+    ]
+      .map(([x, y]) => Math.hypot(
+        x - projectedCenter.x,
+        CoordinateHelpers.lat2y(y) - projectedCenter.y
+      ))
+      .reduce((max, distance) => Math.max(max, distance), Number.EPSILON);
+
+    return {
+      center,
+      radius,
+    };
+  }
+
+  private getLockedCenterConstraint(): MapCenterConstraint {
+    return {
+      center: {
+        x: this.standardCenter[0],
+        y: this.standardCenter[1],
+      },
+      radius: 0,
+    };
+  }
+
+  private expandBuildingBounds(bounds: MapBounds): MapBounds {
+    const lngSpan = Math.max(bounds.east - bounds.west, Number.EPSILON);
+    const latSpan = Math.max(bounds.north - bounds.south, Number.EPSILON);
+    const lngMargin = lngSpan * MAP_MIN_BOUNDS_MARGIN_FACTOR;
+    const latMargin = latSpan * MAP_MIN_BOUNDS_MARGIN_FACTOR;
+
+    return {
+      west: bounds.west - lngMargin,
+      south: Math.max(bounds.south - latMargin, -MAP_MAX_LATITUDE_BOUND),
+      east: bounds.east + lngMargin,
+      north: Math.min(bounds.north + latMargin, MAP_MAX_LATITUDE_BOUND),
+    };
   }
 
   private getLevelAboveOrSelf(level: number): number {
