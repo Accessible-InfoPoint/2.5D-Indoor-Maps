@@ -5,6 +5,7 @@ import type {
   Map as MapLibreMap,
 } from "maplibre-gl";
 import * as THREE from "three";
+import { LEVEL_HEIGHT } from "../../../../public/strings/settings.json";
 import {
   InfoPointRenderItem,
   RoomRenderItem,
@@ -42,6 +43,7 @@ const ROOM_EDGE_OPACITY = 0.9;
 const OUTLINE_RENDER_ORDER = 0;
 const ROOM_FILL_RENDER_ORDER = 10;
 const ROOM_EDGE_RENDER_ORDER = 11;
+const MAX_VISIBLE_3D_LEVEL_HEIGHT_FACTOR = 2.25;
 
 export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   readonly type = "custom";
@@ -55,6 +57,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private readonly staircasesGroup = new THREE.Group();
   private readonly modelMatrix = new THREE.Matrix4();
   private readonly cameraMatrix = new THREE.Matrix4();
+  private readonly clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
   private readonly outlineFillMaterial = new THREE.MeshBasicMaterial({
     color: 0x4d4d4d,
     opacity: OUTLINE_FILL_OPACITY,
@@ -117,7 +120,22 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       .multiply(this.modelMatrix);
     this.updateMarkerViewport();
     this.renderer.resetState();
+    this.renderWithClippingPlane();
+  }
+
+  private renderWithClippingPlane(): void {
+    if (!this.renderer || !this.scene || !this.camera) {
+      return;
+    }
+
+    const previousClippingPlanes = this.renderer.clippingPlanes;
+    const previousLocalClippingEnabled = this.renderer.localClippingEnabled;
+
+    this.renderer.clippingPlanes = this.createClippingPlanes();
+    this.renderer.localClippingEnabled = true;
     this.renderer.render(this.scene, this.camera);
+    this.renderer.clippingPlanes = previousClippingPlanes;
+    this.renderer.localClippingEnabled = previousLocalClippingEnabled;
   }
 
   onRemove(): void {
@@ -378,6 +396,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
 
     this.rootGroup.position.z =
       this.altitudeMeters * this.origin.meterInMercatorCoordinateUnits();
+    this.updateClippingPlane();
   }
 
   private applyOpacity(): void {
@@ -451,6 +470,27 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     }
 
     updateMapLibreThreeMarkerViewport(this.markersGroup, canvas);
+  }
+
+  private createClippingPlanes(): THREE.Plane[] {
+    if (!this.origin) {
+      return [];
+    }
+
+    this.updateClippingPlane();
+
+    return [this.clippingPlane];
+  }
+
+  private updateClippingPlane(): void {
+    if (!this.origin) {
+      return;
+    }
+
+    this.clippingPlane.constant =
+      MAX_VISIBLE_3D_LEVEL_HEIGHT_FACTOR *
+      LEVEL_HEIGHT *
+      this.origin.meterInMercatorCoordinateUnits();
   }
 }
 

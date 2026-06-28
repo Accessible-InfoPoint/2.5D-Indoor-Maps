@@ -69,6 +69,7 @@ useful for the project.
 - Tried stabilizing translucent 3D room rendering with non-depth-writing room materials, depth testing, and explicit Three.js render ordering.
 - Prevented repeated complex staircases from rendering twice by starting pathway expansion only from lowest staircase nodes on the current level.
 - Prevented invalid MapLibre Three.js staircase geometries from reaching the scene by handling same-level pathway altitude interpolation and validating generated position buffers.
+- Added a MapLibre Three.js clipping plane matching the previous maptalks staircase cutoff to trim geometry above the top visible 3D level.
 
 ### Removed
 
