@@ -118,6 +118,22 @@ describe("BuildingService.searchSuggestions", () => {
     expect(results[0].feature).toBe(mockFeatureWithName);
   });
 
+  it("ignores name=yes (OSM artifact) and does not match or display it", () => {
+    const artifactFeature: GeoJSON.Feature = {
+      id: "way/6",
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [] },
+      properties: { name: "yes", amenity: "waste_basket", level: [1] },
+    };
+    (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+      type: "FeatureCollection",
+      features: [artifactFeature],
+    });
+    expect(BuildingService.searchSuggestions("yes")).toHaveLength(0);
+    expect(BuildingService.searchSuggestions("waste")).toHaveLength(1);
+    expect(BuildingService.searchSuggestions("waste")[0].displayName).toBe("waste_basket");
+  });
+
   it("does not match features by indoor type alone", () => {
     const results = BuildingService.searchSuggestions("pathway");
     expect(results).toHaveLength(0);

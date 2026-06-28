@@ -135,11 +135,19 @@ function filterByString(f: GeoJSON.Feature, searchString: string) {
   );
 }
 
+const OSM_NAME_ARTIFACTS = new Set(["yes", "no"]);
+
+function getValidName(p: Record<string, unknown>): string | undefined {
+  const name = p.name;
+  if (typeof name !== "string" || OSM_NAME_ARTIFACTS.has(name.toLowerCase())) return undefined;
+  return name;
+}
+
 function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
   const p = getRequiredFeatureProperties(f);
   const s = searchString.toLowerCase();
   return !!(
-    p.name?.toLowerCase().includes(s) ||
+    getValidName(p)?.toLowerCase().includes(s) ||
     p.ref?.toLowerCase().startsWith(s) ||
     p.amenity?.toLowerCase().startsWith(s)
   );
@@ -154,7 +162,7 @@ function searchSuggestions(searchString: string): SearchSuggestion[] {
       const p = getRequiredFeatureProperties(f);
       return {
         id: getRequiredFeatureId(f),
-        displayName: (p.name ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
+        displayName: (getValidName(p) ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
         levels: Array.isArray(p.level) ? (p.level as number[]) : [],
         type: (p.amenity ?? p.indoor) as string | undefined,
         feature: f,
