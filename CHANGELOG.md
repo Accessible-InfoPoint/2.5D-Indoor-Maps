@@ -64,6 +64,7 @@ useful for the project.
 - Replaced the active experimental Three.js marker billboard with a screen-aligned shader quad so marker facing no longer depends on `THREE.Sprite` camera assumptions.
 - Kept selected-room markers visible in the MapLibre Three.js layer even when the older selected-position marker label data is suppressed.
 - Restored selected-position marker labels for rooms above or below the infopoint level by comparing level distances numerically.
+- Tried stabilizing translucent 3D room rendering with non-depth-writing room materials, depth testing, and explicit Three.js render ordering.
 
 ### Removed
 

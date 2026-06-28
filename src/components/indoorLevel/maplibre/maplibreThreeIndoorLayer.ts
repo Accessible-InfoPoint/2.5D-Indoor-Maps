@@ -30,11 +30,14 @@ import {
   updateMapLibreThreeMarkerViewport,
 } from "./maplibreThreeMarkers";
 
-const OUTLINE_THICKNESS_METERS = 0.08;
-const ROOM_BASE_ELEVATION_METERS = 0.1;
+const OUTLINE_THICKNESS_METERS = 0.04;
+const ROOM_BASE_ELEVATION_METERS = 0.05;
 const OUTLINE_FILL_OPACITY = 0.8;
 const OUTLINE_EDGE_OPACITY = 0.85;
 const ROOM_EDGE_OPACITY = 0.9;
+const OUTLINE_RENDER_ORDER = 0;
+const ROOM_FILL_RENDER_ORDER = 10;
+const ROOM_EDGE_RENDER_ORDER = 11;
 
 export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   readonly type = "custom";
@@ -59,6 +62,8 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     color: 0x111827,
     opacity: OUTLINE_EDGE_OPACITY,
     transparent: true,
+    depthWrite: false,
+    depthTest: true,
   });
 
   private map?: MapLibreMap;
@@ -89,6 +94,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       antialias: true,
     });
     this.renderer.autoClear = false;
+    this.renderer.sortObjects = true;
 
     this.rebuildOutline();
   }
@@ -212,6 +218,8 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       this.outlineEdgeMaterial
     );
 
+    outline.renderOrder = OUTLINE_RENDER_ORDER;
+    edges.renderOrder = OUTLINE_RENDER_ORDER;
     this.outlineGroup.add(outline, edges);
     this.applyOpacity();
     this.map?.triggerRepaint();
@@ -256,6 +264,8 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       edgeMaterial
     );
 
+    mesh.renderOrder = ROOM_FILL_RENDER_ORDER;
+    edges.renderOrder = ROOM_EDGE_RENDER_ORDER;
     this.roomsGroup.add(mesh, edges);
   }
 
@@ -417,12 +427,14 @@ function createDisposableMeshMaterial(
   const material = new THREE.MeshBasicMaterial({
     color: createColor(color),
     opacity: baseOpacity,
-    transparent: baseOpacity < 1,
+    transparent: true,
     side: THREE.DoubleSide,
-    depthWrite: true,
+    depthWrite: false,
+    depthTest: true,
   });
 
   material.userData.baseOpacity = baseOpacity;
+  material.userData.alwaysTransparent = true;
   material.userData.disposeWithObject = true;
 
   return material;
@@ -433,9 +445,12 @@ function createDisposableLineMaterial(color: string): THREE.LineBasicMaterial {
     color: createColor(color),
     opacity: ROOM_EDGE_OPACITY,
     transparent: true,
+    depthWrite: false,
+    depthTest: true,
   });
 
   material.userData.baseOpacity = ROOM_EDGE_OPACITY;
+  material.userData.alwaysTransparent = true;
   material.userData.disposeWithObject = true;
 
   return material;
