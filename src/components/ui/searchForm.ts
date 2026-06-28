@@ -1,6 +1,8 @@
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
+import BuildingService from "../../services/buildingService";
+import SearchSuggestions from "./searchSuggestions";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
@@ -8,18 +10,31 @@ const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInpu
 const state: { indoorSearchQuery: string } = { indoorSearchQuery: "" };
 
 function render(geoMap: GeoMap): void {
-  indoorSearchSubmit.addEventListener("click", () => {
-    state.indoorSearchQuery = indoorSearchInput.value;
+  SearchSuggestions.render((suggestion) => {
+    indoorSearchInput.value = suggestion.displayName;
+    geoMap.selectIndoorFeature(suggestion.feature);
+  });
 
+  indoorSearchInput.addEventListener("input", () => {
+    const query = indoorSearchInput.value;
+    if (query.length >= 1) {
+      SearchSuggestions.update(BuildingService.searchSuggestions(query));
+    } else {
+      SearchSuggestions.clear();
+    }
+  });
+
+  indoorSearchSubmit.addEventListener("click", () => {
+    SearchSuggestions.clear();
+    state.indoorSearchQuery = indoorSearchInput.value;
     geoMap.handleIndoorSearch(indoorSearchInput.value);
   });
 
   indoorSearchInput.addEventListener("keyup", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-
+      SearchSuggestions.clear();
       state.indoorSearchQuery = indoorSearchInput.value;
-
       geoMap.handleIndoorSearch(indoorSearchInput.value);
     }
   });
