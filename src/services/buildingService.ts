@@ -14,6 +14,13 @@ import { booleanContainsPoint } from "bbox-fns";
 import BackendService from "./backendService";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
+export interface SearchSuggestion {
+  id: string;
+  displayName: string;
+  levels: number[];
+  feature: GeoJSON.Feature;
+}
+
 /**
  * Finding a building by search string:
  * 1) Iterate through all building Features if there is a Feature with the given name. If so, return the building Feature.
@@ -127,6 +134,33 @@ function filterByString(f: GeoJSON.Feature, searchString: string) {
   );
 }
 
+function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
+  const p = getRequiredFeatureProperties(f);
+  const s = searchString.toLowerCase();
+  return !!(
+    p.name?.toLowerCase().includes(s) ||
+    p.ref?.toLowerCase().startsWith(s) ||
+    p.indoor?.toLowerCase().startsWith(s) ||
+    p.amenity?.toLowerCase().startsWith(s)
+  );
+}
+
+function searchSuggestions(searchString: string): SearchSuggestion[] {
+  if (!searchString) return [];
+  const geoJSON = getBuildingGeoJSON();
+  return geoJSON.features
+    .filter((f) => filterForSuggestions(f, searchString))
+    .map((f) => {
+      const p = getRequiredFeatureProperties(f);
+      return {
+        id: getRequiredFeatureId(f),
+        displayName: (p.name ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
+        levels: Array.isArray(p.level) ? (p.level as number[]) : [],
+        feature: f,
+      };
+    });
+}
+
 // /*Filter*/
 export function filterByBounds(
   geoJSON: GeoJsonObject,
@@ -233,6 +267,7 @@ export default {
   getBuildingDescription,
   handleSearch,
   runIndoorSearch,
+  searchSuggestions,
   filterByBounds,
   filterInsideAndLevel
 };
