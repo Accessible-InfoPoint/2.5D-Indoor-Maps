@@ -22,7 +22,7 @@ useful for the project.
 
 ### Fixed
 
-- 
+- Fixed complex staircases not rendering when their feature contains lowest points on another level.
 
 ### Removed
 
