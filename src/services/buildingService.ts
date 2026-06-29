@@ -13,6 +13,7 @@ import { extent} from "geojson-bounds";
 import { booleanContainsPoint } from "bbox-fns";
 import BackendService from "./backendService";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { getFeatureLevels } from "../utils/featureLevels";
 
 export interface SearchSuggestion {
   id: string;
@@ -162,13 +163,13 @@ function filterForSuggestions(
   searchString: string
 ): boolean {
   const p = getRequiredFeatureProperties(f);
-  if (!Array.isArray(p.level) || p.level.length === 0) return false;
+  if (getFeatureLevels(f).length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
   const s = searchString.toLowerCase();
   return !!(
     getValidName(p)?.toLowerCase().includes(s) ||
-    p.ref?.toLowerCase().startsWith(s) ||
-    p.amenity?.toLowerCase().startsWith(s)
+    p.ref?.toLowerCase().includes(s) ||
+    p.amenity?.toLowerCase().includes(s)
   );
 }
 
@@ -225,7 +226,7 @@ function searchSuggestions(
       return {
         id: getRequiredFeatureId(f),
         displayName: (getValidName(p) ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
-        levels: Array.isArray(p.level) ? (p.level as number[]) : [],
+        levels: getFeatureLevels(f),
         type: (p.amenity ?? p.indoor) as string | undefined,
         feature: f,
       };

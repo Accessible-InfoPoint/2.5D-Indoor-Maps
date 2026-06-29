@@ -154,7 +154,7 @@ describe("BuildingService.searchSuggestions", () => {
     expect(BuildingService.searchSuggestions("lobby", CTX)).toHaveLength(0);
   });
 
-  it("excludes features with level as a non-normalized string (Point features)", () => {
+  it("parses string levels on point features", () => {
     const pointFeature: GeoJSON.Feature = {
       id: "way/8",
       type: "Feature",
@@ -165,7 +165,25 @@ describe("BuildingService.searchSuggestions", () => {
       type: "FeatureCollection",
       features: [pointFeature],
     });
-    expect(BuildingService.searchSuggestions("shower", CTX)).toHaveLength(0);
+    const results = BuildingService.searchSuggestions("shower", CTX);
+    expect(results).toHaveLength(1);
+    expect(results[0].levels).toEqual([0]);
+  });
+
+  it("includes repeat_on levels in suggestion levels", () => {
+    const repeatedFeature: GeoJSON.Feature = {
+      id: "way/9",
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [] },
+      properties: { name: "Repeated Room", level: "0", repeat_on: "1-2" },
+    };
+    (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+      type: "FeatureCollection",
+      features: [repeatedFeature],
+    });
+    const results = BuildingService.searchSuggestions("repeated", CTX);
+    expect(results).toHaveLength(1);
+    expect(results[0].levels).toEqual([0, 1, 2]);
   });
 
   it("returns empty array when no features match", () => {
@@ -216,6 +234,26 @@ describe("BuildingService.searchSuggestions", () => {
       const results = BuildingService.searchSuggestions("room", { currentLevel: 0 });
       expect(results[0].id).toBe("way/21");
       expect(results[1].id).toBe("way/20");
+    });
+
+    it("uses repeat_on levels when ranking by level distance", () => {
+      const repeatedOn2: GeoJSON.Feature = {
+        id: "way/22", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { name: "room repeated", level: "0", repeat_on: "2" },
+      };
+      const level0: GeoJSON.Feature = {
+        id: "way/23", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { name: "room base", level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [level0, repeatedOn2],
+      });
+      const results = BuildingService.searchSuggestions("room", { currentLevel: 2 });
+      expect(results[0].id).toBe("way/22");
+      expect(results[1].id).toBe("way/23");
     });
 
     it("ranks closer to selected feature before farther when match and level are equal", () => {

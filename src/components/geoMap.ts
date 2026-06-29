@@ -21,10 +21,11 @@ import BackendService, { type BuildingCenter } from "../services/backendService"
 import { MapCamera } from "./map/mapCamera";
 import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
 import CoordinateHelpers from "../utils/coordinateHelpers";
+import { getFeatureLevels } from "../utils/featureLevels";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -43,7 +44,7 @@ export class GeoMap {
   standardBearing3DMode = 0;
   infoPoint: GeoJSON.Feature;
   infoPointLevel = INDOOR_LEVEL;
-  configMode = false; // set only during configuration of building constants
+  configMode = true; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
 
   constructor() {
@@ -348,7 +349,7 @@ export class GeoMap {
         // from the levels of the feature, select the nearest to the current level
         const result = getRequiredArrayValue(results, 0, "Indoor search results");
         const selectedLevel = getRequiredArrayValue(
-          (getRequiredFeatureProperties(result).level as number[])
+          getFeatureLevels(result)
             .sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)),
           0,
           "Indoor search result levels"
@@ -368,7 +369,7 @@ export class GeoMap {
     this.selectedFeatures = [getRequiredFeatureId(feature)];
     this.indoorLayers.forEach((layer) => layer.updateLayer());
 
-    const levels = getRequiredFeatureProperties(feature).level as number[];
+    const levels = getFeatureLevels(feature);
     if (levels && levels.length > 0) {
       const selectedLevel = [...levels].sort(
         (a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)
