@@ -194,16 +194,49 @@ function getFeatureCentroid(
   return undefined;
 }
 
+const FIELD_PRIORITY: Record<"name" | "ref" | "amenity", number> = {
+  name: 0,
+  ref: 1,
+  amenity: 2,
+};
+const QUALITY_TIER_COUNT = 3; // exact, prefix, substring
+
+function matchQuality(value: string | undefined, query: string): number | undefined {
+  if (!value) return undefined;
+  const v = value.toLowerCase();
+  if (v === query) return 0;
+  if (v.startsWith(query)) return 1;
+  if (v.includes(query)) return 2;
+  return undefined;
+}
+
+/**
+ * Scores a feature's relevance to a search query across its name, ref and
+ * amenity fields, then combines them so a better match on a lower-priority
+ * field still ranks close to a worse match on a higher-priority field
+ * (e.g. an exact ref match ranks just behind a substring name match).
+ * Lower is better. Reorder FIELD_PRIORITY to change field precedence.
+ */
 function matchScore(
-  displayName: string,
-  query: string
+  p: Record<string, unknown>,
+  validName: string | undefined,
+  searchString: string
 ): number {
-  const name = displayName.toLowerCase();
-  const q = query.toLowerCase();
-  if (name === q) return 0;
-  if (name.startsWith(q)) return 1;
-  if (name.includes(q)) return 2;
-  return 3;
+  const query = searchString.toLowerCase();
+  const fieldValues: Array<[keyof typeof FIELD_PRIORITY, string | undefined]> = [
+    ["name", validName],
+    ["ref", p.ref as string | undefined],
+    ["amenity", p.amenity as string | undefined],
+  ];
+
+  const scores = fieldValues
+    .map(([field, value]) => {
+      const quality = matchQuality(value, query);
+      return quality === undefined ? undefined : FIELD_PRIORITY[field] * QUALITY_TIER_COUNT + quality;
+    })
+    .filter((score): score is number => score !== undefined);
+
+  return Math.min(...scores);
 }
 
 function minLevelDistance(
@@ -246,7 +279,11 @@ function searchSuggestions(
     (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 
   return suggestions.sort((a, b) => {
-    const matchDiff = matchScore(a.displayName, searchString) - matchScore(b.displayName, searchString);
+    const propsA = getRequiredFeatureProperties(a.feature);
+    const propsB = getRequiredFeatureProperties(b.feature);
+    const matchDiff =
+      matchScore(propsA, getValidName(propsA), searchString) -
+      matchScore(propsB, getValidName(propsB), searchString);
     if (matchDiff !== 0) return matchDiff;
 
     const levelDiff = minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);

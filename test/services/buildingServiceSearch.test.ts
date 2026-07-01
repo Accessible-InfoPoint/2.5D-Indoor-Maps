@@ -283,5 +283,45 @@ describe("BuildingService.searchSuggestions", () => {
       expect(results[0].id).toBe("way/30");
       expect(results[1].id).toBe("way/31");
     });
+
+    it("ranks a higher-priority field before a lower-priority field at equal match quality", () => {
+      const refPrefixMatch: GeoJSON.Feature = {
+        id: "way/50", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { ref: "toiletA", level: [0] },
+      };
+      const amenityPrefixMatch: GeoJSON.Feature = {
+        id: "way/51", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { amenity: "toilets", level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [amenityPrefixMatch, refPrefixMatch],
+      });
+      const results = BuildingService.searchSuggestions("toilet", CTX);
+      expect(results.map((r) => r.id)).toEqual(["way/50", "way/51"]);
+    });
+
+    it("scores a feature by its best-matching field, not just its displayName", () => {
+      const exactRefWithName: GeoJSON.Feature = {
+        id: "way/52", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { name: "Lecture Hall", ref: "z12", level: [0] },
+      };
+      const substringNameMatch: GeoJSON.Feature = {
+        id: "way/53", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [] },
+        properties: { name: "Room Z12 Wing", level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [exactRefWithName, substringNameMatch],
+      });
+      const results = BuildingService.searchSuggestions("z12", CTX);
+      // an exact ref match ranks close behind (not unpredictably below) a substring
+      // name match, even though this feature also has an unrelated name property
+      expect(results.map((r) => r.id)).toEqual(["way/53", "way/52"]);
+    });
   });
 });
