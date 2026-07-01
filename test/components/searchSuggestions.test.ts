@@ -5,6 +5,10 @@ jest.mock("../../src/services/languageService", () => ({
   lang: { searchSuggestionLevel: "Level " },
 }));
 
+jest.mock("../../src/services/featureService", () => ({
+  getCategoryIcon: jest.fn(() => "/images/additional.svg"),
+}));
+
 import type { SearchSuggestion } from "../../src/services/buildingService";
 
 function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion {
@@ -38,6 +42,15 @@ describe("SearchSuggestions", () => {
     expect(button).not.toBeNull();
     expect(button?.getAttribute("type")).toBe("button");
     expect(button?.getAttribute("aria-label")).toContain("Room A");
+  });
+
+  it("renders a decorative category icon for each suggestion", () => {
+    SearchSuggestions.update([suggestion()]);
+    const icon = document.querySelector<HTMLImageElement>("#searchSuggestionsList img.suggestion-icon");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("src")).toBe("/images/additional.svg");
+    expect(icon?.getAttribute("alt")).toBe("");
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("calls onSelect and clears the list when a card is activated", () => {

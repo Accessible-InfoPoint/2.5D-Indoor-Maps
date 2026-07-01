@@ -4,6 +4,7 @@ import UserService from "../services/userService";
 import { lang } from "./languageService";
 import {
   MARKERS_IMG_DIR,
+  ICONS,
 } from "../../public/strings/constants.json";
 import {
   FILL_OPACITY,
@@ -91,6 +92,44 @@ function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMark
     };
   }
   return null;
+}
+
+const CATEGORY_ICON_RULES: Array<{ matches: (p: Record<string, unknown>) => boolean; iconFilename: string }> = [
+  {
+    matches: (p) => p.amenity === "toilets" && ["yes", "designated"].includes(p.wheelchair as string),
+    iconFilename: ICONS.TOILETS_WHEELCHAIR,
+  },
+  { matches: (p) => p.amenity === "toilets", iconFilename: ICONS.TOILETS },
+  { matches: (p) => p.highway === "elevator", iconFilename: ICONS.ELEVATOR },
+  { matches: (p) => p.highway === "steps" || p.stairs === "yes", iconFilename: ICONS.STAIRS },
+  { matches: (p) => p.amenity === "cafe" || p.amenity === "restaurant", iconFilename: ICONS.CAFE },
+  { matches: (p) => p.shop !== undefined, iconFilename: ICONS.SHOP },
+  {
+    matches: (p) => p.entrance !== undefined && ["yes", "main", "secondary"].includes(p.entrance as string),
+    iconFilename: ICONS.ENTRANCE,
+  },
+  {
+    matches: (p) =>
+      (p.exit !== undefined && ["yes", "emergency"].includes(p.exit as string)) ||
+      (p.entrance !== undefined && ["exit", "emergency"].includes(p.entrance as string)),
+    iconFilename: ICONS.EMERGENCY_EXIT,
+  },
+  {
+    matches: (p) => p.information !== undefined && ["board", "map"].includes(p.information as string),
+    iconFilename: ICONS.INFO,
+  },
+];
+
+/**
+ * Profile-agnostic category icon for a feature, for use in contexts (like
+ * search results) where the icon must stay consistent regardless of the
+ * user's currently-selected accessibility profile or toggled map filters.
+ * Falls back to a generic icon so callers always get a usable path.
+ */
+export function getCategoryIcon(feature: GeoJSON.Feature): string {
+  const properties = getRequiredFeatureProperties(feature);
+  const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(properties));
+  return MARKERS_IMG_DIR + (rule ? rule.iconFilename : ICONS.ADDITIONAL);
 }
 
 function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
@@ -205,4 +244,5 @@ export default {
   isStaircase,
   isSimpleStaircase,
   isComplexStaircase,
+  getCategoryIcon,
 };
