@@ -247,6 +247,29 @@ nav {
         }
       }
     }
+
+    #searchErrorMessage {
+      display: none;
+      // Same slot as #searchSuggestionsList (above the bar). Mutually
+      // exclusive with it by construction: submitSearch() clears suggestions
+      // before showing an error, and the input listener clears any error
+      // before showing suggestions again.
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
+      padding: 8px 12px;
+      border-radius: var(--button-border-radius);
+      background: var(--bs-danger-bg-subtle, #f8d7da);
+      color: var(--bs-danger-text-emphasis, #842029);
+      border: 1px solid var(--bs-danger-border-subtle, #f5c2c7);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+
+      &.visible {
+        display: block;
+      }
+    }
   }
 
 

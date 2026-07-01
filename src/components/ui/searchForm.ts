@@ -3,12 +3,22 @@ import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 import BuildingService, { type SearchSuggestion, type SuggestionSortContext } from "../../services/buildingService";
 import SearchSuggestions from "./searchSuggestions";
-import LoadingIndicator from "./loadingIndicator";
 import UserService from "../../services/userService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
+const searchErrorMessage = getRequiredElement<HTMLDivElement>("searchErrorMessage");
+
+function showSearchError(message: string): void {
+  searchErrorMessage.textContent = message;
+  searchErrorMessage.classList.add("visible");
+}
+
+function clearSearchError(): void {
+  searchErrorMessage.textContent = "";
+  searchErrorMessage.classList.remove("visible");
+}
 
 function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
   const selectedId = geoMap.selectedFeatures[0];
@@ -27,9 +37,10 @@ function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
 }
 
 function submitSearch(geoMap: GeoMap, selectSuggestion: (suggestion: SearchSuggestion) => void): void {
+  clearSearchError();
   const query = indoorSearchInput.value;
   if (!query) {
-    LoadingIndicator.error(lang.searchEmpty);
+    showSearchError(lang.searchEmpty);
     return;
   }
 
@@ -38,7 +49,7 @@ function submitSearch(geoMap: GeoMap, selectSuggestion: (suggestion: SearchSugge
 
   const best = results[0];
   if (!best) {
-    LoadingIndicator.error(lang.searchNotFound);
+    showSearchError(lang.searchNotFound);
     return;
   }
 
@@ -54,6 +65,7 @@ function render(geoMap: GeoMap): void {
   SearchSuggestions.render(selectSuggestion);
 
   indoorSearchInput.addEventListener("input", () => {
+    clearSearchError();
     const query = indoorSearchInput.value;
     if (query.length >= 1) {
       SearchSuggestions.update(BuildingService.searchSuggestions(query, buildSortContext(geoMap)));
