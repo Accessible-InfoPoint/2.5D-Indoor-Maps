@@ -124,32 +124,6 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
   });
 }
 
-function runIndoorSearch(
-  searchString: string
-): GeoJSON.Feature[] {
-  const geoJSON = getBuildingGeoJSON();
-
-  const results = geoJSON.features.filter((f) =>
-    filterByString(f, searchString)
-  );
-
-  return results;
-}
-
-function filterByString(
-  f: GeoJSON.Feature,
-  searchString: string
-) {
-  const properties = getRequiredFeatureProperties(f);
-  const s = searchString.toLowerCase();
-
-  return (
-    (properties.ref?.toLowerCase().startsWith(s)) || //room number
-    (properties.indoor?.toLowerCase().startsWith(s)) || //type
-    (properties.amenity?.toLowerCase().startsWith(s)) //toilet type
-  );
-}
-
 const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 
@@ -429,7 +403,6 @@ export default {
   getBuildingGeoJSON,
   getBuildingDescription,
   handleSearch,
-  runIndoorSearch,
   searchSuggestions,
   filterByBounds,
   filterInsideAndLevel

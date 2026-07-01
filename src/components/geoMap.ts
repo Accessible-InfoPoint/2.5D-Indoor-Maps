@@ -10,7 +10,6 @@ import {
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
 import BuildingService from "../services/buildingService";
-import LoadingIndicator from "./ui/loadingIndicator";
 import { IndoorLevel } from "./indoorLevel";
 import AccessibilityService from "../services/accessibilityService";
 import LevelService from "../services/levelService";
@@ -337,32 +336,6 @@ export class GeoMap {
     // TODO: might need to optimize this, needs a long time to update all layers at the moment
     // idea: only update the layers that are needed
     this.indoorLayers.forEach((layer) => layer.updateLayer());
-  }
-
-  handleIndoorSearch(searchString: string): void {
-    if (searchString) {
-      const results = BuildingService.runIndoorSearch(searchString);
-      if (results.length != 0) {
-        this.selectedFeatures = results.map((feature) => getRequiredFeatureId(feature));
-        this.indoorLayers.forEach((layer) => layer.updateLayer());
-
-        // from the levels of the feature, select the nearest to the current level
-        const result = getRequiredArrayValue(results, 0, "Indoor search results");
-        const selectedLevel = getRequiredArrayValue(
-          getFeatureLevels(result)
-            .sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)),
-          0,
-          "Indoor search result levels"
-        );
-        if (this.handleLevelChange(selectedLevel)) {
-          LevelControl.focusOnLevel(selectedLevel);
-        }
-
-        const accessibilityDescription =
-          FeatureService.getAccessibilityDescription(result);
-        DescriptionArea.update(accessibilityDescription);
-      } else LoadingIndicator.error(lang.searchNotFound);
-    } else LoadingIndicator.error(lang.searchEmpty);
   }
 
   selectIndoorFeature(feature: GeoJSON.Feature): void {

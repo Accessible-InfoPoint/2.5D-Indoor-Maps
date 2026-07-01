@@ -1,51 +1,75 @@
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
-import BuildingService from "../../services/buildingService";
+import BuildingService, { type SearchSuggestion, type SuggestionSortContext } from "../../services/buildingService";
 import SearchSuggestions from "./searchSuggestions";
+import LoadingIndicator from "./loadingIndicator";
+import UserService from "../../services/userService";
+import { UserGroupEnum } from "../../models/userGroupEnum";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
 
-const state: { indoorSearchQuery: string } = { indoorSearchQuery: "" };
+function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
+  const selectedId = geoMap.selectedFeatures[0];
+  const selectedFeature = selectedId
+    ? BuildingService.getBuildingGeoJSON().features.find((f) => f.id?.toString() === selectedId)
+    : undefined;
+
+  return {
+    currentLevel: geoMap.currentLevel,
+    selectedFeature,
+    infoPointFeature: geoMap.infoPoint.geometry.type !== "GeometryCollection"
+      ? geoMap.infoPoint
+      : undefined,
+    wheelchairMode: UserService.getCurrentProfile() === UserGroupEnum.wheelchairUsers,
+  };
+}
+
+function submitSearch(geoMap: GeoMap, selectSuggestion: (suggestion: SearchSuggestion) => void): void {
+  const query = indoorSearchInput.value;
+  if (!query) {
+    LoadingIndicator.error(lang.searchEmpty);
+    return;
+  }
+
+  const results = BuildingService.searchSuggestions(query, buildSortContext(geoMap));
+  SearchSuggestions.clear();
+
+  const best = results[0];
+  if (!best) {
+    LoadingIndicator.error(lang.searchNotFound);
+    return;
+  }
+
+  selectSuggestion(best);
+}
 
 function render(geoMap: GeoMap): void {
-  SearchSuggestions.render((suggestion) => {
+  const selectSuggestion = (suggestion: SearchSuggestion): void => {
     indoorSearchInput.value = suggestion.displayName;
     geoMap.selectIndoorFeature(suggestion.feature);
-  });
+  };
+
+  SearchSuggestions.render(selectSuggestion);
 
   indoorSearchInput.addEventListener("input", () => {
     const query = indoorSearchInput.value;
     if (query.length >= 1) {
-      const selectedId = geoMap.selectedFeatures[0];
-      const selectedFeature = selectedId
-        ? BuildingService.getBuildingGeoJSON().features.find((f) => f.id?.toString() === selectedId)
-        : undefined;
-      SearchSuggestions.update(BuildingService.searchSuggestions(query, {
-        currentLevel: geoMap.currentLevel,
-        selectedFeature,
-        infoPointFeature: geoMap.infoPoint.geometry.type !== "GeometryCollection"
-          ? geoMap.infoPoint
-          : undefined,
-      }));
+      SearchSuggestions.update(BuildingService.searchSuggestions(query, buildSortContext(geoMap)));
     } else {
       SearchSuggestions.clear();
     }
   });
 
   indoorSearchSubmit.addEventListener("click", () => {
-    SearchSuggestions.clear();
-    state.indoorSearchQuery = indoorSearchInput.value;
-    geoMap.handleIndoorSearch(indoorSearchInput.value);
+    submitSearch(geoMap, selectSuggestion);
   });
 
   indoorSearchInput.addEventListener("keyup", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      SearchSuggestions.clear();
-      state.indoorSearchQuery = indoorSearchInput.value;
-      geoMap.handleIndoorSearch(indoorSearchInput.value);
+      submitSearch(geoMap, selectSuggestion);
     }
   });
 
