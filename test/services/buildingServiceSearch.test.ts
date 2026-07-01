@@ -351,5 +351,62 @@ describe("BuildingService.searchSuggestions", () => {
       // name match, even though this feature also has an unrelated name property
       expect(results.map((r) => r.id)).toEqual(["way/53", "way/52"]);
     });
+
+    it("ranks wheelchair-accessible rooms first in wheelchair mode, even if farther away", () => {
+      const accessibleFar: GeoJSON.Feature = {
+        id: "way/40", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[5, 5], [5.01, 5], [5.01, 5.01], [5, 5.01], [5, 5]]] },
+        properties: { amenity: "toilets", wheelchair: "yes", level: [0] },
+      };
+      const nearNonAccessible: GeoJSON.Feature = {
+        id: "way/41", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { amenity: "toilets", level: [0] },
+      };
+      const selected: GeoJSON.Feature = {
+        id: "way/99", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [nearNonAccessible, accessibleFar],
+      });
+      const results = BuildingService.searchSuggestions("toilet", {
+        currentLevel: 0,
+        selectedFeature: selected,
+        wheelchairMode: true,
+      });
+      expect(results[0].id).toBe("way/40");
+      expect(results[1].id).toBe("way/41");
+    });
+
+    it("ranks the closer room first when wheelchair mode is off", () => {
+      const accessibleFar: GeoJSON.Feature = {
+        id: "way/40", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[5, 5], [5.01, 5], [5.01, 5.01], [5, 5.01], [5, 5]]] },
+        properties: { amenity: "toilets", wheelchair: "yes", level: [0] },
+      };
+      const nearNonAccessible: GeoJSON.Feature = {
+        id: "way/41", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { amenity: "toilets", level: [0] },
+      };
+      const selected: GeoJSON.Feature = {
+        id: "way/99", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [accessibleFar, nearNonAccessible],
+      });
+      const results = BuildingService.searchSuggestions("toilet", {
+        currentLevel: 0,
+        selectedFeature: selected,
+      });
+      expect(results[0].id).toBe("way/41");
+      expect(results[1].id).toBe("way/40");
+    });
   });
 });

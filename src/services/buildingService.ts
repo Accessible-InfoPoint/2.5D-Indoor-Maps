@@ -29,6 +29,7 @@ export interface SuggestionSortContext {
   currentLevel: number;
   selectedFeature?: GeoJSON.Feature;
   infoPointFeature?: GeoJSON.Feature;
+  wheelchairMode?: boolean;
 }
 
 /**
@@ -248,6 +249,11 @@ function minLevelDistance(
   return Math.min(...levels.map((l) => Math.abs(l - currentLevel)));
 }
 
+function isWheelchairAccessible(feature: GeoJSON.Feature): boolean {
+  const wheelchair = getRequiredFeatureProperties(feature).wheelchair;
+  return wheelchair !== undefined && ["yes", "designated"].includes(wheelchair);
+}
+
 function searchSuggestions(
   searchString: string,
   context: SuggestionSortContext
@@ -291,6 +297,11 @@ function searchSuggestions(
     getRequiredMapValue(scores, a.id, "Search suggestion score") -
     getRequiredMapValue(scores, b.id, "Search suggestion score");
 
+  const byWheelchairAccessibility = (a: SearchSuggestion, b: SearchSuggestion): number => {
+    if (!context.wheelchairMode) return 0;
+    return Number(isWheelchairAccessible(b.feature)) - Number(isWheelchairAccessible(a.feature));
+  };
+
   const byLevelDistance = (a: SearchSuggestion, b: SearchSuggestion): number =>
     minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
 
@@ -306,6 +317,7 @@ function searchSuggestions(
   // Priority order, most important first. Reorder this list to change ranking behavior.
   return suggestions.sort(chainComparators(
     byMatchScore,
+    byWheelchairAccessibility,
     byLevelDistance,
     byProximityTo(selectedCoords),
     byProximityTo(infoCoords)
