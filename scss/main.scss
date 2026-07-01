@@ -179,8 +179,18 @@ nav {
     #searchSuggestionsList {
       display: none;
       list-style: none;
-      margin: 0 0 6px 0;
+      margin: 0;
       padding: 0;
+      // Absolutely positioned (relative to #indoorSearchWrapper, which is
+      // position:absolute) so it renders above the search bar regardless of
+      // DOM order. DOM order is input-then-list so Tab flows input -> search
+      // button -> suggestion cards; using flex `order` instead would risk
+      // decoupling visual position from focus order across browsers.
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
 
       &.visible {
         display: flex;
@@ -191,6 +201,14 @@ nav {
       }
 
       .search-suggestion-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        font: inherit;
+        text-align: left;
+        color: inherit;
         background: #fffffff0;
         border: 1px solid var(--button-border-color);
         border-radius: var(--button-border-radius);
@@ -198,8 +216,15 @@ nav {
         cursor: pointer;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 
-        &:hover {
+        &:hover,
+        &:focus-visible {
           background: var(--button-hover-bg);
+        }
+
+        .suggestion-text {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
         }
 
         .suggestion-name {

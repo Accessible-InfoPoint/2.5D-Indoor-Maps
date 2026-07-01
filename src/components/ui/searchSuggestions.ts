@@ -8,16 +8,21 @@ let currentSuggestions: SearchSuggestion[] = [];
 
 function render(onSelect: (suggestion: SearchSuggestion) => void): void {
   suggestionsList.addEventListener("click", (e) => {
-    const li = (e.target as HTMLElement).closest<HTMLElement>("li[data-suggestion-index]");
-    if (!li) return;
+    const button = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-suggestion-index]");
+    if (!button) return;
 
-    const index = parseInt(li.dataset.suggestionIndex ?? "-1", 10);
+    const index = parseInt(button.dataset.suggestionIndex ?? "-1", 10);
     const suggestion = currentSuggestions[index];
     if (suggestion) {
       onSelect(suggestion);
       clear();
     }
   });
+}
+
+function buildSubtitle(suggestion: SearchSuggestion): string {
+  const levelText = suggestion.levels.map((l) => lang.searchSuggestionLevel + l).join(", ");
+  return suggestion.type ? `${levelText} · ${suggestion.type}` : levelText;
 }
 
 function update(suggestions: SearchSuggestion[]): void {
@@ -30,9 +35,16 @@ function update(suggestions: SearchSuggestion[]): void {
   }
 
   suggestions.forEach((suggestion, index) => {
-    const li = document.createElement("li");
-    li.className = "search-suggestion-card";
-    li.setAttribute("data-suggestion-index", index.toString());
+    const subtitle = buildSubtitle(suggestion);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "search-suggestion-card";
+    button.setAttribute("data-suggestion-index", index.toString());
+    button.setAttribute("aria-label", `${suggestion.displayName}, ${subtitle}`);
+
+    const textWrapper = document.createElement("span");
+    textWrapper.className = "suggestion-text";
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "suggestion-name";
@@ -40,11 +52,14 @@ function update(suggestions: SearchSuggestion[]): void {
 
     const levelsSpan = document.createElement("span");
     levelsSpan.className = "suggestion-levels";
-    const levelText = suggestion.levels.map((l) => lang.searchSuggestionLevel + l).join(", ");
-    levelsSpan.textContent = suggestion.type ? `${levelText} · ${suggestion.type}` : levelText;
+    levelsSpan.textContent = subtitle;
 
-    li.appendChild(nameSpan);
-    li.appendChild(levelsSpan);
+    textWrapper.appendChild(nameSpan);
+    textWrapper.appendChild(levelsSpan);
+    button.appendChild(textWrapper);
+
+    const li = document.createElement("li");
+    li.appendChild(button);
     suggestionsList.appendChild(li);
   });
 
