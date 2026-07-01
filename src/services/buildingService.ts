@@ -14,6 +14,8 @@ import { booleanContainsPoint } from "bbox-fns";
 import BackendService from "./backendService";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getFeatureLevels } from "../utils/featureLevels";
+import { chainComparators } from "../utils/compareChain";
+import { getRequiredMapValue } from "../utils/requiredHelpers";
 
 export interface SearchSuggestion {
   id: string;
@@ -252,17 +254,24 @@ function searchSuggestions(
 ): SearchSuggestion[] {
   if (!searchString) return [];
   const geoJSON = getBuildingGeoJSON();
-  const suggestions = geoJSON.features
+  const suggestions: SearchSuggestion[] = [];
+  const scores = new Map<string, number>();
+
+  geoJSON.features
     .filter((f) => filterForSuggestions(f, searchString))
-    .map((f) => {
+    .forEach((f) => {
       const p = getRequiredFeatureProperties(f);
-      return {
-        id: getRequiredFeatureId(f),
-        displayName: (getValidName(p) ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
+      const validName = getValidName(p);
+      const id = getRequiredFeatureId(f);
+
+      suggestions.push({
+        id,
+        displayName: (validName ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
         levels: getFeatureLevels(f),
         type: (p.amenity ?? p.indoor) as string | undefined,
         feature: f,
-      };
+      });
+      scores.set(id, matchScore(p, validName, searchString));
     });
 
   const centroids = new Map<string, [number, number] | undefined>(
@@ -278,37 +287,29 @@ function searchSuggestions(
   const squaredDist = (a: [number, number], b: [number, number]): number =>
     (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 
-  return suggestions.sort((a, b) => {
-    const propsA = getRequiredFeatureProperties(a.feature);
-    const propsB = getRequiredFeatureProperties(b.feature);
-    const matchDiff =
-      matchScore(propsA, getValidName(propsA), searchString) -
-      matchScore(propsB, getValidName(propsB), searchString);
-    if (matchDiff !== 0) return matchDiff;
+  const byMatchScore = (a: SearchSuggestion, b: SearchSuggestion): number =>
+    getRequiredMapValue(scores, a.id, "Search suggestion score") -
+    getRequiredMapValue(scores, b.id, "Search suggestion score");
 
-    const levelDiff = minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
-    if (levelDiff !== 0) return levelDiff;
+  const byLevelDistance = (a: SearchSuggestion, b: SearchSuggestion): number =>
+    minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
 
-    if (selectedCoords) {
+  const byProximityTo = (coords: [number, number] | undefined) =>
+    (a: SearchSuggestion, b: SearchSuggestion): number => {
+      if (!coords) return 0;
       const ca = centroids.get(a.id);
       const cb = centroids.get(b.id);
-      if (ca && cb) {
-        const diff = squaredDist(ca, selectedCoords) - squaredDist(cb, selectedCoords);
-        if (diff !== 0) return diff;
-      }
-    }
+      if (!ca || !cb) return 0;
+      return squaredDist(ca, coords) - squaredDist(cb, coords);
+    };
 
-    if (infoCoords) {
-      const ca = centroids.get(a.id);
-      const cb = centroids.get(b.id);
-      if (ca && cb) {
-        const diff = squaredDist(ca, infoCoords) - squaredDist(cb, infoCoords);
-        if (diff !== 0) return diff;
-      }
-    }
-
-    return 0;
-  });
+  // Priority order, most important first. Reorder this list to change ranking behavior.
+  return suggestions.sort(chainComparators(
+    byMatchScore,
+    byLevelDistance,
+    byProximityTo(selectedCoords),
+    byProximityTo(infoCoords)
+  ));
 }
 
 // /*Filter*/

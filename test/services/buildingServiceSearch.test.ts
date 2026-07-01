@@ -284,6 +284,34 @@ describe("BuildingService.searchSuggestions", () => {
       expect(results[1].id).toBe("way/31");
     });
 
+    it("ranks closer to info point before farther when match, level, and selected feature are equal", () => {
+      const near: GeoJSON.Feature = {
+        id: "way/60", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { name: "room E", level: [0] },
+      };
+      const far: GeoJSON.Feature = {
+        id: "way/61", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        properties: { name: "room F", level: [0] },
+      };
+      const infoPoint: GeoJSON.Feature = {
+        id: "way/98", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [far, near],
+      });
+      const results = BuildingService.searchSuggestions("room", {
+        currentLevel: 0,
+        infoPointFeature: infoPoint,
+      });
+      expect(results[0].id).toBe("way/60");
+      expect(results[1].id).toBe("way/61");
+    });
+
     it("ranks a higher-priority field before a lower-priority field at equal match quality", () => {
       const refPrefixMatch: GeoJSON.Feature = {
         id: "way/50", type: "Feature",
