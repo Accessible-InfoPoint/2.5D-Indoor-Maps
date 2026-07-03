@@ -6,7 +6,7 @@ jest.mock("../../src/services/languageService", () => ({
 }));
 
 jest.mock("../../src/services/featureService", () => ({
-  getCategoryIcon: jest.fn(() => "/images/additional.svg"),
+  getCategoryIcon: jest.fn(),
 }));
 
 import type { SearchSuggestion } from "../../src/services/buildingService";
@@ -29,10 +29,13 @@ function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion
 
 describe("SearchSuggestions", () => {
   let SearchSuggestions: typeof import("../../src/components/ui/searchSuggestions").default;
+  let getCategoryIcon: jest.Mock;
 
   beforeEach(() => {
     jest.resetModules();
+    jest.clearAllMocks();
     document.body.innerHTML = `<ul id="searchSuggestionsList" aria-label="Search suggestions"></ul>`;
+    getCategoryIcon = require("../../src/services/featureService").getCategoryIcon;
     SearchSuggestions = require("../../src/components/ui/searchSuggestions").default;
   });
 
@@ -44,11 +47,19 @@ describe("SearchSuggestions", () => {
     expect(button?.getAttribute("aria-label")).toContain("Room A");
   });
 
-  it("renders a decorative category icon for each suggestion", () => {
+  it("does not render a category icon when none is configured", () => {
+    getCategoryIcon.mockReturnValue(undefined);
+    SearchSuggestions.update([suggestion()]);
+    const icon = document.querySelector<HTMLImageElement>("#searchSuggestionsList img.suggestion-icon");
+    expect(icon).toBeNull();
+  });
+
+  it("renders a decorative category icon when one is configured", () => {
+    getCategoryIcon.mockReturnValue("/images/toilets.svg");
     SearchSuggestions.update([suggestion()]);
     const icon = document.querySelector<HTMLImageElement>("#searchSuggestionsList img.suggestion-icon");
     expect(icon).not.toBeNull();
-    expect(icon?.getAttribute("src")).toBe("/images/additional.svg");
+    expect(icon?.getAttribute("src")).toBe("/images/toilets.svg");
     expect(icon?.getAttribute("alt")).toBe("");
     expect(icon?.getAttribute("aria-hidden")).toBe("true");
   });

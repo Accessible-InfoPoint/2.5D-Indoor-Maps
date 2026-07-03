@@ -59,12 +59,15 @@ function update(suggestions: SearchSuggestion[]): void {
     textWrapper.appendChild(levelsSpan);
     button.appendChild(textWrapper);
 
-    const icon = document.createElement("img");
-    icon.className = "suggestion-icon";
-    icon.src = getCategoryIcon(suggestion.feature);
-    icon.alt = "";
-    icon.setAttribute("aria-hidden", "true");
-    button.appendChild(icon);
+    const categoryIcon = getCategoryIcon(suggestion.feature);
+    if (categoryIcon) {
+      const icon = document.createElement("img");
+      icon.className = "suggestion-icon";
+      icon.src = categoryIcon;
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+    }
 
     const li = document.createElement("li");
     li.appendChild(button);

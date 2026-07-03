@@ -49,8 +49,8 @@ describe("getCategoryIcon", () => {
       .toBe(MARKERS_IMG_DIR + ICONS.ENTRANCE);
   });
 
-  it("falls back to the generic icon for unrecognized rooms", () => {
+  it("returns no icon for unrecognized rooms", () => {
     expect(getCategoryIcon(feature({ indoor: "room" })))
-      .toBe(MARKERS_IMG_DIR + ICONS.ADDITIONAL);
+      .toBeUndefined();
   });
 });

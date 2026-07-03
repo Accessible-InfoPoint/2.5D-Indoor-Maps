@@ -124,12 +124,12 @@ const CATEGORY_ICON_RULES: Array<{ matches: (p: Record<string, unknown>) => bool
  * Profile-agnostic category icon for a feature, for use in contexts (like
  * search results) where the icon must stay consistent regardless of the
  * user's currently-selected accessibility profile or toggled map filters.
- * Falls back to a generic icon so callers always get a usable path.
+ * Returns undefined when no specific category icon applies.
  */
-export function getCategoryIcon(feature: GeoJSON.Feature): string {
+export function getCategoryIcon(feature: GeoJSON.Feature): string | undefined {
   const properties = getRequiredFeatureProperties(feature);
   const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(properties));
-  return MARKERS_IMG_DIR + (rule ? rule.iconFilename : ICONS.ADDITIONAL);
+  return rule ? MARKERS_IMG_DIR + rule.iconFilename : undefined;
 }
 
 function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
