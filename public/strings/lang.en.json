@@ -6,6 +6,8 @@
   "buildingSearchPlaceholder": "Search for buildings",
   "indoorSearchPlaceholder": "Search indoor",
   "clearBuildingSearch": "Clear search field",
+  "clearIndoorSearch": "Clear indoor search field",
+  "clearSearchError": "Dismiss search error",
   "centeringButton": "Set view to the focused building",
   "currentBuilding": "Current Building",
   "currentRoom": "Current Room",

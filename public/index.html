@@ -41,6 +41,10 @@
                 <input class="form-control" type="text" placeholder="Search indoor"
                        aria-label="Search indoor"
                        id="indoorSearchInput" name="indoorSearchInput">
+                <button class="btn btn-outline-secondary search-clear-button" type="button"
+                        id="indoorSearchClear" name="indoorSearchClear">
+                    <span class="material-icons" aria-hidden="true">close</span>
+                </button>
                 <button class="btn btn-secondary" id="indoorSearchSubmit"
                         name="indoorSearchSubmit">
                     Search
@@ -48,7 +52,12 @@
             </div>
         </div>
         <ul id="searchSuggestionsList" aria-label="Search suggestions"></ul>
-        <div id="searchErrorMessage" class="search-error-message" role="alert" aria-live="assertive"></div>
+        <div id="searchErrorMessage" class="search-error-message" role="alert" aria-live="assertive">
+            <span id="searchErrorText"></span>
+            <button type="button" id="searchErrorClear" class="search-error-clear">
+                <span class="material-icons" aria-hidden="true">close</span>
+            </button>
+        </div>
     </div>
 
     <!--           LEVEL CONTROL           -->

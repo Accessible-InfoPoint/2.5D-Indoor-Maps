@@ -7,6 +7,8 @@ jest.mock("../../src/services/languageService", () => ({
     indoorSearchPlaceholder: "Search indoor",
     searchEmpty: "Please enter a search term!",
     searchNotFound: "Not found!",
+    clearIndoorSearch: "Clear indoor search field",
+    clearSearchError: "Dismiss search error",
   },
 }));
 jest.mock("../../src/services/buildingService", () => ({
@@ -31,13 +33,18 @@ jest.mock("../../src/services/userService", () => ({
 
 import type { GeoMap } from "../../src/components/geoMap";
 import type BuildingServiceType from "../../src/services/buildingService";
+import type SearchSuggestionsType from "../../src/components/ui/searchSuggestions";
 
 describe("searchForm", () => {
   let SearchForm: typeof import("../../src/components/ui/searchForm").default;
   let BuildingService: typeof BuildingServiceType;
+  let SearchSuggestions: typeof SearchSuggestionsType;
   let input: HTMLInputElement;
   let submitButton: HTMLButtonElement;
+  let clearButton: HTMLButtonElement;
   let errorMessage: HTMLDivElement;
+  let errorText: HTMLSpanElement;
+  let errorClearButton: HTMLButtonElement;
   let geoMap: GeoMap;
 
   beforeEach(() => {
@@ -45,14 +52,22 @@ describe("searchForm", () => {
     jest.clearAllMocks();
     document.body.innerHTML = `
       <input id="indoorSearchInput" />
+      <button id="indoorSearchClear"></button>
       <button id="indoorSearchSubmit"></button>
-      <div id="searchErrorMessage"></div>
+      <div id="searchErrorMessage">
+        <span id="searchErrorText"></span>
+        <button id="searchErrorClear"></button>
+      </div>
     `;
     BuildingService = require("../../src/services/buildingService").default;
+    SearchSuggestions = require("../../src/components/ui/searchSuggestions").default;
     SearchForm = require("../../src/components/ui/searchForm").default;
     input = document.getElementById("indoorSearchInput") as HTMLInputElement;
     submitButton = document.getElementById("indoorSearchSubmit") as HTMLButtonElement;
+    clearButton = document.getElementById("indoorSearchClear") as HTMLButtonElement;
     errorMessage = document.getElementById("searchErrorMessage") as HTMLDivElement;
+    errorText = document.getElementById("searchErrorText") as HTMLSpanElement;
+    errorClearButton = document.getElementById("searchErrorClear") as HTMLButtonElement;
     geoMap = {
       currentLevel: 0,
       selectedFeatures: [],
@@ -69,7 +84,7 @@ describe("searchForm", () => {
     SearchForm.render(geoMap);
     input.value = "";
     pressEnter();
-    expect(errorMessage.textContent).toBe("Please enter a search term!");
+    expect(errorText.textContent).toBe("Please enter a search term!");
     expect(errorMessage.classList.contains("visible")).toBe(true);
     expect(BuildingService.searchSuggestions).not.toHaveBeenCalled();
   });
@@ -94,7 +109,7 @@ describe("searchForm", () => {
     input.value = "xyzzy";
     pressEnter();
 
-    expect(errorMessage.textContent).toBe("Not found!");
+    expect(errorText.textContent).toBe("Not found!");
     expect(errorMessage.classList.contains("visible")).toBe(true);
     expect(geoMap.selectIndoorFeature).not.toHaveBeenCalled();
   });
@@ -110,7 +125,7 @@ describe("searchForm", () => {
     input.dispatchEvent(new Event("input"));
 
     expect(errorMessage.classList.contains("visible")).toBe(false);
-    expect(errorMessage.textContent).toBe("");
+    expect(errorText.textContent).toBe("");
   });
 
   it("selects the first result when the Search button is clicked", () => {
@@ -123,5 +138,33 @@ describe("searchForm", () => {
     submitButton.click();
 
     expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(feature);
+  });
+
+  it("clears the input, suggestions, and visible error when the clear search button is clicked", () => {
+    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    SearchForm.render(geoMap);
+    input.value = "xyzzy";
+    pressEnter();
+    expect(errorMessage.classList.contains("visible")).toBe(true);
+
+    clearButton.click();
+
+    expect(input.value).toBe("");
+    expect(errorText.textContent).toBe("");
+    expect(errorMessage.classList.contains("visible")).toBe(false);
+    expect(SearchSuggestions.clear).toHaveBeenCalled();
+  });
+
+  it("clears a visible search error when the error dismiss button is clicked", () => {
+    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    SearchForm.render(geoMap);
+    input.value = "xyzzy";
+    pressEnter();
+
+    errorClearButton.click();
+
+    expect(input.value).toBe("xyzzy");
+    expect(errorText.textContent).toBe("");
+    expect(errorMessage.classList.contains("visible")).toBe(false);
   });
 });

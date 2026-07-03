@@ -8,16 +8,25 @@ import { UserGroupEnum } from "../../models/userGroupEnum";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
+const indoorSearchClear = getRequiredElement<HTMLButtonElement>("indoorSearchClear");
 const searchErrorMessage = getRequiredElement<HTMLDivElement>("searchErrorMessage");
+const searchErrorText = getRequiredElement<HTMLSpanElement>("searchErrorText");
+const searchErrorClear = getRequiredElement<HTMLButtonElement>("searchErrorClear");
 
 function showSearchError(message: string): void {
-  searchErrorMessage.textContent = message;
+  searchErrorText.textContent = message;
   searchErrorMessage.classList.add("visible");
 }
 
 function clearSearchError(): void {
-  searchErrorMessage.textContent = "";
+  searchErrorText.textContent = "";
   searchErrorMessage.classList.remove("visible");
+}
+
+function clearSearchInput(): void {
+  indoorSearchInput.value = "";
+  SearchSuggestions.clear();
+  clearSearchError();
 }
 
 function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
@@ -38,7 +47,7 @@ function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
 
 function submitSearch(geoMap: GeoMap, selectSuggestion: (suggestion: SearchSuggestion) => void): void {
   clearSearchError();
-  const query = indoorSearchInput.value;
+  const query = indoorSearchInput.value.trim();
   if (!query) {
     showSearchError(lang.searchEmpty);
     return;
@@ -66,7 +75,7 @@ function render(geoMap: GeoMap): void {
 
   indoorSearchInput.addEventListener("input", () => {
     clearSearchError();
-    const query = indoorSearchInput.value;
+    const query = indoorSearchInput.value.trim();
     if (query.length >= 1) {
       SearchSuggestions.update(BuildingService.searchSuggestions(query, buildSortContext(geoMap)));
     } else {
@@ -76,6 +85,14 @@ function render(geoMap: GeoMap): void {
 
   indoorSearchSubmit.addEventListener("click", () => {
     submitSearch(geoMap, selectSuggestion);
+  });
+
+  indoorSearchClear.addEventListener("click", () => {
+    clearSearchInput();
+  });
+
+  searchErrorClear.addEventListener("click", () => {
+    clearSearchError();
   });
 
   indoorSearchInput.addEventListener("keyup", (e) => {
@@ -92,6 +109,10 @@ function updateLabels(): void {
   indoorSearchSubmit.innerText = lang.indoorSearchSubmit;
   indoorSearchInput.setAttribute("placeholder", lang.indoorSearchPlaceholder);
   indoorSearchInput.setAttribute("aria-label", lang.indoorSearchPlaceholder);
+  indoorSearchClear.setAttribute("aria-label", lang.clearIndoorSearch);
+  indoorSearchClear.setAttribute("title", lang.clearIndoorSearch);
+  searchErrorClear.setAttribute("aria-label", lang.clearSearchError);
+  searchErrorClear.setAttribute("title", lang.clearSearchError);
 }
 
 export default {
