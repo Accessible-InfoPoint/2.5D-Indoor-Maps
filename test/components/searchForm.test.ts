@@ -77,7 +77,7 @@ describe("searchForm", () => {
   });
 
   function pressEnter(): void {
-    input.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter" }));
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
   }
 
   it("shows an error and does not search when the input is empty", () => {
@@ -100,6 +100,26 @@ describe("searchForm", () => {
 
     expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(feature);
     expect(input.value).toBe("Room A");
+  });
+
+  it("reruns suggestions on submit and selects the current first result", () => {
+    const staleFeature: GeoJSON.Feature = { id: "way/1", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
+    const currentFeature: GeoJSON.Feature = { id: "way/2", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
+    const staleSuggestion = { id: "way/1", displayName: "Room A", levels: [0], type: "room", feature: staleFeature };
+    const currentSuggestion = { id: "way/2", displayName: "Room B", levels: [0], type: "room", feature: currentFeature };
+    (BuildingService.searchSuggestions as jest.Mock)
+      .mockReturnValueOnce([staleSuggestion])
+      .mockReturnValueOnce([currentSuggestion]);
+
+    SearchForm.render(geoMap);
+    input.value = "room";
+    input.dispatchEvent(new Event("input"));
+    pressEnter();
+
+    expect(SearchSuggestions.update).toHaveBeenCalledWith([staleSuggestion]);
+    expect(BuildingService.searchSuggestions).toHaveBeenCalledTimes(2);
+    expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(currentFeature);
+    expect(input.value).toBe("Room B");
   });
 
   it("shows a not-found error when Enter is pressed with no matches", () => {

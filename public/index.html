@@ -40,7 +40,12 @@
             <div class="input-group" style="height:var(--button-size)">
                 <input class="form-control" type="text" placeholder="Search indoor"
                        aria-label="Search indoor"
-                       id="indoorSearchInput" name="indoorSearchInput">
+                       id="indoorSearchInput" name="indoorSearchInput"
+                       role="combobox"
+                       aria-autocomplete="list"
+                       aria-expanded="false"
+                       aria-controls="searchSuggestionsList"
+                       aria-activedescendant="">
                 <button class="btn btn-outline-secondary search-clear-button" type="button"
                         id="indoorSearchClear" name="indoorSearchClear">
                     <span class="material-icons" aria-hidden="true">close</span>
@@ -51,7 +56,8 @@
                 </button>
             </div>
         </div>
-        <ul id="searchSuggestionsList" aria-label="Search suggestions"></ul>
+        <ul id="searchSuggestionsList" role="listbox" aria-label="Search suggestions"></ul>
+        <div id="searchAnnouncement" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
         <div id="searchErrorMessage" class="search-error-message" role="alert" aria-live="assertive">
             <span id="searchErrorText"></span>
             <button type="button" id="searchErrorClear" class="search-error-clear">

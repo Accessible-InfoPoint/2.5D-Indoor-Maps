@@ -58,6 +58,8 @@
   "searchEmpty": "Bitte einen Suchbegriff eingeben!",
   "searchNotFound": "Nicht gefunden!",
   "searchSuggestionLevel": "Etage ",
+  "searchSuggestionsAvailable": "{count} Suchvorschläge verfügbar.",
+  "searchSuggestionsNone": "Keine Suchvorschläge verfügbar.",
 
   "buildingNotFound": "Gebäude konnte nicht gefunden werden",
   "buildingNotSITconform": "Gebäude wurde gefunden, gehört jedoch nicht zum Datensatz von SIT-konformen Gebäuden",

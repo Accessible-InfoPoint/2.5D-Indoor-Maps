@@ -71,7 +71,7 @@ function render(geoMap: GeoMap): void {
     geoMap.selectIndoorFeature(suggestion.feature);
   };
 
-  SearchSuggestions.render(selectSuggestion);
+  SearchSuggestions.render(indoorSearchInput, selectSuggestion);
 
   indoorSearchInput.addEventListener("input", () => {
     clearSearchError();
@@ -95,7 +95,7 @@ function render(geoMap: GeoMap): void {
     clearSearchError();
   });
 
-  indoorSearchInput.addEventListener("keyup", (e) => {
+  indoorSearchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       submitSearch(geoMap, selectSuggestion);

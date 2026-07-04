@@ -58,6 +58,8 @@
   "searchEmpty": "Please enter a search term!",
   "searchNotFound": "Not found!",
   "searchSuggestionLevel": "Level ",
+  "searchSuggestionsAvailable": "{count} search suggestions available.",
+  "searchSuggestionsNone": "No search suggestions available.",
 
   "buildingNotFound": "Building could not be found",
   "buildingNotSITconform": "Building was found, but is not in the dataset of SIT-conform buildings",

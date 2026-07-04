@@ -237,7 +237,9 @@ nav {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 
         &:hover,
-        &:focus-visible {
+        &:focus-visible,
+        &.active,
+        &[aria-selected="true"] {
           background: var(--button-hover-bg);
         }
 
