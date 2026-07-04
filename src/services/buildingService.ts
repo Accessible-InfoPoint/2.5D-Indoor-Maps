@@ -126,6 +126,7 @@ function nominatimSearch(searchString: string): Promise<BuildingInterface> {
 
 const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
+const SEARCH_SUGGESTIONS_DEBUG_KEY = "debugSearchSuggestions";
 
 function getValidName(
   p: Record<string, unknown>
@@ -228,6 +229,14 @@ function isWheelchairAccessible(feature: GeoJSON.Feature): boolean {
   return wheelchair !== undefined && ["yes", "designated"].includes(wheelchair);
 }
 
+function isSearchSuggestionsDebugEnabled(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(SEARCH_SUGGESTIONS_DEBUG_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 function searchSuggestions(
   searchString: string,
   context: SuggestionSortContext
@@ -267,6 +276,15 @@ function searchSuggestions(
   const squaredDist = (a: [number, number], b: [number, number]): number =>
     (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 
+  const distanceTo = (
+    suggestion: SearchSuggestion,
+    coords: [number, number] | undefined
+  ): number | undefined => {
+    if (!coords) return undefined;
+    const centroid = centroids.get(suggestion.id);
+    return centroid ? squaredDist(centroid, coords) : undefined;
+  };
+
   const byMatchScore = (a: SearchSuggestion, b: SearchSuggestion): number =>
     getRequiredMapValue(scores, a.id, "Search suggestion score") -
     getRequiredMapValue(scores, b.id, "Search suggestion score");
@@ -282,20 +300,90 @@ function searchSuggestions(
   const byProximityTo = (coords: [number, number] | undefined) =>
     (a: SearchSuggestion, b: SearchSuggestion): number => {
       if (!coords) return 0;
-      const ca = centroids.get(a.id);
-      const cb = centroids.get(b.id);
-      if (!ca || !cb) return 0;
-      return squaredDist(ca, coords) - squaredDist(cb, coords);
+      const da = distanceTo(a, coords);
+      const db = distanceTo(b, coords);
+      if (da === undefined || db === undefined) return 0;
+      return da - db;
     };
 
   // Priority order, most important first. Reorder this list to change ranking behavior.
-  return suggestions.sort(chainComparators(
+  const sortedSuggestions = suggestions.sort(chainComparators(
     byMatchScore,
     byWheelchairAccessibility,
     byLevelDistance,
     byProximityTo(selectedCoords),
     byProximityTo(infoCoords)
   ));
+
+  // debug view for suggestion rankings
+  // activate using: localStorage.setItem("debugSearchSuggestions", "true")
+  // deactivate using: localStorage.removeItem("debugSearchSuggestions")
+  logSearchSuggestionRanking(searchString, sortedSuggestions, {
+    context,
+    scores,
+    centroids,
+    selectedCoords,
+    infoCoords,
+    distanceTo,
+  });
+
+  return sortedSuggestions;
+}
+
+function logSearchSuggestionRanking(
+  searchString: string,
+  suggestions: SearchSuggestion[],
+  debugContext: {
+    context: SuggestionSortContext;
+    scores: Map<string, number>;
+    centroids: Map<string, [number, number] | undefined>;
+    selectedCoords: [number, number] | undefined;
+    infoCoords: [number, number] | undefined;
+    distanceTo: (
+      suggestion: SearchSuggestion,
+      coords: [number, number] | undefined
+    ) => number | undefined;
+  }
+): void {
+  if (!isSearchSuggestionsDebugEnabled()) return;
+
+  const rows = suggestions.map((suggestion, index) => {
+    const centroid = debugContext.centroids.get(suggestion.id);
+    const wheelchairAccessible = isWheelchairAccessible(suggestion.feature);
+    return {
+      rank: index + 1,
+      id: suggestion.id,
+      displayName: suggestion.displayName,
+      type: suggestion.type ?? "",
+      levels: suggestion.levels.join(", "),
+      matchScore: getRequiredMapValue(debugContext.scores, suggestion.id, "Search suggestion score"),
+      wheelchairScore: debugContext.context.wheelchairMode
+        ? wheelchairAccessible ? 0 : 1
+        : 0,
+      wheelchairAccessible,
+      levelDistance: minLevelDistance(suggestion.levels, debugContext.context.currentLevel),
+      selectedDistanceSq: debugContext.distanceTo(suggestion, debugContext.selectedCoords) ?? "",
+      infoDistanceSq: debugContext.distanceTo(suggestion, debugContext.infoCoords) ?? "",
+      centroid: centroid ? centroid.join(", ") : "",
+    };
+  });
+
+  console.debug("[SearchSuggestions] ranking context", {
+    query: searchString,
+    currentLevel: debugContext.context.currentLevel,
+    wheelchairMode: debugContext.context.wheelchairMode === true,
+    selectedCoords: debugContext.selectedCoords,
+    infoCoords: debugContext.infoCoords,
+    sortOrder: [
+      "matchScore",
+      "wheelchairScore",
+      "levelDistance",
+      "selectedDistanceSq",
+      "infoDistanceSq",
+    ],
+    note: "Lower scores sort first. Proximity values are squared distances.",
+  });
+  console.table(rows);
 }
 
 // /*Filter*/

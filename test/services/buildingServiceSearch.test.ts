@@ -409,4 +409,83 @@ describe("BuildingService.searchSuggestions", () => {
       expect(results[1].id).toBe("way/40");
     });
   });
+
+  it("logs sorted ranking details when search suggestion debug mode is enabled", () => {
+    const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    const debugSpy = jest.spyOn(console, "debug").mockImplementation();
+    const tableSpy = jest.spyOn(console, "table").mockImplementation();
+
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: jest.fn((key: string) => key === "debugSearchSuggestions" ? "true" : null),
+      },
+    });
+
+    const near: GeoJSON.Feature = {
+      id: "way/70", type: "Feature",
+      geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+      properties: { name: "room debug near", level: [0] },
+    };
+    const far: GeoJSON.Feature = {
+      id: "way/71", type: "Feature",
+      geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+      properties: { name: "room debug far", level: [1], wheelchair: "yes" },
+    };
+    const selected: GeoJSON.Feature = {
+      id: "way/72", type: "Feature",
+      geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+      properties: { level: [0] },
+    };
+    (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+      type: "FeatureCollection",
+      features: [far, near],
+    });
+
+    try {
+      BuildingService.searchSuggestions("room", {
+        currentLevel: 0,
+        selectedFeature: selected,
+        infoPointFeature: selected,
+        wheelchairMode: true,
+      });
+
+      expect(debugSpy).toHaveBeenCalledWith("[SearchSuggestions] ranking context", expect.objectContaining({
+        query: "room",
+        sortOrder: [
+          "matchScore",
+          "wheelchairScore",
+          "levelDistance",
+          "selectedDistanceSq",
+          "infoDistanceSq",
+        ],
+      }));
+      expect(tableSpy).toHaveBeenCalledWith([
+        expect.objectContaining({
+          rank: 1,
+          id: "way/71",
+          matchScore: 1,
+          wheelchairScore: 0,
+          wheelchairAccessible: true,
+          levelDistance: 1,
+        }),
+        expect.objectContaining({
+          rank: 2,
+          id: "way/70",
+          matchScore: 1,
+          wheelchairScore: 1,
+          wheelchairAccessible: false,
+          levelDistance: 0,
+        }),
+      ]);
+    } finally {
+      debugSpy.mockRestore();
+      tableSpy.mockRestore();
+      if (originalLocalStorage) {
+        Object.defineProperty(globalThis, "localStorage", originalLocalStorage);
+      } else {
+        delete (globalThis as { localStorage?: Storage }).localStorage;
+      }
+    }
+  });
 });
