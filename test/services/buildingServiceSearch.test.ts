@@ -312,6 +312,34 @@ describe("BuildingService.searchSuggestions", () => {
       expect(results[1].id).toBe("way/61");
     });
 
+    it("uses point info features when ranking by proximity", () => {
+      const near: GeoJSON.Feature = {
+        id: "way/62", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        properties: { name: "room G", level: [0] },
+      };
+      const far: GeoJSON.Feature = {
+        id: "way/63", type: "Feature",
+        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        properties: { name: "room H", level: [0] },
+      };
+      const infoPoint: GeoJSON.Feature = {
+        id: "node/98", type: "Feature",
+        geometry: { type: "Point", coordinates: [0, 0] },
+        properties: { level: [0] },
+      };
+      (BackendService.getGeoJson as jest.Mock).mockReturnValue({
+        type: "FeatureCollection",
+        features: [far, near],
+      });
+      const results = BuildingService.searchSuggestions("room", {
+        currentLevel: 0,
+        infoPointFeature: infoPoint,
+      });
+      expect(results[0].id).toBe("way/62");
+      expect(results[1].id).toBe("way/63");
+    });
+
     it("ranks a higher-priority field before a lower-priority field at equal match quality", () => {
       const refPrefixMatch: GeoJSON.Feature = {
         id: "way/50", type: "Feature",

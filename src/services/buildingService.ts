@@ -169,6 +169,9 @@ function getFeatureCentroid(
       pts.reduce((s, c) => s + c[1], 0) / pts.length,
     ];
   }
+  if (geom.type === "Point") {
+    return [geom.coordinates[0], geom.coordinates[1]];
+  }
   return undefined;
 }
 
