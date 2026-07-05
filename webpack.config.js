@@ -1,47 +1,70 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
-module.exports = (_env, argv) => ({
-    mode: argv.mode ?? "development",
-    entry: {
-        main: [path.resolve(__dirname, "./src/main.ts"), path.resolve(__dirname, "./src/ui.ts")],
-        style: path.resolve(__dirname, "./src/style.ts")
-    },
-    ignoreWarnings: [
-        {
-            module: /sass/
-        }
-    ],
-    output: {
-        path: path.resolve(__dirname, "./public/dist"),
-        filename: "[name].js",
-    },
-    resolve: {
-        extensions: ['.tsx', '.ts', '.js'],
-    },
-    module: {
-        rules: [
+module.exports = (_env, argv) => {
+    const mode = argv.mode ?? "development";
+
+    return {
+        mode,
+        entry: {
+            main: [
+                path.resolve(__dirname, "./scss/main.scss"),
+                path.resolve(__dirname, "./src/main.ts"),
+                path.resolve(__dirname, "./src/ui.ts")
+            ],
+        },
+        ignoreWarnings: [
             {
-                test: /\.(scss)$/,
-                use: [{loader: 'style-loader'}, {loader: 'css-loader'}, {loader: require.resolve("sass-loader"), options: {sassOptions: {quietDeps: true}}}]
+                module: /sass/
             },
-            {
-                test: /\.(svg|png|jpe?g|gif)$/i,
-                use: [
-                    {
-                        loader: "file-loader",
-                        options: {
-                            name: "[path]/[name].[ext]",
+        ],
+        output: {
+            path: path.resolve(__dirname, "./public/dist"),
+            filename: "[name].js",
+        },
+        resolve: {
+            extensions: ['.tsx', '.ts', '.js'],
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.(scss)$/,
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        {loader: 'css-loader'},
+                        {loader: require.resolve("sass-loader"), options: {sassOptions: {quietDeps: true}}}
+                    ]
+                },
+                {
+                    test: /\.(svg|png|jpe?g|gif)$/i,
+                    use: [
+                        {
+                            loader: "file-loader",
+                            options: {
+                                name: "[path]/[name].[ext]",
+                            },
                         },
-                    },
-                ],
-            },
-            {
-                test: /\.tsx?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/,
-            }
-        ]
-    }
-});
+                    ],
+                },
+                {
+                    test: /\.tsx?$/,
+                    use: 'ts-loader',
+                    exclude: /node_modules/,
+                }
+            ]
+        },
+        plugins: [
+            new MiniCssExtractPlugin({
+                filename: "[name].css",
+            }),
+        ],
+        optimization: {
+            minimizer: mode === "production"
+                ? ["...", new CssMinimizerPlugin()]
+                : ["..."],
+        },
+    };
+};
 
