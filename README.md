@@ -8,7 +8,7 @@ This repository contains the source code for the 2.5D visualization prototype, i
 
 Used technologies:
 
-* Maptalks: [https://maptalks.org/](https://maptalks.org/)
+* MapLibre GL JS: [https://maplibre.org/maplibre-gl-js/docs/](https://maplibre.org/maplibre-gl-js/docs/)
 * THREE.js: [https://threejs.org/](https://threejs.org/)
 * OverpassAPI: [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)
 

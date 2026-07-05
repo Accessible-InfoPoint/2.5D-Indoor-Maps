@@ -96,7 +96,7 @@ function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unkno
   return {
     ...FeatureService.getFeatureStyle(feature),
     polygonOpacity: 0,
-    lineDasharray: [2, 2], // maptalks: [10, 10], maplibre: [2, 2]
+    lineDasharray: [2, 2],
   };
 }
 
