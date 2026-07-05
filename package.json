@@ -24,7 +24,8 @@
     "typecheck": "tsc --noEmit && npm run typecheck:server",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
-    "build-start": "npm start"
+    "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
+    "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json"
   },
   "repository": {
     "type": "git",
@@ -68,6 +69,7 @@
     "ts-loader": "^9.6.2",
     "typescript": "^6.0.3",
     "webpack": "^5.107.2",
+    "webpack-bundle-analyzer": "^5.3.0",
     "webpack-cli": "^6.0.1"
   }
 }
