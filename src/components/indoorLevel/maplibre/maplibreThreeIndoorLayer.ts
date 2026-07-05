@@ -26,7 +26,6 @@ import {
   createMapLibreThreeMarker,
   getMapLibreThreeMarkerElevationMeters,
   getMapLibreThreeMaterialTexture,
-  MAPLIBRE_THREE_INFO_POINT_FILL,
   MAPLIBRE_THREE_SELECTED_POSITION_FILL,
   updateMapLibreThreeMarkerViewport,
 } from "./maplibreThreeMarkers";
@@ -34,6 +33,7 @@ import {
   createMapLibreThreeStaircaseObjects,
   MapLibreThreeStaircaseRenderItem,
 } from "./maplibreThreeStaircases";
+import { getInfoPointStyle } from "../infoPointStyle";
 
 const OUTLINE_THICKNESS_METERS = 0.04;
 const ROOM_BASE_ELEVATION_METERS = 0.05;
@@ -317,11 +317,14 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     if (!this.origin || !this.infoPoint || this.infoPoint.feature.geometry.type != "Point") {
       return;
     }
+    const infoPointStyle = getInfoPointStyle();
 
     this.addMarker(
       this.infoPoint.feature.geometry.coordinates,
       "i",
-      MAPLIBRE_THREE_INFO_POINT_FILL
+      infoPointStyle.fillColor,
+      infoPointStyle.strokeColor,
+      infoPointStyle.textColor
     );
   }
 
@@ -347,7 +350,9 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private addMarker(
     coordinates: GeoJSON.Position,
     label: string,
-    fillColor: string
+    fillColor: string,
+    strokeColor?: string,
+    textColor?: string
   ): void {
     if (!this.origin) {
       return;
@@ -361,6 +366,8 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     const marker = createMapLibreThreeMarker({
       label,
       fillColor,
+      strokeColor,
+      textColor,
       origin: this.origin,
       anisotropy: this.renderer?.capabilities.getMaxAnisotropy() ?? 1,
     });

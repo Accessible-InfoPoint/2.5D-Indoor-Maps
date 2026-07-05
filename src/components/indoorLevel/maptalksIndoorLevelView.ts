@@ -28,6 +28,7 @@ import {
 } from "./indoorLevelRenderModel";
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
+import { getInfoPointStyle } from "./infoPointStyle";
 
 export interface MaptalksIndoorLevelViewMapContext {
   map: Maptalks.Map;
@@ -323,6 +324,8 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
   }
 
   private renderInfoPoint(feature: GeoJSON.Feature): void {
+    const infoPointStyle = getInfoPointStyle();
+
     new Maptalks.Marker((feature.geometry as GeoJSON.Point).coordinates, {
       properties: {
         name: "i",
@@ -330,8 +333,8 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
       symbol: [
         {
           markerType: "pin",
-          markerFill: "rgb(255, 195, 195)",
-          markerLineColor: "#000000",
+          markerFill: infoPointStyle.fillColor,
+          markerLineColor: infoPointStyle.strokeColor,
           markerLineWidth: 2,
           markerWidth: 80,
           markerHeight: 70,
@@ -340,6 +343,7 @@ export class MaptalksIndoorLevelView implements IndoorLevelView {
           textFaceName: "sans-serif",
           textName: "{name}",
           textSize: 18,
+          textFill: infoPointStyle.textColor,
           textDy: -35,
         } as Maptalks.TextSymbol,
       ],

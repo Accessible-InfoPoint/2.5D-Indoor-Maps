@@ -51,6 +51,7 @@ import {
   buildSimpleStaircaseRenderItems,
   filterConnectedPathways,
 } from "../staircase/staircaseRenderBuilder";
+import { getInfoPointStyle } from "./infoPointStyle";
 
 const SHOW_DOOR_ORIENTATION_DEBUG = false;
 
@@ -300,6 +301,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderInfoPoint(renderModel: IndoorLevelRenderModel): void {
+    const infoPointStyle = getInfoPointStyle();
+
     this.threeLayer.setInfoPoint(renderModel.infoPoint);
     this.setSourceData(
       this.infoPoint.sourceId,
@@ -312,6 +315,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
                 properties: {
                   ...renderModel.infoPoint.feature.properties,
                   label: "i",
+                  ...infoPointStyle,
                 },
               },
             ],
