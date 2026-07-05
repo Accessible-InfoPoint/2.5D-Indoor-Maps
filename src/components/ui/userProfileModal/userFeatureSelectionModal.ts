@@ -10,7 +10,7 @@ type SettingsChangeHandler = () => void;
 
 const userFeatureSelectionModal = new Modal(
   getRequiredElement("userFeatureSelectionModal"),
-  { backdrop: "static", keyboard: false }
+  { backdrop: "static" }
 );
 
 let checkboxState = FeatureService.getCurrentFeatures();

@@ -6,10 +6,13 @@ import { getRequiredElement } from "../../utils/domHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
 
 function setup(geoMap: GeoMap): void {
+  const switch2DButton = getRequiredElement("switch2D");
   const switch2DLabel = getRequiredElement("switch2DLabel");
+  updateSwitch2DPressedState(switch2DButton, geoMap.flatMode);
 
-  getRequiredElement("switch2D").onclick = () => {
+  switch2DButton.onclick = () => {
     geoMap.flatMode = !geoMap.flatMode;
+    updateSwitch2DPressedState(switch2DButton, geoMap.flatMode);
 
     if (geoMap.flatMode) {
       switch2DLabel.innerHTML = "3d_rotation";
@@ -193,6 +196,10 @@ function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): 
 
     requestAnimationFrame(animateStep);
   });
+}
+
+function updateSwitch2DPressedState(button: HTMLElement, flatMode: boolean): void {
+  button.setAttribute("aria-pressed", (!flatMode).toString());
 }
 
 

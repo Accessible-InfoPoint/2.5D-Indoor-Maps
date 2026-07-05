@@ -41,9 +41,7 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
     levelBtn.setAttribute("aria-label", changeToLevel);
     levelBtn.setAttribute("tabindex", "0");
 
-    if (level == INDOOR_LEVEL.toString()) { // TODO: Check for level ref, name might not be simply numerical
-      levelBtn.classList.add("active");
-    }
+    updateLevelButtonState(levelBtn, level == INDOOR_LEVEL.toString()); // TODO: Check for level ref, name might not be simply numerical
 
     levelBtn.addEventListener("click", () => {
       const didChangeLevel = geoMap.handleLevelChange(parseFloat(level));
@@ -51,9 +49,11 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
         return;
 
       for (const element of levelControl.children) {
-        element.children[0].classList.remove("active");
+        if (element.firstElementChild instanceof HTMLButtonElement) {
+          updateLevelButtonState(element.firstElementChild, false);
+        }
       }
-      levelBtn.classList.add("active");
+      updateLevelButtonState(levelBtn, true);
     });
 
     levelLi.appendChild(levelBtn);
@@ -155,8 +155,12 @@ function focusOnLevel(selectedLevel: number): void {
   const list = levelControl.children;
   for (const item of list) {
     if (item.firstChild?.textContent === selectedLevel.toString()) {
-      item.children[0].classList.add("active");
-    } else item.children[0].classList.remove("active");
+      if (item.children[0] instanceof HTMLButtonElement) {
+        updateLevelButtonState(item.children[0], true);
+      }
+    } else if (item.children[0] instanceof HTMLButtonElement) {
+      updateLevelButtonState(item.children[0], false);
+    }
   }
 
   const index = allLevelNames.findIndex((level) => level == selectedLevel.toString());
@@ -184,6 +188,15 @@ function setupControlShifter(): void {
   down.addEventListener("click", () => {
     moveDown();
   })
+}
+
+function updateLevelButtonState(button: HTMLButtonElement, active: boolean): void {
+  button.classList.toggle("active", active);
+  if (active) {
+    button.setAttribute("aria-current", "true");
+  } else {
+    button.removeAttribute("aria-current");
+  }
 }
 
 export default {

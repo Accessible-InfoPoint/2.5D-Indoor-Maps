@@ -29,7 +29,7 @@
     </div>
 
     <!--           BUILDING AND ROOM DESCRIPTION           -->
-    <aside class="description" id="descriptionArea" aria-label="descriptionArea">
+    <aside class="description" id="descriptionArea" aria-label="descriptionArea" aria-live="polite" aria-atomic="true">
         <strong id="selectedBuilding"></strong>
         <span id="description"></span>
     </aside>
@@ -51,21 +51,21 @@
     <!--           LEVEL CONTROL           -->
     <div id="levelControlWrapper">
         <button id="levelShiftUp" class="square">
-            <span id="levelShiftUpLabel" class="material-icons"aria-hidden="true">expand_less</span>
+            <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true">expand_less</span>
         </button>
         <div id="levelControlWindow">
             <ul id="levelControl" aria-label="Change displayed level" class="transition">
             </ul>
         </div>
         <button id="levelShiftDown" class="square">
-            <span id="levelShiftDownLabel" class="material-icons"aria-hidden="true">expand_more</span>
+            <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true">expand_more</span>
         </button>
     </div>
 
     <!--           WHEELCHAIR-MODE SWITCHER           -->
     <div id="switchWheelchairModeWrapper">
-        <button id="switchWheelchairMode" class="square">
-            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="Icon" width="35" height="35" > <!-- alternative: man -->
+        <button id="switchWheelchairMode" class="square" aria-pressed="false">
+            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="" aria-hidden="true" width="35" height="35" > <!-- alternative: man -->
         </button>
     </div>
 
@@ -81,7 +81,7 @@
 
     <!--           2.5D SWITCHER           -->
     <div id="switch2DViewWrapper">
-        <button id="switch2D" class="square">
+        <button id="switch2D" class="square" aria-pressed="false">
             <span class="material-icons" id="switch2DLabel" aria-label="Switch to 2.5D View" title="Switch to 2.5D View">3d_rotation</span> <!-- alternative: map -->
         </button>
     </div>
@@ -101,18 +101,10 @@
 
 <!--feature selection-->
 <div class="modal fade settings" id="userFeatureSelectionModal" tabindex="-1"
-     aria-labelledby="userFeatureSelectionModal" aria-hidden="true">
+     aria-labelledby="userFeatureModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
-                        aria-label="Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         class="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </button>
                 <h5 class="modal-title" id="userFeatureModalLabel">Select Features</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -135,18 +127,10 @@
 
 <!--display settings-->
 <div class="modal fade settings" id="userVisualSettingsModal" tabindex="-1"
-     aria-labelledby="userVisualSettingsModal" aria-hidden="true">
+     aria-labelledby="visualSettingsLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
-                        aria-label="Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         class="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </button>
                 <h5 class="modal-title" id="visualSettingsLabel">Visual Settings</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

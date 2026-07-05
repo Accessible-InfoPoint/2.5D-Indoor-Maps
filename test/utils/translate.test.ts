@@ -34,10 +34,10 @@ describe('translate()', () => {
       <ul id="userProfileList"></ul>
       <ul id="userSettingsList"></ul>
       <ul id="languageList"></ul>
-      <button id="switch2DLabel"></button>
+      <button id="switch2D"><span id="switch2DLabel"></span></button>
       <button id="switchWheelchairMode"></button>
-      <button id="zoomControlInLabel"></button>
-      <button id="zoomControlOutLabel"></button>
+      <button id="zoomControlIn"><span id="zoomControlInLabel"></span></button>
+      <button id="zoomControlOut"><span id="zoomControlOutLabel"></span></button>
       <button id="levelShiftUp"></button>
       <button id="levelShiftDown"></button>
       <ul id="levelControl">
@@ -56,14 +56,20 @@ describe('translate()', () => {
   it('updates aria-labels and titles', () => {
     translate();
     const userProfileList = getRequiredElement('userProfileList');
+    const switch2D = getRequiredElement('switch2D');
     const switch2DLabel = getRequiredElement('switch2DLabel');
+    const zoomControlIn = getRequiredElement('zoomControlIn');
     const zoomControlInLabel = getRequiredElement('zoomControlInLabel');
     const levelShiftUp = getRequiredElement('levelShiftUp');
     const levelButton = getRequiredElement('levelControl').children[0].firstElementChild as HTMLElement;
 
     expect(userProfileList.ariaLabel).toBe('Profiles');
+    expect(switch2D.title).toBe('2D Mode');
+    expect(switch2D.ariaLabel).toBe('2D Mode');
     expect(switch2DLabel.title).toBe('2D Mode');
     expect(switch2DLabel.ariaLabel).toBe('2D Mode');
+    expect(zoomControlIn.title).toBe('Zoom in');
+    expect(zoomControlIn.ariaLabel).toBe('Zoom in');
     expect(zoomControlInLabel.title).toBe('Zoom in');
     expect(zoomControlInLabel.ariaLabel).toBe('Zoom in');
     expect(levelShiftUp.title).toBe('Show previous levels');

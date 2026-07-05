@@ -42,6 +42,9 @@ function renderProfiles(onSettingsChanged: SettingsChangeHandler): void {
 
     if (UserService.getCurrentProfile() === k) {
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     li.appendChild(button);
@@ -85,6 +88,8 @@ function renderSettings(): void {
     const button = document.createElement("button");
     const name = getUserSettingName(k);
     button.className = "square";
+    button.ariaLabel = name;
+    button.title = name;
     button.innerHTML = '<span aria-label="' + name + '" title="' + name + '"><i class="material-icons">' + v.icon + "</i></span>";
     button.setAttribute("data-bs-target", v.linkedModal);
     button.setAttribute("data-bs-toggle", "modal");
@@ -113,6 +118,9 @@ function renderLanguages(onSettingsChanged: SettingsChangeHandler): void {
 
     if (LanguageService.getCurrentLanguage() === k) {
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     li.appendChild(button);

@@ -9,7 +9,7 @@ type SettingsChangeHandler = () => void;
 
 const userVisualSettingsModal = new Modal(
   getRequiredElement("userVisualSettingsModal"),
-  { backdrop: "static", keyboard: false }
+  { backdrop: "static" }
 );
 
 const colorBlindnessList = getRequiredElement("colorBlindnessList");
@@ -73,7 +73,8 @@ function renderCheckbox(profile: string): HTMLDivElement {
 
   checkbox_div.className = "form-check";
   checkbox.className = "form-check-input";
-  checkbox.type = "checkbox";
+  checkbox.type = "radio";
+  checkbox.name = "colorProfile";
   checkbox.id = profile;
 
   checkbox.checked = profile === selectedColorProfile;

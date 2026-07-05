@@ -110,6 +110,12 @@ nav {
     box-shadow: none;
   }
 
+  button.square:focus-visible {
+    outline: 3px solid var(--button-active-bg);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(2, 85, 88, 0.2);
+  }
+
   button.square.active {
     z-index: 3;
     color: var(--button-active-color);
