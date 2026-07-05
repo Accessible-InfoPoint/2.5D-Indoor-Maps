@@ -7,10 +7,14 @@ function start(): void {
   loadingIndicator.classList.remove("text-danger");
   loadingIndicator.classList.add("text-primary");
   loadingIndicator.classList.remove("d-none");
+  loadingIndicator.removeAttribute("aria-hidden");
+  loadingIndicator.removeAttribute("inert");
 }
 
 function end(): void {
   loadingIndicator.classList.add("d-none");
+  loadingIndicator.setAttribute("aria-hidden", "true");
+  loadingIndicator.setAttribute("inert", "");
 }
 
 function error(message: string): void {

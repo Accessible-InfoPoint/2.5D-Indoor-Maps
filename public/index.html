@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Accessible indoor map for exploring buildings, levels, rooms, and accessibility features.">
     <title>AccessibleMaps Mobile</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
 <body>
-            <div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+<div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator" tabindex="-1" aria-hidden="true" inert>
+    <span class="visually-hidden">Loading...</span>
+</div>
 <div id="toastWrapper"></div>
 
+<main id="appMain" aria-label="Accessible indoor map">
 <div id="map" aria-disabled="true"></div>
 <div id="flatMap" aria-disabled="true"></div>
 
@@ -98,6 +100,7 @@
         </ul>
     </div>
 </div>
+</main>
 
 <!--feature selection-->
 <div class="modal fade settings" id="userFeatureSelectionModal" tabindex="-1"
