@@ -57,7 +57,6 @@
   "searchNotFound": "Not found!",
 
   "buildingNotFound": "Building could not be found",
-  "buildingNotSITconform": "Building was found, but is not in the dataset of SIT-conform buildings",
   "buildingErrorFetching": "An error occurred while fetching building data: ",
 
   "legendRoom": "Room",

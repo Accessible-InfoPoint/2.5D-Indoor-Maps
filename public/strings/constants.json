@@ -3,8 +3,6 @@
     "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
     "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
     "CARTO_TILE_SUBDOMAINS": ["a", "b", "c", "d"],
-    "NOMINATIM_SERVER": "https://open.mapquestapi.com/nominatim/v1/search.php",
-    "MAPQUEST_API_KEY": "qjp4XJGBDGe98cl7QOPOgExZhNWX1lEx",
     "OVERPASS_DATA_URLS": {
         "INDOOR": "/overpass/indoor.json",
         "BUILDINGS": "/overpass/buildings.json"

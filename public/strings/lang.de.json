@@ -57,7 +57,6 @@
   "searchNotFound": "Nicht gefunden!",
 
   "buildingNotFound": "Gebäude konnte nicht gefunden werden",
-  "buildingNotSITconform": "Gebäude wurde gefunden, gehört jedoch nicht zum Datensatz von SIT-konformen Gebäuden",
   "buildingErrorFetching": "Ein Fehler ist beim Laden der Gebäudedaten aufgetreten: ",
 
   "legendRoom": "Raum",
