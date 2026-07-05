@@ -10,8 +10,10 @@
 </head>
 
 <body>
-<div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator" tabindex="-1" aria-hidden="true" inert>
-    <span class="visually-hidden">Loading...</span>
+<div id="loadingIndicatorWrapper" class="d-none" aria-hidden="true" inert>
+    <div class="spinner-border" role="status" id="loadingIndicator" tabindex="-1">
+        <span class="visually-hidden">Loading...</span>
+    </div>
 </div>
 <div id="toastWrapper"></div>
 

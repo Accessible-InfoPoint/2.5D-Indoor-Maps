@@ -2,19 +2,20 @@ import Toast from "./toast";
 import { getRequiredElement } from "../../utils/domHelpers";
 
 const loadingIndicator = getRequiredElement("loadingIndicator");
+const loadingIndicatorWrapper = getRequiredElement("loadingIndicatorWrapper");
 
 function start(): void {
   loadingIndicator.classList.remove("text-danger");
   loadingIndicator.classList.add("text-primary");
-  loadingIndicator.classList.remove("d-none");
-  loadingIndicator.removeAttribute("aria-hidden");
-  loadingIndicator.removeAttribute("inert");
+  loadingIndicatorWrapper.classList.remove("d-none");
+  loadingIndicatorWrapper.removeAttribute("aria-hidden");
+  loadingIndicatorWrapper.removeAttribute("inert");
 }
 
 function end(): void {
-  loadingIndicator.classList.add("d-none");
-  loadingIndicator.setAttribute("aria-hidden", "true");
-  loadingIndicator.setAttribute("inert", "");
+  loadingIndicatorWrapper.classList.add("d-none");
+  loadingIndicatorWrapper.setAttribute("aria-hidden", "true");
+  loadingIndicatorWrapper.setAttribute("inert", "");
 }
 
 function error(message: string): void {
