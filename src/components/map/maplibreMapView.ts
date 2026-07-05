@@ -5,11 +5,7 @@ import type {
   StyleSpecification,
   TransformConstrainFunction,
 } from "maplibre-gl";
-import {
-  CARTO_ATTRIBUTION,
-  CARTO_TILE_SERVER,
-  CARTO_TILE_SUBDOMAINS,
-} from "../../../public/strings/constants.json";
+import constants from "../../../public/strings/constants.json";
 import {
   MAP_START_LAT,
   MAP_START_LNG,
@@ -25,6 +21,11 @@ import { MapBounds, MapCenterConstraint, MapView, MapViewportPadding } from "./m
 const MAX_PITCH = 85;
 const DEFAULT_MIN_ZOOM = -2;
 const DEFAULT_MAX_ZOOM = 22;
+const {
+  CARTO_ATTRIBUTION,
+  CARTO_TILE_SERVER,
+  CARTO_TILE_SUBDOMAINS,
+} = constants;
 
 interface MapLibreMapViewOptions {
   configMode: boolean;

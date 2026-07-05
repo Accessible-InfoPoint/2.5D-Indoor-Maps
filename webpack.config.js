@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path');
 
-module.exports = {
-    mode: "development",
+module.exports = (_env, argv) => ({
+    mode: argv.mode ?? "development",
     entry: {
         main: [path.resolve(__dirname, "./src/main.ts"), path.resolve(__dirname, "./src/ui.ts")],
         style: path.resolve(__dirname, "./src/style.ts")
@@ -43,5 +43,5 @@ module.exports = {
             }
         ]
     }
-};
+});
 

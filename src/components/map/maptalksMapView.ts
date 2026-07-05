@@ -1,9 +1,5 @@
 import * as Maptalks from "maptalks";
-import {
-  CARTO_ATTRIBUTION,
-  CARTO_TILE_SERVER,
-  CARTO_TILE_SUBDOMAINS,
-} from "../../../public/strings/constants.json";
+import constants from "../../../public/strings/constants.json";
 import {
   MAP_START_LAT,
   MAP_START_LNG,
@@ -14,6 +10,12 @@ import { MapCamera } from "./mapCamera";
 import { MaptalksMapCamera } from "./maptalksMapCamera";
 import { MapBounds, MapView } from "./mapView";
 import { getRequiredElement } from "../../utils/domHelpers";
+
+const {
+  CARTO_ATTRIBUTION,
+  CARTO_TILE_SERVER,
+  CARTO_TILE_SUBDOMAINS,
+} = constants;
 
 interface MaptalksMapViewOptions {
   configMode: boolean;

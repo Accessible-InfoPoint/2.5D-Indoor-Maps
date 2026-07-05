@@ -29,13 +29,26 @@ npm install
 
 ## Running the Application
 
-Build the client and server, then start the application:
+During development, start the application with:
+
+```sh
+npm run dev
+```
+
+This starts the app in watch mode. Watching means the related process stays
+running and reacts to file changes instead of requiring a manual restart:
+webpack rebuilds the client bundles when client files change, TypeScript
+recompiles the server when server files change, and Node restarts the compiled
+server process.
+
+For production-like usage, build the client and server, then start the
+application:
 
 ```sh
 npm start
 ```
 
-For production-like usage, build once and run the compiled server:
+Alternatively, build once and run the compiled server:
 
 ```sh
 npm run build
