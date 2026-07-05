@@ -2,7 +2,6 @@ import { BuildingInterface } from "../models/buildingInterface";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
 import {
-  filterByBounds,
   filterFeaturesByIndoorSearch,
   filterInsideAndLevel,
   findBuildingBySearchString,
@@ -35,6 +34,5 @@ export default {
   getBuildingDescription,
   handleSearch,
   runIndoorSearch,
-  filterByBounds,
   filterInsideAndLevel
 };

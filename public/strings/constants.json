@@ -3,10 +3,6 @@
     "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
     "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
     "CARTO_TILE_SUBDOMAINS": ["a", "b", "c", "d"],
-    "OVERPASS_DATA_URLS": {
-        "INDOOR": "/overpass/indoor.json",
-        "BUILDINGS": "/overpass/buildings.json"
-    },
     "LOCAL_GEOJSON_DATA_URL": "/geojson/",
     "MARKERS_IMG_DIR": "/images/",
     "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
