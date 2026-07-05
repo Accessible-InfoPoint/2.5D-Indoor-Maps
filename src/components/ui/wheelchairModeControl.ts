@@ -4,6 +4,9 @@ import LevelControl from "./levelControl";
 import { getRequiredElement } from "../../utils/domHelpers";
 
 const wheelchairModeKey = "wheelchairMode";
+const uiPaddingFallback = 15;
+let quickSettingsLayoutFrame: number | undefined;
+let quickSettingsLayoutObserverSetup = false;
 
 function applyStoredLayout(): void {
   getRequiredElement("uiWrapper")
@@ -13,6 +16,7 @@ function applyStoredLayout(): void {
 
 function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void {
   applyStoredLayout();
+  setupQuickSettingsLayoutObserver();
 
   const uiWrapper = getRequiredElement("uiWrapper");
   const levelControl = getRequiredElement("levelControl");
@@ -42,6 +46,7 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
     } else {
       indoorSearchWrapper.style.removeProperty("left");
       indoorSearchWrapper.style.removeProperty("right");
+      requestQuickSettingsLayoutUpdate();
     }
 
     onLayoutChanged();
@@ -55,6 +60,7 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
   }
 
   replaceIcons();
+  requestQuickSettingsLayoutUpdate();
 }
 
 function replaceIcons(): void {
@@ -80,6 +86,65 @@ function setIndoorSearchWheelchairLayout(): void {
 
   indoorSearchWrapper.style.left = (levelControlWrapper.offsetLeft + levelControlWrapper.offsetWidth + 15 + 12) + "px";
   indoorSearchWrapper.style.right = (document.body.clientWidth - quickSettingsWrapper.offsetLeft + 15 + 50) + "px";
+}
+
+function setupQuickSettingsLayoutObserver(): void {
+  if (quickSettingsLayoutObserverSetup) {
+    return;
+  }
+
+  quickSettingsLayoutObserverSetup = true;
+
+  window.addEventListener("resize", requestQuickSettingsLayoutUpdate);
+
+  if (typeof ResizeObserver === "undefined") {
+    return;
+  }
+
+  const observer = new ResizeObserver(requestQuickSettingsLayoutUpdate);
+  observer.observe(getRequiredElement("quickSettingsWrapper"));
+  observer.observe(getRequiredElement("legendWrapper"));
+}
+
+function requestQuickSettingsLayoutUpdate(): void {
+  if (quickSettingsLayoutFrame !== undefined) {
+    cancelAnimationFrame(quickSettingsLayoutFrame);
+  }
+
+  quickSettingsLayoutFrame = requestAnimationFrame(() => {
+    quickSettingsLayoutFrame = undefined;
+    updateQuickSettingsLayout();
+  });
+}
+
+function updateQuickSettingsLayout(): void {
+  const uiWrapper = getRequiredElement("uiWrapper");
+  const quickSettingsWrapper = getRequiredElement("quickSettingsWrapper");
+
+  if (uiWrapper.classList.contains("wheelchairMode")) {
+    quickSettingsWrapper.style.removeProperty("--quick-settings-center-y");
+    quickSettingsWrapper.style.removeProperty("--quick-settings-max-height");
+    return;
+  }
+
+  const legendWrapper = getRequiredElement("legendWrapper");
+  const uiPadding = getUiPadding(uiWrapper);
+  const uiRect = uiWrapper.getBoundingClientRect();
+  const legendRect = legendWrapper.getBoundingClientRect();
+  const quickSettingsHeight = quickSettingsWrapper.getBoundingClientRect().height;
+  const maxHeight = Math.max(0, legendRect.top - uiRect.top - 2 * uiPadding);
+  const minCenterY = uiPadding + quickSettingsHeight / 2;
+  const maxCenterY = legendRect.top - uiRect.top - uiPadding - quickSettingsHeight / 2;
+  const centeredY = uiRect.height / 2;
+  const clampedCenterY = Math.max(minCenterY, Math.min(centeredY, maxCenterY));
+
+  quickSettingsWrapper.style.setProperty("--quick-settings-center-y", `${clampedCenterY}px`);
+  quickSettingsWrapper.style.setProperty("--quick-settings-max-height", `${maxHeight}px`);
+}
+
+function getUiPadding(uiWrapper: HTMLElement): number {
+  const uiPadding = parseFloat(getComputedStyle(uiWrapper).getPropertyValue("--ui-padding"));
+  return Number.isFinite(uiPadding) ? uiPadding : uiPaddingFallback;
 }
 
 export default {

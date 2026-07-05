@@ -20,7 +20,13 @@ nav {
 }
 
 #uiWrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
   //Buttonstyling--button-padding-x: 0.75rem;
+  --ui-padding: #{$uiPadding};
   --button-padding-y: 0.375rem;
   --button-font-size: 1rem;
   --button-color: #025558;
@@ -36,6 +42,10 @@ nav {
   --button-active-border-color: #025558;
   --button-size: 50px;
   --level-control-gap: 10px;
+
+  > * {
+    pointer-events: auto;
+  }
 
   button.square {
     position: relative;
@@ -271,22 +281,20 @@ nav {
     left: $uiPadding;
   }
 
-  #settingsButtonWrapper {
-    position: absolute;
-    z-index: 1;
-    top: $uiPadding;
-    right: $uiPadding;
-    display:none;
-  }
-
   #quickSettingsWrapper {
     display: flex;
     flex-direction: column;
     z-index: 1;
     position: absolute;
     right: $uiPadding;
-    top: 50%;
+    top: var(--quick-settings-center-y, 50%);
     transform: translate(0, -50%);
+    -webkit-transform: translate(0, -50%);
+    -moz-transform: translate(0, -50%);
+    -ms-transform: translate(0, -50%);
+    -o-transform: translate(0, -50%);
+    max-height: var(--quick-settings-max-height, calc(100% - 2*#{$uiPadding}));
+    overflow-y: auto;
     gap: var(--level-control-gap);
     padding: 10px 15px 15px;
     background-color: #fffffff0;
@@ -338,7 +346,6 @@ nav {
 }
 
   #legendWrapper {
-    position: absolute;
     top: $uiPadding;
     bottom: auto;
     right: $uiPadding;
@@ -377,17 +384,14 @@ nav {
     flex-direction: column;
   }
 
-  #settingsButtonWrapper {
-    top: $uiPadding;
-    right: $uiPadding;
-  }
-
   #quickSettingsWrapper {
     flex-direction: row;
     right: 15px;
     top: auto;
     transform: none;
     bottom: 15px;
+    max-height: none;
+    overflow-y: visible;
 
     ul {
       width: calc(2* var(--button-size) + 1* var(--level-control-gap));
