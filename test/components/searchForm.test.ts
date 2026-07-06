@@ -59,9 +59,9 @@ describe("searchForm", () => {
         <button id="searchErrorClear"></button>
       </div>
     `;
-    BuildingService = require("../../src/services/buildingService").default;
-    SearchSuggestions = require("../../src/components/ui/searchSuggestions").default;
-    SearchForm = require("../../src/components/ui/searchForm").default;
+    BuildingService = jest.requireMock("../../src/services/buildingService").default as typeof BuildingServiceType;
+    SearchSuggestions = jest.requireMock("../../src/components/ui/searchSuggestions").default as typeof SearchSuggestionsType;
+    SearchForm = jest.requireActual("../../src/components/ui/searchForm").default as typeof SearchForm;
     input = document.getElementById("indoorSearchInput") as HTMLInputElement;
     submitButton = document.getElementById("indoorSearchSubmit") as HTMLButtonElement;
     clearButton = document.getElementById("indoorSearchClear") as HTMLButtonElement;

@@ -8,7 +8,7 @@ This repository contains the source code for the 2.5D visualization prototype, i
 
 Used technologies:
 
-* Maptalks: [https://maptalks.org/](https://maptalks.org/)
+* MapLibre GL JS: [https://maplibre.org/maplibre-gl-js/docs/](https://maplibre.org/maplibre-gl-js/docs/)
 * THREE.js: [https://threejs.org/](https://threejs.org/)
 * OverpassAPI: [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)
 
@@ -30,13 +30,25 @@ npm ci
 
 ## Execution
 
-Run one command to build the client and server and start the application:
+For local development, start the app with:
+
+```sh
+npm run dev
+```
+
+This builds the client and server once, starts the web server, and keeps
+watching the source files. When client files change, webpack rebuilds the
+browser bundles. When server files change, TypeScript recompiles the server and
+Node restarts the compiled server process.
+
+Afterwards, the app is accessible via your browser under the displayed URL.
+
+For production-like usage, run one command to build the client and server and
+start the application:
 
 ```sh
 npm start
 ```
-
-Afterwards, the app is accessible via your browser under the displayed URL.
 
 Overpass requests identify the application with a default `User-Agent`. For a
 production deployment, set `OVERPASS_USER_AGENT` to an application identifier

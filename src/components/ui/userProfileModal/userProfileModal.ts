@@ -42,6 +42,9 @@ function renderProfiles(onSettingsChanged: SettingsChangeHandler): void {
 
     if (UserService.getCurrentProfile() === k) {
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     li.appendChild(button);
@@ -85,7 +88,13 @@ function renderSettings(): void {
     const button = document.createElement("button");
     const name = getUserSettingName(k);
     button.className = "square";
-    button.innerHTML = '<span aria-label="' + name + '" title="' + name + '"><i class="material-icons">' + v.icon + "</i></span>";
+    button.ariaLabel = name;
+    button.title = name;
+    const icon = document.createElement("span");
+    icon.className = "material-icons";
+    icon.ariaHidden = "true";
+    icon.innerText = v.icon;
+    button.appendChild(icon);
     button.setAttribute("data-bs-target", v.linkedModal);
     button.setAttribute("data-bs-toggle", "modal");
 
@@ -108,11 +117,16 @@ function renderLanguages(onSettingsChanged: SettingsChangeHandler): void {
     const li = document.createElement("li");
     const button = document.createElement("button");
     button.className = "square";
-    button.innerHTML = '<span aria-label="' + v.name + '" title="' + v.name + '">' + v.display + "</span>";
+    button.ariaLabel = v.name;
+    button.title = v.name;
+    button.innerText = v.display;
     button.onclick = () => setLanguage(k, onSettingsChanged);
 
     if (LanguageService.getCurrentLanguage() === k) {
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     li.appendChild(button);

@@ -19,14 +19,6 @@ mixed into unrelated refactors.
 
 ## Larger Features
 
-### MapLibre Migration
-
-- Add a minimal MapLibre map initialization without removing maptalks first.
-- Introduce a small internal adapter for map operations used by the application.
-- Port building geometry, markers, and interaction one part at a time.
-- Port level switching and 3D behavior.
-- Remove maptalks only after feature parity is reached.
-
 ### Indoor Data Model
 
 - Document the expected OSM tags used by the renderer.

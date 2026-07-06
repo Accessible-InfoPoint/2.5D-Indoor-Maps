@@ -125,7 +125,7 @@ async function loadBackendData(
 ): Promise<LoadedBackendData> {
   switch (config.source) {
     case BackendSourceEnum.cachedOverpass:
-      return loadCachedOverpassData(buildingDefinition);
+      return loadCachedOverpassData();
     case BackendSourceEnum.localGeojson:
       return loadLocalGeoJsonData(config.building, buildingDefinition);
     default:
@@ -133,21 +133,8 @@ async function loadBackendData(
   }
 }
 
-async function loadCachedOverpassData(buildingDefinition: BuildingDefinition): Promise<LoadedBackendData> {
-  await HttpService.fetchOverpassData();
-
-  const loadedBuildingInterface = await BuildingService.handleSearch(
-    HttpService.getBuildingData(),
-    buildingDefinition.SEARCH_STRING
-  );
-
-  return {
-    buildingInterface: loadedBuildingInterface,
-    geoJson: BuildingService.filterByBounds(
-      HttpService.getIndoorData(),
-      loadedBuildingInterface.boundingBox
-    ),
-  };
+async function loadCachedOverpassData(): Promise<LoadedBackendData> {
+  return HttpService.fetchFilteredIndoorData(backendConfig.building);
 }
 
 async function loadLocalGeoJsonData(

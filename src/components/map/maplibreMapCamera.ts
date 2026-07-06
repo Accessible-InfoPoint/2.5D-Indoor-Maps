@@ -6,6 +6,7 @@ import {
   MapInteractionOptions,
 } from "./mapCamera";
 import { MapLibreLeftButtonRotateHandler } from "./maplibreLeftButtonRotateHandler";
+import { prefersReducedMotion } from "../../utils/motionPreferences";
 
 export class MapLibreMapCamera implements MapCamera {
   private readonly leftButtonRotateHandler: MapLibreLeftButtonRotateHandler;
@@ -73,7 +74,14 @@ export class MapLibreMapCamera implements MapCamera {
   }
 
   zoomBy(delta: number): void {
-    this.map.zoomTo(this.map.getZoom() + delta);
+    const zoom = this.map.getZoom() + delta;
+
+    if (prefersReducedMotion()) {
+      this.map.setZoom(zoom);
+      return;
+    }
+
+    this.map.zoomTo(zoom);
   }
 
   animateToCenter(center: MapCenter, duration: number): void {

@@ -1,5 +1,6 @@
 import express from "express";
 import { createPatternFillImages } from "./server/createPatternFillImages";
+import { registerFilteredIndoorDataRoute } from "./server/filteredIndoorDataRoute";
 import { getOverpassData } from "./server/getOverpassData";
 import { resolveProjectPath } from "./server/paths";
 
@@ -11,8 +12,9 @@ async function startServer(): Promise<void> {
   await getOverpassData();
 
   console.log("=== Starting web server ===");
-  app.use(express.static(resolveProjectPath("public")));
   app.use(express.json());
+  registerFilteredIndoorDataRoute(app);
+  app.use(express.static(resolveProjectPath("public")));
   app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
   });

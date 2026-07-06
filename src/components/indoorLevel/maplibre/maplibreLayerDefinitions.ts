@@ -20,9 +20,9 @@ export function createInfoPointLayers(options: LayerDefinitionOptions): AddLayer
       type: "circle",
       source: options.sourceId("info-point"),
       paint: {
-        "circle-color": "rgb(255, 195, 195)",
+        "circle-color": ["coalesce", ["get", "fillColor"], "#ffffff"],
         "circle-radius": 18,
-        "circle-stroke-color": "#000000",
+        "circle-stroke-color": ["coalesce", ["get", "strokeColor"], "#000000"],
         "circle-stroke-width": 2,
         "circle-opacity": options.opacity,
       },
@@ -37,7 +37,7 @@ export function createInfoPointLayers(options: LayerDefinitionOptions): AddLayer
         "text-allow-overlap": true,
       },
       paint: {
-        "text-color": "#000000",
+        "text-color": ["coalesce", ["get", "textColor"], "#000000"],
         "text-opacity": options.opacity,
       },
     },

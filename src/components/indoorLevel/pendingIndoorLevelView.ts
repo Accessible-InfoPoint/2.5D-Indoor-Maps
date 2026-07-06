@@ -13,6 +13,14 @@ export class PendingIndoorLevelView implements IndoorLevelView {
 
   show2DView(): void {}
 
+  preload3DAssets(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  preload3DView(): Promise<void> {
+    return Promise.resolve();
+  }
+
   show3DView(): void {}
 
   animateAltitude(): Promise<void> {

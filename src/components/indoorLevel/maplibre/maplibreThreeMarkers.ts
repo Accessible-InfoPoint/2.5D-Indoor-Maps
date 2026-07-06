@@ -10,6 +10,8 @@ type MarkerRenderMode =
 interface MarkerOptions {
   label: string;
   fillColor: string;
+  strokeColor?: string;
+  textColor?: string;
   origin: maplibregl.MercatorCoordinate;
   anisotropy: number;
 }
@@ -57,7 +59,6 @@ void main() {
 }
 `;
 
-export const MAPLIBRE_THREE_INFO_POINT_FILL = "rgb(255, 195, 195)";
 export const MAPLIBRE_THREE_SELECTED_POSITION_FILL = "rgb(195, 255, 195)";
 
 export function getMapLibreThreeMarkerElevationMeters(): number {
@@ -73,7 +74,7 @@ export function getMapLibreThreeMarkerElevationMeters(): number {
 
 export function createMapLibreThreeMarker(options: MarkerOptions): THREE.Object3D {
   const createTexture = () =>
-    createMarkerTexture(options.label, options.fillColor, options.anisotropy);
+    createMarkerTexture(options);
 
   switch (MARKER_RENDER_MODE) {
     case "three-sprite-doc-example":
@@ -258,11 +259,7 @@ function createMapFacingMarker(
   return marker;
 }
 
-function createMarkerTexture(
-  label: string,
-  fillColor: string,
-  anisotropy: number
-): THREE.CanvasTexture {
+function createMarkerTexture(options: MarkerOptions): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = MARKER_TEXTURE_WIDTH;
   canvas.height = MARKER_TEXTURE_HEIGHT;
@@ -274,21 +271,21 @@ function createMarkerTexture(
   }
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = fillColor;
-  context.strokeStyle = "#000000";
+  context.fillStyle = options.fillColor;
+  context.strokeStyle = options.strokeColor ?? "#000000";
   context.lineWidth = MARKER_TEXTURE_LINE_WIDTH;
   drawCircle(context, canvas.width / 2, canvas.height / 2, MARKER_TEXTURE_RADIUS);
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#000000";
+  context.fillStyle = options.textColor ?? "#000000";
   context.font = `bold ${MARKER_TEXTURE_FONT_SIZE}px sans-serif`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(label, canvas.width / 2, canvas.height / 2);
+  context.fillText(options.label, canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.anisotropy = anisotropy;
+  texture.anisotropy = options.anisotropy;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.generateMipmaps = true;

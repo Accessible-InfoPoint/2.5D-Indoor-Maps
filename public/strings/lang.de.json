@@ -34,6 +34,7 @@
   "languageHeader": "Sprache",
 
   "switch2DButton": "Zu 2.5D Ansicht wechseln",
+  "switchFlatButton": "Zu 2D Ansicht wechseln",
   "switchWheelchairModeButton": "Zu Rollstuhl-Ansicht wechseln",
   "zoomInButton": "Hineinzoomen",
   "zoomOutButton": "Herauszoomen",
@@ -62,7 +63,6 @@
   "searchSuggestionsNone": "Keine Suchvorschläge verfügbar.",
 
   "buildingNotFound": "Gebäude konnte nicht gefunden werden",
-  "buildingNotSITconform": "Gebäude wurde gefunden, gehört jedoch nicht zum Datensatz von SIT-konformen Gebäuden",
   "buildingErrorFetching": "Ein Fehler ist beim Laden der Gebäudedaten aufgetreten: ",
 
   "legendRoom": "Raum",

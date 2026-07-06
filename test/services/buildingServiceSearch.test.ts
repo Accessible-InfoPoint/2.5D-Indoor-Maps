@@ -1,4 +1,3 @@
-jest.mock("maptalks", () => ({}));
 jest.mock("../../src/services/backendService", () => ({
   getGeoJson: jest.fn(),
 }));

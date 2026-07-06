@@ -1,6 +1,7 @@
 import { Toast } from "bootstrap";
 
 import { getRequiredElement } from "../../utils/domHelpers";
+import { lang } from "../../services/languageService";
 
 function render(message: string): void {
   const toastDiv = document.createElement("div");
@@ -13,8 +14,14 @@ function render(message: string): void {
     '<div class="toast-body">\n' +
     message +
     "</div>" +
-    '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>\n' +
+    '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>\n' +
     "</div>";
+
+  const closeButton = toastDiv.querySelector(".btn-close");
+  if (closeButton instanceof HTMLElement) {
+    closeButton.ariaLabel = lang.closeButton;
+    closeButton.title = lang.closeButton;
+  }
 
   getRequiredElement("toastWrapper").appendChild(toastDiv);
 

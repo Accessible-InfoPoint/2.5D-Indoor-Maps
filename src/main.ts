@@ -40,15 +40,21 @@ import { applyStoredUiLayout, setupUi } from "./ui";
 document.addEventListener("DOMContentLoaded", function () {
   LoadingIndicator.start();
 
-  BackendService.fetchBackendData().then(() => {
-    LoadingIndicator.end();
-    const geoMap = new GeoMap();
-    applyStoredUiLayout();
-    geoMap.showBuilding();
-    Legend.create();
-    LevelControl.setupControlShifter();
-    CenterBtn.create(geoMap);
-    setupUi(geoMap);
-    translate();
-  });
+  BackendService.fetchBackendData()
+    .then(() => {
+      LoadingIndicator.end();
+      const geoMap = new GeoMap();
+      applyStoredUiLayout();
+      geoMap.showBuilding();
+      Legend.create();
+      LevelControl.setupControlShifter();
+      CenterBtn.setup(geoMap);
+      setupUi(geoMap);
+      translate();
+    })
+    .catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred while loading map data.";
+      console.error(error);
+      LoadingIndicator.error(message);
+    });
 });

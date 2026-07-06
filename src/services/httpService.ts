@@ -1,42 +1,13 @@
-import { OVERPASS_DATA_URLS, LOCAL_GEOJSON_DATA_URL } from "../../public/strings/constants.json";
+import { LOCAL_GEOJSON_DATA_URL } from "../../public/strings/constants.json";
+import { BuildingInterface } from "../models/buildingInterface";
 import { lang } from "./languageService";
 
-let indoorDataGeoJSON: GeoJSON.FeatureCollection<any, any>;
-let buildingDataGeoJSON: GeoJSON.FeatureCollection<any, any>;
-
-function fetchOverpassData(): Promise<boolean> {
-  return Promise.all([fetchIndoorData(), fetchBuildingData()]).then(
-    (
-      values: [
-        GeoJSON.FeatureCollection<any, any>,
-        GeoJSON.FeatureCollection<any, any>
-      ]
-    ) => {
-      indoorDataGeoJSON = values[0];
-      buildingDataGeoJSON = values[1];
-    //   console.log(buildingDataGeoJSON);
-      return true;
-    }
-  );
+export interface FilteredIndoorDataResponse {
+  buildingInterface: BuildingInterface;
+  geoJson: GeoJSON.FeatureCollection;
 }
 
-function getIndoorData(): GeoJSON.FeatureCollection<any, any> {
-  return indoorDataGeoJSON;
-}
-
-function getBuildingData(): GeoJSON.FeatureCollection<any, any> {
-  return buildingDataGeoJSON;
-}
-
-function fetchIndoorData(): Promise<GeoJSON.FeatureCollection<any, any>> {
-  return getLocalData(OVERPASS_DATA_URLS.INDOOR);
-}
-
-function fetchBuildingData(): Promise<GeoJSON.FeatureCollection<any, any>> {
-  return getLocalData(OVERPASS_DATA_URLS.BUILDINGS);
-}
-
-function getLocalData(overpassQuery: string): Promise<GeoJSON.FeatureCollection<any, any>> {
+function getLocalData<T = GeoJSON.FeatureCollection<any, any>>(overpassQuery: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
@@ -44,10 +15,13 @@ function getLocalData(overpassQuery: string): Promise<GeoJSON.FeatureCollection<
         if (xhr.status === 200) {
           const returnValue = JSON.parse(xhr.responseText);
           resolve(returnValue);
-        } else if (xhr.status > 400) {
-          reject(new Error(lang.buildingErrorFetching + xhr.statusText));
+        } else if (xhr.status >= 400) {
+          reject(new Error(lang.buildingErrorFetching + getErrorMessage(xhr)));
         }
       }
+    };
+    xhr.onerror = () => {
+      reject(new Error(lang.buildingErrorFetching + "Network error"));
     };
 
     xhr.open("GET", overpassQuery, true);
@@ -55,13 +29,29 @@ function getLocalData(overpassQuery: string): Promise<GeoJSON.FeatureCollection<
   });
 }
 
+function getErrorMessage(xhr: XMLHttpRequest): string {
+  try {
+    const response = JSON.parse(xhr.responseText) as { error?: unknown };
+
+    if (typeof response.error === "string") {
+      return response.error;
+    }
+  } catch {
+    // Fall back to the HTTP status text below.
+  }
+
+  return xhr.statusText || `HTTP ${xhr.status}`;
+}
+
 function fetchLocalGeojson(geojson_building: string): Promise<GeoJSON.FeatureCollection<any, any>> {
   return getLocalData(LOCAL_GEOJSON_DATA_URL + geojson_building + ".geojson");
 }
 
+function fetchFilteredIndoorData(building: string): Promise<FilteredIndoorDataResponse> {
+  return getLocalData(`/api/buildings/${encodeURIComponent(building)}/indoor`);
+}
+
 export default {
-  fetchOverpassData,
-  getIndoorData,
-  getBuildingData,
   fetchLocalGeojson,
+  fetchFilteredIndoorData,
 };

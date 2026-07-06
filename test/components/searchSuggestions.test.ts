@@ -46,8 +46,10 @@ describe("SearchSuggestions", () => {
       <div id="searchAnnouncement" aria-live="polite" aria-atomic="true"></div>
     `;
     input = document.getElementById("indoorSearchInput") as HTMLInputElement;
-    getCategoryIcon = require("../../src/services/featureService").getCategoryIcon;
-    SearchSuggestions = require("../../src/components/ui/searchSuggestions").default;
+    getCategoryIcon = (
+      jest.requireMock("../../src/services/featureService") as { getCategoryIcon: jest.Mock }
+    ).getCategoryIcon;
+    SearchSuggestions = jest.requireActual("../../src/components/ui/searchSuggestions").default as typeof SearchSuggestions;
   });
 
   afterEach(() => {

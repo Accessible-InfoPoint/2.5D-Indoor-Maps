@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Accessible indoor map for exploring buildings, levels, rooms, and accessibility features.">
     <title>AccessibleMaps Mobile</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="./dist/main.css" rel="stylesheet">
 </head>
 
 <body>
-            <div class="spinner-border ms-3 d-none" role="status" id="loadingIndicator">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+<div id="loadingIndicatorWrapper" class="d-none" aria-hidden="true" inert>
+    <div class="spinner-border" role="status" id="loadingIndicator" tabindex="-1">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 <div id="toastWrapper"></div>
 
+<main id="appMain" aria-label="Accessible indoor map">
 <div id="map" aria-disabled="true"></div>
 <div id="flatMap" aria-disabled="true"></div>
 
@@ -29,14 +33,17 @@
     </div>
 
     <!--           BUILDING AND ROOM DESCRIPTION           -->
-    <aside class="description" id="descriptionArea" aria-label="descriptionArea">
+    <aside class="description" id="descriptionArea" aria-label="descriptionArea" aria-live="polite" aria-atomic="true">
         <strong id="selectedBuilding"></strong>
         <span id="description"></span>
     </aside>
 
     <!--           INDOOR ROOM SEARCH           -->
     <div id="indoorSearchWrapper">
-        <div class="from-group row flex-nowrap" id="indoorSearchBar">
+          <button id="centeringButton" class="square" aria-label="Set view to the focused building" title="Set view to the focused building">
+            <span class="material-icons" aria-hidden="true">center_focus_weak</span>
+          </button>
+          <div class="from-group row flex-nowrap" id="indoorSearchBar">
             <div class="input-group" style="height:var(--button-size)">
                 <input class="form-control" type="text" placeholder="Search indoor"
                        aria-label="Search indoor"
@@ -68,46 +75,39 @@
 
     <!--           LEVEL CONTROL           -->
     <div id="levelControlWrapper">
-        <button id="levelShiftUp" class="square">
-            <span id="levelShiftUpLabel" class="material-icons"aria-hidden="true">expand_less</span>
+        <button id="levelShiftUp" class="square" aria-label="Show higher levels" title="Show higher levels">
+            <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true">expand_less</span>
         </button>
         <div id="levelControlWindow">
             <ul id="levelControl" aria-label="Change displayed level" class="transition">
             </ul>
         </div>
-        <button id="levelShiftDown" class="square">
-            <span id="levelShiftDownLabel" class="material-icons"aria-hidden="true">expand_more</span>
+        <button id="levelShiftDown" class="square" aria-label="Show lower levels" title="Show lower levels">
+            <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true">expand_more</span>
         </button>
     </div>
 
     <!--           WHEELCHAIR-MODE SWITCHER           -->
     <div id="switchWheelchairModeWrapper">
-        <button id="switchWheelchairMode" class="square">
-            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="Icon" width="35" height="35" > <!-- alternative: man -->
+        <button id="switchWheelchairMode" class="square" aria-label="Switch to wheelchair mode" title="Switch to wheelchair mode" aria-pressed="false">
+            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="" aria-hidden="true" width="35" height="35" > <!-- alternative: man -->
         </button>
     </div>
 
     <!--           ZOOM CONTROL           -->
     <div id="zoomControlWrapper">
-        <button id="zoomControlIn" class="square">
-            <span id="zoomControlInLabel" class="material-icons" aria-label="Zoom in" title="Zoom in">add</span>
+        <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
+            <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
         </button>
-        <button id="zoomControlOut" class="square">
-            <span id="zoomControlOutLabel" class="material-icons" aria-label="Zoom out" title="Zoom out">remove</span>
+        <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
+            <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
         </button>
     </div>
 
     <!--           2.5D SWITCHER           -->
     <div id="switch2DViewWrapper">
-        <button id="switch2D" class="square">
-            <span class="material-icons" id="switch2DLabel" aria-label="Switch to 2.5D View" title="Switch to 2.5D View">3d_rotation</span> <!-- alternative: map -->
-        </button>
-    </div>
-
-    <!--           SETTINGS BUTTON           -->
-    <div id="settingsButtonWrapper">
-        <button id="settingsButton" class="square">
-            <span class="material-icons" aria-label="Open Settings" title="Open Settings">settings</span>
+        <button id="switch2D" class="square" aria-label="Switch to 2.5D View" title="Switch to 2.5D View" aria-pressed="false">
+            <span class="material-icons" id="switch2DLabel" aria-hidden="true">3d_rotation</span> <!-- alternative: map -->
         </button>
     </div>
 
@@ -123,21 +123,14 @@
         </ul>
     </div>
 </div>
+</main>
 
 <!--feature selection-->
 <div class="modal fade settings" id="userFeatureSelectionModal" tabindex="-1"
-     aria-labelledby="userFeatureSelectionModal" aria-hidden="true">
+     aria-labelledby="userFeatureModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
-                        aria-label="Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         class="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </button>
                 <h5 class="modal-title" id="userFeatureModalLabel">Select Features</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -160,18 +153,10 @@
 
 <!--display settings-->
 <div class="modal fade settings" id="userVisualSettingsModal" tabindex="-1"
-     aria-labelledby="userVisualSettingsModal" aria-hidden="true">
+     aria-labelledby="visualSettingsLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#userProfileModal"
-                        aria-label="Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         class="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </button>
                 <h5 class="modal-title" id="visualSettingsLabel">Visual Settings</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -192,7 +177,6 @@
     </div>
 </div>
 <script src="./dist/main.js"></script>
-<script src="./dist/style.js"></script>
 
 </body>
 </html>

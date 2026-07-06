@@ -1,5 +1,3 @@
-jest.mock("maptalks", () => {});
-
 import levelService from '../../src/services/levelService';
 import * as hasCurrentLevel from '../../src/utils/hasCurrentLevel';
 import AccessibilityService from '../../src/services/accessibilityService';

@@ -24,6 +24,7 @@ import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
 import CoordinateHelpers from "../utils/coordinateHelpers";
+import { getMotionDuration } from "../utils/motionPreferences";
 import { getFeatureLevels } from "../utils/featureLevels";
 
 export class GeoMap {
@@ -45,6 +46,7 @@ export class GeoMap {
   infoPointLevel = INDOOR_LEVEL;
   configMode = false; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
+  private threePreloadPromise?: Promise<void>;
 
   constructor() {
     const buildingConstants = BackendService.getBuildingConstants();
@@ -83,8 +85,31 @@ export class GeoMap {
     this.handleBuildingLoad();
     this.refreshMapViewportConstraints();
     this.centerMapToBuilding();
+    this.mapView.onceIdle(() => {
+      void this.preload3DAssets().catch((error: unknown) => {
+        console.warn("Could not preload the 3D map assets.", error);
+      });
+    });
 
     return lang.searchBuildingFound;
+  }
+
+  preload3DAssets(): Promise<void> {
+    return Promise
+      .all(Array.from(this.indoorLayers.values(), (layer) => layer.preload3DAssets()))
+      .then((): void => undefined);
+  }
+
+  preload3DView(): Promise<void> {
+    this.threePreloadPromise ??= Promise
+      .all(Array.from(this.indoorLayers.values(), (layer) => layer.preload3DView()))
+      .then((): void => undefined)
+      .catch((error: unknown) => {
+        this.threePreloadPromise = undefined;
+        throw error;
+      });
+
+    return this.threePreloadPromise;
   }
 
   handleBuildingLoad(): void {
@@ -143,11 +168,11 @@ export class GeoMap {
 
     this.camera.animateToCenter(
       center,
-      350
+      getMotionDuration(350)
     );
     setTimeout(() => {
-      this.camera.animateToZoom(this.standardZoom, 350);
-    }, 350);
+      this.camera.animateToZoom(this.standardZoom, getMotionDuration(350));
+    }, getMotionDuration(350));
     setTimeout(() => {
       // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
       console.log(this.camera.getPosition());
@@ -235,7 +260,7 @@ export class GeoMap {
   }
 
   handleLevelChange(newLevel: number): boolean {
-    const animationDuration = 1;
+    const animationDuration = getMotionDuration(1);
 
     if (!this.flatMode && this.isLevelTransitionRunning)
       return false;

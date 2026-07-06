@@ -58,6 +58,14 @@ export class IndoorLevel {
     this.view.show2DView();
   }
 
+  preload3DAssets(): Promise<void> {
+    return this.view.preload3DAssets();
+  }
+
+  preload3DView(): Promise<void> {
+    return this.view.preload3DView();
+  }
+
   /**
    * Shows the level in 3D mode and resets altitude and opacity
    */

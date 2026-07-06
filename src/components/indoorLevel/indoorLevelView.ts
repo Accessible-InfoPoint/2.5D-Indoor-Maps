@@ -12,6 +12,8 @@ export interface IndoorLevelView {
   hideAll(): void;
   showAll(): void;
   show2DView(): void;
+  preload3DAssets(): Promise<void>;
+  preload3DView(): Promise<void>;
   show3DView(): void;
   animateAltitude(
     start: number,
