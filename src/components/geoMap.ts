@@ -25,6 +25,7 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geo
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
 import CoordinateHelpers from "../utils/coordinateHelpers";
+import { getMotionDuration } from "../utils/motionPreferences";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -167,11 +168,11 @@ export class GeoMap {
 
     this.camera.animateToCenter(
       center,
-      350
+      getMotionDuration(350)
     );
     setTimeout(() => {
-      this.camera.animateToZoom(this.standardZoom, 350);
-    }, 350);
+      this.camera.animateToZoom(this.standardZoom, getMotionDuration(350));
+    }, getMotionDuration(350));
     setTimeout(() => {
       // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
       console.log(this.camera.getPosition());
@@ -259,7 +260,7 @@ export class GeoMap {
   }
 
   handleLevelChange(newLevel: number): boolean {
-    const animationDuration = 1;
+    const animationDuration = getMotionDuration(1);
 
     if (!this.flatMode && this.isLevelTransitionRunning)
       return false;

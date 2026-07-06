@@ -188,6 +188,11 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     opacityEnd: number,
     duration = 0.5
   ): Promise<void> {
+    if (duration <= 0) {
+      this.setAltitudeAndOpacity(end, opacityEnd);
+      return Promise.resolve();
+    }
+
     return new Promise((resolve) => {
       let startTime: number | undefined;
 

@@ -20,6 +20,7 @@ import { IndoorLevelRenderModel } from "../indoorLevelRenderModel";
 import { IndoorLevelViewEvents } from "../indoorLevelView";
 import { getMarkerImageId } from "./maplibreIndoorLevelTypes";
 import { registerMarkerImage } from "./maplibreImageRegistry";
+import { getMotionDuration } from "../../../utils/motionPreferences";
 
 interface AccessibilityMarkerCluster extends MarkerCluster {
   id: number;
@@ -251,14 +252,14 @@ export class MapLibreAccessibilityMarkerRenderer {
         zoom: this.map.getZoom() + 1,
         bearing: this.map.getBearing(),
         pitch: this.map.getPitch(),
-        duration: 350,
+        duration: getMotionDuration(350),
       });
       return;
     }
 
     this.map.fitBounds(bounds, {
       bearing: this.map.getBearing(),
-      duration: 350,
+      duration: getMotionDuration(350),
       padding: 80,
       pitch: this.map.getPitch(),
     });

@@ -513,3 +513,14 @@ nav {
 .settings .modal-body .collection:not(:last-child) {
   margin-bottom: 1rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  #uiWrapper button.square,
+  #uiWrapper #levelControl.transition {
+    transition: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -ms-transition: none !important;
+    -o-transition: none !important;
+  }
+}

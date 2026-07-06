@@ -6,6 +6,7 @@ import { getRequiredElement } from "../../utils/domHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
 import LoadingIndicator from "./loadingIndicator";
 import { lang } from "../../services/languageService";
+import { getMotionDuration } from "../../utils/motionPreferences";
 
 function setup(geoMap: GeoMap): void {
   const switch2DButton = getRequiredElement("switch2D") as HTMLButtonElement;
@@ -43,6 +44,7 @@ function setup(geoMap: GeoMap): void {
 
     geoMap.flatMode = nextFlatMode;
     updateSwitch2DPressedState(switch2DButton, geoMap.flatMode);
+    const animationDuration = getMotionDuration(0.5);
 
     if (geoMap.flatMode) {
       switch2DLabel.innerHTML = "3d_rotation";
@@ -57,11 +59,11 @@ function setup(geoMap: GeoMap): void {
       // if we are on the highest level, don't show anything above
       // TODO: move to own function, like "isTopLevel" and "isBottomLevel"
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, animationDuration);
         offset = 1;
       } else {
-        getCurrentIndoorLevel(geoMap).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, 0.5);
-        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getCurrentIndoorLevel(geoMap).animateAltitude(LEVEL_HEIGHT, 0, 1, 1, animationDuration);
+        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration)
         .then(() => {
           getAdjacentIndoorLevel(geoMap, 1).hideAll();
         });
@@ -69,7 +71,7 @@ function setup(geoMap: GeoMap): void {
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
-        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, 0.5)
+        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((2-offset)*LEVEL_HEIGHT, (3-offset)*LEVEL_HEIGHT, OPACITY_TRANSLUCENT_LAYER, 0, animationDuration)
         .then(() => {
           getAdjacentIndoorLevel(geoMap, -1).hideAll();
         });
@@ -89,7 +91,7 @@ function setup(geoMap: GeoMap): void {
         zoomStart: currentCameraPosition.zoom,
         // zoomEnd: wheelchair mode ? geoMap.standardZoomWheelchairMode : geoMap.standardZoom
         zoomEnd: geoMap.standardZoom
-      }, 0.5)
+      }, animationDuration)
     } else {
       switch2DLabel.innerHTML = "map";
       geoMap.camera.setInteractionOptions({
@@ -108,20 +110,20 @@ function setup(geoMap: GeoMap): void {
       let offset = 0;
       // if we are on the highest level, don't show anything above
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) == BackendService.getAllLevels().length - 1) {
-        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, 0, 1, 1, animationDuration);
         offset = 1;
       } else {
-        getCurrentIndoorLevel(geoMap).animateAltitude(0, LEVEL_HEIGHT, 1, 1, 0.5);
+        getCurrentIndoorLevel(geoMap).animateAltitude(0, LEVEL_HEIGHT, 1, 1, animationDuration);
         getAdjacentIndoorLevel(geoMap, 1).show3DView();
         visibleLayers.push(getAdjacentLevel(geoMap, 1))
-        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getAdjacentIndoorLevel(geoMap, 1).animateAltitude(0, 0, 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
       }
 
       // if we are on the lowest level, don't show anything below
       if (BackendService.getAllLevels().indexOf(geoMap.getCurrentLevel()) >= 1) {
         getAdjacentIndoorLevel(geoMap, -1).show3DView();
         visibleLayers.push(getAdjacentLevel(geoMap, -1))
-        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, 0.5);
+        getAdjacentIndoorLevel(geoMap, -1).animateAltitude((3-offset)*LEVEL_HEIGHT, (2-offset)*LEVEL_HEIGHT, 0, OPACITY_TRANSLUCENT_LAYER, animationDuration);
       }
       BackendService.getAllLevels().filter(item => !visibleLayers.includes(item)).forEach(item => {
         getIndoorLevel(geoMap, item).hideAll();
@@ -141,7 +143,7 @@ function setup(geoMap: GeoMap): void {
         pitchEnd: geoMap.standardPitch3DMode,
         zoomStart: currentCameraPosition.zoom,
         zoomEnd: geoMap.standardZoom3DMode
-      }, 0.5).then(() => {
+      }, animationDuration).then(() => {
         geoMap.lockMapCenterToStandardCenter();
       })
     }
@@ -183,6 +185,13 @@ function getAdjacentLevel(geoMap: GeoMap, offset: number): number {
 }
 
 function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): Promise<void> {
+  if (duration <= 0) {
+    camera.setBearing(options.bearingEnd);
+    camera.setPitch(options.pitchEnd);
+    camera.setCenterAndZoom(options.centerEnd, options.zoomEnd);
+    return Promise.resolve();
+  }
+
   let startTime: number | null = null;
   const dir = ((options.bearingStart + 360) % 360) - ((options.bearingEnd + 360) % 360); // neg = clockwise, pos = counter-clockwise
   let bearingEnd = options.bearingEnd;
