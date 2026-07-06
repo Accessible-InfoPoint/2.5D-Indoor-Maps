@@ -14,11 +14,13 @@ useful for the project.
 
 ### Added
 
-- 
+- Added a backend endpoint for serving building-filtered indoor data.
 
 ### Changed
 
-- 
+- Improved map controls with clearer accessible labels, reduced-motion support, static centering button markup, and more robust loading/error feedback.
+- Moved map attribution to the top right, added CARTO/OpenStreetMap/MapLibre attribution text, and adjusted the wheelchair-mode legend layout around it.
+- Improved frontend performance by extracting CSS, trimming unused Bootstrap imports, self-hosting Material icons, and lazy-loading the 3D rendering code.
 
 ### Fixed
 
@@ -26,7 +28,7 @@ useful for the project.
 
 ### Removed
 
-- 
+- Removed the unused maptalks dependency and documentation references.
 
 ## 1.1.0 - 2026-06-28
 
