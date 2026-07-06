@@ -31,6 +31,34 @@ nav {
   display: none !important;
 }
 
+.d-none {
+  display: none !important;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.me-2 {
+  margin-right: 0.5rem !important;
+}
+
+.m-auto {
+  margin: auto !important;
+}
+
+.text-primary {
+  color: var(--bs-primary) !important;
+}
+
+.text-danger {
+  color: var(--bs-danger) !important;
+}
+
 @media screen and (max-width: 1469px){
   nav{
     height: 107px;
@@ -191,15 +219,35 @@ nav {
   // #buildingSearchWrapper
   #indoorSearchWrapper {
     position: absolute;
+    display: flex;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: var(--level-control-gap);
     bottom: $uiPadding;
     left: 50%;
     width: 420px;
+    height: var(--button-size);
     z-index: 1;
     transform: translate(-50%, 0);
     -webkit-transform: translate(-50%, 0);
     -moz-transform: translate(-50%, 0);
     -ms-transform: translate(-50%, 0);
     -o-transform: translate(-50%, 0);
+
+    .input-group {
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+      min-width: 0;
+      height: 100%;
+    }
+
+    #indoorSearchInput {
+      min-width: 0;
+    }
+
+    #centeringButton {
+      flex: 0 0 var(--button-size);
+    }
 
     #indoorSearchSubmit {
       color: var(--button-active-color);
@@ -462,78 +510,6 @@ nav {
 }
 
 
-
-#changeUserProfileBtnLabel{
-  white-space: nowrap;
-}
-
-// #map{
-//   top: 56px;
-// }
-
-// @media screen and (max-width: 1469px){
-//   #indoorSearchWrapper{
-//     margin-top: 5px !important;
-//   }
-// }
-
-
-// @media screen and (max-width: 1469px){
-//   #map{
-//     top: 107px !important;
-//   }
-/*
-  #centeringButton{
-    top: 110px !important;
-  }*/
-// }
-
-.hidden{
-  visibility: hidden;
-  width: 0 !important;
-  height: 0;
-  padding: 0;
-  margin: 0 !important;
-}
-
-.room-label {
-  margin-left: 0;
-
-  color: #000000;
-  background: rgba(255, 255, 255, 0.75);
-
-  border: none;
-  box-shadow: none;
-  /*text-shadow: 0 0 10px #000;*/
-
-  &:before{
-    content: none;
-  }
-}
-
-.leaflet-marker-pane img.leaflet-marker-icon {
-  box-shadow: 2px 2px 8px 0 #00000069;
-  border-radius: 8px;
-}
-
 .settings .modal-body .collection:not(:last-child) {
   margin-bottom: 1rem;
 }
-
-.more-less {
-  float: right;
-  color: #333;
-}
-
-//remove search X from input
-
-/* clears the 'X' from Internet Explorer */
-.hide-clear-icon::-ms-clear {  display: none; width : 0; height: 0; }
-.hide-clear-icon::-ms-reveal {  display: none; width : 0; height: 0; }
-
-/* clears the 'X' from Chrome */
-.hide-clear-icon::-webkit-search-decoration,
-.hide-clear-icon::-webkit-search-cancel-button,
-.hide-clear-icon::-webkit-search-results-button,
-.hide-clear-icon::-webkit-search-results-decoration { display: none; }
-
