@@ -131,9 +131,6 @@ export function filterConnectedPathways(
     return [];
   }
 
-  const lowestNodes = featurePathCoordinates.filter((point) =>
-    lowestPoints.some((lowestPoint) => isFeatureAtPosition(lowestPoint, point))
-  );
   const lowestNodesOnCurrentLevel = featurePathCoordinates.filter((point) =>
     lowestPoints.some(
       (lowestPoint) =>
@@ -144,7 +141,7 @@ export function filterConnectedPathways(
   const doorNodes = featurePathCoordinates.filter((point) =>
     doors.some((door) => isSamePosition(door, point))
   );
-  const specialNodes = lowestNodes.length > 0
+  const specialNodes = lowestNodesOnCurrentLevel.length > 0
     ? lowestNodesOnCurrentLevel
     : doorNodes;
 
