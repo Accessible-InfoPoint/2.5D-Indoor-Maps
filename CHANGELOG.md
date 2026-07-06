@@ -14,17 +14,21 @@ useful for the project.
 
 ### Added
 
-- 
+- Live search suggestion cards with category icons, room-type labels, and keyboard-accessible buttons/ARIA combobox pattern.
+- Clear buttons for search input and errors, plus a suggestion sort-order debug view.
+- Multi-key suggestion sorting (per-field match score, level, wheelchair accessibility, selection/infopoint proximity) via a reusable comparator-chain utility.
 
 ### Changed
 
-- 
+- Enter/Search now routes through the sorted suggestion list instead of the old `handleIndoorSearch`/`runIndoorSearch` path.
+- Search errors now surface inline above the search bar instead of as a top-left toast.
 
 ### Fixed
 
 - Fixed complex staircases not rendering when their feature contains lowest points on another level.
+- Suggestions now filter out features without a level, indoor-type features, waste baskets, and can filter out OSM name artifacts, e.g. ("yes"/"no").
 
-### Removed
+### Reworked
 
 - 
 
