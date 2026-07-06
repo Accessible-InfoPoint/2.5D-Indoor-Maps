@@ -25,6 +25,7 @@ const {
   CARTO_ATTRIBUTION,
   CARTO_TILE_SERVER,
   CARTO_TILE_SUBDOMAINS,
+  MAPLIBRE_ATTRIBUTION,
 } = constants;
 
 interface MapLibreMapViewOptions {
@@ -75,8 +76,15 @@ export class MapLibreMapView implements MapView {
       canvasContextAttributes: {
         antialias: true,
       },
-      attributionControl: {},
+      attributionControl: false,
     });
+    this.map.addControl(
+      new maplibregl.AttributionControl({
+        compact: true,
+        customAttribution: MAPLIBRE_ATTRIBUTION,
+      }),
+      "top-right"
+    );
 
     this.camera = new MapLibreMapCamera(this.map, options.configMode);
     this.syncDebugLogging(options.configMode);

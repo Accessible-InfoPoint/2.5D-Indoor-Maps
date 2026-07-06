@@ -6,7 +6,8 @@
     "LOCAL_GEOJSON_DATA_URL": "/geojson/",
     "MARKERS_IMG_DIR": "/images/",
     "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
-    "CARTO_ATTRIBUTION": "&copy; <a href='http://osm.org'>OpenStreetMap</a> contributors, &copy; <a href='https://carto.com/'>CARTO</a>",
+    "CARTO_ATTRIBUTION": "Map tiles by <a href='https://carto.com/'>CARTO</a>, under <a href='https://creativecommons.org/licenses/by/3.0/'>CC BY 3.0</a>. Data by <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>, under <a href='https://opendatacommons.org/licenses/odbl/'>ODbL</a>.",
+    "MAPLIBRE_ATTRIBUTION": "<a href='https://maplibre.org/'>MapLibre</a>",
     "COLORS": {
         "WALL": "#000000",
         "WALL_SELECTED": "#068288",

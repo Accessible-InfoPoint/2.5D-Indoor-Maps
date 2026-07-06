@@ -4,6 +4,7 @@
 
 $legendWidth: 150px;
 $uiPadding: 15px;
+$mapAttributionHeight: 28px;
 
 html, body{
   overflow-x: hidden;
@@ -424,7 +425,7 @@ nav {
 }
 
   #legendWrapper {
-    top: $uiPadding;
+    top: $uiPadding + $mapAttributionHeight;
     bottom: auto;
     right: $uiPadding;
   }
