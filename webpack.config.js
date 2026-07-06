@@ -41,6 +41,13 @@ module.exports = (_env, argv) => {
                     ]
                 },
                 {
+                    test: /\.(woff2?|ttf|eot)$/i,
+                    type: "asset/resource",
+                    generator: {
+                        filename: "fonts/[name][ext]",
+                    },
+                },
+                {
                     test: /\.(svg|png|jpe?g|gif)$/i,
                     use: [
                         {
