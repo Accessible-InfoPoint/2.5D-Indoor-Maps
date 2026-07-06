@@ -8,24 +8,18 @@ export function translate(): void {
   getRequiredElement("userProfileList").ariaLabel = lang.profileQuickSwitchHeader;
   getRequiredElement("userSettingsList").ariaLabel = lang.settingsHeader;
   getRequiredElement("languageList").ariaLabel = lang.languageHeader;
-  getRequiredElement("switch2D").title = lang.switch2DButton;
-  getRequiredElement("switch2D").ariaLabel = lang.switch2DButton;
-  getRequiredElement("switch2DLabel").title = lang.switch2DButton;
-  getRequiredElement("switch2DLabel").ariaLabel = lang.switch2DButton;
-  getRequiredElement("switchWheelchairMode").title = lang.switchWheelchairModeButton;
-  getRequiredElement("switchWheelchairMode").ariaLabel = lang.switchWheelchairModeButton;
-  getRequiredElement("zoomControlIn").title = lang.zoomInButton;
-  getRequiredElement("zoomControlIn").ariaLabel = lang.zoomInButton;
-  getRequiredElement("zoomControlInLabel").title = lang.zoomInButton;
-  getRequiredElement("zoomControlInLabel").ariaLabel = lang.zoomInButton;
-  getRequiredElement("zoomControlOut").title = lang.zoomOutButton;
-  getRequiredElement("zoomControlOut").ariaLabel = lang.zoomOutButton;
-  getRequiredElement("zoomControlOutLabel").title = lang.zoomOutButton;
-  getRequiredElement("zoomControlOutLabel").ariaLabel = lang.zoomOutButton;
-  getRequiredElement("levelShiftUp").title = lang.showPreviousLevels;
-  getRequiredElement("levelShiftUp").ariaLabel = lang.showPreviousLevels;
-  getRequiredElement("levelShiftDown").title = lang.showNextLevels;
-  getRequiredElement("levelShiftDown").ariaLabel = lang.showNextLevels;
+
+  const switch2D = getRequiredElement("switch2D");
+  const switch2DLabel = switch2D.getAttribute("aria-pressed") === "true"
+    ? lang.switchFlatButton
+    : lang.switch2DButton;
+  setButtonLabel(switch2D, switch2DLabel);
+  setButtonLabel(getRequiredElement("switchWheelchairMode"), lang.switchWheelchairModeButton);
+  setButtonLabel(getRequiredElement("zoomControlIn"), lang.zoomInButton);
+  setButtonLabel(getRequiredElement("zoomControlOut"), lang.zoomOutButton);
+  setButtonLabel(getRequiredElement("levelShiftUp"), lang.showPreviousLevels);
+  setButtonLabel(getRequiredElement("levelShiftDown"), lang.showNextLevels);
+  setButtonLabel(getRequiredElement("centeringButton"), lang.centeringButton);
 
   for (const element of getRequiredElement("levelControl").children) {
     const levelButton = element.firstElementChild;
@@ -43,4 +37,14 @@ export function translate(): void {
   for (const element of document.getElementsByClassName("closeButton")) {
     element.textContent = lang.closeButton
   }
+  for (const element of document.getElementsByClassName("btn-close")) {
+    if (element instanceof HTMLElement) {
+      setButtonLabel(element, lang.closeButton);
+    }
+  }
+}
+
+function setButtonLabel(element: HTMLElement, label: string): void {
+  element.title = label;
+  element.ariaLabel = label;
 }

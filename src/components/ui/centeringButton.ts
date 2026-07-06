@@ -6,8 +6,15 @@ function create(geoMap: GeoMap): void {
   const button = document.createElement("button");
   button.className = "square";
   button.id = "centeringButton";
+  button.ariaLabel = lang.centeringButton;
+  button.title = lang.centeringButton;
   button.onclick = () => geoMap.centerMapToBuilding();
-  button.innerHTML = '<span aria-label="' + lang.centeringButton + '" title="' + lang.centeringButton + '"><i class="material-icons">center_focus_weak</i></span>';
+
+  const icon = document.createElement("span");
+  icon.className = "material-icons";
+  icon.ariaHidden = "true";
+  icon.innerText = "center_focus_weak";
+  button.appendChild(icon);
 
   const indoorSearch = getRequiredElement("indoorSearchWrapper");
   indoorSearch.insertBefore(button, indoorSearch.firstChild);

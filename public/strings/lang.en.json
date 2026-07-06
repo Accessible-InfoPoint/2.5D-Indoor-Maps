@@ -32,6 +32,7 @@
   "languageHeader": "Language",
 
   "switch2DButton": "Switch to 2.5D View",
+  "switchFlatButton": "Switch to 2D View",
   "switchWheelchairModeButton": "Switch to wheelchair mode",
   "zoomInButton": "Zoom in",
   "zoomOutButton": "Zoom out",

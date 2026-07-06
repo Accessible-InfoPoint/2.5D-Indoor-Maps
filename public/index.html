@@ -54,39 +54,39 @@
 
     <!--           LEVEL CONTROL           -->
     <div id="levelControlWrapper">
-        <button id="levelShiftUp" class="square">
+        <button id="levelShiftUp" class="square" aria-label="Show higher levels" title="Show higher levels">
             <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true">expand_less</span>
         </button>
         <div id="levelControlWindow">
             <ul id="levelControl" aria-label="Change displayed level" class="transition">
             </ul>
         </div>
-        <button id="levelShiftDown" class="square">
+        <button id="levelShiftDown" class="square" aria-label="Show lower levels" title="Show lower levels">
             <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true">expand_more</span>
         </button>
     </div>
 
     <!--           WHEELCHAIR-MODE SWITCHER           -->
     <div id="switchWheelchairModeWrapper">
-        <button id="switchWheelchairMode" class="square" aria-pressed="false">
+        <button id="switchWheelchairMode" class="square" aria-label="Switch to wheelchair mode" title="Switch to wheelchair mode" aria-pressed="false">
             <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="" aria-hidden="true" width="35" height="35" > <!-- alternative: man -->
         </button>
     </div>
 
     <!--           ZOOM CONTROL           -->
     <div id="zoomControlWrapper">
-        <button id="zoomControlIn" class="square">
-            <span id="zoomControlInLabel" class="material-icons" aria-label="Zoom in" title="Zoom in">add</span>
+        <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
+            <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
         </button>
-        <button id="zoomControlOut" class="square">
-            <span id="zoomControlOutLabel" class="material-icons" aria-label="Zoom out" title="Zoom out">remove</span>
+        <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
+            <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
         </button>
     </div>
 
     <!--           2.5D SWITCHER           -->
     <div id="switch2DViewWrapper">
-        <button id="switch2D" class="square" aria-pressed="false">
-            <span class="material-icons" id="switch2DLabel" aria-label="Switch to 2.5D View" title="Switch to 2.5D View">3d_rotation</span> <!-- alternative: map -->
+        <button id="switch2D" class="square" aria-label="Switch to 2.5D View" title="Switch to 2.5D View" aria-pressed="false">
+            <span class="material-icons" id="switch2DLabel" aria-hidden="true">3d_rotation</span> <!-- alternative: map -->
         </button>
     </div>
 

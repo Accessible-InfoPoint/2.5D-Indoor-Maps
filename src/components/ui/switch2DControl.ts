@@ -5,6 +5,7 @@ import { MapCamera, MapCenter } from "../map/mapCamera";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
 import LoadingIndicator from "./loadingIndicator";
+import { lang } from "../../services/languageService";
 
 function setup(geoMap: GeoMap): void {
   const switch2DButton = getRequiredElement("switch2D") as HTMLButtonElement;
@@ -229,6 +230,9 @@ function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): 
 
 function updateSwitch2DPressedState(button: HTMLElement, flatMode: boolean): void {
   button.setAttribute("aria-pressed", (!flatMode).toString());
+  const label = flatMode ? lang.switch2DButton : lang.switchFlatButton;
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
 }
 
 
