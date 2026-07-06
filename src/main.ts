@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
       geoMap.showBuilding();
       Legend.create();
       LevelControl.setupControlShifter();
-      CenterBtn.create(geoMap);
+      CenterBtn.setup(geoMap);
       setupUi(geoMap);
       translate();
     })
