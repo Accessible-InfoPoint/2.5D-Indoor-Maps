@@ -9,6 +9,7 @@ import ColorService from "../../services/colorService";
 import DoorService from "../../services/doorService";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import {
+  InfoPointRenderItem,
   IndoorLevelRenderModel,
   RoomRenderItem,
   StyledFeatureRenderItem,
@@ -44,8 +45,8 @@ import {
   createRoomNumberLayers,
   createTactilePavingLayers,
 } from "./maplibre/maplibreLayerDefinitions";
-import { MapLibreThreeIndoorLayer } from "./maplibre/maplibreThreeIndoorLayer";
-import { MapLibreThreeStaircaseRenderItem } from "./maplibre/maplibreThreeStaircases";
+import type { MapLibreThreeIndoorLayer } from "./maplibre/maplibreThreeIndoorLayer";
+import type { MapLibreThreeStaircaseRenderItem } from "./maplibre/maplibreThreeStaircases";
 import {
   buildComplexStaircaseRenderItems,
   buildSimpleStaircaseRenderItems,
@@ -54,6 +55,22 @@ import {
 import { getInfoPointStyle } from "./infoPointStyle";
 
 const SHOW_DOOR_ORIENTATION_DEBUG = false;
+
+type ThreeIndoorLayerModule = typeof import("./maplibre/maplibreThreeIndoorLayer.js");
+
+let threeIndoorLayerModulePromise: Promise<ThreeIndoorLayerModule> | undefined;
+
+function loadThreeIndoorLayerModule(): Promise<ThreeIndoorLayerModule> {
+  threeIndoorLayerModulePromise ??= import(
+    /* webpackChunkName: "three-indoor-layer" */
+    "./maplibre/maplibreThreeIndoorLayer.js"
+  ).catch((error: unknown) => {
+    threeIndoorLayerModulePromise = undefined;
+    throw error;
+  });
+
+  return threeIndoorLayerModulePromise;
+}
 
 export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly infoPoint: MapLibreIndoorLevelLayerSet;
@@ -64,7 +81,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly roomNumbers: MapLibreIndoorLevelLayerSet;
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
   private readonly threeLayerSet: MapLibreIndoorLevelLayerSet;
-  private readonly threeLayer: MapLibreThreeIndoorLayer;
+  private threeLayer?: MapLibreThreeIndoorLayer;
+  private threeLayerPromise?: Promise<MapLibreThreeIndoorLayer>;
   private readonly accessibilityMarkerRenderer: MapLibreAccessibilityMarkerRenderer;
   private pendingRenderModel?: IndoorLevelRenderModel;
   private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
@@ -74,6 +92,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
   private opacity = 1;
+  private threeOutlineCoordinates: GeoJSON.Position[] = [];
+  private threeRooms: RoomRenderItem[] = [];
+  private threeInfoPoint?: InfoPointRenderItem;
+  private threeStaircases: MapLibreThreeStaircaseRenderItem[] = [];
+  private threeAltitude = 0;
+  private threeOpacity = 1;
 
   constructor(
     private readonly level: number,
@@ -95,9 +119,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.roomNumbers = this.createLayerSet("room-numbers", ["label"]);
     this.accessibilityMarkers = this.createLayerSet("accessibility-markers", ["icon"]);
     this.threeLayerSet = this.createLayerSet("three", ["custom"]);
-    this.threeLayer = new MapLibreThreeIndoorLayer(
-      getMapLibreLayerId(this.level, "three", "custom")
-    );
     this.accessibilityMarkerRenderer = new MapLibreAccessibilityMarkerRenderer(
       this.map,
       this.accessibilityMarkers.sourceId,
@@ -120,7 +141,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.setSourceData(this.doorDebug.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
-      this.threeLayer.clear();
+      this.threeOutlineCoordinates = [];
+      this.threeRooms = [];
+      this.threeInfoPoint = undefined;
+      this.threeStaircases = [];
+      this.threeLayer?.clear();
     });
   }
 
@@ -172,6 +197,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.accessibilityMarkers,
     ]);
     this.setAltitudeAndOpacity(0, 1);
+    void this.preload3DView();
   }
 
   show2DView(): void {
@@ -187,11 +213,20 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setAltitudeAndOpacity(0, 1);
   }
 
+  preload3DAssets(): Promise<void> {
+    return loadThreeIndoorLayerModule().then((): void => undefined);
+  }
+
+  preload3DView(): Promise<void> {
+    return this.getThreeLayer().then((): void => undefined);
+  }
+
   show3DView(): void {
     this.setVisibleLayerSets([
       this.threeLayerSet,
     ]);
     this.setAltitudeAndOpacity(0, 1);
+    void this.preload3DView();
   }
 
   animateAltitude(
@@ -202,13 +237,18 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     duration = 0.5
   ): Promise<void> {
     this.opacity = opacityEnd;
+    this.threeAltitude = end;
+    this.threeOpacity = opacityEnd;
     this.whenLayersInitialized(() => this.applyOpacity());
-    return this.threeLayer.animateAltitude(start, end, opacityStart, opacityEnd, duration);
+    return this.getThreeLayer()
+      .then((threeLayer) => threeLayer.animateAltitude(start, end, opacityStart, opacityEnd, duration));
   }
 
   setAltitudeAndOpacity(altitude: number, opacity: number): void {
     this.opacity = opacity;
-    this.threeLayer.setAltitudeAndOpacity(altitude, opacity);
+    this.threeAltitude = altitude;
+    this.threeOpacity = opacity;
+    this.threeLayer?.setAltitudeAndOpacity(altitude, opacity);
     this.whenLayersInitialized(() => this.applyOpacity());
   }
 
@@ -234,7 +274,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
     this.addAccessibilityMarkerLayers();
-    this.addThreeLayer();
     this.addInfoPointLayers();
 
     this.applyOpacity();
@@ -275,9 +314,9 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.accessibilityMarkerRenderer.bindEvents();
   }
 
-  private addThreeLayer(): void {
-    if (!this.map.getLayer(this.threeLayer.id)) {
-      this.map.addLayer(this.threeLayer);
+  private addThreeLayer(threeLayer: MapLibreThreeIndoorLayer): void {
+    if (!this.map.getLayer(threeLayer.id)) {
+      this.map.addLayer(threeLayer);
     }
   }
 
@@ -297,13 +336,15 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderOutline(outlineCoordinates: number[][]): void {
-    this.threeLayer.setOutline(outlineCoordinates);
+    this.threeOutlineCoordinates = outlineCoordinates;
+    this.threeLayer?.setOutline(outlineCoordinates);
   }
 
   private renderInfoPoint(renderModel: IndoorLevelRenderModel): void {
     const infoPointStyle = getInfoPointStyle();
 
-    this.threeLayer.setInfoPoint(renderModel.infoPoint);
+    this.threeInfoPoint = renderModel.infoPoint;
+    this.threeLayer?.setInfoPoint(renderModel.infoPoint);
     this.setSourceData(
       this.infoPoint.sourceId,
       renderModel.infoPoint
@@ -326,7 +367,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private renderRooms(rooms: RoomRenderItem[]): void {
     this.roomFeaturesById.clear();
-    this.threeLayer.setRooms(rooms);
+    this.threeRooms = rooms;
+    this.threeLayer?.setRooms(rooms);
     this.registerRoomPatternImages(rooms);
     const roomFeatures = rooms.map((room) => buildMapLibreRoomFeature(room));
     roomFeatures.forEach((roomFeature) => {
@@ -399,7 +441,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       }),
     ];
 
-    this.threeLayer.setStaircases(items);
+    this.threeStaircases = items;
+    this.threeLayer?.setStaircases(items);
   }
 
   // ===== MapLibre sources and layers ========================================
@@ -475,6 +518,47 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     if (this.map.getLayer(layerId)) {
       this.map.setLayoutProperty(layerId, "visibility", visibility);
     }
+  }
+
+  private getThreeLayer(): Promise<MapLibreThreeIndoorLayer> {
+    if (this.threeLayer) {
+      return Promise.resolve(this.threeLayer);
+    }
+
+    this.threeLayerPromise ??= loadThreeIndoorLayerModule()
+      .then(({ MapLibreThreeIndoorLayer }) =>
+        new MapLibreThreeIndoorLayer(
+          getMapLibreLayerId(this.level, "three", "custom")
+        )
+      )
+      .then((threeLayer) =>
+        new Promise<MapLibreThreeIndoorLayer>((resolve) => {
+          this.whenLayersInitialized(() => {
+            this.threeLayer = threeLayer;
+            this.addThreeLayer(threeLayer);
+            this.applyThreeLayerState(threeLayer);
+            resolve(threeLayer);
+          });
+        })
+      )
+      .catch((error: unknown) => {
+        this.threeLayerPromise = undefined;
+        throw error;
+      });
+
+    return this.threeLayerPromise;
+  }
+
+  private applyThreeLayerState(threeLayer: MapLibreThreeIndoorLayer): void {
+    threeLayer.setOutline(this.threeOutlineCoordinates);
+    threeLayer.setInfoPoint(this.threeInfoPoint);
+    threeLayer.setRooms(this.threeRooms);
+    threeLayer.setStaircases(this.threeStaircases);
+    threeLayer.setAltitudeAndOpacity(this.threeAltitude, this.threeOpacity);
+    this.setLayerVisibility(
+      threeLayer.id,
+      this.visibleLayerIds.has(threeLayer.id) ? "visible" : "none"
+    );
   }
 
   private applyOpacity(): void {

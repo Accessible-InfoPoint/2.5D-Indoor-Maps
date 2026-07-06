@@ -45,6 +45,7 @@ export class GeoMap {
   infoPointLevel = INDOOR_LEVEL;
   configMode = false; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
+  private threePreloadPromise?: Promise<void>;
 
   constructor() {
     const buildingConstants = BackendService.getBuildingConstants();
@@ -83,8 +84,31 @@ export class GeoMap {
     this.handleBuildingLoad();
     this.refreshMapViewportConstraints();
     this.centerMapToBuilding();
+    this.mapView.onceIdle(() => {
+      void this.preload3DAssets().catch((error: unknown) => {
+        console.warn("Could not preload the 3D map assets.", error);
+      });
+    });
 
     return lang.searchBuildingFound;
+  }
+
+  preload3DAssets(): Promise<void> {
+    return Promise
+      .all(Array.from(this.indoorLayers.values(), (layer) => layer.preload3DAssets()))
+      .then((): void => undefined);
+  }
+
+  preload3DView(): Promise<void> {
+    this.threePreloadPromise ??= Promise
+      .all(Array.from(this.indoorLayers.values(), (layer) => layer.preload3DView()))
+      .then((): void => undefined)
+      .catch((error: unknown) => {
+        this.threePreloadPromise = undefined;
+        throw error;
+      });
+
+    return this.threePreloadPromise;
   }
 
   handleBuildingLoad(): void {

@@ -32,4 +32,5 @@ export interface MapView {
   setViewportPadding(padding: MapViewportPadding): void;
   setBaseLayerOpacity(opacity: number): void;
   setSaturation(saturation: number): void;
+  onceIdle(callback: () => void): void;
 }

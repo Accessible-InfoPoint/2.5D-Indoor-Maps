@@ -128,6 +128,10 @@ export class MapLibreMapView implements MapView {
     getRequiredElement("map").style.filter = `saturate(${saturation})`;
   }
 
+  onceIdle(callback: () => void): void {
+    this.map.once("idle", callback);
+  }
+
   private createStyle(): StyleSpecification {
     return {
       version: 8,

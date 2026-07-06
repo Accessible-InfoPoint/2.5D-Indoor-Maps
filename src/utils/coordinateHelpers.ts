@@ -1,5 +1,43 @@
-import { Vector2 } from "three";
 import { getRequiredArrayValue } from "./requiredHelpers";
+
+class Vector2 {
+    constructor(
+        readonly x: number,
+        readonly y: number
+    ) {}
+
+    clone(): Vector2 {
+        return new Vector2(this.x, this.y);
+    }
+
+    sub(vector: Vector2): Vector2 {
+        return new Vector2(this.x - vector.x, this.y - vector.y);
+    }
+
+    add(vector: Vector2): Vector2 {
+        return new Vector2(this.x + vector.x, this.y + vector.y);
+    }
+
+    multiplyScalar(scalar: number): Vector2 {
+        return new Vector2(this.x * scalar, this.y * scalar);
+    }
+
+    dot(vector: Vector2): number {
+        return this.x * vector.x + this.y * vector.y;
+    }
+
+    length(): number {
+        return Math.hypot(this.x, this.y);
+    }
+
+    normalize(): Vector2 {
+        const length = this.length();
+
+        return length > 0
+            ? this.multiplyScalar(1 / length)
+            : new Vector2(0, 0);
+    }
+}
 
 /**
  * Given Latitude and Longitude of two points, calculate the shortest distance between them (along the great circle) in kilometers

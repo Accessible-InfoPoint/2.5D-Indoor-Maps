@@ -4,14 +4,43 @@ import BackendService from "../../services/backendService";
 import { MapCamera, MapCenter } from "../map/mapCamera";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../../utils/requiredHelpers";
+import LoadingIndicator from "./loadingIndicator";
 
 function setup(geoMap: GeoMap): void {
-  const switch2DButton = getRequiredElement("switch2D");
+  const switch2DButton = getRequiredElement("switch2D") as HTMLButtonElement;
   const switch2DLabel = getRequiredElement("switch2DLabel");
   updateSwitch2DPressedState(switch2DButton, geoMap.flatMode);
+  let switchInProgress = false;
 
-  switch2DButton.onclick = () => {
-    geoMap.flatMode = !geoMap.flatMode;
+  switch2DButton.onclick = async () => {
+    if (switchInProgress) {
+      return;
+    }
+
+    const nextFlatMode = !geoMap.flatMode;
+
+    if (!nextFlatMode) {
+      switchInProgress = true;
+      switch2DButton.disabled = true;
+      switch2DButton.setAttribute("aria-busy", "true");
+
+      try {
+        await geoMap.preload3DView();
+      } catch (error: unknown) {
+        console.error(error);
+        LoadingIndicator.error("Could not load the 3D map view.");
+        switch2DButton.disabled = false;
+        switch2DButton.removeAttribute("aria-busy");
+        switchInProgress = false;
+        return;
+      }
+
+      switch2DButton.disabled = false;
+      switch2DButton.removeAttribute("aria-busy");
+      switchInProgress = false;
+    }
+
+    geoMap.flatMode = nextFlatMode;
     updateSwitch2DPressedState(switch2DButton, geoMap.flatMode);
 
     if (geoMap.flatMode) {
