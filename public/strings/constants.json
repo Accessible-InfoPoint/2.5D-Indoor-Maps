@@ -25,6 +25,8 @@
         "ENTRANCE": "entrance.svg",
         "EMERGENCY_EXIT": "emergency_exit.svg",
         "STAIRS": "stairs.svg",
+        "CAFE": "restaurant.svg",
+        "SHOP": "shop.svg",
         "ADDITIONAL": "additional.svg"
     }
 }

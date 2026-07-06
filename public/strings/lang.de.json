@@ -6,6 +6,8 @@
   "buildingSearchPlaceholder": "Nach Gebäuden suchen",
   "indoorSearchPlaceholder": "Im Gebäude suchen",
   "clearBuildingSearch": "Gebäudesuchfeld leeren",
+  "clearIndoorSearch": "Suchfeld leeren",
+  "clearSearchError": "Suchfehler schließen",
   "centeringButton": "Sicht zum fokussierten Gebäude zentrieren",
   "currentBuilding": "Ausgewähltes Gebäude",
   "currentRoom": "Ausgewählter Raum",
@@ -56,6 +58,9 @@
   "searchBuildingFound": "Gebäude gefunden.",
   "searchEmpty": "Bitte einen Suchbegriff eingeben!",
   "searchNotFound": "Nicht gefunden!",
+  "searchSuggestionLevel": "Etage ",
+  "searchSuggestionsAvailable": "{count} Suchvorschläge verfügbar.",
+  "searchSuggestionsNone": "Keine Suchvorschläge verfügbar.",
 
   "buildingNotFound": "Gebäude konnte nicht gefunden werden",
   "buildingErrorFetching": "Ein Fehler ist beim Laden der Gebäudedaten aufgetreten: ",

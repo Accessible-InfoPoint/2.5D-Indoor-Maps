@@ -14,10 +14,15 @@ useful for the project.
 
 ### Added
 
+- Live search suggestion cards with category icons, room-type labels, and keyboard-accessible buttons/ARIA combobox pattern.
+- Clear buttons for search input and errors, plus a suggestion sort-order debug view.
+- Multi-key suggestion sorting (per-field match score, level, wheelchair accessibility, selection/infopoint proximity) via a reusable comparator-chain utility.
 - Added a backend endpoint for serving building-filtered indoor data.
 
 ### Changed
 
+- Enter/Search now routes through the sorted suggestion list instead of the old `handleIndoorSearch`/`runIndoorSearch` path.
+- Search errors now surface inline above the search bar instead of as a top-left toast.
 - Improved map controls with clearer accessible labels, reduced-motion support, static centering button markup, and more robust loading/error feedback.
 - Moved map attribution to the top right, added CARTO/OpenStreetMap/MapLibre attribution text, and adjusted the wheelchair-mode legend layout around it.
 - Improved frontend performance by extracting CSS, trimming unused Bootstrap imports, self-hosting Material icons, and lazy-loading the 3D rendering code.
@@ -25,8 +30,9 @@ useful for the project.
 ### Fixed
 
 - Fixed complex staircases not rendering when their feature contains lowest points on another level.
+- Suggestions now filter out features without a level, indoor-type features, waste baskets, and can filter out OSM name artifacts, e.g. ("yes"/"no").
 
-### Removed
+### Reworked
 
 - Removed the unused maptalks dependency and documentation references.
 

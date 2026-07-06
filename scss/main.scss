@@ -235,6 +235,13 @@ nav {
     -ms-transform: translate(-50%, 0);
     -o-transform: translate(-50%, 0);
 
+    #indoorSearchBar {
+      display: flex;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 100%;
+    }
+
     .input-group {
       flex: 1 1 auto;
       flex-wrap: nowrap;
@@ -257,10 +264,157 @@ nav {
       border: var(--button-border-width) solid var(--button-active-border-color);
     }
 
-    #indoorSearchSubmit:focus-visible {
+    #indoorSearchSubmit:focus-visible, #indoorSearchClear:focus-visible {
       outline: 3px solid var(--button-active-bg);
       outline-offset: 2px;
       box-shadow: 0 0 0 4px rgba(2, 85, 88, 0.2);
+    }
+
+    #indoorSearchClear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--button-size);
+      color: var(--button-color);
+      background-color: var(--button-bg);
+      border-color: var(--button-border-color);
+
+      .material-icons {
+        font-size: 20px;
+      }
+    }
+
+    #indoorSearchClear:hover {
+      background-color: var(--button-hover-bg);
+      border-color: var(--button-hover-border-color);
+      color: var(--button-hover-color);
+    }
+
+    #searchSuggestionsList {
+      display: none;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      // Absolutely positioned (relative to #indoorSearchWrapper, which is
+      // position:absolute) so it renders above the search bar regardless of
+      // DOM order. DOM order is input-then-list so Tab flows input -> search
+      // button -> suggestion cards; using flex `order` instead would risk
+      // decoupling visual position from focus order across browsers.
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
+
+      &.visible {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .search-suggestion-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        font: inherit;
+        text-align: left;
+        color: inherit;
+        background: #fffffff8;
+        border: 1px solid var(--button-border-color);
+        border-radius: var(--button-border-radius);
+        padding: 8px 12px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+
+        &:hover,
+        &:focus-visible,
+        &.active,
+        &[aria-selected="true"] {
+          background: var(--button-hover-bg);
+        }
+
+        .suggestion-text {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+
+        .suggestion-name {
+          display: block;
+          font-weight: 600;
+          color: var(--button-color);
+        }
+
+        .suggestion-levels {
+          display: block;
+          font-size: 0.8em;
+          color: #666;
+          margin-top: 2px;
+        }
+
+        .suggestion-icon {
+          flex: 0 0 auto;
+          width: 32px;
+          height: 32px;
+        }
+      }
+    }
+
+    #searchErrorMessage {
+      display: none;
+      // Same slot as #searchSuggestionsList (above the bar). Mutually
+      // exclusive with it by construction: submitSearch() clears suggestions
+      // before showing an error, and the input listener clears any error
+      // before showing suggestions again.
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
+      padding: 8px 12px;
+      border-radius: var(--button-border-radius);
+      background: var(--bs-danger-bg-subtle, #f8d7da);
+      color: var(--bs-danger-text-emphasis, #842029);
+      border: 1px solid var(--bs-danger-border-subtle, #f5c2c7);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+
+      #searchErrorText {
+        min-width: 0;
+      }
+
+      .search-error-clear {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        color: currentColor;
+        background: transparent;
+        border: 0;
+        border-radius: var(--button-border-radius);
+
+        &:hover,
+        &:focus-visible {
+          background: rgba(0, 0, 0, 0.08);
+        }
+
+        .material-icons {
+          font-size: 18px;
+        }
+      }
+
+      &.visible {
+        display: flex;
+      }
     }
   }
 

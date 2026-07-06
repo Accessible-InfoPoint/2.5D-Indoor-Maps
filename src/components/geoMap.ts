@@ -10,7 +10,6 @@ import {
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
 import BuildingService from "../services/buildingService";
-import LoadingIndicator from "./ui/loadingIndicator";
 import { IndoorLevel } from "./indoorLevel";
 import AccessibilityService from "../services/accessibilityService";
 import LevelService from "../services/levelService";
@@ -21,11 +20,12 @@ import BackendService, { type BuildingCenter } from "../services/backendService"
 import { MapCamera } from "./map/mapCamera";
 import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { getMotionDuration } from "../utils/motionPreferences";
+import { getFeatureLevels } from "../utils/featureLevels";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -363,30 +363,22 @@ export class GeoMap {
     this.indoorLayers.forEach((layer) => layer.updateLayer());
   }
 
-  handleIndoorSearch(searchString: string): void {
-    if (searchString) {
-      const results = BuildingService.runIndoorSearch(searchString);
-      if (results.length != 0) {
-        this.selectedFeatures = results.map((feature) => getRequiredFeatureId(feature));
-        this.indoorLayers.forEach((layer) => layer.updateLayer());
+  selectIndoorFeature(feature: GeoJSON.Feature): void {
+    this.selectedFeatures = [getRequiredFeatureId(feature)];
+    this.indoorLayers.forEach((layer) => layer.updateLayer());
 
-        // from the levels of the feature, select the nearest to the current level
-        const result = getRequiredArrayValue(results, 0, "Indoor search results");
-        const selectedLevel = getRequiredArrayValue(
-          (getRequiredFeatureProperties(result).level as number[])
-            .sort((a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)),
-          0,
-          "Indoor search result levels"
-        );
-        if (this.handleLevelChange(selectedLevel)) {
-          LevelControl.focusOnLevel(selectedLevel);
-        }
+    const levels = getFeatureLevels(feature);
+    if (levels && levels.length > 0) {
+      const selectedLevel = [...levels].sort(
+        (a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel)
+      )[0];
+      if (this.handleLevelChange(selectedLevel)) {
+        LevelControl.focusOnLevel(selectedLevel);
+      }
+    }
 
-        const accessibilityDescription =
-          FeatureService.getAccessibilityDescription(result);
-        DescriptionArea.update(accessibilityDescription);
-      } else LoadingIndicator.error(lang.searchNotFound);
-    } else LoadingIndicator.error(lang.searchEmpty);
+    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
+    DescriptionArea.update(accessibilityDescription);
   }
 
   applyStyleFilters = (): void => {
