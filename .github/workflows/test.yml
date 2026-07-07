@@ -1,6 +1,8 @@
-name: Run Tests
+name: Run Checks
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   test:
@@ -17,5 +19,14 @@ jobs:
     - name: Install modules
       run: npm ci
 
+    - name: Run lint
+      run: npm run lint
+
+    - name: Run typecheck
+      run: npm run typecheck
+
     - name: Run tests
       run: npm test
+
+    - name: Run build
+      run: npm run build
