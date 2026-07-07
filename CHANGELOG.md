@@ -14,11 +14,22 @@ useful for the project.
 
 ### Added
 
--
+- Added a shared `npm run check` command that runs config validation, formatting,
+  linting, type checking, tests, production build, bundle budget checks, and
+  Playwright checks.
+- Added Playwright smoke tests and axe accessibility checks for the map UI,
+  wheelchair mode, and settings modals.
+- Added JSON validation for settings, building constants, constants, color
+  profiles, icon references, and language key/placeholder parity.
+- Added a bundle budget check and server response compression.
+- Added Dependabot configuration and a pull request template.
 
 ### Changed
 
--
+- Expanded GitHub Actions to run the full repository check workflow and upload
+  Playwright reports on failure.
+- Added Prettier formatting and formatted the repository.
+- Documented the local check and formatting workflow.
 
 ### Fixed
 
