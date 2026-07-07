@@ -8,3 +8,6 @@
 /tmp
 .vscode
 /coverage/
+/playwright-report/
+/test-results/
+/debug.log

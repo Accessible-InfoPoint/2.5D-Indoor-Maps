@@ -14,6 +14,11 @@ type DownloadCache = Record<string, number>;
 const cachePath = resolveProjectPath("tmp", "overpass-cache.json");
 
 export async function getOverpassData(): Promise<void> {
+  if (process.env.SKIP_OVERPASS_DOWNLOAD === "true") {
+    console.log("=== Skipping Overpass data download ===");
+    return;
+  }
+
   console.log("=== Downloading Overpass data ===");
 
   const cache = await readDownloadCache();

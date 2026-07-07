@@ -18,7 +18,7 @@ const compat = new FlatCompat({
 export default defineConfig([
     globalIgnores(["**/node_modules", "**/dist", "**/coverage", "**/tmp", "**/*.d.ts", "**/*.js"]),
     {
-        files: ["src/**/*.ts", "test/**/*.ts", "server/**/*.ts", "index.ts"],
+        files: ["src/**/*.ts", "test/**/*.ts", "server/**/*.ts", "e2e/**/*.ts", "index.ts", "playwright.config.ts"],
 
         extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
 

@@ -19,6 +19,7 @@
     "serve": "node dist/server/index.js",
     "serve:watch": "node --watch dist/server/index.js",
     "test": "jest",
+    "test:e2e": "node scripts/runPlaywright.mjs",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc --noEmit && npm run typecheck:server",
@@ -27,7 +28,7 @@
     "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
     "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json",
     "check:bundle": "node scripts/checkBundleBudget.mjs",
-    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle"
+    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.61.1",
     "@types/bootstrap": "^5.2.10",
     "@types/compression": "^1.8.1",
     "@types/geojson": "^7946.0.16",
