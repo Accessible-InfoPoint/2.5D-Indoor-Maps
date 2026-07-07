@@ -12,7 +12,7 @@ export default defineConfig({
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
-    trace: "off",
+    trace: process.env.CI ? "off" : "retain-on-failure",
   },
   projects: [
     {
