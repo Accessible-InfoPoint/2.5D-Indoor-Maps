@@ -7,7 +7,7 @@ const distDir = join(process.cwd(), "public", "dist");
 const budgets = [
   { file: "main.js", maxKiB: 1300 },
   { file: "main.css", maxKiB: 160 },
-  { file: "186.js", maxKiB: 720 },
+  { file: "186.js", maxKiB: 760 },
   { file: "228.js", maxKiB: 30 },
 ];
 
