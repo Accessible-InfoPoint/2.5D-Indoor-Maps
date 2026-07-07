@@ -76,8 +76,8 @@ Run the same checks locally that GitHub Actions runs for pull requests:
 npm run check
 ```
 
-This runs linting, type checking, the Jest test suite, and a production build.
-For stricter migration work, also run:
+This runs linting, type checking, the Jest test suite, a production build, and
+the bundle budget check. For stricter migration work, also run:
 
 ```sh
 npm run typecheck:strict

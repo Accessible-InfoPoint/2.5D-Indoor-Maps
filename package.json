@@ -26,7 +26,8 @@
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
     "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
     "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json",
-    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build"
+    "check:bundle": "node scripts/checkBundleBudget.mjs",
+    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,7 @@
     "@fontsource/material-icons": "^5.2.7",
     "bbox-fns": "^0.20.2",
     "bootstrap": "^5.3.8",
+    "compression": "^1.8.1",
     "express": "^5.2.1",
     "geojson-bounds": "^1.0.4",
     "geojson-polygon-center": "^0.0.0",
@@ -52,6 +54,7 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
     "@types/bootstrap": "^5.2.10",
+    "@types/compression": "^1.8.1",
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
     "@types/three": "^0.175.0",
