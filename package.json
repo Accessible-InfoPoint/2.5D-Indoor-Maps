@@ -70,7 +70,7 @@
     "concurrently": "^10.0.3",
     "css-loader": "^7.1.4",
     "css-minimizer-webpack-plugin": "^8.0.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.6.0",
     "file-loader": "^6.2.0",
     "globals": "^16.0.0",
     "jest": "^30.4.2",
