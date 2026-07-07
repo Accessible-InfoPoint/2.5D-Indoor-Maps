@@ -5,10 +5,7 @@ import {
   STAIRCASE_OUTLINE_OPACITY,
 } from "../../../../public/strings/settings.json";
 import { StaircaseRenderItem } from "../../staircase/staircaseRenderModel";
-import {
-  createSlopedPrismGeometry,
-  createVerticalCylinderGeometry,
-} from "./maplibreThreeGeometry";
+import { createSlopedPrismGeometry, createVerticalCylinderGeometry } from "./maplibreThreeGeometry";
 
 export interface MapLibreThreeStaircaseRenderItem {
   item: StaircaseRenderItem;
@@ -20,7 +17,7 @@ const STAIRCASE_OUTLINE_RENDER_ORDER = 21;
 
 export function createMapLibreThreeStaircaseObjects(
   items: MapLibreThreeStaircaseRenderItem[],
-  origin: maplibregl.MercatorCoordinate
+  origin: maplibregl.MercatorCoordinate,
 ): THREE.Object3D[] {
   return items.flatMap(({ item, color }) => {
     const geometry = createStaircaseGeometry(item, origin);
@@ -33,9 +30,8 @@ export function createMapLibreThreeStaircaseObjects(
 
     const material = createStaircaseMaterial(color, getBaseOpacity(item));
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.renderOrder = item.materialRole == "outline"
-      ? STAIRCASE_OUTLINE_RENDER_ORDER
-      : STAIRCASE_MAIN_RENDER_ORDER;
+    mesh.renderOrder =
+      item.materialRole == "outline" ? STAIRCASE_OUTLINE_RENDER_ORDER : STAIRCASE_MAIN_RENDER_ORDER;
 
     return [mesh];
   });
@@ -43,22 +39,17 @@ export function createMapLibreThreeStaircaseObjects(
 
 function createStaircaseGeometry(
   item: StaircaseRenderItem,
-  origin: maplibregl.MercatorCoordinate
+  origin: maplibregl.MercatorCoordinate,
 ): THREE.BufferGeometry {
   return item.type == "prism"
-    ? createSlopedPrismGeometry(
-        origin,
-        item.coordinates,
-        item.height,
-        item.altitude
-      )
+    ? createSlopedPrismGeometry(origin, item.coordinates, item.height, item.altitude)
     : createVerticalCylinderGeometry(
         origin,
         item.coordinate,
         item.radius,
         item.height,
         item.altitude,
-        item.radialSegments
+        item.radialSegments,
       );
 }
 
@@ -82,10 +73,7 @@ function isRenderableGeometry(geometry: THREE.BufferGeometry): boolean {
   return true;
 }
 
-function createStaircaseMaterial(
-  color: string,
-  baseOpacity: number
-): THREE.MeshBasicMaterial {
+function createStaircaseMaterial(color: string, baseOpacity: number): THREE.MeshBasicMaterial {
   const material = new THREE.MeshBasicMaterial({
     color: createColor(color),
     opacity: baseOpacity,
@@ -103,9 +91,7 @@ function createStaircaseMaterial(
 }
 
 function getBaseOpacity(item: StaircaseRenderItem): number {
-  return item.materialRole == "outline"
-    ? STAIRCASE_OUTLINE_OPACITY
-    : STAIRCASE_OPACITY;
+  return item.materialRole == "outline" ? STAIRCASE_OUTLINE_OPACITY : STAIRCASE_OPACITY;
 }
 
 function createColor(color: string): THREE.Color {

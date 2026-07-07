@@ -21,7 +21,9 @@ function getLevelGeoJSON(level: number): GeoJSON.FeatureCollection {
 
   const currentBuildingIndoorData = BackendService.getGeoJson();
 
-  const levelFilteredFeatures = currentBuildingIndoorData.features.filter((feat) => hasLevel(feat, level));
+  const levelFilteredFeatures = currentBuildingIndoorData.features.filter((feat) =>
+    hasLevel(feat, level),
+  );
   const levelFilteredFeatureCollection: GeoJSON.FeatureCollection<any, any> = {
     type: "FeatureCollection",
     features: levelFilteredFeatures,
@@ -32,13 +34,13 @@ function getLevelGeoJSON(level: number): GeoJSON.FeatureCollection {
 }
 
 function getLevelNames(): string[] {
-  return BackendService.getAllLevels().map(val => val.toString()); // reverse order
+  return BackendService.getAllLevels().map((val) => val.toString()); // reverse order
 }
 
 function getCurrentLevelDescription(currentLevel: number): string {
   const levelAccessibilityInformation = AccessibilityService.getForLevel(
     currentLevel,
-    getCurrentLevelGeoJSON(currentLevel)
+    getCurrentLevelGeoJSON(currentLevel),
   );
   return lang.currentLevel + currentLevel + " " + levelAccessibilityInformation;
 }

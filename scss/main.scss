@@ -6,7 +6,8 @@ $legendWidth: 150px;
 $uiPadding: 15px;
 $mapAttributionHeight: 28px;
 
-html, body{
+html,
+body {
   overflow-x: hidden;
 }
 
@@ -60,8 +61,8 @@ nav {
   color: var(--bs-danger) !important;
 }
 
-@media screen and (max-width: 1469px){
-  nav{
+@media screen and (max-width: 1469px) {
+  nav {
     height: 107px;
   }
 }
@@ -103,11 +104,31 @@ nav {
     text-decoration: none;
     background-color: var(--button-bg);
     border: var(--button-border-width) solid var(--button-border-color);
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    -webkit-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    -moz-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    -ms-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    -o-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    -webkit-transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    -moz-transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    -ms-transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    -o-transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
     width: var(--button-size);
     height: var(--button-size);
     text-align: center;
@@ -176,7 +197,7 @@ nav {
     right: $uiPadding;
     z-index: 1;
     padding: 10px 15px 15px;
-    width: calc(2*var(--button-size) + var(--level-control-gap));
+    width: calc(2 * var(--button-size) + var(--level-control-gap));
     box-sizing: content-box;
     background-color: #fffffff0;
     border: 1px solid gray;
@@ -264,7 +285,8 @@ nav {
       border: var(--button-border-width) solid var(--button-active-border-color);
     }
 
-    #indoorSearchSubmit:focus-visible, #indoorSearchClear:focus-visible {
+    #indoorSearchSubmit:focus-visible,
+    #indoorSearchClear:focus-visible {
       outline: 3px solid var(--button-active-bg);
       outline-offset: 2px;
       box-shadow: 0 0 0 4px rgba(2, 85, 88, 0.2);
@@ -418,7 +440,6 @@ nav {
     }
   }
 
-
   .description {
     position: absolute;
     z-index: 1;
@@ -426,7 +447,7 @@ nav {
     left: 50%;
     transform: translate(-50%, 0);
     width: max-content;
-    max-width: calc(100% - 2*var(--button-size) - 4*#{$uiPadding});
+    max-width: calc(100% - 2 * var(--button-size) - 4 *#{$uiPadding});
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -463,7 +484,7 @@ nav {
     -o-border-radius: var(--button-border-radius);
     // transition: all 0.2s ease-out;
 
-    div#levelControlWindow{
+    div#levelControlWindow {
       height: 222px; // 4 * 48 + 3 * 10, gets overwritten
       overflow: hidden;
 
@@ -501,7 +522,7 @@ nav {
     position: absolute;
     z-index: 1;
     bottom: $uiPadding;
-    left: calc(var(--button-size) + 4*#{$uiPadding});
+    left: calc(var(--button-size) + 4 *#{$uiPadding});
     display: flex;
     gap: var(--level-control-gap);
     flex-direction: row;
@@ -526,7 +547,7 @@ nav {
     -moz-transform: translate(0, -50%);
     -ms-transform: translate(0, -50%);
     -o-transform: translate(0, -50%);
-    max-height: var(--quick-settings-max-height, calc(100% - 2*#{$uiPadding}));
+    max-height: var(--quick-settings-max-height, calc(100% - 2 *#{$uiPadding}));
     overflow-y: auto;
     gap: var(--level-control-gap);
     padding: 10px 15px 15px;
@@ -546,7 +567,7 @@ nav {
 
       flex-direction: row;
       flex-wrap: wrap;
-      width: calc(2*var(--button-size) + var(--level-control-gap));
+      width: calc(2 * var(--button-size) + var(--level-control-gap));
       // width: auto;
       justify-content: center;
 
@@ -576,7 +597,7 @@ nav {
     -moz-transform: none;
     -ms-transform: none;
     -o-transform: none;
-}
+  }
 
   #legendWrapper {
     top: $uiPadding + $mapAttributionHeight;
@@ -586,7 +607,7 @@ nav {
 
   #levelControlWrapper {
     bottom: $uiPadding;
-    left: calc(3* 15px + 2*var(--button-size));
+    left: calc(3 * 15px + 2 * var(--button-size));
     transform: none;
     flex-direction: row;
     top: auto;
@@ -606,13 +627,13 @@ nav {
 
   #switch2DViewWrapper {
     top: auto;
-    bottom: calc(2*#{$uiPadding} + var(--button-size));
+    bottom: calc(2 *#{$uiPadding} + var(--button-size));
     left: $uiPadding;
   }
 
   #zoomControlWrapper {
     bottom: $uiPadding;
-    left: calc(var(--button-size) + 2*#{$uiPadding});
+    left: calc(var(--button-size) + 2 *#{$uiPadding});
     gap: $uiPadding;
     flex-direction: column;
   }
@@ -627,11 +648,11 @@ nav {
     overflow-y: visible;
 
     ul {
-      width: calc(2* var(--button-size) + 1* var(--level-control-gap));
+      width: calc(2 * var(--button-size) + 1 * var(--level-control-gap));
     }
 
     ul#userProfileList {
-      width: calc(3* var(--button-size) + 2* var(--level-control-gap));
+      width: calc(3 * var(--button-size) + 2 * var(--level-control-gap));
     }
 
     hr {
@@ -647,7 +668,7 @@ nav {
   left: 10px;
   z-index: 50;
   @include media-breakpoint-down(md) {
-      top: 200px;
+    top: 200px;
   }
 }
 
@@ -663,7 +684,6 @@ nav {
     height: 3rem;
   }
 }
-
 
 .settings .modal-body .collection:not(:last-child) {
   margin-bottom: 1rem;

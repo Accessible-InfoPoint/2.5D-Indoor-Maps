@@ -7,18 +7,20 @@ const PITCH_DEGREES_PER_PIXEL = -0.5;
 
 export class MapLibreLeftButtonRotateHandler {
   private enabled = false;
-  private dragState: {
-    lastX: number;
-    lastY: number;
-    startX: number;
-    startY: number;
-    moved: boolean;
-    cursor: string;
-  } | undefined;
+  private dragState:
+    | {
+        lastX: number;
+        lastY: number;
+        startX: number;
+        startY: number;
+        moved: boolean;
+        cursor: string;
+      }
+    | undefined;
 
   constructor(
     private readonly map: MapLibreMap,
-    private readonly allowPitch: boolean
+    private readonly allowPitch: boolean,
   ) {}
 
   enable(): void {
@@ -66,7 +68,7 @@ export class MapLibreLeftButtonRotateHandler {
 
     const deltaFromStart = Math.hypot(
       event.clientX - this.dragState.startX,
-      event.clientY - this.dragState.startY
+      event.clientY - this.dragState.startY,
     );
 
     if (!this.dragState.moved && deltaFromStart < CLICK_TOLERANCE_PX) {
@@ -114,7 +116,7 @@ export class MapLibreLeftButtonRotateHandler {
         event.preventDefault();
         event.stopPropagation();
       },
-      { capture: true, once: true }
+      { capture: true, once: true },
     );
   }
 }

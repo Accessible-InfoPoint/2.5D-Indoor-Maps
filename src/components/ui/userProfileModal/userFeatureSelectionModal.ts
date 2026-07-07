@@ -8,10 +8,9 @@ import { getRequiredElement } from "../../../utils/domHelpers";
 
 type SettingsChangeHandler = () => void;
 
-const userFeatureSelectionModal = new Modal(
-  getRequiredElement("userFeatureSelectionModal"),
-  { backdrop: "static" }
-);
+const userFeatureSelectionModal = new Modal(getRequiredElement("userFeatureSelectionModal"), {
+  backdrop: "static",
+});
 
 let checkboxState = FeatureService.getCurrentFeatures();
 
@@ -19,9 +18,7 @@ function render(onSettingsChanged: SettingsChangeHandler): void {
   //create checkboxes and headings
   checkboxState = FeatureService.getCurrentFeatures();
   const currentProfile = UserService.getCurrentProfile();
-  const userAccessibleFeatureList = getRequiredElement(
-    "userAccessibleFeatureList"
-  );
+  const userAccessibleFeatureList = getRequiredElement("userAccessibleFeatureList");
   const userFeatureList = getRequiredElement("userFeatureList");
   userAccessibleFeatureList.innerHTML = "";
   userFeatureList.innerHTML = "";
@@ -42,10 +39,8 @@ function render(onSettingsChanged: SettingsChangeHandler): void {
     }
   });
 
-  getRequiredElement("userFeatureModalLabel").innerText =
-    lang.userFeatureModalLabel;
-  getRequiredElement("featureSelectionHeader").innerText =
-    lang.featureSelectionHeader;
+  getRequiredElement("userFeatureModalLabel").innerText = lang.userFeatureModalLabel;
+  getRequiredElement("featureSelectionHeader").innerText = lang.featureSelectionHeader;
   getRequiredElement("accessibleFeatureSelectionHeader").innerText =
     lang.accessibleFeatureSelectionHeader;
 
@@ -56,18 +51,17 @@ function render(onSettingsChanged: SettingsChangeHandler): void {
 }
 
 function removeEmpty() {
-  [
-    getRequiredElement("userFeatureList"),
-    getRequiredElement("userAccessibleFeatureList"),
-  ].forEach((l) => {
-    if (!l.hasChildNodes()) {
-      l.style.display = "none";
+  [getRequiredElement("userFeatureList"), getRequiredElement("userAccessibleFeatureList")].forEach(
+    (l) => {
+      if (!l.hasChildNodes()) {
+        l.style.display = "none";
 
-      if (l.previousElementSibling instanceof HTMLElement) {
-        l.previousElementSibling.style.display = "none";
+        if (l.previousElementSibling instanceof HTMLElement) {
+          l.previousElementSibling.style.display = "none";
+        }
       }
-    }
-  });
+    },
+  );
 }
 
 function renderCheckbox(v: any): HTMLDivElement {

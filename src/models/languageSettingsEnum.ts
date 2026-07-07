@@ -1,4 +1,4 @@
-export enum LanguageSettingsEnum{
-    english,
-    german
+export enum LanguageSettingsEnum {
+  english,
+  german,
 }

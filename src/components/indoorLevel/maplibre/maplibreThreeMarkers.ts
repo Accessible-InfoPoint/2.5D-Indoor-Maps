@@ -2,10 +2,7 @@ import maplibregl from "maplibre-gl";
 import * as THREE from "three";
 
 type MarkerRenderMode =
-  | "map-facing"
-  | "screen-billboard"
-  | "three-sprite-doc-example"
-  | "three-sprite-texture";
+  "map-facing" | "screen-billboard" | "three-sprite-doc-example" | "three-sprite-texture";
 
 interface MarkerOptions {
   label: string;
@@ -73,8 +70,7 @@ export function getMapLibreThreeMarkerElevationMeters(): number {
 }
 
 export function createMapLibreThreeMarker(options: MarkerOptions): THREE.Object3D {
-  const createTexture = () =>
-    createMarkerTexture(options);
+  const createTexture = () => createMarkerTexture(options);
 
   switch (MARKER_RENDER_MODE) {
     case "three-sprite-doc-example":
@@ -90,33 +86,26 @@ export function createMapLibreThreeMarker(options: MarkerOptions): THREE.Object3
 
 export function updateMapLibreThreeMarkerViewport(
   group: THREE.Group,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ): void {
-  const pixelRatio = canvas.clientWidth > 0
-    ? canvas.width / canvas.clientWidth
-    : 1;
+  const pixelRatio = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;
   const viewportSize = new THREE.Vector2(canvas.width, canvas.height);
   const markerSize = new THREE.Vector2(
     MARKER_SCREEN_WIDTH_PIXELS * pixelRatio,
-    MARKER_SCREEN_HEIGHT_PIXELS * pixelRatio
+    MARKER_SCREEN_HEIGHT_PIXELS * pixelRatio,
   );
 
   group.traverse((child) => {
     const material = (child as THREE.Mesh).material;
 
-    if (
-      material instanceof THREE.ShaderMaterial &&
-      material.userData.isScreenBillboard === true
-    ) {
+    if (material instanceof THREE.ShaderMaterial && material.userData.isScreenBillboard === true) {
       material.uniforms.viewportSize.value.copy(viewportSize);
       material.uniforms.markerSize.value.copy(markerSize);
     }
   });
 }
 
-export function getMapLibreThreeMaterialTexture(
-  material: THREE.Material
-): unknown {
+export function getMapLibreThreeMaterialTexture(material: THREE.Material): unknown {
   if (material instanceof THREE.ShaderMaterial) {
     return material.uniforms.markerTexture?.value;
   }
@@ -128,9 +117,7 @@ export function getMapLibreThreeMaterialTexture(
   return undefined;
 }
 
-function createThreeSpriteDocsExampleMarker(
-  origin: maplibregl.MercatorCoordinate
-): THREE.Sprite {
+function createThreeSpriteDocsExampleMarker(origin: maplibregl.MercatorCoordinate): THREE.Sprite {
   const material = new THREE.SpriteMaterial({
     color: 0xff00ff,
     side: THREE.DoubleSide,
@@ -148,7 +135,7 @@ function createThreeSpriteDocsExampleMarker(
 
 function createSpriteTextureMarker(
   texture: THREE.Texture,
-  origin: maplibregl.MercatorCoordinate
+  origin: maplibregl.MercatorCoordinate,
 ): THREE.Sprite {
   const material = new THREE.SpriteMaterial({
     map: texture,
@@ -174,10 +161,7 @@ function createScreenBillboardMarker(texture: THREE.Texture): THREE.Mesh {
     uniforms: {
       markerTexture: { value: texture },
       markerSize: {
-        value: new THREE.Vector2(
-          MARKER_SCREEN_WIDTH_PIXELS,
-          MARKER_SCREEN_HEIGHT_PIXELS
-        ),
+        value: new THREE.Vector2(MARKER_SCREEN_WIDTH_PIXELS, MARKER_SCREEN_HEIGHT_PIXELS),
       },
       viewportSize: { value: new THREE.Vector2(1, 1) },
       opacity: { value: 1 },
@@ -205,28 +189,9 @@ function createScreenBillboardGeometry(): THREE.BufferGeometry {
 
   geometry.setAttribute(
     "position",
-    new THREE.Float32BufferAttribute(
-      [
-        -0.5, 0, 0,
-        0.5, 0, 0,
-        0.5, 1, 0,
-        -0.5, 1, 0,
-      ],
-      3
-    )
+    new THREE.Float32BufferAttribute([-0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0], 3),
   );
-  geometry.setAttribute(
-    "uv",
-    new THREE.Float32BufferAttribute(
-      [
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
-      ],
-      2
-    )
-  );
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
 
   return geometry;
@@ -234,7 +199,7 @@ function createScreenBillboardGeometry(): THREE.BufferGeometry {
 
 function createMapFacingMarker(
   texture: THREE.Texture,
-  origin: maplibregl.MercatorCoordinate
+  origin: maplibregl.MercatorCoordinate,
 ): THREE.Mesh {
   const material = new THREE.MeshBasicMaterial({
     map: texture,
@@ -247,7 +212,7 @@ function createMapFacingMarker(
   const scale = origin.meterInMercatorCoordinateUnits();
   const geometry = new THREE.PlaneGeometry(
     MARKER_WIDTH_METERS * scale,
-    MARKER_HEIGHT_METERS * scale
+    MARKER_HEIGHT_METERS * scale,
   );
   const marker = new THREE.Mesh(geometry, material);
 
@@ -294,12 +259,7 @@ function createMarkerTexture(options: MarkerOptions): THREE.CanvasTexture {
   return texture;
 }
 
-function drawCircle(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  radius: number
-): void {
+function drawCircle(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
   context.beginPath();
   context.arc(x, y, radius, 0, Math.PI * 2);
   context.closePath();

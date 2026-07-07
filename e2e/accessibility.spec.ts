@@ -12,8 +12,8 @@ async function expectNoSeriousAccessibilityViolations(page: Page): Promise<void>
 
   logAccessibilityViolations(results.violations);
 
-  const failingViolations = results.violations.filter((violation) =>
-    violation.impact === "critical" || violation.impact === "serious"
+  const failingViolations = results.violations.filter(
+    (violation) => violation.impact === "critical" || violation.impact === "serious",
   );
 
   expect(failingViolations).toEqual([]);
@@ -26,13 +26,15 @@ function logAccessibilityViolations(violations: Result[]): void {
   }
 
   console.info("axe accessibility violations:");
-  console.table(violations.map((violation) => ({
-    impact: violation.impact ?? "unknown",
-    rule: violation.id,
-    description: violation.description,
-    nodes: violation.nodes.map((node) => node.target.join(", ")).join(" | "),
-    help: violation.helpUrl,
-  })));
+  console.table(
+    violations.map((violation) => ({
+      impact: violation.impact ?? "unknown",
+      rule: violation.id,
+      description: violation.description,
+      nodes: violation.nodes.map((node) => node.target.join(", ")).join(" | "),
+      help: violation.helpUrl,
+    })),
+  );
 }
 
 test("initial UI has no serious accessibility violations", async ({ page }) => {
@@ -57,7 +59,9 @@ test("visual settings modal has no serious accessibility violations", async ({ p
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
   await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
-  await expect(page.getByRole("dialog", { name: /visual settings|grafische einstellungen/i })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: /visual settings|grafische einstellungen/i }),
+  ).toBeVisible();
 
   await expectNoSeriousAccessibilityViolations(page);
 });
@@ -67,7 +71,9 @@ test("feature selection modal has no serious accessibility violations", async ({
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
   await page.getByRole("button", { name: /feature selection|auswahl/i }).click();
-  await expect(page.getByRole("dialog", { name: /select features|anzuzeigende objekte/i })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: /select features|anzuzeigende objekte/i }),
+  ).toBeVisible();
 
   await expectNoSeriousAccessibilityViolations(page);
 });

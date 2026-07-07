@@ -15,9 +15,9 @@ describe("requiredHelpers", () => {
     it("throws when the key is missing", () => {
       const values = new Map<string, number>();
 
-      expect(() =>
-        getRequiredMapValue(values, "level", "Levels")
-      ).toThrow('Levels is missing required key "level".');
+      expect(() => getRequiredMapValue(values, "level", "Levels")).toThrow(
+        'Levels is missing required key "level".',
+      );
     });
   });
 
@@ -31,9 +31,9 @@ describe("requiredHelpers", () => {
     });
 
     it("throws when the index is missing", () => {
-      expect(() =>
-        getRequiredArrayValue(["a"], 2, "Coordinates")
-      ).toThrow('Coordinates is missing required index "2".');
+      expect(() => getRequiredArrayValue(["a"], 2, "Coordinates")).toThrow(
+        'Coordinates is missing required index "2".',
+      );
     });
   });
 
@@ -43,9 +43,9 @@ describe("requiredHelpers", () => {
     });
 
     it("throws when the value is undefined", () => {
-      expect(() =>
-        getRequiredMatch(undefined, "Bearing node")
-      ).toThrow("Bearing node was not found.");
+      expect(() => getRequiredMatch(undefined, "Bearing node")).toThrow(
+        "Bearing node was not found.",
+      );
     });
   });
 });

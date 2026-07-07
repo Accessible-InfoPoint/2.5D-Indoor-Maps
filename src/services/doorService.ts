@@ -16,18 +16,17 @@ export interface DoorRenderData {
 }
 
 function coordKey(coord: GeoJSON.Position): string {
-  return coord.join(',');
+  return coord.join(",");
 }
 
 function findDoorByCoordinate(
   coord: GeoJSON.Position,
-  levels: number[] = []
+  levels: number[] = [],
 ): DoorDataInterface | null {
   const exactMatches = doorIndex.get(coordKey(coord)) ?? [];
   const exactMatch = findBestLevelMatch(exactMatches, levels);
 
-  if (exactMatch)
-    return exactMatch;
+  if (exactMatch) return exactMatch;
 
   let nearestDoor: DoorDataInterface | null = null;
   let nearestDistance = DOOR_MATCH_TOLERANCE_M;
@@ -48,11 +47,7 @@ function clearDoorIndex() {
   doorIndex.clear();
 }
 
-function addDoor(
-  coord: GeoJSON.Position,
-  levels: Set<number>,
-  geojsonProps: Record<string, any>
-) {
+function addDoor(coord: GeoJSON.Position, levels: Set<number>, geojsonProps: Record<string, any>) {
   const key = coordKey(coord);
   const doors = doorIndex.get(key) ?? [];
   const existingDoor = doors.find((door) => hasSameLevelSet(door.levels, levels));
@@ -62,11 +57,11 @@ function addDoor(
       coord,
       rooms: [],
       levels: levels,
-      properties: { ...geojsonProps }
+      properties: { ...geojsonProps },
     };
     doorIndex.set(key, [...doors, door]);
   } else {
-    console.info("duplicate door", coord, levels, geojsonProps, existingDoor)
+    console.info("duplicate door", coord, levels, geojsonProps, existingDoor);
   }
 }
 
@@ -77,19 +72,18 @@ function checkIfDoorExists(doorCoord: GeoJSON.Position): boolean {
 function addRoomToDoor(
   doorCoord: GeoJSON.Position,
   roomFeature: GeoJSON.Feature,
-  levels: number[] = []
+  levels: number[] = [],
 ) {
   const door = findDoorByCoordinate(doorCoord, levels);
 
-  if (door)
-    door.rooms.push(roomFeature);
+  if (door) door.rooms.push(roomFeature);
 }
 
 function calculateDoorOrientation(
   doorCoord: GeoJSON.Position,
   previous: GeoJSON.Position,
   after: GeoJSON.Position,
-  levels: number[] = []
+  levels: number[] = [],
 ) {
   const door = findDoorByCoordinate(doorCoord, levels);
 
@@ -104,20 +98,18 @@ function calculateDoorOrientation(
       matchedDoorCoord[0] + ((previous[0] - matchedDoorCoord[0]) * doorWidth) / (2 * prevDist),
       CoordinateHelpers.y2lat(
         CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
-          ((CoordinateHelpers.lat2y(previous[1]) -
-            CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
+          ((CoordinateHelpers.lat2y(previous[1]) - CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
             doorWidth) /
-            (2 * prevDist)
+            (2 * prevDist),
       ),
     ];
     const afterDoorCoord = [
       matchedDoorCoord[0] + ((after[0] - matchedDoorCoord[0]) * doorWidth) / (2 * afterDist),
       CoordinateHelpers.y2lat(
         CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
-          ((CoordinateHelpers.lat2y(after[1]) -
-            CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
+          ((CoordinateHelpers.lat2y(after[1]) - CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
             doorWidth) /
-            (2 * afterDist)
+            (2 * afterDist),
       ),
     ];
 
@@ -136,7 +128,7 @@ function calculateDoorOrientation(
 }
 
 function getDoorsByLevel(level: number): DoorDataInterface[] {
-  return getAllDoors().filter(door => door.levels.has(level));
+  return getAllDoors().filter((door) => door.levels.has(level));
 }
 
 function getAllDoors(): DoorDataInterface[] {
@@ -145,7 +137,7 @@ function getAllDoors(): DoorDataInterface[] {
 
 function findBestLevelMatch(
   doors: DoorDataInterface[],
-  levels: number[]
+  levels: number[],
 ): DoorDataInterface | undefined {
   if (levels.length == 0) {
     return doors[0];
@@ -169,24 +161,27 @@ function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): D
   // linear door (e.g. hinged, sliding, opening etc)
   let color = "";
 
-  if (door.rooms.every(feature => {
-    const properties = getRequiredFeatureProperties(feature);
-
-    return ["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes";
-  }))
-    color = FeatureService.getFeatureStyle(door.rooms[0])["polygonFill"] // if every room connected is a corridor or an area (for rooms bordering an area, and it is not a free standing staircase), we draw it in corridor color
-  else
-    color = FeatureService.getFeatureStyle(door.rooms.filter(feature => {
+  if (
+    door.rooms.every((feature) => {
       const properties = getRequiredFeatureProperties(feature);
 
-      return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
-    })[0])["polygonFill"] // else we draw it in the color of the not-corridor (or not-area)
+      return ["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes";
+    })
+  )
+    color = FeatureService.getFeatureStyle(door.rooms[0])["polygonFill"]; // if every room connected is a corridor or an area (for rooms bordering an area, and it is not a free standing staircase), we draw it in corridor color
+  else
+    color = FeatureService.getFeatureStyle(
+      door.rooms.filter((feature) => {
+        const properties = getRequiredFeatureProperties(feature);
 
-  if (door.rooms.some(feature => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
+        return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
+      })[0],
+    )["polygonFill"]; // else we draw it in the color of the not-corridor (or not-area)
+
+  if (door.rooms.some((feature) => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
     color = ColorService.getCurrentColors().roomColorS; // at least one room is selected, color door in selected room color
 
-  if (!door.orientation)
-    return renderData;
+  if (!door.orientation) return renderData;
 
   renderData.push({
     coordinates: door.orientation,
@@ -207,5 +202,5 @@ export default {
   calculateDoorOrientation,
   getDoorsByLevel,
   getRenderData,
-  findDoorByCoordinate
-}
+  findDoorByCoordinate,
+};

@@ -1,7 +1,4 @@
-import {
-  LEVEL_HEIGHT,
-  STAIRCASE_HANDRAIL_HEIGHT,
-} from "../../../public/strings/settings.json";
+import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import { extractLevels } from "../../utils/extractLevels";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
@@ -15,7 +12,7 @@ const complexStaircaseThickness = 0.05;
 
 export function buildSimpleStaircaseRenderItems(
   coordinates: GeoJSON.Position[],
-  altitude: number
+  altitude: number,
 ): StaircaseRenderItem[] {
   return [
     {
@@ -25,8 +22,10 @@ export function buildSimpleStaircaseRenderItems(
       altitude,
       materialRole: "main",
     },
-    ...coordinateHelpers.simplifyByAngle(coordinates, 5).slice(0, -1).map(
-      (coordinate): StaircaseRenderItem => ({
+    ...coordinateHelpers
+      .simplifyByAngle(coordinates, 5)
+      .slice(0, -1)
+      .map((coordinate): StaircaseRenderItem => ({
         type: "cylinder",
         coordinate,
         height: LEVEL_HEIGHT,
@@ -34,27 +33,26 @@ export function buildSimpleStaircaseRenderItems(
         radius: 0.02,
         radialSegments: 10,
         materialRole: "outline",
-      })
-    ),
+      })),
   ];
 }
 
 export function buildComplexStaircaseRenderItems(
   lineStrings: StaircasePath[],
   allNodes: GeoJSON.Feature[],
-  altitude: number
+  altitude: number,
 ): StaircaseRenderItem[] {
   return lineStrings.flatMap(([lineString, width]) => {
     const altitudes = getLineStringAltitudes(lineString, allNodes);
     const offsetLine = coordinateHelpers.offsetCoordinateLine(lineString, width / 2);
     const handrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
       offsetLine,
-      -complexStaircaseThickness
+      -complexStaircaseThickness,
     );
     const oppositeOffsetLine = coordinateHelpers.offsetCoordinateLine(lineString, -width / 2);
     const oppositeHandrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
       oppositeOffsetLine,
-      complexStaircaseThickness
+      complexStaircaseThickness,
     );
 
     const renderItems: StaircaseRenderItem[] = [];
@@ -62,12 +60,36 @@ export function buildComplexStaircaseRenderItems(
     for (let i = 0; i < offsetLine.length - 1; i++) {
       const leftStart = getRequiredArrayValue(offsetLine, i, "Staircase offset line");
       const leftEnd = getRequiredArrayValue(offsetLine, i + 1, "Staircase offset line");
-      const rightStart = getRequiredArrayValue(oppositeOffsetLine, i, "Staircase opposite offset line");
-      const rightEnd = getRequiredArrayValue(oppositeOffsetLine, i + 1, "Staircase opposite offset line");
-      const leftHandrailStart = getRequiredArrayValue(handrailOffsetLine, i, "Staircase handrail offset line");
-      const leftHandrailEnd = getRequiredArrayValue(handrailOffsetLine, i + 1, "Staircase handrail offset line");
-      const rightHandrailStart = getRequiredArrayValue(oppositeHandrailOffsetLine, i, "Staircase opposite handrail offset line");
-      const rightHandrailEnd = getRequiredArrayValue(oppositeHandrailOffsetLine, i + 1, "Staircase opposite handrail offset line");
+      const rightStart = getRequiredArrayValue(
+        oppositeOffsetLine,
+        i,
+        "Staircase opposite offset line",
+      );
+      const rightEnd = getRequiredArrayValue(
+        oppositeOffsetLine,
+        i + 1,
+        "Staircase opposite offset line",
+      );
+      const leftHandrailStart = getRequiredArrayValue(
+        handrailOffsetLine,
+        i,
+        "Staircase handrail offset line",
+      );
+      const leftHandrailEnd = getRequiredArrayValue(
+        handrailOffsetLine,
+        i + 1,
+        "Staircase handrail offset line",
+      );
+      const rightHandrailStart = getRequiredArrayValue(
+        oppositeHandrailOffsetLine,
+        i,
+        "Staircase opposite handrail offset line",
+      );
+      const rightHandrailEnd = getRequiredArrayValue(
+        oppositeHandrailOffsetLine,
+        i + 1,
+        "Staircase opposite handrail offset line",
+      );
       const startAltitude = getRequiredArrayValue(altitudes, i, "Staircase altitudes");
       const endAltitude = getRequiredArrayValue(altitudes, i + 1, "Staircase altitudes");
 
@@ -110,7 +132,7 @@ export function buildComplexStaircaseRenderItems(
           height: STAIRCASE_HANDRAIL_HEIGHT,
           altitude,
           materialRole: "main",
-        }
+        },
       );
     }
 
@@ -123,7 +145,7 @@ export function filterConnectedPathways(
   doors: GeoJSON.Position[],
   lowestPoints: GeoJSON.Feature[],
   pathways: GeoJSON.Feature[],
-  level: number
+  level: number,
 ): StaircasePath[] {
   const connectedPathways = new Set<GeoJSON.Feature>();
   const featurePathCoordinates = getFeaturePathCoordinates(feature);
@@ -134,16 +156,13 @@ export function filterConnectedPathways(
   const lowestNodesOnCurrentLevel = featurePathCoordinates.filter((point) =>
     lowestPoints.some(
       (lowestPoint) =>
-        isFeatureAtPosition(lowestPoint, point) &&
-        isFeatureOnLevel(lowestPoint, level)
-    )
+        isFeatureAtPosition(lowestPoint, point) && isFeatureOnLevel(lowestPoint, level),
+    ),
   );
   const doorNodes = featurePathCoordinates.filter((point) =>
-    doors.some((door) => isSamePosition(door, point))
+    doors.some((door) => isSamePosition(door, point)),
   );
-  const specialNodes = lowestNodesOnCurrentLevel.length > 0
-    ? lowestNodesOnCurrentLevel
-    : doorNodes;
+  const specialNodes = lowestNodesOnCurrentLevel.length > 0 ? lowestNodesOnCurrentLevel : doorNodes;
 
   specialNodes.forEach((specialNode) => {
     const paths = pathways.filter((path) => isRelevantPathway(path, specialNode, level));
@@ -156,8 +175,8 @@ export function filterConnectedPathways(
 
       const lowestIndex = pathCoordinates.findIndex((point) =>
         lowestPoints.some((lowestPoint) =>
-          isSamePosition((lowestPoint.geometry as GeoJSON.Point).coordinates, point)
-        )
+          isSamePosition((lowestPoint.geometry as GeoJSON.Point).coordinates, point),
+        ),
       );
 
       if (lowestIndex > pathCoordinates.length / 2) {
@@ -176,21 +195,23 @@ export function filterConnectedPathways(
       }
 
       const otherNodes = pathCoordinates.filter(
-        (point) => point[0] != specialNode[0] || point[1] != specialNode[1]
+        (point) => point[0] != specialNode[0] || point[1] != specialNode[1],
       );
       const connectedPathwayIds = new Set(
-        Array.from(connectedPathways, (connected) => connected.id)
+        Array.from(connectedPathways, (connected) => connected.id),
       );
       const secondDegreePaths = otherNodes.flatMap((otherNode) =>
         pathways.filter((pathway) => {
           const pathwayCoordinates = getFeaturePathCoordinates(pathway);
 
-          return pathwayCoordinates != undefined &&
-          pathwayCoordinates.some(
-            (pathwayPoint) =>
-              pathwayPoint[0] == otherNode[0] && pathwayPoint[1] == otherNode[1]
-          ) && !connectedPathwayIds.has(getRequiredFeatureId(pathway));
-        })
+          return (
+            pathwayCoordinates != undefined &&
+            pathwayCoordinates.some(
+              (pathwayPoint) => pathwayPoint[0] == otherNode[0] && pathwayPoint[1] == otherNode[1],
+            ) &&
+            !connectedPathwayIds.has(getRequiredFeatureId(pathway))
+          );
+        }),
       );
       secondDegreePaths.forEach((secondDegreePath) => {
         connectedPathways.add(secondDegreePath);
@@ -205,28 +226,20 @@ export function filterConnectedPathways(
     }
 
     const properties = getRequiredFeatureProperties(feature);
-    const width = "width" in properties
-      ? parseFloat(properties.width)
-      : defaultStaircaseWidth;
+    const width = "width" in properties ? parseFloat(properties.width) : defaultStaircaseWidth;
 
-    return [
-      [
-        coordinates,
-        Number.isFinite(width) && width > 0 ? width : defaultStaircaseWidth,
-      ],
-    ];
+    return [[coordinates, Number.isFinite(width) && width > 0 ? width : defaultStaircaseWidth]];
   });
 }
 
 function getLineStringAltitudes(
   lineString: GeoJSON.Position[],
-  allNodes: GeoJSON.Feature[]
+  allNodes: GeoJSON.Feature[],
 ): number[] {
   const nodeLevels = lineString.map((point) => {
     const potentialNode = findNodeAtPosition(point, allNodes);
 
-    if (!potentialNode)
-      return undefined;
+    if (!potentialNode) return undefined;
 
     return getRequiredFeatureProperties(potentialNode)["level"];
   });
@@ -250,8 +263,7 @@ function getLineStringAltitudes(
         }
 
         return (
-          ((parseFloat(getRequiredFeatureProperties(node)["level"]) - min) /
-            (max - min)) *
+          ((parseFloat(getRequiredFeatureProperties(node)["level"]) - min) / (max - min)) *
           (LEVEL_HEIGHT - complexStaircaseThickness)
         );
       });
@@ -260,15 +272,14 @@ function getLineStringAltitudes(
 
   return lineString.map(
     (_point, index) =>
-      (index / (lineString.length - 1)) *
-      (LEVEL_HEIGHT - complexStaircaseThickness)
+      (index / (lineString.length - 1)) * (LEVEL_HEIGHT - complexStaircaseThickness),
   );
 }
 
 function isRelevantPathway(
   path: GeoJSON.Feature,
   specialNode: GeoJSON.Position,
-  level: number
+  level: number,
 ): boolean {
   const pathCoordinates = getFeaturePathCoordinates(path);
   if (!pathCoordinates) {
@@ -278,22 +289,18 @@ function isRelevantPathway(
   const properties = getRequiredFeatureProperties(path);
 
   return (
-    pathCoordinates.some((lineStringPoint) =>
-      isSamePosition(lineStringPoint, specialNode)
-    ) &&
-    (
-      properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
-      extractLevels(properties.repeat_on).includes(level)
-    )
+    pathCoordinates.some((lineStringPoint) => isSamePosition(lineStringPoint, specialNode)) &&
+    (properties.level.at(-1) != level || // when staircase goes from level 0-3, it does not start at level 3, so we filter it out. Also: must be array, as we make that the case in backendService for all polygons and lineStrings
+      extractLevels(properties.repeat_on).includes(level))
   );
 }
 
 function findNodeAtPosition(
   point: GeoJSON.Position,
-  allNodes: GeoJSON.Feature[]
+  allNodes: GeoJSON.Feature[],
 ): GeoJSON.Feature | undefined {
   return allNodes.find((node) =>
-    isSamePosition((node.geometry as GeoJSON.Point).coordinates, point)
+    isSamePosition((node.geometry as GeoJSON.Point).coordinates, point),
   );
 }
 
@@ -304,8 +311,10 @@ function isFeatureAtPosition(feature: GeoJSON.Feature, point: GeoJSON.Position):
 function isFeatureOnLevel(feature: GeoJSON.Feature, level: number): boolean {
   const properties = getRequiredFeatureProperties(feature);
 
-  return extractLevels(properties.level).includes(level) ||
-  extractLevels(properties.repeat_on).includes(level);
+  return (
+    extractLevels(properties.level).includes(level) ||
+    extractLevels(properties.repeat_on).includes(level)
+  );
 }
 
 function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[] | undefined {
@@ -321,16 +330,12 @@ function getFeaturePathCoordinates(feature: GeoJSON.Feature): GeoJSON.Position[]
   }
 
   if (geometry.type == "Polygon") {
-    return getRequiredArrayValue(
-      geometry.coordinates,
-      0,
-      "Staircase pathway polygon coordinates"
-    );
+    return getRequiredArrayValue(geometry.coordinates, 0, "Staircase pathway polygon coordinates");
   }
 
   console.error(
     `Skipping staircase pathway with unsupported geometry type "${geometry.type}".`,
-    feature
+    feature,
   );
   return undefined;
 }

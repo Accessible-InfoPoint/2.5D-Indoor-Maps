@@ -8,9 +8,9 @@ This repository contains the source code for the 2.5D visualization prototype, i
 
 Used technologies:
 
-* MapLibre GL JS: [https://maplibre.org/maplibre-gl-js/docs/](https://maplibre.org/maplibre-gl-js/docs/)
-* THREE.js: [https://threejs.org/](https://threejs.org/)
-* OverpassAPI: [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)
+- MapLibre GL JS: [https://maplibre.org/maplibre-gl-js/docs/](https://maplibre.org/maplibre-gl-js/docs/)
+- THREE.js: [https://threejs.org/](https://threejs.org/)
+- OverpassAPI: [https://wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)
 
 The source files are written in [TypeScript](https://www.typescriptlang.org/).
 
@@ -93,11 +93,11 @@ Configuration fields in `public/strings/settings.json` and
 
 Contains all the static files that are to be sent to clients, including:
 
-* index.html
-* compiled JavaScript bundle files (which also load css styles, included by webpack)
-* OverPass XML files, transformed to GeoJSON (are downloaded and transformed on server start, if necessary)
-* Constants used by the application (general constants for rendering and constants for each building)
-* images, both icons and patterns for indicating wheelchair accessability (generated on server startup)
+- index.html
+- compiled JavaScript bundle files (which also load css styles, included by webpack)
+- OverPass XML files, transformed to GeoJSON (are downloaded and transformed on server start, if necessary)
+- Constants used by the application (general constants for rendering and constants for each building)
+- images, both icons and patterns for indicating wheelchair accessability (generated on server startup)
 
 This directory doesn't contain any application logic!
 
@@ -114,10 +114,10 @@ The client application's source files, written in TypeScript.
 
 Free icon attributions:
 
-* <https://thenounproject.com/>
-* <https://freeicons.io/profile/5790>
-* <https://www.freepik.com>
-* <https://www.flaticon.com/>
+- <https://thenounproject.com/>
+- <https://freeicons.io/profile/5790>
+- <https://www.freepik.com>
+- <https://www.flaticon.com/>
 
 See attribution files for further details.
 

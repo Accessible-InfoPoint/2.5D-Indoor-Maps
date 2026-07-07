@@ -1,10 +1,7 @@
 import { BuildingInterface } from "../models/buildingInterface";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
-import {
-  filterInsideAndLevel,
-  findBuildingBySearchString,
-} from "../utils/buildingGeoJsonFilters";
+import { filterInsideAndLevel, findBuildingBySearchString } from "../utils/buildingGeoJsonFilters";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getFeatureLevels } from "../utils/featureLevels";
 import { chainComparators } from "../utils/compareChain";
@@ -32,7 +29,10 @@ export interface SuggestionSortContext {
  *    we have to again iterate through all building Features to find the id returned by Nominatim.
  */
 
-function handleSearch(featureCollection: GeoJSON.FeatureCollection, searchString: string): Promise<BuildingInterface> {
+function handleSearch(
+  featureCollection: GeoJSON.FeatureCollection,
+  searchString: string,
+): Promise<BuildingInterface> {
   const returnBuilding = findBuildingBySearchString(featureCollection, searchString);
 
   if (returnBuilding) {
@@ -46,18 +46,13 @@ const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 const SEARCH_SUGGESTIONS_DEBUG_KEY = "debugSearchSuggestions";
 
-function getValidName(
-  p: Record<string, unknown>
-): string | undefined {
+function getValidName(p: Record<string, unknown>): string | undefined {
   const name = p.name;
   if (typeof name !== "string" || OSM_NAME_ARTIFACTS.has(name.toLowerCase())) return undefined;
   return name;
 }
 
-function filterForSuggestions(
-  f: GeoJSON.Feature,
-  searchString: string
-): boolean {
+function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
   const p = getRequiredFeatureProperties(f);
   if (getFeatureLevels(f).length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
@@ -69,9 +64,7 @@ function filterForSuggestions(
   );
 }
 
-function getFeatureCentroid(
-  feature: GeoJSON.Feature
-): [number, number] | undefined {
+function getFeatureCentroid(feature: GeoJSON.Feature): [number, number] | undefined {
   const geom = feature.geometry;
   if (geom.type === "Polygon" && geom.coordinates[0]?.length > 0) {
     const ring = geom.coordinates[0];
@@ -119,7 +112,7 @@ function matchQuality(value: string | undefined, query: string): number | undefi
 function matchScore(
   p: Record<string, unknown>,
   validName: string | undefined,
-  searchString: string
+  searchString: string,
 ): number {
   const query = searchString.toLowerCase();
   const fieldValues: Array<[keyof typeof FIELD_PRIORITY, string | undefined]> = [
@@ -131,17 +124,16 @@ function matchScore(
   const scores = fieldValues
     .map(([field, value]) => {
       const quality = matchQuality(value, query);
-      return quality === undefined ? undefined : FIELD_PRIORITY[field] * QUALITY_TIER_COUNT + quality;
+      return quality === undefined
+        ? undefined
+        : FIELD_PRIORITY[field] * QUALITY_TIER_COUNT + quality;
     })
     .filter((score): score is number => score !== undefined);
 
   return Math.min(...scores);
 }
 
-function minLevelDistance(
-  levels: number[],
-  currentLevel: number
-): number {
+function minLevelDistance(levels: number[], currentLevel: number): number {
   return Math.min(...levels.map((l) => Math.abs(l - currentLevel)));
 }
 
@@ -160,7 +152,7 @@ function isSearchSuggestionsDebugEnabled(): boolean {
 
 function searchSuggestions(
   searchString: string,
-  context: SuggestionSortContext
+  context: SuggestionSortContext,
 ): SearchSuggestion[] {
   if (!searchString) return [];
   const geoJSON = getBuildingGeoJSON();
@@ -185,7 +177,7 @@ function searchSuggestions(
     });
 
   const centroids = new Map<string, [number, number] | undefined>(
-    suggestions.map((s) => [s.id, getFeatureCentroid(s.feature)])
+    suggestions.map((s) => [s.id, getFeatureCentroid(s.feature)]),
   );
   const selectedCoords = context.selectedFeature
     ? getFeatureCentroid(context.selectedFeature)
@@ -199,7 +191,7 @@ function searchSuggestions(
 
   const distanceTo = (
     suggestion: SearchSuggestion,
-    coords: [number, number] | undefined
+    coords: [number, number] | undefined,
   ): number | undefined => {
     if (!coords) return undefined;
     const centroid = centroids.get(suggestion.id);
@@ -216,9 +208,11 @@ function searchSuggestions(
   };
 
   const byLevelDistance = (a: SearchSuggestion, b: SearchSuggestion): number =>
-    minLevelDistance(a.levels, context.currentLevel) - minLevelDistance(b.levels, context.currentLevel);
+    minLevelDistance(a.levels, context.currentLevel) -
+    minLevelDistance(b.levels, context.currentLevel);
 
-  const byProximityTo = (coords: [number, number] | undefined) =>
+  const byProximityTo =
+    (coords: [number, number] | undefined) =>
     (a: SearchSuggestion, b: SearchSuggestion): number => {
       if (!coords) return 0;
       const da = distanceTo(a, coords);
@@ -228,13 +222,15 @@ function searchSuggestions(
     };
 
   // Priority order, most important first. Reorder this list to change ranking behavior.
-  const sortedSuggestions = suggestions.sort(chainComparators(
-    byMatchScore,
-    byWheelchairAccessibility,
-    byLevelDistance,
-    byProximityTo(selectedCoords),
-    byProximityTo(infoCoords)
-  ));
+  const sortedSuggestions = suggestions.sort(
+    chainComparators(
+      byMatchScore,
+      byWheelchairAccessibility,
+      byLevelDistance,
+      byProximityTo(selectedCoords),
+      byProximityTo(infoCoords),
+    ),
+  );
 
   // debug view for suggestion rankings
   // activate using: localStorage.setItem("debugSearchSuggestions", "true")
@@ -262,9 +258,9 @@ function logSearchSuggestionRanking(
     infoCoords: [number, number] | undefined;
     distanceTo: (
       suggestion: SearchSuggestion,
-      coords: [number, number] | undefined
+      coords: [number, number] | undefined,
     ) => number | undefined;
-  }
+  },
 ): void {
   if (!isSearchSuggestionsDebugEnabled()) return;
 
@@ -277,10 +273,12 @@ function logSearchSuggestionRanking(
       displayName: suggestion.displayName,
       type: suggestion.type ?? "",
       levels: suggestion.levels.join(", "),
-      matchScore: getRequiredMapValue(debugContext.scores, suggestion.id, "Search suggestion score"),
-      wheelchairScore: debugContext.context.wheelchairMode
-        ? wheelchairAccessible ? 0 : 1
-        : 0,
+      matchScore: getRequiredMapValue(
+        debugContext.scores,
+        suggestion.id,
+        "Search suggestion score",
+      ),
+      wheelchairScore: debugContext.context.wheelchairMode ? (wheelchairAccessible ? 0 : 1) : 0,
       wheelchairAccessible,
       levelDistance: minLevelDistance(suggestion.levels, debugContext.context.currentLevel),
       selectedDistanceSq: debugContext.distanceTo(suggestion, debugContext.selectedCoords) ?? "",
@@ -320,5 +318,5 @@ export default {
   getBuildingDescription,
   handleSearch,
   searchSuggestions,
-  filterInsideAndLevel
+  filterInsideAndLevel,
 };

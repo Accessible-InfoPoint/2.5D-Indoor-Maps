@@ -6,10 +6,7 @@ import type {
 } from "maplibre-gl";
 import * as THREE from "three";
 import { LEVEL_HEIGHT } from "../../../../public/strings/settings.json";
-import {
-  InfoPointRenderItem,
-  RoomRenderItem,
-} from "../indoorLevelRenderModel";
+import { InfoPointRenderItem, RoomRenderItem } from "../indoorLevelRenderModel";
 import {
   createLocalMercatorVector,
   createMercatorOrigin,
@@ -18,10 +15,7 @@ import {
   getOpenRing,
 } from "./maplibreThreeGeometry";
 import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
-import {
-  getStyleNumber,
-  getStyleString,
-} from "./maplibreStyleHelpers";
+import { getStyleNumber, getStyleString } from "./maplibreStyleHelpers";
 import {
   createMapLibreThreeMarker,
   getMapLibreThreeMarkerElevationMeters,
@@ -109,7 +103,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
 
   render(
     _gl: WebGLRenderingContext | WebGL2RenderingContext,
-    { defaultProjectionData }: CustomRenderMethodInput
+    { defaultProjectionData }: CustomRenderMethodInput,
   ): void {
     if (!this.camera || !this.renderer || !this.scene) {
       return;
@@ -186,7 +180,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     end: number,
     opacityStart: number,
     opacityEnd: number,
-    duration = 0.5
+    duration = 0.5,
   ): Promise<void> {
     if (duration <= 0) {
       this.setAltitudeAndOpacity(end, opacityEnd);
@@ -204,7 +198,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
 
         this.setAltitudeAndOpacity(
           start + (end - start) * easedProgress,
-          opacityStart + (opacityEnd - opacityStart) * progress
+          opacityStart + (opacityEnd - opacityStart) * progress,
         );
 
         if (progress < 1) {
@@ -243,15 +237,11 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.modelMatrix.makeTranslation(this.origin.x, this.origin.y, this.origin.z);
     this.applyAltitude();
 
-    const geometry = createPolygonSlabGeometry(
-      this.origin,
-      [ring],
-      OUTLINE_THICKNESS_METERS
-    );
+    const geometry = createPolygonSlabGeometry(this.origin, [ring], OUTLINE_THICKNESS_METERS);
     const outline = new THREE.Mesh(geometry, this.outlineFillMaterial);
     const edges = new THREE.LineSegments(
       new THREE.EdgesGeometry(geometry),
-      this.outlineEdgeMaterial
+      this.outlineEdgeMaterial,
     );
 
     outline.renderOrder = OUTLINE_RENDER_ORDER;
@@ -268,9 +258,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       return;
     }
 
-    this.rooms
-      .filter((room) => room.isVisibleIn3D)
-      .forEach((room) => this.addRoom(room));
+    this.rooms.filter((room) => room.isVisibleIn3D).forEach((room) => this.addRoom(room));
 
     this.applyOpacity();
     this.map?.triggerRepaint();
@@ -282,23 +270,16 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     }
 
     const rings = room.feature.geometry.coordinates;
-    const geometry = createPolygonSurfaceGeometry(
-      this.origin,
-      rings,
-      ROOM_BASE_ELEVATION_METERS
-    );
+    const geometry = createPolygonSurfaceGeometry(this.origin, rings, ROOM_BASE_ELEVATION_METERS);
     const material = createDisposableMeshMaterial(
       getStyleString(room.style, "polygonFill", "#ffffff"),
-      getStyleNumber(room.style, "polygonOpacity", 1)
+      getStyleNumber(room.style, "polygonOpacity", 1),
     );
     const edgeMaterial = createDisposableLineMaterial(
-      getStyleString(room.style, "lineColor", "#000000")
+      getStyleString(room.style, "lineColor", "#000000"),
     );
     const mesh = new THREE.Mesh(geometry, material);
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      edgeMaterial
-    );
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), edgeMaterial);
 
     mesh.renderOrder = ROOM_FILL_RENDER_ORDER;
     edges.renderOrder = ROOM_EDGE_RENDER_ORDER;
@@ -329,7 +310,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       "i",
       infoPointStyle.fillColor,
       infoPointStyle.strokeColor,
-      infoPointStyle.textColor
+      infoPointStyle.textColor,
     );
   }
 
@@ -339,15 +320,11 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       .forEach((room) => {
         const marker = room.selectedPositionMarker;
         const coordinates = getGeometryLabelCenter(
-          marker?.feature.geometry ?? room.feature.geometry
+          marker?.feature.geometry ?? room.feature.geometry,
         );
 
         if (coordinates) {
-          this.addMarker(
-            coordinates,
-            marker?.label ?? "",
-            MAPLIBRE_THREE_SELECTED_POSITION_FILL
-          );
+          this.addMarker(coordinates, marker?.label ?? "", MAPLIBRE_THREE_SELECTED_POSITION_FILL);
         }
       });
   }
@@ -357,7 +334,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     label: string,
     fillColor: string,
     strokeColor?: string,
-    textColor?: string
+    textColor?: string,
   ): void {
     if (!this.origin) {
       return;
@@ -366,7 +343,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     const position = createLocalMercatorVector(
       this.origin,
       coordinates,
-      getMapLibreThreeMarkerElevationMeters()
+      getMapLibreThreeMarkerElevationMeters(),
     );
     const marker = createMapLibreThreeMarker({
       label,
@@ -388,10 +365,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       return;
     }
 
-    const staircaseObjects = createMapLibreThreeStaircaseObjects(
-      this.staircases,
-      this.origin
-    );
+    const staircaseObjects = createMapLibreThreeStaircaseObjects(this.staircases, this.origin);
 
     if (staircaseObjects.length > 0) {
       this.staircasesGroup.add(...staircaseObjects);
@@ -406,8 +380,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       return;
     }
 
-    this.rootGroup.position.z =
-      this.altitudeMeters * this.origin.meterInMercatorCoordinateUnits();
+    this.rootGroup.position.z = this.altitudeMeters * this.origin.meterInMercatorCoordinateUnits();
     this.updateClippingPlane();
   }
 
@@ -506,10 +479,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   }
 }
 
-function createDisposableMeshMaterial(
-  color: string,
-  baseOpacity: number
-): THREE.MeshBasicMaterial {
+function createDisposableMeshMaterial(color: string, baseOpacity: number): THREE.MeshBasicMaterial {
   const material = new THREE.MeshBasicMaterial({
     color: createColor(color),
     opacity: baseOpacity,

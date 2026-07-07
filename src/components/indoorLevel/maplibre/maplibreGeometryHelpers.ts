@@ -2,9 +2,7 @@
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 
-export function getGeometryLabelCenter(
-  geometry: GeoJSON.Geometry
-): GeoJSON.Position | undefined {
+export function getGeometryLabelCenter(geometry: GeoJSON.Geometry): GeoJSON.Position | undefined {
   if (geometry.type == "Polygon") {
     return getPolygonCenter(geometry);
   }
@@ -51,7 +49,7 @@ function getBoundingBoxArea(positions: GeoJSON.Position[]): number {
       minY: Infinity,
       maxX: -Infinity,
       maxY: -Infinity,
-    }
+    },
   );
 
   return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);

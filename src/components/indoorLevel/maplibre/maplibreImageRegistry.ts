@@ -33,7 +33,7 @@ export function registerRoomNumberBackgroundImage(map: MapLibreMap): void {
     1,
     canvas.width - 2,
     canvas.height - 2,
-    ROOM_NUMBER_BACKGROUND_BORDER
+    ROOM_NUMBER_BACKGROUND_BORDER,
   );
   context.fill();
   context.stroke();
@@ -50,14 +50,14 @@ export function registerRoomNumberBackgroundImage(map: MapLibreMap): void {
       ],
       stretchX: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.width - ROOM_NUMBER_BACKGROUND_BORDER]],
       stretchY: [[ROOM_NUMBER_BACKGROUND_BORDER, canvas.height - ROOM_NUMBER_BACKGROUND_BORDER]],
-    }
+    },
   );
 }
 
 export function registerMarkerImage(
   map: MapLibreMap,
   markerFile: string,
-  loadingMarkerImageIds: Set<string>
+  loadingMarkerImageIds: Set<string>,
 ): void {
   const imageId = getMarkerImageId(markerFile);
 
@@ -111,7 +111,7 @@ function drawRoundedRectangle(
   y: number,
   width: number,
   height: number,
-  radius: number
+  radius: number,
 ): void {
   context.beginPath();
   context.moveTo(x + radius, y);

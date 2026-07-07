@@ -53,7 +53,10 @@ document.addEventListener("DOMContentLoaded", function () {
       translate();
     })
     .catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred while loading map data.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while loading map data.";
       console.error(error);
       LoadingIndicator.error(message);
     });

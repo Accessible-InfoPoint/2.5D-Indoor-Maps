@@ -20,7 +20,9 @@ for (const budget of budgets) {
   try {
     sizeKiB = statSync(filePath).size / KiB;
   } catch {
-    console.error(`${budget.file} is missing. Run npm run build before checking the bundle budget.`);
+    console.error(
+      `${budget.file} is missing. Run npm run build before checking the bundle budget.`,
+    );
     failed = true;
     continue;
   }

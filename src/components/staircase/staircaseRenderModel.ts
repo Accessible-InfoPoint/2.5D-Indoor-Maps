@@ -18,6 +18,4 @@ export interface StaircaseCylinderRenderItem {
   materialRole: StaircaseMaterialRole;
 }
 
-export type StaircaseRenderItem =
-  | StaircasePrismRenderItem
-  | StaircaseCylinderRenderItem;
+export type StaircaseRenderItem = StaircasePrismRenderItem | StaircaseCylinderRenderItem;

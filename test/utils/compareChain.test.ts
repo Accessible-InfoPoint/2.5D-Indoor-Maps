@@ -15,7 +15,10 @@ describe("chainComparators", () => {
   });
 
   it("falls back to 0 when all comparators tie", () => {
-    const combined = chainComparators<number>(() => 0, () => 0);
+    const combined = chainComparators<number>(
+      () => 0,
+      () => 0,
+    );
     expect(combined(1, 2)).toBe(0);
   });
 

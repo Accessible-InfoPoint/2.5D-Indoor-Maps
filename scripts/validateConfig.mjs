@@ -139,9 +139,7 @@ function validateConfigRelations(settingsData, buildingConstantsData) {
   const buildingIds = Object.keys(buildingConstantsData);
 
   if (!buildingIds.includes(settingsData.CURRENT_BUILDING)) {
-    errors.push(
-      `settings.json/CURRENT_BUILDING must reference one of: ${buildingIds.join(", ")}`
-    );
+    errors.push(`settings.json/CURRENT_BUILDING must reference one of: ${buildingIds.join(", ")}`);
   }
 
   const startLat = Number(settingsData.MAP_START_LAT);
@@ -158,11 +156,15 @@ function validateConfigRelations(settingsData, buildingConstantsData) {
       errors.push(`${buildingId}: expected MIN_ZOOM <= STANDARD_ZOOM <= MAX_ZOOM.`);
     }
 
-    validateOptionalCoordinatePair(errors, `${buildingId}/STANDARD_CENTER`, building.STANDARD_CENTER);
+    validateOptionalCoordinatePair(
+      errors,
+      `${buildingId}/STANDARD_CENTER`,
+      building.STANDARD_CENTER,
+    );
     validateOptionalCoordinatePair(
       errors,
       `${buildingId}/STANDARD_CENTER_WHEELCHAIR_MODE`,
-      building.STANDARD_CENTER_WHEELCHAIR_MODE
+      building.STANDARD_CENTER_WHEELCHAIR_MODE,
     );
   }
 

@@ -39,7 +39,7 @@ export class MapLibreAccessibilityMarkerRenderer {
     private readonly map: MapLibreMap,
     private readonly sourceId: string,
     private readonly layerId: string,
-    private readonly events: IndoorLevelViewEvents
+    private readonly events: IndoorLevelViewEvents,
   ) {
     this.clusterOptions = resolveMarkerClusterOptions({
       symbol: {
@@ -106,9 +106,11 @@ export class MapLibreAccessibilityMarkerRenderer {
   }
 
   hasMarkerAtClickPoint(event: MapLayerMouseEvent): boolean {
-    return this.map.queryRenderedFeatures(event.point, {
-      layers: [this.layerId],
-    }).length > 0;
+    return (
+      this.map.queryRenderedFeatures(event.point, {
+        layers: [this.layerId],
+      }).length > 0
+    );
   }
 
   private buildMarkerItem(feature: GeoJSON.Feature): ClusterableMarker | undefined {
@@ -146,7 +148,7 @@ export class MapLibreAccessibilityMarkerRenderer {
         ...marker,
         projectedCenter: this.projectMarkerCenter(marker.center),
       })),
-      this.clusterOptions
+      this.clusterOptions,
     ).map((cluster, index) => ({
       ...cluster,
       id: index,
@@ -163,17 +165,12 @@ export class MapLibreAccessibilityMarkerRenderer {
     });
   }
 
-  private buildClusterFeature(
-    cluster: AccessibilityMarkerCluster
-  ): GeoJSON.Feature<GeoJSON.Point> {
+  private buildClusterFeature(cluster: AccessibilityMarkerCluster): GeoJSON.Feature<GeoJSON.Point> {
     return {
       type: "Feature",
       geometry: {
         type: "Point",
-        coordinates: [
-          cluster.center.x,
-          cluster.center.y,
-        ],
+        coordinates: [cluster.center.x, cluster.center.y],
       },
       properties: {
         clusterId: cluster.id,
@@ -266,7 +263,7 @@ export class MapLibreAccessibilityMarkerRenderer {
   }
 
   private getClusterBounds(
-    cluster: MarkerCluster
+    cluster: MarkerCluster,
   ): [[number, number], [number, number]] | undefined {
     if (cluster.markers.length == 0) {
       return undefined;
@@ -284,7 +281,7 @@ export class MapLibreAccessibilityMarkerRenderer {
         south: cluster.markers[0].center.y,
         east: cluster.markers[0].center.x,
         north: cluster.markers[0].center.y,
-      }
+      },
     );
 
     return [

@@ -1,7 +1,10 @@
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
-import BuildingService, { type SearchSuggestion, type SuggestionSortContext } from "../../services/buildingService";
+import BuildingService, {
+  type SearchSuggestion,
+  type SuggestionSortContext,
+} from "../../services/buildingService";
 import SearchSuggestions from "./searchSuggestions";
 import UserService from "../../services/userService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
@@ -38,14 +41,16 @@ function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
   return {
     currentLevel: geoMap.currentLevel,
     selectedFeature,
-    infoPointFeature: geoMap.infoPoint.geometry.type !== "GeometryCollection"
-      ? geoMap.infoPoint
-      : undefined,
+    infoPointFeature:
+      geoMap.infoPoint.geometry.type !== "GeometryCollection" ? geoMap.infoPoint : undefined,
     wheelchairMode: UserService.getCurrentProfile() === UserGroupEnum.wheelchairUsers,
   };
 }
 
-function submitSearch(geoMap: GeoMap, selectSuggestion: (suggestion: SearchSuggestion) => void): void {
+function submitSearch(
+  geoMap: GeoMap,
+  selectSuggestion: (suggestion: SearchSuggestion) => void,
+): void {
   clearSearchError();
   const query = indoorSearchInput.value.trim();
   if (!query) {

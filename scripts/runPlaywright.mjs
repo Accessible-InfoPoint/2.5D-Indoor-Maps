@@ -41,7 +41,9 @@ async function waitForServer(url, childProcess) {
 
   while (Date.now() - startedAt < timeoutMs) {
     if (childProcess.exitCode !== null) {
-      throw new Error(`Server exited before Playwright could connect. Exit code: ${childProcess.exitCode}`);
+      throw new Error(
+        `Server exited before Playwright could connect. Exit code: ${childProcess.exitCode}`,
+      );
     }
 
     if (await canConnect(url)) {

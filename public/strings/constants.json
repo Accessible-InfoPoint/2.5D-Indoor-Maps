@@ -1,32 +1,32 @@
 {
-    "OSM_TILE_SERVER": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
-    "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-    "CARTO_TILE_SUBDOMAINS": ["a", "b", "c", "d"],
-    "LOCAL_GEOJSON_DATA_URL": "/geojson/",
-    "MARKERS_IMG_DIR": "/images/",
-    "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
-    "CARTO_ATTRIBUTION": "Map tiles by <a href='https://carto.com/'>CARTO</a>, under <a href='https://creativecommons.org/licenses/by/3.0/'>CC BY 3.0</a>. Data by <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>, under <a href='https://opendatacommons.org/licenses/odbl/'>ODbL</a>.",
-    "MAPLIBRE_ATTRIBUTION": "<a href='https://maplibre.org/'>MapLibre</a>",
-    "COLORS": {
-        "WALL": "#000000",
-        "WALL_SELECTED": "#068288",
-        "TOILET": "#dfed64",
-        "STAIR": "#dddddd",
-        "ROOM": "#025558",
-        "ROOM_SELECTED": "#FF6F03"
-    },
-    "ICONS": {
-        "INFO": "information.svg",
-        "TOILETS_WHEELCHAIR": "toilets_wheelchair.svg",
-        "ELEVATOR": "elevator2_freepik.svg",
-        "WHEELCHAIR": "wheelchair.svg",
-        "TOILETS": "toilets.svg",
-        "ENTRANCE": "entrance.svg",
-        "EMERGENCY_EXIT": "emergency_exit.svg",
-        "STAIRS": "stairs.svg",
-        "CAFE": "restaurant.svg",
-        "SHOP": "shop.svg",
-        "ADDITIONAL": "additional.svg"
-    }
+  "OSM_TILE_SERVER": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "OSM_TILE_SUBDOMAINS": ["a", "b", "c"],
+  "CARTO_TILE_SERVER": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+  "CARTO_TILE_SUBDOMAINS": ["a", "b", "c", "d"],
+  "LOCAL_GEOJSON_DATA_URL": "/geojson/",
+  "MARKERS_IMG_DIR": "/images/",
+  "OSM_ATTRIBUTION": "Map data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
+  "CARTO_ATTRIBUTION": "Map tiles by <a href='https://carto.com/'>CARTO</a>, under <a href='https://creativecommons.org/licenses/by/3.0/'>CC BY 3.0</a>. Data by <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>, under <a href='https://opendatacommons.org/licenses/odbl/'>ODbL</a>.",
+  "MAPLIBRE_ATTRIBUTION": "<a href='https://maplibre.org/'>MapLibre</a>",
+  "COLORS": {
+    "WALL": "#000000",
+    "WALL_SELECTED": "#068288",
+    "TOILET": "#dfed64",
+    "STAIR": "#dddddd",
+    "ROOM": "#025558",
+    "ROOM_SELECTED": "#FF6F03"
+  },
+  "ICONS": {
+    "INFO": "information.svg",
+    "TOILETS_WHEELCHAIR": "toilets_wheelchair.svg",
+    "ELEVATOR": "elevator2_freepik.svg",
+    "WHEELCHAIR": "wheelchair.svg",
+    "TOILETS": "toilets.svg",
+    "ENTRANCE": "entrance.svg",
+    "EMERGENCY_EXIT": "emergency_exit.svg",
+    "STAIRS": "stairs.svg",
+    "CAFE": "restaurant.svg",
+    "SHOP": "shop.svg",
+    "ADDITIONAL": "additional.svg"
+  }
 }

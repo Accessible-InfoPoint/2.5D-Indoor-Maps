@@ -10,7 +10,7 @@ describe("getDistanceBetweenCoordinatesInM", () => {
   });
 
   it("returns 0 for identical coordinates", () => {
-    const point = [13.4050, 52.5200];
+    const point = [13.405, 52.52];
     expect(coordHelpers.getDistanceBetweenCoordinatesInM(point, point)).toBeCloseTo(0);
   });
 });
@@ -81,16 +81,13 @@ describe("offsetCoordinateLine", () => {
   it("moves the line by ~5 meters", () => {
     const originalLine: GeoJSON.Position[] = [
       [10.0, 50.0],
-      [10.001, 50.0]
+      [10.001, 50.0],
     ];
 
     const offsetLine = coordHelpers.offsetCoordinateLine(originalLine, 5);
 
     for (let i = 0; i < originalLine.length; i++) {
-      const dist = coordHelpers.getDistanceBetweenCoordinatesInM(
-        originalLine[i],
-        offsetLine[i]
-      );
+      const dist = coordHelpers.getDistanceBetweenCoordinatesInM(originalLine[i], offsetLine[i]);
       expect(dist).toBeCloseTo(5, 0); // Within 1 meter tolerance
     }
   });
@@ -98,7 +95,7 @@ describe("offsetCoordinateLine", () => {
   it("inverts direction for negative offset", () => {
     const originalLine: GeoJSON.Position[] = [
       [10.0, 50.0],
-      [10.001, 50.0]
+      [10.001, 50.0],
     ];
 
     const offsetA = coordHelpers.offsetCoordinateLine(originalLine, 5);

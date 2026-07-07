@@ -14,15 +14,15 @@ useful for the project.
 
 ### Added
 
-- 
+-
 
 ### Changed
 
-- 
+-
 
 ### Fixed
 
-- 
+-
 
 ### Removed
 
@@ -84,17 +84,17 @@ useful for the project.
 
 ### Added
 
-- 
+-
 
 ### Changed
 
-- 
+-
 
 ### Fixed
 
-- 
+-
 
 ### Removed
 
-- 
+-
 ```

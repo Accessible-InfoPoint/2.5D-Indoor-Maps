@@ -9,17 +9,15 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "./geoJsonHel
 
 export function findBuildingBySearchString(
   featureCollection: GeoJSON.FeatureCollection,
-  searchString: string
+  searchString: string,
 ): BuildingInterface | undefined {
   const building = featureCollection.features.find((feature) => {
     const properties = getRequiredFeatureProperties(feature);
 
     return (
       properties.building !== undefined &&
-      (
-        (properties.name !== undefined && properties.name === searchString) ||
-        (properties.loc_ref !== undefined && properties.loc_ref === searchString)
-      )
+      ((properties.name !== undefined && properties.name === searchString) ||
+        (properties.loc_ref !== undefined && properties.loc_ref === searchString))
     );
   });
 
@@ -35,30 +33,30 @@ export function findBuildingBySearchString(
 
 export function findFeatureById(
   featureCollection: GeoJSON.FeatureCollection,
-  featureId: string
+  featureId: string,
 ): GeoJSON.Feature | undefined {
   return featureCollection.features.find((feature) => getRequiredFeatureId(feature) === featureId);
 }
 
 export function filterFeaturesByIndoorSearch(
   featureCollection: GeoJSON.FeatureCollection,
-  searchString: string
+  searchString: string,
 ): GeoJSON.Feature[] {
   const normalizedSearchString = searchString.toLowerCase();
 
   return featureCollection.features.filter((feature) =>
-    matchesIndoorSearch(feature, normalizedSearchString)
+    matchesIndoorSearch(feature, normalizedSearchString),
   );
 }
 
 export function filterByBounds(
   geoJSON: GeoJsonObject,
-  buildingBBox: Array<number>
+  buildingBBox: Array<number>,
 ): GeoJSON.FeatureCollection {
   const featureCollection = geoJSON as GeoJSON.FeatureCollection;
 
   const filteredFeatures = featureCollection.features.filter((feature) =>
-    doFilterByBounds(feature, buildingBBox)
+    doFilterByBounds(feature, buildingBBox),
   );
 
   return {
@@ -67,7 +65,9 @@ export function filterByBounds(
   };
 }
 
-export function filterInsideAndLevel(featureCollection: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+export function filterInsideAndLevel(
+  featureCollection: GeoJSON.FeatureCollection,
+): GeoJSON.FeatureCollection {
   const filteredFeatures = featureCollection.features.filter((feature) => {
     const properties = getRequiredFeatureProperties(feature);
 
@@ -90,10 +90,7 @@ function matchesIndoorSearch(feature: GeoJSON.Feature, normalizedSearchString: s
   );
 }
 
-function doFilterByBounds(
-  feature: GeoJSON.Feature,
-  buildingBBox: Array<number>
-): boolean {
+function doFilterByBounds(feature: GeoJSON.Feature, buildingBBox: Array<number>): boolean {
   if (feature.geometry.type === "GeometryCollection") {
     return false;
   }
@@ -111,7 +108,7 @@ function checkIfValid(feature: GeoJSON.Feature): boolean {
 
 function checkIfInside(
   featureCoordinates: Position[][][] | Position[][] | Position[] | Position,
-  buildingBBox: Array<number>
+  buildingBBox: Array<number>,
 ): boolean {
   switch (getArrayDepth(featureCoordinates)) {
     case 1: {

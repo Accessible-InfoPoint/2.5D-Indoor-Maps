@@ -1,10 +1,5 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
-import {
-  MapCamera,
-  MapCameraPosition,
-  MapCenter,
-  MapInteractionOptions,
-} from "./mapCamera";
+import { MapCamera, MapCameraPosition, MapCenter, MapInteractionOptions } from "./mapCamera";
 import { MapLibreLeftButtonRotateHandler } from "./maplibreLeftButtonRotateHandler";
 import { prefersReducedMotion } from "../../utils/motionPreferences";
 
@@ -13,12 +8,9 @@ export class MapLibreMapCamera implements MapCamera {
 
   constructor(
     private readonly map: MapLibreMap,
-    private readonly configMode: boolean
+    private readonly configMode: boolean,
   ) {
-    this.leftButtonRotateHandler = new MapLibreLeftButtonRotateHandler(
-      map,
-      configMode
-    );
+    this.leftButtonRotateHandler = new MapLibreLeftButtonRotateHandler(map, configMode);
   }
 
   getPosition(): MapCameraPosition {
@@ -100,7 +92,7 @@ export class MapLibreMapCamera implements MapCamera {
 
   private setHandlerState(
     handler: { enable: () => void; disable: () => void },
-    enabled: boolean | undefined
+    enabled: boolean | undefined,
   ): void {
     if (enabled === true) {
       handler.enable();

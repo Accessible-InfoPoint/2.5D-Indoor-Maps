@@ -9,9 +9,10 @@ let quickSettingsLayoutFrame: number | undefined;
 let quickSettingsLayoutObserverSetup = false;
 
 function applyStoredLayout(): void {
-  getRequiredElement("uiWrapper")
-    .classList
-    .toggle("wheelchairMode", localStorage.getItem(wheelchairModeKey) == "true");
+  getRequiredElement("uiWrapper").classList.toggle(
+    "wheelchairMode",
+    localStorage.getItem(wheelchairModeKey) == "true",
+  );
 }
 
 function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void {
@@ -24,9 +25,12 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
 
   getRequiredElement("switchWheelchairMode").onclick = () => {
     levelControl.classList.remove("transition");
-    
+
     uiWrapper.classList.toggle("wheelchairMode");
-    localStorage.setItem(wheelchairModeKey, uiWrapper.classList.contains("wheelchairMode").toString());
+    localStorage.setItem(
+      wheelchairModeKey,
+      uiWrapper.classList.contains("wheelchairMode").toString(),
+    );
     if (uiWrapper.classList.contains("wheelchairMode")) {
       if (UserService.getCurrentProfile() != UserGroupEnum.wheelchairUsers) {
         UserService.setProfile(UserGroupEnum.wheelchairUsers);
@@ -39,7 +43,7 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
     LevelControl.setMargin();
     setTimeout(() => {
       levelControl.classList.add("transition");
-    }, 200)
+    }, 200);
 
     if (uiWrapper.classList.contains("wheelchairMode")) {
       setIndoorSearchWheelchairLayout();
@@ -56,7 +60,7 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
     setTimeout(() => {
       setIndoorSearchWheelchairLayout();
       onLayoutChanged();
-    }, 200)
+    }, 200);
   }
 
   replaceIcons();
@@ -87,8 +91,10 @@ function setIndoorSearchWheelchairLayout(): void {
   const levelControlWrapper = getRequiredElement("levelControlWrapper");
   const quickSettingsWrapper = getRequiredElement("quickSettingsWrapper");
 
-  indoorSearchWrapper.style.left = (levelControlWrapper.offsetLeft + levelControlWrapper.offsetWidth + 15 + 12) + "px";
-  indoorSearchWrapper.style.right = (document.body.clientWidth - quickSettingsWrapper.offsetLeft + 15 + 50) + "px";
+  indoorSearchWrapper.style.left =
+    levelControlWrapper.offsetLeft + levelControlWrapper.offsetWidth + 15 + 12 + "px";
+  indoorSearchWrapper.style.right =
+    document.body.clientWidth - quickSettingsWrapper.offsetLeft + 15 + 50 + "px";
 }
 
 function setupQuickSettingsLayoutObserver(): void {

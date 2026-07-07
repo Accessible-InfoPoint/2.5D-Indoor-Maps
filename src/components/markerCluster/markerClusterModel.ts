@@ -46,7 +46,7 @@ export const defaultMarkerClusterOptions: ResolvedMarkerClusterOptions = {
 };
 
 export function resolveMarkerClusterOptions(
-  options: MarkerClusterOptions = {}
+  options: MarkerClusterOptions = {},
 ): ResolvedMarkerClusterOptions {
   return {
     ...defaultMarkerClusterOptions,
@@ -56,27 +56,25 @@ export function resolveMarkerClusterOptions(
 
 export function buildMarkerClusters(
   markers: ClusterableMarker[],
-  options: ResolvedMarkerClusterOptions
+  options: ResolvedMarkerClusterOptions,
 ): MarkerCluster[] {
   let remaining = [...markers];
   const clusters: MarkerCluster[] = [];
 
   while (remaining.length) {
     const next = remaining.pop();
-    if (!next)
-      break;
+    if (!next) break;
 
     const cluster = [next];
     const unclustered: ClusterableMarker[] = [];
 
-    remaining.sort((a, b) =>
-      Number(a.markerFile === next.markerFile) - Number(b.markerFile === next.markerFile)
+    remaining.sort(
+      (a, b) => Number(a.markerFile === next.markerFile) - Number(b.markerFile === next.markerFile),
     );
 
     while (remaining.length) {
       const candidate = remaining.pop();
-      if (!candidate)
-        break;
+      if (!candidate) break;
 
       if (cluster.some((clusterMarker) => belongsToCluster(candidate, clusterMarker, options))) {
         cluster.push(candidate);
@@ -100,8 +98,7 @@ export function getMarkerFile(symbol: MarkerSymbol | undefined): string | undefi
   if (Array.isArray(symbol))
     return symbol.map(getMarkerFile).find((markerFile) => markerFile !== undefined);
 
-  if (!symbol)
-    return undefined;
+  if (!symbol) return undefined;
 
   const markerFile = symbol.markerFile;
   return typeof markerFile === "string" ? markerFile : undefined;
@@ -110,33 +107,35 @@ export function getMarkerFile(symbol: MarkerSymbol | undefined): string | undefi
 function belongsToCluster(
   candidate: ClusterableMarker,
   clusterMarker: ClusterableMarker,
-  options: ResolvedMarkerClusterOptions
+  options: ResolvedMarkerClusterOptions,
 ): boolean {
   const distance = getDistance(candidate.projectedCenter, clusterMarker.projectedCenter);
 
-  return distance < options.maxClusterRadius ||
-    candidate.markerFile === clusterMarker.markerFile &&
-    distance < options.sameSymbolClusterRadius;
+  return (
+    distance < options.maxClusterRadius ||
+    (candidate.markerFile === clusterMarker.markerFile &&
+      distance < options.sameSymbolClusterRadius)
+  );
 }
 
 function getClusterSymbol(
   cluster: ClusterableMarker[],
-  options: ResolvedMarkerClusterOptions
+  options: ResolvedMarkerClusterOptions,
 ): MarkerSymbol | undefined {
-  if (!options.combineSameSymbol)
-    return options.symbol;
+  if (!options.combineSameSymbol) return options.symbol;
 
   const markerFiles = new Set(cluster.map((marker) => marker.markerFile));
 
-  if (markerFiles.size === 1)
-    return cluster[0].symbol;
+  if (markerFiles.size === 1) return cluster[0].symbol;
 
-  if (hasExactlySameValues(
-    markerFiles,
-    new Set([MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR, MARKERS_IMG_DIR + ICONS.WHEELCHAIR])
-  )) {
+  if (
+    hasExactlySameValues(
+      markerFiles,
+      new Set([MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR, MARKERS_IMG_DIR + ICONS.WHEELCHAIR]),
+    )
+  ) {
     return cluster.find(
-      (marker) => marker.markerFile === MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR
+      (marker) => marker.markerFile === MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR,
     )?.symbol;
   }
 
@@ -145,8 +144,12 @@ function getClusterSymbol(
 
 function getClusterCenter(cluster: ClusterableMarker[]): ClusterPoint {
   return {
-    x: cluster.map((marker) => marker.center.x).reduce((previous, value) => previous + value, 0) / cluster.length,
-    y: cluster.map((marker) => marker.center.y).reduce((previous, value) => previous + value, 0) / cluster.length,
+    x:
+      cluster.map((marker) => marker.center.x).reduce((previous, value) => previous + value, 0) /
+      cluster.length,
+    y:
+      cluster.map((marker) => marker.center.y).reduce((previous, value) => previous + value, 0) /
+      cluster.length,
   };
 }
 

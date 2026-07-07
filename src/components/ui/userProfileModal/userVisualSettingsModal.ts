@@ -7,10 +7,9 @@ import { getRequiredElement } from "../../../utils/domHelpers";
 
 type SettingsChangeHandler = () => void;
 
-const userVisualSettingsModal = new Modal(
-  getRequiredElement("userVisualSettingsModal"),
-  { backdrop: "static" }
-);
+const userVisualSettingsModal = new Modal(getRequiredElement("userVisualSettingsModal"), {
+  backdrop: "static",
+});
 
 const colorBlindnessList = getRequiredElement("colorBlindnessList");
 const contrastSettingsList = getRequiredElement("contrastSettingsList");
@@ -41,10 +40,8 @@ function render(onSettingsChanged: SettingsChangeHandler): void {
   renderContrastSettingsList();
 
   getRequiredElement("visualSettingsLabel").innerText = lang.visualSettingsLabel;
-  getRequiredElement("colorBlindnessHeader").innerText =
-    lang.colorBlindnessHeader;
-  getRequiredElement("contrastSettingsHeader").innerText =
-    lang.contrastSettingsHeader;
+  getRequiredElement("colorBlindnessHeader").innerText = lang.colorBlindnessHeader;
+  getRequiredElement("contrastSettingsHeader").innerText = lang.contrastSettingsHeader;
 
   const saveFeaturesButton = getRequiredElement("saveVisualSettings");
   saveFeaturesButton.onclick = () => onSave(onSettingsChanged);
@@ -110,15 +107,14 @@ function renderRangeInput(name: string): HTMLDivElement {
     state.contrastSettings[name as prop][1]
   }</label>
     <input type="range" class="form-range" id="${name}" step="10" min="0" max="100" value="${
-    state.contrastSettings[name as prop][0]
-  }">`;
+      state.contrastSettings[name as prop][0]
+    }">`;
 
   range_div.onchange = (e: Event) => {
     type prop = keyof typeof state.contrastSettings;
     const prop = (<HTMLElement>e.target).id;
 
-    state.contrastSettings[prop as prop][0] = +(<HTMLInputElement>e.target)
-      .value;
+    state.contrastSettings[prop as prop][0] = +(<HTMLInputElement>e.target).value;
   };
   return range_div;
 }

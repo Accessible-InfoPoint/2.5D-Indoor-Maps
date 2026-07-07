@@ -1,5 +1,4 @@
 {
-
   "baseColor": "#FBFCFE",
   "roomColor": "#FFCCBC",
   "roomColorS": "#663300",
@@ -10,13 +9,14 @@
   "inServiceColor": "#FFCCBC",
   "elevatorColor": "#FF5252",
 
-  "zoom": [{
-    "doors_primary": true,
-    "doors_secondary": false,
-    "toilets": false,
-    "staircases": false,
-    "elevators": false
-  },
+  "zoom": [
+    {
+      "doors_primary": true,
+      "doors_secondary": false,
+      "toilets": false,
+      "staircases": false,
+      "elevators": false
+    },
     {
       "doors_primary": true,
       "doors_secondary": false,

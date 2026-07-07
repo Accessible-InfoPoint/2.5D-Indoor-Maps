@@ -6,16 +6,13 @@ const propertiesByLevel = new Map<number, string>();
 
 function getForLevel(
   level: number,
-  featureCollection: GeoJSON.FeatureCollection<any, any>
+  featureCollection: GeoJSON.FeatureCollection<any, any>,
 ): string {
   if (propertiesByLevel.get(level) !== undefined) {
     return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
   }
 
-  propertiesByLevel.set(
-    level,
-    getAccessibilityInformation(featureCollection.features)
-  );
+  propertiesByLevel.set(level, getAccessibilityInformation(featureCollection.features));
   return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
 }
 
@@ -23,25 +20,17 @@ function reset(): void {
   propertiesByLevel.clear();
 }
 
-function getAccessibilityInformation(
-  geoJSONFeatures: GeoJSON.Feature<any, any>[]
-): string {
+function getAccessibilityInformation(geoJSONFeatures: GeoJSON.Feature<any, any>[]): string {
   let returnString = "";
 
   levelAccessibilityProperties.forEach((levelAccessibilityProperty) => {
-    if (
-      !levelAccessibilityProperty.userGroups.includes(
-        UserService.getCurrentProfile()
-      )
-    ) {
+    if (!levelAccessibilityProperty.userGroups.includes(UserService.getCurrentProfile())) {
       return; // only show properties for currently selected user profile
     }
 
-    const foundAccessibilityFeature = geoJSONFeatures.some(
-      (feature: GeoJSON.Feature<any, any>) => {
-        return levelAccessibilityProperty.hasCorrectProperties(feature);
-      }
-    );
+    const foundAccessibilityFeature = geoJSONFeatures.some((feature: GeoJSON.Feature<any, any>) => {
+      return levelAccessibilityProperty.hasCorrectProperties(feature);
+    });
 
     if (foundAccessibilityFeature) {
       returnString += levelAccessibilityProperty.msgTrue;
@@ -51,7 +40,7 @@ function getAccessibilityInformation(
     returnString += ", ";
   });
 
-  if (returnString){
+  if (returnString) {
     //remove last comma
     returnString = "[" + returnString.slice(0, -2) + "]";
     return returnString;

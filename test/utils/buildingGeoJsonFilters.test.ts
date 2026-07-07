@@ -12,8 +12,26 @@ describe("buildingGeoJsonFilters", () => {
       const collection: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
         features: [
-          polygonFeature("relation/1", [[0, 0], [1, 0], [1, 1], [0, 0]], { building: "yes", name: "Library" }),
-          polygonFeature("relation/2", [[2, 2], [3, 2], [3, 3], [2, 2]], { building: "yes", loc_ref: "APB" }),
+          polygonFeature(
+            "relation/1",
+            [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 0],
+            ],
+            { building: "yes", name: "Library" },
+          ),
+          polygonFeature(
+            "relation/2",
+            [
+              [2, 2],
+              [3, 2],
+              [3, 3],
+              [2, 2],
+            ],
+            { building: "yes", loc_ref: "APB" },
+          ),
         ],
       };
 
@@ -25,7 +43,16 @@ describe("buildingGeoJsonFilters", () => {
       const collection: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
         features: [
-          polygonFeature("relation/1", [[0, 0], [1, 0], [1, 1], [0, 0]], { name: "Library" }),
+          polygonFeature(
+            "relation/1",
+            [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 0],
+            ],
+            { name: "Library" },
+          ),
         ],
       };
 
@@ -37,9 +64,7 @@ describe("buildingGeoJsonFilters", () => {
     it("finds features by normalized GeoJSON id", () => {
       const collection: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
-        features: [
-          pointFeature(1, [0, 0], { level: "0" }),
-        ],
+        features: [pointFeature(1, [0, 0], { level: "0" })],
       };
 
       expect(findFeatureById(collection, "1")?.id).toBe(1);
@@ -58,9 +83,15 @@ describe("buildingGeoJsonFilters", () => {
         ],
       };
 
-      expect(filterFeaturesByIndoorSearch(collection, "a").map((feature) => feature.id)).toEqual(["room"]);
-      expect(filterFeaturesByIndoorSearch(collection, "cor").map((feature) => feature.id)).toEqual(["corridor"]);
-      expect(filterFeaturesByIndoorSearch(collection, "TOI").map((feature) => feature.id)).toEqual(["toilet"]);
+      expect(filterFeaturesByIndoorSearch(collection, "a").map((feature) => feature.id)).toEqual([
+        "room",
+      ]);
+      expect(filterFeaturesByIndoorSearch(collection, "cor").map((feature) => feature.id)).toEqual([
+        "corridor",
+      ]);
+      expect(filterFeaturesByIndoorSearch(collection, "TOI").map((feature) => feature.id)).toEqual([
+        "toilet",
+      ]);
     });
   });
 
@@ -70,8 +101,24 @@ describe("buildingGeoJsonFilters", () => {
         type: "FeatureCollection",
         features: [
           pointFeature("inside-point", [0.5, 0.5], { level: "0" }),
-          lineFeature("inside-line", [[2, 2], [0.5, 0.5]], { level: "0" }),
-          polygonFeature("inside-polygon", [[2, 2], [0.25, 0.25], [2, 0.25], [2, 2]], { level: "0" }),
+          lineFeature(
+            "inside-line",
+            [
+              [2, 2],
+              [0.5, 0.5],
+            ],
+            { level: "0" },
+          ),
+          polygonFeature(
+            "inside-polygon",
+            [
+              [2, 2],
+              [0.25, 0.25],
+              [2, 0.25],
+              [2, 2],
+            ],
+            { level: "0" },
+          ),
           pointFeature("outside", [2, 2], { level: "0" }),
           pointFeature("missing-level", [0.5, 0.5], {}),
         ],
@@ -110,7 +157,7 @@ describe("buildingGeoJsonFilters", () => {
 function pointFeature(
   id: string | number,
   coordinates: GeoJSON.Position,
-  properties: GeoJSON.GeoJsonProperties
+  properties: GeoJSON.GeoJsonProperties,
 ): GeoJSON.Feature<GeoJSON.Point> {
   return {
     type: "Feature",
@@ -126,7 +173,7 @@ function pointFeature(
 function lineFeature(
   id: string,
   coordinates: GeoJSON.Position[],
-  properties: GeoJSON.GeoJsonProperties
+  properties: GeoJSON.GeoJsonProperties,
 ): GeoJSON.Feature<GeoJSON.LineString> {
   return {
     type: "Feature",
@@ -142,7 +189,7 @@ function lineFeature(
 function polygonFeature(
   id: string,
   coordinates: GeoJSON.Position[],
-  properties: GeoJSON.GeoJsonProperties
+  properties: GeoJSON.GeoJsonProperties,
 ): GeoJSON.Feature<GeoJSON.Polygon> {
   return {
     type: "Feature",

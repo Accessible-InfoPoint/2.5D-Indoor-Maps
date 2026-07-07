@@ -26,9 +26,7 @@ function getReadableTextColor(backgroundColor: string): string {
 
   const [r, g, b] = rgb.map((channel) => {
     const normalized = channel / 255;
-    return normalized <= 0.03928
-      ? normalized / 12.92
-      : Math.pow((normalized + 0.055) / 1.055, 2.4);
+    return normalized <= 0.03928 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
   });
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
@@ -39,9 +37,13 @@ function parseColor(color: string): [number, number, number] | undefined {
   const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
 
   if (hex) {
-    const value = hex[1].length == 3
-      ? hex[1].split("").map((part) => part + part).join("")
-      : hex[1];
+    const value =
+      hex[1].length == 3
+        ? hex[1]
+            .split("")
+            .map((part) => part + part)
+            .join("")
+        : hex[1];
 
     return [
       parseInt(value.slice(0, 2), 16),
@@ -56,9 +58,5 @@ function parseColor(color: string): [number, number, number] | undefined {
     return undefined;
   }
 
-  return [
-    parseInt(rgb[1], 10),
-    parseInt(rgb[2], 10),
-    parseInt(rgb[3], 10),
-  ];
+  return [parseInt(rgb[1], 10), parseInt(rgb[2], 10), parseInt(rgb[3], 10)];
 }

@@ -193,17 +193,20 @@ describe("BuildingService.searchSuggestions", () => {
   describe("sort order", () => {
     it("ranks exact displayName match before startsWith before substring", () => {
       const exact: GeoJSON.Feature = {
-        id: "way/10", type: "Feature",
+        id: "way/10",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room", level: [0] },
       };
       const starts: GeoJSON.Feature = {
-        id: "way/11", type: "Feature",
+        id: "way/11",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room 101", level: [0] },
       };
       const contains: GeoJSON.Feature = {
-        id: "way/12", type: "Feature",
+        id: "way/12",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "east room", level: [0] },
       };
@@ -217,12 +220,14 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks closer level before farther level when match score is equal", () => {
       const level2: GeoJSON.Feature = {
-        id: "way/20", type: "Feature",
+        id: "way/20",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room A", level: [2] },
       };
       const level0: GeoJSON.Feature = {
-        id: "way/21", type: "Feature",
+        id: "way/21",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room B", level: [0] },
       };
@@ -237,12 +242,14 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("uses repeat_on levels when ranking by level distance", () => {
       const repeatedOn2: GeoJSON.Feature = {
-        id: "way/22", type: "Feature",
+        id: "way/22",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room repeated", level: "0", repeat_on: "2" },
       };
       const level0: GeoJSON.Feature = {
-        id: "way/23", type: "Feature",
+        id: "way/23",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "room base", level: [0] },
       };
@@ -257,18 +264,54 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks closer to selected feature before farther when match and level are equal", () => {
       const near: GeoJSON.Feature = {
-        id: "way/30", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/30",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { name: "room C", level: [0] },
       };
       const far: GeoJSON.Feature = {
-        id: "way/31", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        id: "way/31",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [1, 1],
+              [1.01, 1],
+              [1.01, 1.01],
+              [1, 1.01],
+              [1, 1],
+            ],
+          ],
+        },
         properties: { name: "room D", level: [0] },
       };
       const selected: GeoJSON.Feature = {
-        id: "way/99", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/99",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { level: [0] },
       };
       (BackendService.getGeoJson as jest.Mock).mockReturnValue({
@@ -285,18 +328,54 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks closer to info point before farther when match, level, and selected feature are equal", () => {
       const near: GeoJSON.Feature = {
-        id: "way/60", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/60",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { name: "room E", level: [0] },
       };
       const far: GeoJSON.Feature = {
-        id: "way/61", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        id: "way/61",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [1, 1],
+              [1.01, 1],
+              [1.01, 1.01],
+              [1, 1.01],
+              [1, 1],
+            ],
+          ],
+        },
         properties: { name: "room F", level: [0] },
       };
       const infoPoint: GeoJSON.Feature = {
-        id: "way/98", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/98",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { level: [0] },
       };
       (BackendService.getGeoJson as jest.Mock).mockReturnValue({
@@ -313,17 +392,42 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("uses point info features when ranking by proximity", () => {
       const near: GeoJSON.Feature = {
-        id: "way/62", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/62",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { name: "room G", level: [0] },
       };
       const far: GeoJSON.Feature = {
-        id: "way/63", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+        id: "way/63",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [1, 1],
+              [1.01, 1],
+              [1.01, 1.01],
+              [1, 1.01],
+              [1, 1],
+            ],
+          ],
+        },
         properties: { name: "room H", level: [0] },
       };
       const infoPoint: GeoJSON.Feature = {
-        id: "node/98", type: "Feature",
+        id: "node/98",
+        type: "Feature",
         geometry: { type: "Point", coordinates: [0, 0] },
         properties: { level: [0] },
       };
@@ -341,12 +445,14 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks a higher-priority field before a lower-priority field at equal match quality", () => {
       const refPrefixMatch: GeoJSON.Feature = {
-        id: "way/50", type: "Feature",
+        id: "way/50",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { ref: "toiletA", level: [0] },
       };
       const amenityPrefixMatch: GeoJSON.Feature = {
-        id: "way/51", type: "Feature",
+        id: "way/51",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { amenity: "toilets", level: [0] },
       };
@@ -360,12 +466,14 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("scores a feature by its best-matching field, not just its displayName", () => {
       const exactRefWithName: GeoJSON.Feature = {
-        id: "way/52", type: "Feature",
+        id: "way/52",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "Lecture Hall", ref: "z12", level: [0] },
       };
       const substringNameMatch: GeoJSON.Feature = {
-        id: "way/53", type: "Feature",
+        id: "way/53",
+        type: "Feature",
         geometry: { type: "Polygon", coordinates: [] },
         properties: { name: "Room Z12 Wing", level: [0] },
       };
@@ -381,18 +489,54 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks wheelchair-accessible rooms first in wheelchair mode, even if farther away", () => {
       const accessibleFar: GeoJSON.Feature = {
-        id: "way/40", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[5, 5], [5.01, 5], [5.01, 5.01], [5, 5.01], [5, 5]]] },
+        id: "way/40",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [5, 5],
+              [5.01, 5],
+              [5.01, 5.01],
+              [5, 5.01],
+              [5, 5],
+            ],
+          ],
+        },
         properties: { amenity: "toilets", wheelchair: "yes", level: [0] },
       };
       const nearNonAccessible: GeoJSON.Feature = {
-        id: "way/41", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/41",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { amenity: "toilets", level: [0] },
       };
       const selected: GeoJSON.Feature = {
-        id: "way/99", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/99",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { level: [0] },
       };
       (BackendService.getGeoJson as jest.Mock).mockReturnValue({
@@ -410,18 +554,54 @@ describe("BuildingService.searchSuggestions", () => {
 
     it("ranks the closer room first when wheelchair mode is off", () => {
       const accessibleFar: GeoJSON.Feature = {
-        id: "way/40", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[5, 5], [5.01, 5], [5.01, 5.01], [5, 5.01], [5, 5]]] },
+        id: "way/40",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [5, 5],
+              [5.01, 5],
+              [5.01, 5.01],
+              [5, 5.01],
+              [5, 5],
+            ],
+          ],
+        },
         properties: { amenity: "toilets", wheelchair: "yes", level: [0] },
       };
       const nearNonAccessible: GeoJSON.Feature = {
-        id: "way/41", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/41",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { amenity: "toilets", level: [0] },
       };
       const selected: GeoJSON.Feature = {
-        id: "way/99", type: "Feature",
-        geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+        id: "way/99",
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [0.01, 0],
+              [0.01, 0.01],
+              [0, 0.01],
+              [0, 0],
+            ],
+          ],
+        },
         properties: { level: [0] },
       };
       (BackendService.getGeoJson as jest.Mock).mockReturnValue({
@@ -445,23 +625,59 @@ describe("BuildingService.searchSuggestions", () => {
     Object.defineProperty(globalThis, "localStorage", {
       configurable: true,
       value: {
-        getItem: jest.fn((key: string) => key === "debugSearchSuggestions" ? "true" : null),
+        getItem: jest.fn((key: string) => (key === "debugSearchSuggestions" ? "true" : null)),
       },
     });
 
     const near: GeoJSON.Feature = {
-      id: "way/70", type: "Feature",
-      geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+      id: "way/70",
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [0, 0],
+            [0.01, 0],
+            [0.01, 0.01],
+            [0, 0.01],
+            [0, 0],
+          ],
+        ],
+      },
       properties: { name: "room debug near", level: [0] },
     };
     const far: GeoJSON.Feature = {
-      id: "way/71", type: "Feature",
-      geometry: { type: "Polygon", coordinates: [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]] },
+      id: "way/71",
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [1, 1],
+            [1.01, 1],
+            [1.01, 1.01],
+            [1, 1.01],
+            [1, 1],
+          ],
+        ],
+      },
       properties: { name: "room debug far", level: [1], wheelchair: "yes" },
     };
     const selected: GeoJSON.Feature = {
-      id: "way/72", type: "Feature",
-      geometry: { type: "Polygon", coordinates: [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]] },
+      id: "way/72",
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [0, 0],
+            [0.01, 0],
+            [0.01, 0.01],
+            [0, 0.01],
+            [0, 0],
+          ],
+        ],
+      },
       properties: { level: [0] },
     };
     (BackendService.getGeoJson as jest.Mock).mockReturnValue({
@@ -477,16 +693,19 @@ describe("BuildingService.searchSuggestions", () => {
         wheelchairMode: true,
       });
 
-      expect(debugSpy).toHaveBeenCalledWith("[SearchSuggestions] ranking context", expect.objectContaining({
-        query: "room",
-        sortOrder: [
-          "matchScore",
-          "wheelchairScore",
-          "levelDistance",
-          "selectedDistanceSq",
-          "infoDistanceSq",
-        ],
-      }));
+      expect(debugSpy).toHaveBeenCalledWith(
+        "[SearchSuggestions] ranking context",
+        expect.objectContaining({
+          query: "room",
+          sortOrder: [
+            "matchScore",
+            "wheelchairScore",
+            "levelDistance",
+            "selectedDistanceSq",
+            "infoDistanceSq",
+          ],
+        }),
+      );
       expect(tableSpy).toHaveBeenCalledWith([
         expect.objectContaining({
           rank: 1,

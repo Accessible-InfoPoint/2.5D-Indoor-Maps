@@ -9,13 +9,14 @@
   "inServiceColor": "#FAF500",
   "elevatorColor": "#66CCFF",
 
-  "zoom": [{
-    "doors_primary": true,
-    "doors_secondary": false,
-    "toilets": false,
-    "staircases": false,
-    "elevators": false
-  },
+  "zoom": [
+    {
+      "doors_primary": true,
+      "doors_secondary": false,
+      "toilets": false,
+      "staircases": false,
+      "elevators": false
+    },
     {
       "doors_primary": true,
       "doors_secondary": false,

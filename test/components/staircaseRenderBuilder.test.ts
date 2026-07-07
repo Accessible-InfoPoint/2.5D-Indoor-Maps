@@ -1,7 +1,4 @@
-import {
-  LEVEL_HEIGHT,
-  STAIRCASE_HANDRAIL_HEIGHT,
-} from "../../public/strings/settings.json";
+import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../public/strings/settings.json";
 import {
   buildComplexStaircaseRenderItems,
   buildSimpleStaircaseRenderItems,
@@ -37,7 +34,7 @@ describe("staircaseRenderBuilder", () => {
           radialSegments: 10,
           materialRole: "outline",
         }),
-      ])
+      ]),
     );
   });
 
@@ -51,11 +48,7 @@ describe("staircaseRenderBuilder", () => {
       createPointFeature(lineString[1], "1"),
     ];
 
-    const items = buildComplexStaircaseRenderItems(
-      [[lineString, 1]],
-      allNodes,
-      6
-    );
+    const items = buildComplexStaircaseRenderItems([[lineString, 1]], allNodes, 6);
 
     expect(items).toHaveLength(3);
     expect(items.map((item) => item.type)).toEqual(["prism", "prism", "prism"]);
@@ -93,17 +86,11 @@ describe("staircaseRenderBuilder", () => {
       {
         level: [0, 1],
         width: "1.5",
-      }
+      },
     );
     const lowestPoint = createPointFeature([0.5, 0.5], "0");
 
-    const paths = filterConnectedPathways(
-      staircase,
-      [[0, 0]],
-      [lowestPoint],
-      [path],
-      0
-    );
+    const paths = filterConnectedPathways(staircase, [[0, 0]], [lowestPoint], [path], 0);
 
     expect(paths).toEqual([
       [
@@ -119,20 +106,14 @@ describe("staircaseRenderBuilder", () => {
   it("skips unsupported staircase feature geometries instead of throwing", () => {
     const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
 
-    const paths = filterConnectedPathways(
-      createPointFeature([0, 0], "0"),
-      [],
-      [],
-      [],
-      0
-    );
+    const paths = filterConnectedPathways(createPointFeature([0, 0], "0"), [], [], [], 0);
 
     expect(paths).toEqual([]);
     expect(consoleError).toHaveBeenCalledWith(
       'Skipping staircase pathway with unsupported geometry type "Point".',
       expect.objectContaining({
         geometry: expect.objectContaining({ type: "Point" }),
-      })
+      }),
     );
 
     consoleError.mockRestore();
@@ -153,7 +134,7 @@ describe("staircaseRenderBuilder", () => {
       [[0, 0]],
       [],
       [createPointFeature([0, 0], "0")],
-      0
+      0,
     );
 
     expect(paths).toEqual([]);
@@ -161,17 +142,14 @@ describe("staircaseRenderBuilder", () => {
       'Skipping staircase pathway with unsupported geometry type "Point".',
       expect.objectContaining({
         geometry: expect.objectContaining({ type: "Point" }),
-      })
+      }),
     );
 
     consoleError.mockRestore();
   });
 });
 
-function createPointFeature(
-  coordinates: GeoJSON.Position,
-  level: string
-): GeoJSON.Feature {
+function createPointFeature(coordinates: GeoJSON.Position, level: string): GeoJSON.Feature {
   return {
     type: "Feature",
     geometry: {
@@ -186,7 +164,7 @@ function createPointFeature(
 
 function createLineStringFeature(
   coordinates: GeoJSON.Position[],
-  properties: GeoJSON.GeoJsonProperties
+  properties: GeoJSON.GeoJsonProperties,
 ): GeoJSON.Feature {
   return {
     type: "Feature",

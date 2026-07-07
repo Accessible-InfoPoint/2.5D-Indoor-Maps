@@ -1,17 +1,10 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
 import type { DoorRenderData } from "../../../services/doorService";
 import type { DoorDataInterface } from "../../../models/doorDataInterface";
-import {
-  RoomRenderItem,
-  StyledFeatureRenderItem,
-} from "../indoorLevelRenderModel";
+import { RoomRenderItem, StyledFeatureRenderItem } from "../indoorLevelRenderModel";
 import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
 import { getPatternImageId } from "./maplibreIndoorLevelTypes";
-import {
-  getStyleNumber,
-  getStyleNumberArray,
-  getStyleString,
-} from "./maplibreStyleHelpers";
+import { getStyleNumber, getStyleNumberArray, getStyleString } from "./maplibreStyleHelpers";
 
 export interface MapLibreRoomFeatureConversion {
   feature: GeoJSON.Feature;
@@ -20,9 +13,7 @@ export interface MapLibreRoomFeatureConversion {
   sourceFeature: GeoJSON.Feature;
 }
 
-export function buildMapLibreRoomFeature(
-  item: RoomRenderItem
-): MapLibreRoomFeatureConversion {
+export function buildMapLibreRoomFeature(item: RoomRenderItem): MapLibreRoomFeatureConversion {
   const featureId = getRequiredFeatureId(item.feature);
   const patternFile = getRoomPatternFile(item);
 
@@ -52,7 +43,7 @@ export function buildMapLibreRoomFeature(
 }
 
 export function buildMapLibreRoomNumberFeature(
-  item: RoomRenderItem
+  item: RoomRenderItem,
 ): GeoJSON.Feature<GeoJSON.Point> | undefined {
   if (!item.label) {
     return undefined;
@@ -76,9 +67,7 @@ export function buildMapLibreRoomNumberFeature(
   };
 }
 
-export function buildMapLibreStyledLineFeature(
-  item: StyledFeatureRenderItem
-): GeoJSON.Feature {
+export function buildMapLibreStyledLineFeature(item: StyledFeatureRenderItem): GeoJSON.Feature {
   return {
     ...item.feature,
     properties: {
@@ -92,7 +81,7 @@ export function buildMapLibreStyledLineFeature(
 }
 
 export function buildMapLibreDoorFeature(
-  item: DoorRenderData
+  item: DoorRenderData,
 ): GeoJSON.Feature<GeoJSON.LineString> {
   return {
     type: "Feature",
@@ -108,9 +97,7 @@ export function buildMapLibreDoorFeature(
   };
 }
 
-export function buildMapLibreDoorDebugFeatures(
-  door: DoorDataInterface
-): GeoJSON.Feature[] {
+export function buildMapLibreDoorDebugFeatures(door: DoorDataInterface): GeoJSON.Feature[] {
   const debug = door.orientationDebug;
 
   if (!debug) {
@@ -160,7 +147,7 @@ function buildDoorDebugPoint(
   debugType: string,
   label: string,
   coordinates: GeoJSON.Position,
-  properties: Record<string, unknown>
+  properties: Record<string, unknown>,
 ): GeoJSON.Feature<GeoJSON.Point> {
   return {
     type: "Feature",
