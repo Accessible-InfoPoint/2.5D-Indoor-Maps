@@ -70,14 +70,17 @@ npm start
 
 ## Checks
 
-Run these before merging a feature branch into `main`:
+Run the same checks locally that GitHub Actions runs for pull requests:
 
 ```sh
-npm test -- --runInBand
-npm run typecheck
+npm run check
+```
+
+This runs linting, type checking, the Jest test suite, and a production build.
+For stricter migration work, also run:
+
+```sh
 npm run typecheck:strict
-npm run lint
-npm run build
 ```
 
 ## Branches

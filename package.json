@@ -25,7 +25,8 @@
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
     "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
-    "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json"
+    "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json",
+    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build"
   },
   "repository": {
     "type": "git",
