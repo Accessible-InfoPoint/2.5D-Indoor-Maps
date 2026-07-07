@@ -33,10 +33,7 @@ import {
   MapLibreIndoorLevelLayerSet,
 } from "./maplibre/maplibreIndoorLevelTypes";
 import { registerRoomNumberBackgroundImage } from "./maplibre/maplibreImageRegistry";
-import {
-  getOpacityExpression,
-  getZoomOpacityExpression,
-} from "./maplibre/maplibreStyleHelpers";
+import { getOpacityExpression, getZoomOpacityExpression } from "./maplibre/maplibreStyleHelpers";
 import {
   createInfoPointLayers,
   createDoorDebugLayers,
@@ -102,7 +99,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   constructor(
     private readonly level: number,
     private readonly map: MapLibreMap,
-    private readonly events: IndoorLevelViewEvents
+    private readonly events: IndoorLevelViewEvents,
   ) {
     this.infoPoint = this.createLayerSet("info-point", ["circle", "label"]);
     this.rooms = this.createLayerSet("rooms", ["fill", "pattern", "line"]);
@@ -123,7 +120,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.map,
       this.accessibilityMarkers.sourceId,
       getMapLibreLayerId(this.level, "accessibility-markers", "icon"),
-      events
+      events,
     );
 
     this.whenMapStyleReady(() => this.initializeLayers());
@@ -222,9 +219,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   show3DView(): void {
-    this.setVisibleLayerSets([
-      this.threeLayerSet,
-    ]);
+    this.setVisibleLayerSets([this.threeLayerSet]);
     this.setAltitudeAndOpacity(0, 1);
     void this.preload3DView();
   }
@@ -234,14 +229,15 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     end: number,
     opacityStart: number,
     opacityEnd: number,
-    duration = 0.5
+    duration = 0.5,
   ): Promise<void> {
     this.opacity = opacityEnd;
     this.threeAltitude = end;
     this.threeOpacity = opacityEnd;
     this.whenLayersInitialized(() => this.applyOpacity());
-    return this.getThreeLayer()
-      .then((threeLayer) => threeLayer.animateAltitude(start, end, opacityStart, opacityEnd, duration));
+    return this.getThreeLayer().then((threeLayer) =>
+      threeLayer.animateAltitude(start, end, opacityStart, opacityEnd, duration),
+    );
   }
 
   setAltitudeAndOpacity(altitude: number, opacity: number): void {
@@ -322,10 +318,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   // ===== Render pipelines ===================================================
 
-  private renderLayerData(
-    renderModel: IndoorLevelRenderModel,
-    selectedFeatureIds: string[]
-  ): void {
+  private renderLayerData(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
     this.renderOutline(renderModel.outlineCoordinates);
     this.renderInfoPoint(renderModel);
     this.renderRooms(renderModel.rooms);
@@ -361,7 +354,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
               },
             ],
           }
-        : this.emptyFeatureCollection()
+        : this.emptyFeatureCollection(),
     );
   }
 
@@ -402,7 +395,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   private renderStaircases(
     renderModel: IndoorLevelRenderModel,
-    selectedFeatureIds: string[]
+    selectedFeatureIds: string[],
   ): void {
     const colors = ColorService.getCurrentColors();
     const staircase = renderModel.staircase;
@@ -414,7 +407,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
         return buildSimpleStaircaseRenderItems(
           (feature.geometry as GeoJSON.Polygon).coordinates[0],
-          localAltitude
+          localAltitude,
         ).map((item) => ({
           item,
           color,
@@ -430,10 +423,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
             staircase.doorCoordinates,
             staircase.lowestPoints,
             staircase.pathways,
-            this.level
+            this.level,
           ),
           staircase.allNodes,
-          localAltitude
+          localAltitude,
         ).map((item) => ({
           item,
           color,
@@ -526,20 +519,20 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     }
 
     this.threeLayerPromise ??= loadThreeIndoorLayerModule()
-      .then(({ MapLibreThreeIndoorLayer }) =>
-        new MapLibreThreeIndoorLayer(
-          getMapLibreLayerId(this.level, "three", "custom")
-        )
+      .then(
+        ({ MapLibreThreeIndoorLayer }) =>
+          new MapLibreThreeIndoorLayer(getMapLibreLayerId(this.level, "three", "custom")),
       )
-      .then((threeLayer) =>
-        new Promise<MapLibreThreeIndoorLayer>((resolve) => {
-          this.whenLayersInitialized(() => {
-            this.threeLayer = threeLayer;
-            this.addThreeLayer(threeLayer);
-            this.applyThreeLayerState(threeLayer);
-            resolve(threeLayer);
-          });
-        })
+      .then(
+        (threeLayer) =>
+          new Promise<MapLibreThreeIndoorLayer>((resolve) => {
+            this.whenLayersInitialized(() => {
+              this.threeLayer = threeLayer;
+              this.addThreeLayer(threeLayer);
+              this.applyThreeLayerState(threeLayer);
+              resolve(threeLayer);
+            });
+          }),
       )
       .catch((error: unknown) => {
         this.threeLayerPromise = undefined;
@@ -557,29 +550,89 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     threeLayer.setAltitudeAndOpacity(this.threeAltitude, this.threeOpacity);
     this.setLayerVisibility(
       threeLayer.id,
-      this.visibleLayerIds.has(threeLayer.id) ? "visible" : "none"
+      this.visibleLayerIds.has(threeLayer.id) ? "visible" : "none",
     );
   }
 
   private applyOpacity(): void {
     this.setPaintProperty(this.getLayerId("info-point", "circle"), "circle-opacity", this.opacity);
     this.setPaintProperty(this.getLayerId("info-point", "label"), "text-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("rooms", "fill"), "fill-opacity", getOpacityExpression("fillOpacity", this.opacity));
-    this.setPaintProperty(this.getLayerId("rooms", "pattern"), "fill-opacity", getOpacityExpression("fillOpacity", this.opacity));
-    this.setPaintProperty(this.getLayerId("rooms", "line"), "line-opacity", getOpacityExpression("lineOpacity", this.opacity));
-    this.setPaintProperty(this.getLayerId("doors", "line"), "line-opacity", getOpacityExpression("lineOpacity", this.opacity));
-    this.setPaintProperty(this.getLayerId("door-debug", "wall-context"), "line-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "calculated-door"), "line-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "previous-point"), "circle-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "previous-point"), "circle-stroke-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "door-point"), "circle-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "door-point"), "circle-stroke-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "after-point"), "circle-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("door-debug", "after-point"), "circle-stroke-opacity", this.opacity);
+    this.setPaintProperty(
+      this.getLayerId("rooms", "fill"),
+      "fill-opacity",
+      getOpacityExpression("fillOpacity", this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("rooms", "pattern"),
+      "fill-opacity",
+      getOpacityExpression("fillOpacity", this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("rooms", "line"),
+      "line-opacity",
+      getOpacityExpression("lineOpacity", this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("doors", "line"),
+      "line-opacity",
+      getOpacityExpression("lineOpacity", this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "wall-context"),
+      "line-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "calculated-door"),
+      "line-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "previous-point"),
+      "circle-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "previous-point"),
+      "circle-stroke-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "door-point"),
+      "circle-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "door-point"),
+      "circle-stroke-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "after-point"),
+      "circle-opacity",
+      this.opacity,
+    );
+    this.setPaintProperty(
+      this.getLayerId("door-debug", "after-point"),
+      "circle-stroke-opacity",
+      this.opacity,
+    );
     this.setPaintProperty(this.getLayerId("door-debug", "label"), "text-opacity", this.opacity);
-    this.setPaintProperty(this.getLayerId("tactile-paving", "line"), "line-opacity", getOpacityExpression("lineOpacity", this.opacity));
-    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "text-opacity", getZoomOpacityExpression(this.opacity));
-    this.setPaintProperty(this.getLayerId("room-numbers", "label"), "icon-opacity", getZoomOpacityExpression(this.opacity));
+    this.setPaintProperty(
+      this.getLayerId("tactile-paving", "line"),
+      "line-opacity",
+      getOpacityExpression("lineOpacity", this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("room-numbers", "label"),
+      "text-opacity",
+      getZoomOpacityExpression(this.opacity),
+    );
+    this.setPaintProperty(
+      this.getLayerId("room-numbers", "label"),
+      "icon-opacity",
+      getZoomOpacityExpression(this.opacity),
+    );
     this.accessibilityMarkerRenderer.applyOpacity(this.opacity);
   }
 
@@ -610,7 +663,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     }
 
     this.loadingPatternImageIds.add(imageId);
-    this.map.loadImage(patternFile)
+    this.map
+      .loadImage(patternFile)
       .then((image) => {
         if (!this.map.hasImage(imageId)) {
           this.map.addImage(imageId, image.data);

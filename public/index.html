@@ -1,182 +1,290 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Accessible indoor map for exploring buildings, levels, rooms, and accessibility features.">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Accessible indoor map for exploring buildings, levels, rooms, and accessibility features."
+    />
     <title>AccessibleMaps Mobile</title>
-    <link href="./dist/main.css" rel="stylesheet">
-</head>
+    <link href="./dist/main.css" rel="stylesheet" />
+  </head>
 
-<body>
-<div id="loadingIndicatorWrapper" class="d-none" aria-hidden="true" inert>
-    <div class="spinner-border" role="status" id="loadingIndicator" tabindex="-1">
+  <body>
+    <div id="loadingIndicatorWrapper" class="d-none" aria-hidden="true" inert>
+      <div class="spinner-border" role="status" id="loadingIndicator" tabindex="-1">
         <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
-</div>
-<div id="toastWrapper"></div>
+    <div id="toastWrapper"></div>
 
-<main id="appMain" aria-label="Accessible indoor map">
-<div id="map" aria-disabled="true"></div>
-<div id="flatMap" aria-disabled="true"></div>
+    <main id="appMain" aria-label="Accessible indoor map">
+      <div id="map" aria-disabled="true"></div>
+      <div id="flatMap" aria-disabled="true"></div>
 
-<div id="uiWrapper">
-    <!--           LEGEND           -->
-    <div id="legendWrapper">
-        <ul id="legendList" aria-label="Legend">
+      <div id="uiWrapper">
+        <!--           LEGEND           -->
+        <div id="legendWrapper">
+          <ul id="legendList" aria-label="Legend">
             <li aria-hidden="true" class="label">Legend</li>
-            <li><div class="colorBox" style="background-color: rgb(255, 209, 209);"></div><span>Room</span></li>
-            <li><div class="colorBox" style="background-color: rgb(53, 161, 107);"></div><span>Toilet</span></li>
-            <li><div class="colorBox" style="background-color: rgb(255, 153, 0);"></div><span>Stairs</span></li>
-            <li><div class="colorBox" style="background-color: rgb(102, 43, 9);"></div><span>Selected</span></li>
-        </ul>
-    </div>
+            <li>
+              <div class="colorBox" style="background-color: rgb(255, 209, 209)"></div>
+              <span>Room</span>
+            </li>
+            <li>
+              <div class="colorBox" style="background-color: rgb(53, 161, 107)"></div>
+              <span>Toilet</span>
+            </li>
+            <li>
+              <div class="colorBox" style="background-color: rgb(255, 153, 0)"></div>
+              <span>Stairs</span>
+            </li>
+            <li>
+              <div class="colorBox" style="background-color: rgb(102, 43, 9)"></div>
+              <span>Selected</span>
+            </li>
+          </ul>
+        </div>
 
-    <!--           BUILDING AND ROOM DESCRIPTION           -->
-    <aside class="description" id="descriptionArea" aria-label="descriptionArea" aria-live="polite" aria-atomic="true">
-        <strong id="selectedBuilding"></strong>
-        <span id="description"></span>
-    </aside>
+        <!--           BUILDING AND ROOM DESCRIPTION           -->
+        <aside
+          class="description"
+          id="descriptionArea"
+          aria-label="descriptionArea"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <strong id="selectedBuilding"></strong>
+          <span id="description"></span>
+        </aside>
 
-    <!--           INDOOR ROOM SEARCH           -->
-    <div id="indoorSearchWrapper">
-          <button id="centeringButton" class="square" aria-label="Set view to the focused building" title="Set view to the focused building">
+        <!--           INDOOR ROOM SEARCH           -->
+        <div id="indoorSearchWrapper">
+          <button
+            id="centeringButton"
+            class="square"
+            aria-label="Set view to the focused building"
+            title="Set view to the focused building"
+          >
             <span class="material-icons" aria-hidden="true">center_focus_weak</span>
           </button>
           <div class="from-group row flex-nowrap" id="indoorSearchBar">
-            <div class="input-group" style="height:var(--button-size)">
-                <input class="form-control" type="text" placeholder="Search indoor"
-                       aria-label="Search indoor"
-                       id="indoorSearchInput" name="indoorSearchInput"
-                       role="combobox"
-                       aria-autocomplete="list"
-                       aria-expanded="false"
-                       aria-controls="searchSuggestionsList"
-                       aria-activedescendant="">
-                <button class="btn btn-outline-secondary search-clear-button" type="button"
-                        id="indoorSearchClear" name="indoorSearchClear">
-                    <span class="material-icons" aria-hidden="true">close</span>
-                </button>
-                <button class="btn btn-secondary" id="indoorSearchSubmit"
-                        name="indoorSearchSubmit">
-                    Search
-                </button>
+            <div class="input-group" style="height: var(--button-size)">
+              <input
+                class="form-control"
+                type="text"
+                placeholder="Search indoor"
+                aria-label="Search indoor"
+                id="indoorSearchInput"
+                name="indoorSearchInput"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="searchSuggestionsList"
+                aria-activedescendant=""
+              />
+              <button
+                class="btn btn-outline-secondary search-clear-button"
+                type="button"
+                id="indoorSearchClear"
+                name="indoorSearchClear"
+              >
+                <span class="material-icons" aria-hidden="true">close</span>
+              </button>
+              <button class="btn btn-secondary" id="indoorSearchSubmit" name="indoorSearchSubmit">
+                Search
+              </button>
             </div>
-        </div>
-        <ul id="searchSuggestionsList" role="listbox" aria-label="Search suggestions"></ul>
-        <div id="searchAnnouncement" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
-        <div id="searchErrorMessage" class="search-error-message" role="alert" aria-live="assertive">
+          </div>
+          <ul id="searchSuggestionsList" role="listbox" aria-label="Search suggestions"></ul>
+          <div
+            id="searchAnnouncement"
+            class="visually-hidden"
+            aria-live="polite"
+            aria-atomic="true"
+          ></div>
+          <div
+            id="searchErrorMessage"
+            class="search-error-message"
+            role="alert"
+            aria-live="assertive"
+          >
             <span id="searchErrorText"></span>
             <button type="button" id="searchErrorClear" class="search-error-clear">
-                <span class="material-icons" aria-hidden="true">close</span>
+              <span class="material-icons" aria-hidden="true">close</span>
             </button>
+          </div>
         </div>
-    </div>
 
-    <!--           LEVEL CONTROL           -->
-    <div id="levelControlWrapper">
-        <button id="levelShiftUp" class="square" aria-label="Show higher levels" title="Show higher levels">
-            <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true">expand_less</span>
-        </button>
-        <div id="levelControlWindow">
-            <ul id="levelControl" aria-label="Change displayed level" class="transition">
-            </ul>
+        <!--           LEVEL CONTROL           -->
+        <div id="levelControlWrapper">
+          <button
+            id="levelShiftUp"
+            class="square"
+            aria-label="Show higher levels"
+            title="Show higher levels"
+          >
+            <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true"
+              >expand_less</span
+            >
+          </button>
+          <div id="levelControlWindow">
+            <ul id="levelControl" aria-label="Change displayed level" class="transition"></ul>
+          </div>
+          <button
+            id="levelShiftDown"
+            class="square"
+            aria-label="Show lower levels"
+            title="Show lower levels"
+          >
+            <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true"
+              >expand_more</span
+            >
+          </button>
         </div>
-        <button id="levelShiftDown" class="square" aria-label="Show lower levels" title="Show lower levels">
-            <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true">expand_more</span>
-        </button>
-    </div>
 
-    <!--           WHEELCHAIR-MODE SWITCHER           -->
-    <div id="switchWheelchairModeWrapper">
-        <button id="switchWheelchairMode" class="square" aria-label="Switch to wheelchair mode" title="Switch to wheelchair mode" aria-pressed="false">
-            <img id="switchWheelchairModeIcon" src="\images\screen_bottom.svg" alt="" aria-hidden="true" width="35" height="35" > <!-- alternative: man -->
-        </button>
-    </div>
+        <!--           WHEELCHAIR-MODE SWITCHER           -->
+        <div id="switchWheelchairModeWrapper">
+          <button
+            id="switchWheelchairMode"
+            class="square"
+            aria-label="Switch to wheelchair mode"
+            title="Switch to wheelchair mode"
+            aria-pressed="false"
+          >
+            <img
+              id="switchWheelchairModeIcon"
+              src="\images\screen_bottom.svg"
+              alt=""
+              aria-hidden="true"
+              width="35"
+              height="35"
+            />
+            <!-- alternative: man -->
+          </button>
+        </div>
 
-    <!--           ZOOM CONTROL           -->
-    <div id="zoomControlWrapper">
-        <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
+        <!--           ZOOM CONTROL           -->
+        <div id="zoomControlWrapper">
+          <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
             <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
-        </button>
-        <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
+          </button>
+          <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
             <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
-        </button>
-    </div>
-
-    <!--           2.5D SWITCHER           -->
-    <div id="switch2DViewWrapper">
-        <button id="switch2D" class="square" aria-label="Switch to 2.5D View" title="Switch to 2.5D View" aria-pressed="false">
-            <span class="material-icons" id="switch2DLabel" aria-hidden="true">3d_rotation</span> <!-- alternative: map -->
-        </button>
-    </div>
-
-    <!--           QUICK SETTINGS           -->
-    <div id="quickSettingsWrapper">
-        <ul id="userProfileList" aria-label="Profiles quick switch">
-        </ul>
-        <hr style="margin:0;">
-        <ul id="userSettingsList" aria-label="Settings">
-        </ul>
-        <hr style="margin:0;">
-        <ul id="languageList" aria-label="Language">
-        </ul>
-    </div>
-</div>
-</main>
-
-<!--feature selection-->
-<div class="modal fade settings" id="userFeatureSelectionModal" tabindex="-1"
-     aria-labelledby="userFeatureModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="userFeatureModalLabel">Select Features</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6 id="featureSelectionHeader">Feature selection</h6>
-                <div class="collection" id="userFeatureList"></div>
-
-                <h6 id="accessibleFeatureSelectionHeader">Accessible feature selection</h6>
-                <div class="collection" id="userAccessibleFeatureList"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light closeButton" data-bs-dismiss="modal" id="closeButtonLabel">
-                    Close
-                </button>
-                <button type="button" class="btn btn-primary saveButton" id="saveFeatureSelection">Save changes</button>
-            </div>
+          </button>
         </div>
-    </div>
-</div>
 
-<!--display settings-->
-<div class="modal fade settings" id="userVisualSettingsModal" tabindex="-1"
-     aria-labelledby="visualSettingsLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="visualSettingsLabel">Visual Settings</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6 id="colorBlindnessHeader">Color blindness</h6>
-                <div class="collection" id="colorBlindnessList"></div>
-
-                <h6 id="contrastSettingsHeader">Contrast settings</h6>
-                <div class="collection" id="contrastSettingsList"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light closeButton" data-bs-dismiss="modal" id="closeVisualSettings">
-                    Close
-                </button>
-                <button type="button" class="btn btn-primary saveButton" id="saveVisualSettings">Save changes</button>
-            </div>
+        <!--           2.5D SWITCHER           -->
+        <div id="switch2DViewWrapper">
+          <button
+            id="switch2D"
+            class="square"
+            aria-label="Switch to 2.5D View"
+            title="Switch to 2.5D View"
+            aria-pressed="false"
+          >
+            <span class="material-icons" id="switch2DLabel" aria-hidden="true">3d_rotation</span>
+            <!-- alternative: map -->
+          </button>
         </div>
-    </div>
-</div>
-<script src="./dist/main.js"></script>
 
-</body>
+        <!--           QUICK SETTINGS           -->
+        <div id="quickSettingsWrapper">
+          <ul id="userProfileList" aria-label="Profiles quick switch"></ul>
+          <hr style="margin: 0" />
+          <ul id="userSettingsList" aria-label="Settings"></ul>
+          <hr style="margin: 0" />
+          <ul id="languageList" aria-label="Language"></ul>
+        </div>
+      </div>
+    </main>
+
+    <!--feature selection-->
+    <div
+      class="modal fade settings"
+      id="userFeatureSelectionModal"
+      tabindex="-1"
+      aria-labelledby="userFeatureModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userFeatureModalLabel">Select Features</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <h6 id="featureSelectionHeader">Feature selection</h6>
+            <div class="collection" id="userFeatureList"></div>
+
+            <h6 id="accessibleFeatureSelectionHeader">Accessible feature selection</h6>
+            <div class="collection" id="userAccessibleFeatureList"></div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-light closeButton"
+              data-bs-dismiss="modal"
+              id="closeButtonLabel"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary saveButton" id="saveFeatureSelection">
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--display settings-->
+    <div
+      class="modal fade settings"
+      id="userVisualSettingsModal"
+      tabindex="-1"
+      aria-labelledby="visualSettingsLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="visualSettingsLabel">Visual Settings</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <h6 id="colorBlindnessHeader">Color blindness</h6>
+            <div class="collection" id="colorBlindnessList"></div>
+
+            <h6 id="contrastSettingsHeader">Contrast settings</h6>
+            <div class="collection" id="contrastSettingsList"></div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-light closeButton"
+              data-bs-dismiss="modal"
+              id="closeVisualSettings"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary saveButton" id="saveVisualSettings">
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./dist/main.js"></script>
+  </body>
 </html>

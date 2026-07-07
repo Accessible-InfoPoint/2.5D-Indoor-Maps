@@ -1,10 +1,7 @@
 import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
-import {
-  filterByBounds,
-  findBuildingBySearchString,
-} from "../src/utils/buildingGeoJsonFilters";
+import { filterByBounds, findBuildingBySearchString } from "../src/utils/buildingGeoJsonFilters";
 import { resolveProjectPath } from "./paths";
 
 const BUILDINGS_DATA_PATH = "public/overpass/buildings.json";
@@ -18,21 +15,24 @@ interface FilteredIndoorDataResponse {
 }
 
 export function registerFilteredIndoorDataRoute(app: any): void {
-  app.get("/api/buildings/:building/indoor", async (request: RouteRequest, response: RouteResponse) => {
-    try {
-      const building = request.params.building;
+  app.get(
+    "/api/buildings/:building/indoor",
+    async (request: RouteRequest, response: RouteResponse) => {
+      try {
+        const building = request.params.building;
 
-      if (!isBuildingId(building)) {
-        response.status(404).json({ error: `Unknown building "${building}".` });
-        return;
+        if (!isBuildingId(building)) {
+          response.status(404).json({ error: `Unknown building "${building}".` });
+          return;
+        }
+
+        response.json(await loadFilteredIndoorData(building));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown server error.";
+        response.status(500).json({ error: message });
       }
-
-      response.json(await loadFilteredIndoorData(building));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown server error.";
-      response.status(500).json({ error: message });
-    }
-  });
+    },
+  );
 }
 
 interface RouteRequest {
@@ -50,13 +50,12 @@ async function loadFilteredIndoorData(building: BuildingId): Promise<FilteredInd
   const buildingDefinition = BuildingConstantsDefinition[building];
   const buildings = await readFeatureCollection(BUILDINGS_DATA_PATH);
   const indoor = await readFeatureCollection(INDOOR_DATA_PATH);
-  const buildingInterface = findBuildingBySearchString(
-    buildings,
-    buildingDefinition.SEARCH_STRING
-  );
+  const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
 
   if (!buildingInterface) {
-    throw new Error(`Configured building "${buildingDefinition.SEARCH_STRING}" was not found in cached buildings data.`);
+    throw new Error(
+      `Configured building "${buildingDefinition.SEARCH_STRING}" was not found in cached buildings data.`,
+    );
   }
 
   return {

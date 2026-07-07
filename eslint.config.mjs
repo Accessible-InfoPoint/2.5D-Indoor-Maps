@@ -10,33 +10,40 @@ import { FlatCompat } from "@eslint/eslintrc";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
 });
 
 export default defineConfig([
-    globalIgnores(["**/node_modules", "**/dist", "**/coverage", "**/tmp", "**/*.d.ts", "**/*.js"]),
-    {
-        files: ["src/**/*.ts", "test/**/*.ts", "server/**/*.ts", "index.ts"],
+  globalIgnores(["**/node_modules", "**/dist", "**/coverage", "**/tmp", "**/*.d.ts", "**/*.js"]),
+  {
+    files: [
+      "src/**/*.ts",
+      "test/**/*.ts",
+      "server/**/*.ts",
+      "e2e/**/*.ts",
+      "index.ts",
+      "playwright.config.ts",
+    ],
 
-        extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
+    extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
 
-        plugins: {
-            "@typescript-eslint": typescriptEslint,
-        },
-
-        languageOptions: {
-            globals: {
-                ...globals.amd,
-                ...globals.node,
-            },
-
-            parser: tsParser,
-        },
-
-        rules: {
-            "@typescript-eslint/no-explicit-any": "off",
-        },
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
     },
+
+    languageOptions: {
+      globals: {
+        ...globals.amd,
+        ...globals.node,
+      },
+
+      parser: tsParser,
+    },
+
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);

@@ -1,8 +1,3 @@
 {
-    "COLOR_PROFS": [  
-    "none",
-    "red_green",
-    "blue_yellow",
-    "black_white"
-    ]
+  "COLOR_PROFS": ["none", "red_green", "blue_yellow", "black_white"]
 }

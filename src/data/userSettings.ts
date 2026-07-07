@@ -5,12 +5,12 @@ const UserSettings = new Map<UserSettingsEnum, any>();
 UserSettings.set(UserSettingsEnum.visualSettings, {
   name: lang.userProfileVisualSettings,
   linkedModal: "#userVisualSettingsModal",
-  icon: "visibility"
+  icon: "visibility",
 });
 UserSettings.set(UserSettingsEnum.featureSelection, {
   name: lang.userProfileFeatureSelection,
   linkedModal: "#userFeatureSelectionModal",
-  icon: "ballot"
+  icon: "ballot",
 });
 
 export { UserSettings };

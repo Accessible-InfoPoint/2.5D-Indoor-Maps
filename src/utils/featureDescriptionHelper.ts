@@ -3,7 +3,7 @@ import UserService from "../services/userService";
 
 export function featureDescriptionHelper(
   feature: GeoJSON.Feature,
-  accessibilityProperties: AccessibilityPropertiesInterface[]
+  accessibilityProperties: AccessibilityPropertiesInterface[],
 ): string {
   let description = " [";
 
@@ -13,7 +13,8 @@ export function featureDescriptionHelper(
     }
 
     if (element.hasCorrectProperties(feature)) {
-      description += (typeof element.msgTrue === "string" ? element.msgTrue : element.msgTrue(feature)) + ", ";
+      description +=
+        (typeof element.msgTrue === "string" ? element.msgTrue : element.msgTrue(feature)) + ", ";
     } else if (element.msgFalse !== null && typeof element.msgFalse === "string") {
       description += element.msgFalse + ", ";
     } else if (element.msgFalse !== null && typeof element.msgFalse === "function") {

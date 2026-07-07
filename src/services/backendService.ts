@@ -9,10 +9,7 @@ import { BackendSourceEnum } from "../models/backendSourceEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMatch } from "../utils/requiredHelpers";
-import {
-  BACKEND_SOURCE,
-  CURRENT_BUILDING,
-} from "../../public/strings/settings.json";
+import { BACKEND_SOURCE, CURRENT_BUILDING } from "../../public/strings/settings.json";
 
 export type BuildingCenter = [longitude: number, latitude: number];
 
@@ -36,8 +33,8 @@ const allLevels = new Set<number>();
 let buildingInterface: BuildingInterface | undefined;
 
 export interface BackendConfig {
-  source: BackendSourceEnum,
-  building: keyof typeof BuildingConstantsDefinition,
+  source: BackendSourceEnum;
+  building: keyof typeof BuildingConstantsDefinition;
 }
 
 const fallbackBackendConfig: BackendConfig = {
@@ -53,7 +50,7 @@ const defaultBackendConfig: BackendConfig = {
 let backendConfig: BackendConfig = { ...defaultBackendConfig };
 
 type BuildingId = keyof typeof BuildingConstantsDefinition;
-type BuildingDefinition = typeof BuildingConstantsDefinition[BuildingId];
+type BuildingDefinition = (typeof BuildingConstantsDefinition)[BuildingId];
 type BuildingDefinitionWithCenters = BuildingDefinition & {
   STANDARD_CENTER?: number[];
   STANDARD_CENTER_WHEELCHAIR_MODE?: number[];
@@ -68,7 +65,9 @@ function parseBackendSource(value: string): BackendSourceEnum {
   if (Object.values(BackendSourceEnum).includes(value as BackendSourceEnum))
     return value as BackendSourceEnum;
 
-  console.warn(`Unknown backend source "${value}", falling back to "${fallbackBackendConfig.source}".`);
+  console.warn(
+    `Unknown backend source "${value}", falling back to "${fallbackBackendConfig.source}".`,
+  );
   return fallbackBackendConfig.source;
 }
 
@@ -121,7 +120,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 
 async function loadBackendData(
   config: BackendConfig,
-  buildingDefinition: BuildingDefinition
+  buildingDefinition: BuildingDefinition,
 ): Promise<LoadedBackendData> {
   switch (config.source) {
     case BackendSourceEnum.cachedOverpass:
@@ -139,12 +138,12 @@ async function loadCachedOverpassData(): Promise<LoadedBackendData> {
 
 async function loadLocalGeoJsonData(
   currentBuilding: BuildingId,
-  buildingDefinition: BuildingDefinition
+  buildingDefinition: BuildingDefinition,
 ): Promise<LoadedBackendData> {
   const fullGeoJson = await HttpService.fetchLocalGeojson(currentBuilding);
   const loadedBuildingInterface = await BuildingService.handleSearch(
     fullGeoJson,
-    buildingDefinition.SEARCH_STRING
+    buildingDefinition.SEARCH_STRING,
   );
 
   return {
@@ -154,31 +153,27 @@ async function loadLocalGeoJsonData(
 }
 
 function normalizeLevelProperties(indoorGeoJson: GeoJSON.FeatureCollection): void {
-  indoorGeoJson.features.forEach(
-    (feature) => {
-      const properties = getRequiredFeatureProperties(feature);
+  indoorGeoJson.features.forEach((feature) => {
+    const properties = getRequiredFeatureProperties(feature);
 
-      if (!["Polygon", "LineString"].includes(feature.geometry.type)) { // only use geometries for levels that are actually drawn
-        return;
-      }
-
-      if (properties.level === undefined) {
-        console.log("no level: ", feature);
-        return;
-      }
-
-      const levels = extractLevels(properties.level);
-      properties.level = levels;
-
-      levels.forEach(
-        (l) => {
-          if (!allLevels.has(l))
-            console.log("Level " + l + "added by feature", feature);
-          allLevels.add(l);
-        }
-      );
+    if (!["Polygon", "LineString"].includes(feature.geometry.type)) {
+      // only use geometries for levels that are actually drawn
+      return;
     }
-  )
+
+    if (properties.level === undefined) {
+      console.log("no level: ", feature);
+      return;
+    }
+
+    const levels = extractLevels(properties.level);
+    properties.level = levels;
+
+    levels.forEach((l) => {
+      if (!allLevels.has(l)) console.log("Level " + l + "added by feature", feature);
+      allLevels.add(l);
+    });
+  });
 }
 
 function initializeDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
@@ -187,31 +182,24 @@ function initializeDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
 }
 
 function addDoorFeatures(indoorGeoJson: GeoJSON.FeatureCollection): void {
-  indoorGeoJson.features.forEach(
-    (feature) => {
-      const properties = getRequiredFeatureProperties(feature);
+  indoorGeoJson.features.forEach((feature) => {
+    const properties = getRequiredFeatureProperties(feature);
 
-      if (feature.geometry.type != "Point")
-        return;
+    if (feature.geometry.type != "Point") return;
 
-      if (!("door" in properties))
-        return
+    if (!("door" in properties)) return;
 
-      const levels = new Set<number>();
-      extractLevels(properties.level ?? "").forEach(l => levels.add(l));
-      extractLevels(properties.repeat_on ?? "").forEach(l => levels.add(l));
-      DoorService.addDoor(feature.geometry.coordinates, levels, properties);
-    }
-  )
+    const levels = new Set<number>();
+    extractLevels(properties.level ?? "").forEach((l) => levels.add(l));
+    extractLevels(properties.repeat_on ?? "").forEach((l) => levels.add(l));
+    DoorService.addDoor(feature.geometry.coordinates, levels, properties);
+  });
 }
 
 function connectRoomsToDoors(indoorGeoJson: GeoJSON.FeatureCollection): void {
-  indoorGeoJson.features.forEach(
-    (feature) => {
-      if (isDrawableRoomOrArea(feature))
-        connectRoomToDoors(feature);
-    }
-  )
+  indoorGeoJson.features.forEach((feature) => {
+    if (isDrawableRoomOrArea(feature)) connectRoomToDoors(feature);
+  });
 }
 
 function connectRoomToDoors(feature: GeoJSON.Feature): void {
@@ -219,7 +207,7 @@ function connectRoomToDoors(feature: GeoJSON.Feature): void {
   const coords = getRequiredArrayValue(
     (feature.geometry as GeoJSON.Polygon).coordinates,
     0,
-    "Room coordinates"
+    "Room coordinates",
   ).slice(1);
 
   for (let i = 0; i < coords.length; i++) {
@@ -243,8 +231,7 @@ function hasSharedLevel(doorLevels: Set<number>, roomLevels: number[]): boolean 
 function buildBuildingDescription(currentBuildingInterface: BuildingInterface): string {
   const buildingProperties = getRequiredFeatureProperties(currentBuildingInterface.feature);
 
-  if (buildingProperties.name === undefined)
-    return "";
+  if (buildingProperties.name === undefined) return "";
 
   if (buildingProperties.loc_ref !== undefined)
     return buildingProperties.name + " (" + buildingProperties.loc_ref + ")";
@@ -254,33 +241,33 @@ function buildBuildingDescription(currentBuildingInterface: BuildingInterface): 
 
 function buildBuildingConstants(
   indoorGeoJson: GeoJSON.FeatureCollection,
-  buildingDefinition: BuildingDefinition
+  buildingDefinition: BuildingDefinition,
 ): BuildingConstants {
   const standardBearing = calculateStandardBearing(indoorGeoJson, buildingDefinition);
   const buildingDefinitionWithCenters = buildingDefinition as BuildingDefinitionWithCenters;
 
   return {
-    "standardZoom": buildingDefinition.STANDARD_ZOOM,
-    "maxZoom": buildingDefinition.MAX_ZOOM,
-    "minZoom": buildingDefinition.MIN_ZOOM,
-    "standardBearing": standardBearing,
-    "standardBearing3DMode": buildingDefinition.STANDARD_BEARING_3D_MODE,
-    "standardPitch3DMode": buildingDefinition.STANDARD_PITCH_3D_MODE,
-    "standardZoom3DMode": buildingDefinition.STANDARD_ZOOM_3D_MODE,
-    "standardCenter": getOptionalBuildingCenter(
+    standardZoom: buildingDefinition.STANDARD_ZOOM,
+    maxZoom: buildingDefinition.MAX_ZOOM,
+    minZoom: buildingDefinition.MIN_ZOOM,
+    standardBearing: standardBearing,
+    standardBearing3DMode: buildingDefinition.STANDARD_BEARING_3D_MODE,
+    standardPitch3DMode: buildingDefinition.STANDARD_PITCH_3D_MODE,
+    standardZoom3DMode: buildingDefinition.STANDARD_ZOOM_3D_MODE,
+    standardCenter: getOptionalBuildingCenter(
       buildingDefinitionWithCenters.STANDARD_CENTER,
-      "STANDARD_CENTER"
+      "STANDARD_CENTER",
     ),
-    "standardCenterWheelchairMode": getOptionalBuildingCenter(
+    standardCenterWheelchairMode: getOptionalBuildingCenter(
       buildingDefinitionWithCenters.STANDARD_CENTER_WHEELCHAIR_MODE,
-      "STANDARD_CENTER_WHEELCHAIR_MODE"
+      "STANDARD_CENTER_WHEELCHAIR_MODE",
     ),
-  }
+  };
 }
 
 function getOptionalBuildingCenter(
   value: number[] | undefined,
-  fieldName: string
+  fieldName: string,
 ): BuildingCenter | undefined {
   if (value === undefined) {
     return undefined;
@@ -299,35 +286,47 @@ function getOptionalBuildingCenter(
 
 function calculateStandardBearing(
   indoorGeoJson: GeoJSON.FeatureCollection,
-  buildingDefinition: BuildingDefinition
+  buildingDefinition: BuildingDefinition,
 ): number {
   // calculate bearing, take two points and orient the map so that both points have a vertical line and point 1 is below (!!!) point 2
   // Then add BEARING_OFFSET (usually 90deg) rotated counterclockwise, so that the line between the points is horizontal again. (and point 1 is right of point 2)
-  const p1 = getBearingCalculationNode(indoorGeoJson, buildingDefinition.BEARING_CALC_NODE1, "Bearing calculation node 1");
-  const p2 = getBearingCalculationNode(indoorGeoJson, buildingDefinition.BEARING_CALC_NODE2, "Bearing calculation node 2");
+  const p1 = getBearingCalculationNode(
+    indoorGeoJson,
+    buildingDefinition.BEARING_CALC_NODE1,
+    "Bearing calculation node 1",
+  );
+  const p2 = getBearingCalculationNode(
+    indoorGeoJson,
+    buildingDefinition.BEARING_CALC_NODE2,
+    "Bearing calculation node 2",
+  );
 
-  return ((
+  return (
     // angle of the line between the two points
-    Math.atan2(
+    ((Math.atan2(
       p2[0] - p1[0],
       // we need to use mercator projection for the latitude
-      CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])
-    ) * (180 / Math.PI) + buildingDefinition.BEARING_OFFSET
-  // angle is between 0 and 360 after calculation (might even be above 360), map camera expects it between -180 and 180
-  + 180) % 360) - 180;
+      CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1]),
+    ) *
+      (180 / Math.PI) +
+      buildingDefinition.BEARING_OFFSET +
+      // angle is between 0 and 360 after calculation (might even be above 360), map camera expects it between -180 and 180
+      180) %
+      360) -
+    180
+  );
 }
 
 function getBearingCalculationNode(
   indoorGeoJson: GeoJSON.FeatureCollection,
   nodeId: number | string,
-  label: string
+  label: string,
 ): GeoJSON.Position {
   return (
     getRequiredMatch(
       indoorGeoJson.features.find((feature) => getRequiredFeatureId(feature) == "node/" + nodeId),
-      label
-    )
-    .geometry as GeoJSON.Point
+      label,
+    ).geometry as GeoJSON.Point
   ).coordinates;
 }
 
@@ -335,7 +334,7 @@ function getOutline(): number[][] {
   return getRequiredArrayValue(
     (getLoadedBuildingInterface().feature.geometry as GeoJSON.Polygon).coordinates,
     0,
-    "Building outline coordinates"
+    "Building outline coordinates",
   );
 }
 

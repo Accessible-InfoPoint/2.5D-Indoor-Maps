@@ -7,7 +7,7 @@ export type ZoomOpacityExpression = [
   number,
   number,
   number,
-  number
+  number,
 ];
 
 export const ROOM_NUMBER_FADE_START_ZOOM = 18.8;
@@ -16,7 +16,7 @@ export const ROOM_NUMBER_FADE_END_ZOOM = 19.0;
 export function getStyleString(
   style: Record<string, unknown>,
   key: string,
-  fallback: string
+  fallback: string,
 ): string {
   const value = style[key];
 
@@ -26,7 +26,7 @@ export function getStyleString(
 export function getStyleNumber(
   style: Record<string, unknown>,
   key: string,
-  fallback: number
+  fallback: number,
 ): number {
   const value = style[key];
 
@@ -36,24 +36,15 @@ export function getStyleNumber(
 export function getStyleNumberArray(
   style: Record<string, unknown>,
   key: string,
-  fallback: number[]
+  fallback: number[],
 ): number[] {
   const value = style[key];
 
-  return Array.isArray(value) && value.every((item) => typeof item == "number")
-    ? value
-    : fallback;
+  return Array.isArray(value) && value.every((item) => typeof item == "number") ? value : fallback;
 }
 
-export function getOpacityExpression(
-  propertyName: string,
-  opacity: number
-): OpacityExpression {
-  return [
-    "*",
-    ["coalesce", ["get", propertyName], 1],
-    opacity,
-  ];
+export function getOpacityExpression(propertyName: string, opacity: number): OpacityExpression {
+  return ["*", ["coalesce", ["get", propertyName], 1], opacity];
 }
 
 export function getPatternExpression(propertyName: string): PatternExpression {

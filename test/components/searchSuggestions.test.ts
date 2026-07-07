@@ -49,7 +49,8 @@ describe("SearchSuggestions", () => {
     getCategoryIcon = (
       jest.requireMock("../../src/services/featureService") as { getCategoryIcon: jest.Mock }
     ).getCategoryIcon;
-    SearchSuggestions = jest.requireActual("../../src/components/ui/searchSuggestions").default as typeof SearchSuggestions;
+    SearchSuggestions = jest.requireActual("../../src/components/ui/searchSuggestions")
+      .default as typeof SearchSuggestions;
   });
 
   afterEach(() => {
@@ -69,14 +70,18 @@ describe("SearchSuggestions", () => {
   it("does not render a category icon when none is configured", () => {
     getCategoryIcon.mockReturnValue(undefined);
     SearchSuggestions.update([suggestion()]);
-    const icon = document.querySelector<HTMLImageElement>("#searchSuggestionsList img.suggestion-icon");
+    const icon = document.querySelector<HTMLImageElement>(
+      "#searchSuggestionsList img.suggestion-icon",
+    );
     expect(icon).toBeNull();
   });
 
   it("renders a decorative category icon when one is configured", () => {
     getCategoryIcon.mockReturnValue("/images/toilets.svg");
     SearchSuggestions.update([suggestion()]);
-    const icon = document.querySelector<HTMLImageElement>("#searchSuggestionsList img.suggestion-icon");
+    const icon = document.querySelector<HTMLImageElement>(
+      "#searchSuggestionsList img.suggestion-icon",
+    );
     expect(icon).not.toBeNull();
     expect(icon?.getAttribute("src")).toBe("/images/toilets.svg");
     expect(icon?.getAttribute("alt")).toBe("");
@@ -93,7 +98,9 @@ describe("SearchSuggestions", () => {
     option.click();
 
     expect(onSelect).toHaveBeenCalledWith(s);
-    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(false);
+    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(
+      false,
+    );
     expect(document.querySelectorAll("#searchSuggestionsList [role='option']")).toHaveLength(0);
   });
 
@@ -122,11 +129,15 @@ describe("SearchSuggestions", () => {
 
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" }));
     expect(input.getAttribute("aria-activedescendant")).toBe("search-suggestion-0");
-    expect(document.getElementById("search-suggestion-0")?.getAttribute("aria-selected")).toBe("true");
+    expect(document.getElementById("search-suggestion-0")?.getAttribute("aria-selected")).toBe(
+      "true",
+    );
 
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" }));
     expect(input.getAttribute("aria-activedescendant")).toBe("search-suggestion-1");
-    expect(document.getElementById("search-suggestion-1")?.getAttribute("aria-selected")).toBe("true");
+    expect(document.getElementById("search-suggestion-1")?.getAttribute("aria-selected")).toBe(
+      "true",
+    );
   });
 
   it("moves to the first option when either arrow key is pressed first", () => {
@@ -164,10 +175,14 @@ describe("SearchSuggestions", () => {
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
 
     expect(document.querySelectorAll("#searchSuggestionsList [role='option']")).toHaveLength(1);
-    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(false);
+    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(
+      false,
+    );
     expect(input.getAttribute("aria-expanded")).toBe("false");
     expect(input.getAttribute("aria-activedescendant")).toBe("");
-    expect(document.getElementById("search-suggestion-0")?.getAttribute("aria-selected")).toBe("false");
+    expect(document.getElementById("search-suggestion-0")?.getAttribute("aria-selected")).toBe(
+      "false",
+    );
   });
 
   it("reopens hidden suggestions and activates the first result with an arrow key", () => {
@@ -180,7 +195,9 @@ describe("SearchSuggestions", () => {
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp" }));
 
-    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(true);
+    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(
+      true,
+    );
     expect(input.getAttribute("aria-expanded")).toBe("true");
     expect(input.getAttribute("aria-activedescendant")).toBe("search-suggestion-0");
   });
@@ -191,7 +208,8 @@ describe("SearchSuggestions", () => {
 
     jest.advanceTimersByTime(250);
 
-    expect(document.getElementById("searchAnnouncement")?.textContent)
-      .toBe("2 search suggestions available.");
+    expect(document.getElementById("searchAnnouncement")?.textContent).toBe(
+      "2 search suggestions available.",
+    );
   });
 });

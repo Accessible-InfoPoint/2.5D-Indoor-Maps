@@ -12,8 +12,8 @@ describe("featureDescriptionHelper", () => {
     properties: { type: "ramp" },
     geometry: {
       type: "Point",
-      coordinates: [0, 0]
-    }
+      coordinates: [0, 0],
+    },
   };
 
   it("returns correct msgTrue for matching profile", () => {
@@ -24,8 +24,8 @@ describe("featureDescriptionHelper", () => {
         userGroups: [UserGroupEnum.wheelchairUsers],
         hasCorrectProperties: () => true,
         msgTrue: "Ramp is accessible",
-        msgFalse: null as null
-      }
+        msgFalse: null as null,
+      },
     ];
 
     const result = featureDescriptionHelper(dummyFeature, accessibilityProperties);
@@ -40,8 +40,8 @@ describe("featureDescriptionHelper", () => {
         userGroups: [UserGroupEnum.wheelchairUsers],
         hasCorrectProperties: () => false,
         msgTrue: "Ramp is accessible",
-        msgFalse: "Ramp is not accessible"
-      }
+        msgFalse: "Ramp is not accessible",
+      },
     ];
 
     const result = featureDescriptionHelper(dummyFeature, accessibilityProperties);
@@ -56,8 +56,8 @@ describe("featureDescriptionHelper", () => {
         userGroups: [UserGroupEnum.blindPeople],
         hasCorrectProperties: () => true,
         msgTrue: "Blind info",
-        msgFalse: "Blind warning"
-      }
+        msgFalse: "Blind warning",
+      },
     ];
 
     const result = featureDescriptionHelper(dummyFeature, accessibilityProperties);
@@ -73,8 +73,8 @@ describe("featureDescriptionHelper", () => {
         hasCorrectProperties: () => false,
         msgTrue: () => "Dynamic true",
         msgFalse: (feature: GeoJSON.Feature<any, any>) =>
-          feature.properties?.type === "ramp" ? "Dynamic false" : "" // empty return as null return not allowed
-      }
+          feature.properties?.type === "ramp" ? "Dynamic false" : "", // empty return as null return not allowed
+      },
     ];
 
     const result = featureDescriptionHelper(dummyFeature, accessibilityProperties);
@@ -89,8 +89,8 @@ describe("featureDescriptionHelper", () => {
         userGroups: [UserGroupEnum.wheelchairUsers],
         hasCorrectProperties: () => false,
         msgTrue: () => "Should not show",
-        msgFalse: () => "" // null return not allowed
-      }
+        msgFalse: () => "", // null return not allowed
+      },
     ];
 
     const result = featureDescriptionHelper(dummyFeature, accessibilityProperties);

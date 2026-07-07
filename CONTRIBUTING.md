@@ -21,10 +21,22 @@ Install dependencies:
 npm ci
 ```
 
+Install the Chromium browser used by Playwright:
+
+```sh
+npx playwright install chromium
+```
+
 For local dependency updates while developing, use:
 
 ```sh
 npm install
+```
+
+Format source, tests, documentation, and config files with:
+
+```sh
+npm run format
 ```
 
 ## Running the Application
@@ -70,14 +82,18 @@ npm start
 
 ## Checks
 
-Run these before merging a feature branch into `main`:
+Run the same checks locally that GitHub Actions runs for pull requests:
 
 ```sh
-npm test -- --runInBand
-npm run typecheck
+npm run check
+```
+
+This runs configuration validation, formatting checks, linting, type checking,
+the Jest test suite, a production build, the bundle budget check, and Playwright
+browser smoke tests. For stricter migration work, also run:
+
+```sh
 npm run typecheck:strict
-npm run lint
-npm run build
 ```
 
 ## Branches

@@ -153,7 +153,10 @@ function setUserProfile(userGroup: UserGroupEnum, onSettingsChanged: SettingsCha
   onSettingsChanged();
 }
 
-function setLanguage(language: LanguageSettingsEnum, onSettingsChanged: SettingsChangeHandler): void {
+function setLanguage(
+  language: LanguageSettingsEnum,
+  onSettingsChanged: SettingsChangeHandler,
+): void {
   LanguageService.setLanguage(language);
   hideAll();
   onSettingsChanged();

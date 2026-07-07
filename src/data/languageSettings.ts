@@ -5,13 +5,13 @@ LanguageSettings.set(LanguageSettingsEnum.english, {
   name: "English",
   acronym: "en",
   display: "EN",
-  resourceFile: "../../public/strings/lang.en.json"
+  resourceFile: "../../public/strings/lang.en.json",
 });
 LanguageSettings.set(LanguageSettingsEnum.german, {
   name: "Deutsch",
   acronym: "de",
   display: "DE",
-  resourceFile: "../../public/strings/lang.de.json"
+  resourceFile: "../../public/strings/lang.de.json",
 });
 
 export { LanguageSettings };

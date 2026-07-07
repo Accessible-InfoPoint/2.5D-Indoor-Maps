@@ -14,6 +14,11 @@ type DownloadCache = Record<string, number>;
 const cachePath = resolveProjectPath("tmp", "overpass-cache.json");
 
 export async function getOverpassData(): Promise<void> {
+  if (process.env.SKIP_OVERPASS_DOWNLOAD === "true") {
+    console.log("=== Skipping Overpass data download ===");
+    return;
+  }
+
   console.log("=== Downloading Overpass data ===");
 
   const cache = await readDownloadCache();
@@ -36,13 +41,13 @@ export async function getOverpassData(): Promise<void> {
 }
 
 async function needToReDownloadFile(dest: string, cache: DownloadCache): Promise<boolean> {
-  const lastDownloadDate = cache[dest] ?? await getFileModifiedTime(dest);
+  const lastDownloadDate = cache[dest] ?? (await getFileModifiedTime(dest));
   if (lastDownloadDate === undefined) {
     return true;
   }
 
   const fileAge = Date.now() - lastDownloadDate;
-  const fileAgeInDays = Math.floor((((fileAge / 1000) / 60) / 60) / 24);
+  const fileAgeInDays = Math.floor(fileAge / 1000 / 60 / 60 / 24);
 
   return fileAgeInDays >= MAX_OVERPASS_FILE_AGE_IN_DAYS;
 }

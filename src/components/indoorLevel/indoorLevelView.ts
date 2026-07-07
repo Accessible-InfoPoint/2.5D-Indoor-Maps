@@ -20,7 +20,7 @@ export interface IndoorLevelView {
     end: number,
     opacityStart: number,
     opacityEnd: number,
-    duration?: number
+    duration?: number,
   ): Promise<void>;
   setAltitudeAndOpacity(altitude: number, opacity: number): void;
 }

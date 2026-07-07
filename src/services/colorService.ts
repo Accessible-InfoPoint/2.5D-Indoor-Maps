@@ -36,7 +36,7 @@ function getCurrentColors(): ColorProfile {
   }
 }
 
-function getCurrentColorTranslation(profile: string): string{
+function getCurrentColorTranslation(profile: string): string {
   switch (profile) {
     case "none":
       return lang.colorProfile_none;
@@ -58,9 +58,7 @@ function setEnvOpacity(opacity: number): void {
 function getEnvOpacity(): number {
   const opacity = localStorage.getItem(opacityKey);
 
-  return opacity
-    ? +opacity
-    : 100;
+  return opacity ? +opacity : 100;
 }
 
 function setColorStrength(strength: number): void {
@@ -70,9 +68,7 @@ function setColorStrength(strength: number): void {
 function getColorStrength(): number {
   const strength = localStorage.getItem(strengthKey);
 
-  return strength
-    ? +strength
-    : 50;
+  return strength ? +strength : 50;
 }
 
 function setLineThickness(thickness: number): void {
@@ -82,9 +78,7 @@ function setLineThickness(thickness: number): void {
 function getLineThickness(): number {
   const thickness = localStorage.getItem(thicknessKey);
 
-  return thickness
-    ? +thickness
-    : 50;
+  return thickness ? +thickness : 50;
 }
 
 export default {

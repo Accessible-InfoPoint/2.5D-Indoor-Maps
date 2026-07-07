@@ -13,10 +13,7 @@ let isPopupOpen = false;
 let inputElement: HTMLInputElement | undefined;
 let announcementTimer: ReturnType<typeof setTimeout> | undefined;
 
-function render(
-  input: HTMLInputElement,
-  onSelect: (suggestion: SearchSuggestion) => void
-): void {
+function render(input: HTMLInputElement, onSelect: (suggestion: SearchSuggestion) => void): void {
   inputElement = input;
   syncInputState();
 
@@ -50,7 +47,7 @@ function buildSubtitle(suggestion: SearchSuggestion): string {
 
 function handleKeyDown(
   e: KeyboardEvent,
-  onSelect: (suggestion: SearchSuggestion) => void
+  onSelect: (suggestion: SearchSuggestion) => void,
 ): boolean {
   if (currentSuggestions.length === 0) {
     return false;
@@ -64,9 +61,9 @@ function handleKeyDown(
       return true;
     }
 
-    setActiveIndex(activeIndex === -1 || activeIndex >= currentSuggestions.length - 1
-      ? 0
-      : activeIndex + 1);
+    setActiveIndex(
+      activeIndex === -1 || activeIndex >= currentSuggestions.length - 1 ? 0 : activeIndex + 1,
+    );
     return true;
   }
 
@@ -78,11 +75,9 @@ function handleKeyDown(
       return true;
     }
 
-    setActiveIndex(activeIndex === -1
-      ? 0
-      : activeIndex > 0
-        ? activeIndex - 1
-        : currentSuggestions.length - 1);
+    setActiveIndex(
+      activeIndex === -1 ? 0 : activeIndex > 0 ? activeIndex - 1 : currentSuggestions.length - 1,
+    );
     return true;
   }
 
@@ -202,14 +197,16 @@ function hide(): void {
 
 function setActiveIndex(index: number): void {
   activeIndex = index;
-  Array.from(suggestionsList.querySelectorAll<HTMLElement>("[role='option']")).forEach((option, optionIndex) => {
-    const isActive = optionIndex === activeIndex;
-    option.setAttribute("aria-selected", isActive.toString());
-    option.classList.toggle("active", isActive);
-    if (isActive && typeof option.scrollIntoView === "function") {
-      option.scrollIntoView({ block: "nearest" });
-    }
-  });
+  Array.from(suggestionsList.querySelectorAll<HTMLElement>("[role='option']")).forEach(
+    (option, optionIndex) => {
+      const isActive = optionIndex === activeIndex;
+      option.setAttribute("aria-selected", isActive.toString());
+      option.classList.toggle("active", isActive);
+      if (isActive && typeof option.scrollIntoView === "function") {
+        option.scrollIntoView({ block: "nearest" });
+      }
+    },
+  );
   syncInputState();
 }
 
@@ -219,7 +216,7 @@ function syncInputState(): void {
   inputElement.setAttribute("aria-expanded", isPopupOpen.toString());
   inputElement.setAttribute(
     "aria-activedescendant",
-    isPopupOpen && activeIndex >= 0 ? `search-suggestion-${activeIndex}` : ""
+    isPopupOpen && activeIndex >= 0 ? `search-suggestion-${activeIndex}` : "",
   );
 }
 
@@ -228,9 +225,10 @@ function announceSuggestionCount(count: number): void {
     clearTimeout(announcementTimer);
   }
   announcementTimer = setTimeout(() => {
-    searchAnnouncement.textContent = count === 0
-      ? lang.searchSuggestionsNone
-      : lang.searchSuggestionsAvailable.replace("{count}", count.toString());
+    searchAnnouncement.textContent =
+      count === 0
+        ? lang.searchSuggestionsNone
+        : lang.searchSuggestionsAvailable.replace("{count}", count.toString());
   }, ANNOUNCEMENT_DELAY_MS);
 }
 

@@ -1,7 +1,4 @@
-import {
-  getRequiredFeatureId,
-  getRequiredFeatureProperties,
-} from "../../src/utils/geoJsonHelpers";
+import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../src/utils/geoJsonHelpers";
 
 describe("geoJsonHelpers", () => {
   it("returns feature properties when present", () => {
@@ -32,7 +29,7 @@ describe("geoJsonHelpers", () => {
     };
 
     expect(() => getRequiredFeatureProperties(feature)).toThrow(
-      "GeoJSON feature is missing properties."
+      "GeoJSON feature is missing properties.",
     );
   });
 
@@ -60,8 +57,6 @@ describe("geoJsonHelpers", () => {
       properties: {},
     };
 
-    expect(() => getRequiredFeatureId(feature)).toThrow(
-      "GeoJSON feature is missing an id."
-    );
+    expect(() => getRequiredFeatureId(feature)).toThrow("GeoJSON feature is missing an id.");
   });
 });

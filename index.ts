@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import { createPatternFillImages } from "./server/createPatternFillImages";
 import { registerFilteredIndoorDataRoute } from "./server/filteredIndoorDataRoute";
 import { getOverpassData } from "./server/getOverpassData";
@@ -12,6 +13,7 @@ async function startServer(): Promise<void> {
   await getOverpassData();
 
   console.log("=== Starting web server ===");
+  app.use(compression());
   app.use(express.json());
   registerFilteredIndoorDataRoute(app);
   app.use(express.static(resolveProjectPath("public")));

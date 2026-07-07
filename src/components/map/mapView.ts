@@ -25,7 +25,7 @@ export interface MapView {
   createIndoorLevelView(
     level: number,
     altitude: number,
-    events: IndoorLevelViewEvents
+    events: IndoorLevelViewEvents,
   ): IndoorLevelView;
   setMaxBounds(bounds: MapBounds): void;
   setCenterConstraint(constraint?: MapCenterConstraint): void;

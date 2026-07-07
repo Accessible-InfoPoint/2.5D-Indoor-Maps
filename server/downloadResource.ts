@@ -10,7 +10,7 @@ const DEFAULT_RATE_LIMIT_DELAY_MS = 10_000;
 export async function downloadResource(
   url: string,
   dest: string,
-  options: DownloadResourceOptions = {}
+  options: DownloadResourceOptions = {},
 ): Promise<void> {
   console.log("Downloading " + url);
 
@@ -22,18 +22,17 @@ export async function downloadResource(
     if (response.status === 429 && attempt < maxRateLimitRetries) {
       const retryDelay = getRetryDelay(response.headers.get("retry-after"), attempt);
       console.warn(
-        `Request was rate limited (HTTP 429). Retrying in ${Math.ceil(retryDelay / 1000)} seconds...`
+        `Request was rate limited (HTTP 429). Retrying in ${Math.ceil(retryDelay / 1000)} seconds...`,
       );
       await wait(retryDelay);
       continue;
     }
 
     if (!response.ok) {
-      const rateLimitMessage = response.status === 429
-        ? " The rate limit was reached; try again later."
-        : "";
+      const rateLimitMessage =
+        response.status === 429 ? " The rate limit was reached; try again later." : "";
       throw new Error(
-        `File could not be downloaded! (${response.status} - ${response.statusText}).${rateLimitMessage}`
+        `File could not be downloaded! (${response.status} - ${response.statusText}).${rateLimitMessage}`,
       );
     }
 
@@ -55,9 +54,9 @@ function getRetryDelay(retryAfter: string | null, attempt: number): number {
     }
   }
 
-  return DEFAULT_RATE_LIMIT_DELAY_MS * (2 ** attempt);
+  return DEFAULT_RATE_LIMIT_DELAY_MS * 2 ** attempt;
 }
 
 function wait(milliseconds: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }

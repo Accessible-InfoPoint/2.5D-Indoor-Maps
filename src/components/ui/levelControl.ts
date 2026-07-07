@@ -1,4 +1,8 @@
-import { INDOOR_LEVEL, VISIBLE_LEVEL_CONTROLS, START_LEVEL_CONTROL_POSITION } from "../../../public/strings/settings.json";
+import {
+  INDOOR_LEVEL,
+  VISIBLE_LEVEL_CONTROLS,
+  START_LEVEL_CONTROL_POSITION,
+} from "../../../public/strings/settings.json";
 import LevelService from "../../services/levelService";
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
@@ -34,9 +38,9 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
   allLevelNames.forEach((level: string) => {
     const changeToLevel = lang.changeLevel + level;
     const levelLi = document.createElement("li");
-    const levelBtn = document.createElement("button")
+    const levelBtn = document.createElement("button");
     levelBtn.className = "square";
-    levelBtn.innerHTML = level
+    levelBtn.innerHTML = level;
     levelBtn.setAttribute("title", changeToLevel);
     levelBtn.setAttribute("aria-label", changeToLevel);
     levelBtn.setAttribute("tabindex", "0");
@@ -45,8 +49,7 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
 
     levelBtn.addEventListener("click", () => {
       const didChangeLevel = geoMap.handleLevelChange(parseFloat(level));
-      if (!didChangeLevel)
-        return;
+      if (!didChangeLevel) return;
 
       for (const element of levelControl.children) {
         if (element.firstElementChild instanceof HTMLButtonElement) {
@@ -101,10 +104,10 @@ function setWindow(): void {
   const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
 
   if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
-    levelControlWindow.style.width = (shownLevels * size + (shownLevels - 1) * gap) + "px";
+    levelControlWindow.style.width = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.height = "auto";
   } else {
-    levelControlWindow.style.height = (shownLevels * size + (shownLevels - 1) * gap) + "px";
+    levelControlWindow.style.height = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.width = "auto";
   }
 }
@@ -115,12 +118,12 @@ function setMargin(): void {
   if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
-    levelControl.style.marginLeft = (-1 * (size + gap) * offset) + "px";
+    levelControl.style.marginLeft = -1 * (size + gap) * offset + "px";
     levelControl.style.marginTop = "0px";
   } else {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
-    levelControl.style.marginTop = (-1 * (size + gap) * offset) + "px";
+    levelControl.style.marginTop = -1 * (size + gap) * offset + "px";
     levelControl.style.marginLeft = "0px";
   }
 }
@@ -183,11 +186,11 @@ function setupControlShifter(): void {
   const up = getRequiredElement("levelShiftUp");
   up.addEventListener("click", () => {
     moveUp();
-  })
+  });
   const down = getRequiredElement("levelShiftDown");
   down.addEventListener("click", () => {
     moveDown();
-  })
+  });
 }
 
 function updateLevelButtonState(button: HTMLButtonElement, active: boolean): void {

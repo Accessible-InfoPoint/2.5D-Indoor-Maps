@@ -24,10 +24,7 @@ export function setupUi(geoMap: GeoMap): void {
   SearchForm.render(geoMap);
   UserProfileModal.render(refreshSettings);
   ZoomControl.setup(geoMap);
-  WheelchairModeControl.setup(
-    refreshSettings,
-    () => geoMap.refreshMapViewportConstraints(true)
-  );
+  WheelchairModeControl.setup(refreshSettings, () => geoMap.refreshMapViewportConstraints(true));
   Switch2DControl.setup(geoMap);
   geoMap.refreshMapViewportConstraints(true);
 }

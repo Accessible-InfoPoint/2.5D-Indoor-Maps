@@ -1,21 +1,58 @@
-name: Run Tests
+name: Run Checks
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: ".node-version"
-        cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+          cache: "npm"
 
-    - name: Install modules
-      run: npm ci
+      - name: Install modules
+        run: npm ci
 
-    - name: Run tests
-      run: npm test
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate config
+        run: npm run check:config
+
+      - name: Check formatting
+        run: npm run check:format
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run build
+        run: npm run build
+
+      - name: Check bundle budget
+        run: npm run check:bundle
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

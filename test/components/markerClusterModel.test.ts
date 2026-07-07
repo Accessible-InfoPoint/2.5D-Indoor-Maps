@@ -11,7 +11,7 @@ function marker(
   y: number,
   projectedX: number,
   projectedY: number,
-  markerFile?: string
+  markerFile?: string,
 ): ClusterableMarker {
   const symbol = markerFile ? { markerFile } : undefined;
 
@@ -27,15 +27,11 @@ function marker(
 describe("buildMarkerClusters", () => {
   it("clusters markers within the max cluster radius", () => {
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0),
-        marker("b", 2, 2, 20, 0),
-        marker("c", 10, 10, 80, 0),
-      ],
+      [marker("a", 0, 0, 0, 0), marker("b", 2, 2, 20, 0), marker("c", 10, 10, 80, 0)],
       resolveMarkerClusterOptions({
         maxClusterRadius: 30,
         sameSymbolClusterRadius: 30,
-      })
+      }),
     );
 
     expect(clusters).toHaveLength(2);
@@ -48,14 +44,11 @@ describe("buildMarkerClusters", () => {
   it("uses the larger same-symbol radius for matching marker files", () => {
     const markerFile = "/same.svg";
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0, markerFile),
-        marker("b", 2, 2, 60, 0, markerFile),
-      ],
+      [marker("a", 0, 0, 0, 0, markerFile), marker("b", 2, 2, 60, 0, markerFile)],
       resolveMarkerClusterOptions({
         maxClusterRadius: 30,
         sameSymbolClusterRadius: 70,
-      })
+      }),
     );
 
     expect(clusters).toHaveLength(1);
@@ -65,11 +58,8 @@ describe("buildMarkerClusters", () => {
   it("uses the marker symbol for clusters containing only one marker file", () => {
     const markerFile = "/same.svg";
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0, markerFile),
-        marker("b", 2, 2, 20, 0, markerFile),
-      ],
-      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } })
+      [marker("a", 0, 0, 0, 0, markerFile), marker("b", 2, 2, 20, 0, markerFile)],
+      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } }),
     );
 
     expect(clusters[0].symbol).toEqual({ markerFile });
@@ -77,11 +67,8 @@ describe("buildMarkerClusters", () => {
 
   it("uses the fallback symbol for mixed marker clusters", () => {
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0, "/a.svg"),
-        marker("b", 2, 2, 20, 0, "/b.svg"),
-      ],
-      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } })
+      [marker("a", 0, 0, 0, 0, "/a.svg"), marker("b", 2, 2, 20, 0, "/b.svg")],
+      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } }),
     );
 
     expect(clusters[0].symbol).toEqual({ markerFile: "/cluster.svg" });
@@ -91,11 +78,8 @@ describe("buildMarkerClusters", () => {
     const wheelchairToilet = MARKERS_IMG_DIR + ICONS.TOILETS_WHEELCHAIR;
     const wheelchair = MARKERS_IMG_DIR + ICONS.WHEELCHAIR;
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0, wheelchairToilet),
-        marker("b", 2, 2, 20, 0, wheelchair),
-      ],
-      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } })
+      [marker("a", 0, 0, 0, 0, wheelchairToilet), marker("b", 2, 2, 20, 0, wheelchair)],
+      resolveMarkerClusterOptions({ symbol: { markerFile: "/cluster.svg" } }),
     );
 
     expect(clusters[0].symbol).toEqual({ markerFile: wheelchairToilet });
@@ -103,14 +87,11 @@ describe("buildMarkerClusters", () => {
 
   it("returns the fallback symbol when same-symbol combining is disabled", () => {
     const clusters = buildMarkerClusters(
-      [
-        marker("a", 0, 0, 0, 0, "/same.svg"),
-        marker("b", 2, 2, 20, 0, "/same.svg"),
-      ],
+      [marker("a", 0, 0, 0, 0, "/same.svg"), marker("b", 2, 2, 20, 0, "/same.svg")],
       resolveMarkerClusterOptions({
         combineSameSymbol: false,
         symbol: { markerFile: "/cluster.svg" },
-      })
+      }),
     );
 
     expect(clusters[0].symbol).toEqual({ markerFile: "/cluster.svg" });

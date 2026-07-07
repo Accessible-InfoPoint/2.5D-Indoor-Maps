@@ -2,7 +2,10 @@ import { promises as fs, existsSync } from "node:fs";
 import path from "node:path";
 import { resolveProjectPath } from "./paths";
 
-export async function transformToGeoJsonAndSaveFile(responseText: string, dest: string): Promise<void> {
+export async function transformToGeoJsonAndSaveFile(
+  responseText: string,
+  dest: string,
+): Promise<void> {
   const outputPath = resolveProjectPath(dest);
   console.log("saving transformed GeoJSON data to " + dest);
 

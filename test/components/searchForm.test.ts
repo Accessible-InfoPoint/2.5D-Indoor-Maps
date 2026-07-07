@@ -14,7 +14,10 @@ jest.mock("../../src/services/languageService", () => ({
 jest.mock("../../src/services/buildingService", () => ({
   __esModule: true,
   default: {
-    getBuildingGeoJSON: jest.fn(() => ({ type: "FeatureCollection", features: [] as GeoJSON.Feature[] })),
+    getBuildingGeoJSON: jest.fn(() => ({
+      type: "FeatureCollection",
+      features: [] as GeoJSON.Feature[],
+    })),
     searchSuggestions: jest.fn(),
   },
 }));
@@ -59,9 +62,12 @@ describe("searchForm", () => {
         <button id="searchErrorClear"></button>
       </div>
     `;
-    BuildingService = jest.requireMock("../../src/services/buildingService").default as typeof BuildingServiceType;
-    SearchSuggestions = jest.requireMock("../../src/components/ui/searchSuggestions").default as typeof SearchSuggestionsType;
-    SearchForm = jest.requireActual("../../src/components/ui/searchForm").default as typeof SearchForm;
+    BuildingService = jest.requireMock("../../src/services/buildingService")
+      .default as typeof BuildingServiceType;
+    SearchSuggestions = jest.requireMock("../../src/components/ui/searchSuggestions")
+      .default as typeof SearchSuggestionsType;
+    SearchForm = jest.requireActual("../../src/components/ui/searchForm")
+      .default as typeof SearchForm;
     input = document.getElementById("indoorSearchInput") as HTMLInputElement;
     submitButton = document.getElementById("indoorSearchSubmit") as HTMLButtonElement;
     clearButton = document.getElementById("indoorSearchClear") as HTMLButtonElement;
@@ -71,7 +77,11 @@ describe("searchForm", () => {
     geoMap = {
       currentLevel: 0,
       selectedFeatures: [],
-      infoPoint: { type: "Feature", properties: {}, geometry: { type: "GeometryCollection", geometries: [] } },
+      infoPoint: {
+        type: "Feature",
+        properties: {},
+        geometry: { type: "GeometryCollection", geometries: [] },
+      },
       selectIndoorFeature: jest.fn(),
     } as unknown as GeoMap;
   });
@@ -90,7 +100,12 @@ describe("searchForm", () => {
   });
 
   it("selects the first search result when Enter is pressed", () => {
-    const feature: GeoJSON.Feature = { id: "way/1", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
+    const feature: GeoJSON.Feature = {
+      id: "way/1",
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Polygon", coordinates: [] },
+    };
     const suggestion = { id: "way/1", displayName: "Room A", levels: [0], type: "room", feature };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
@@ -103,10 +118,32 @@ describe("searchForm", () => {
   });
 
   it("reruns suggestions on submit and selects the current first result", () => {
-    const staleFeature: GeoJSON.Feature = { id: "way/1", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
-    const currentFeature: GeoJSON.Feature = { id: "way/2", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
-    const staleSuggestion = { id: "way/1", displayName: "Room A", levels: [0], type: "room", feature: staleFeature };
-    const currentSuggestion = { id: "way/2", displayName: "Room B", levels: [0], type: "room", feature: currentFeature };
+    const staleFeature: GeoJSON.Feature = {
+      id: "way/1",
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Polygon", coordinates: [] },
+    };
+    const currentFeature: GeoJSON.Feature = {
+      id: "way/2",
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Polygon", coordinates: [] },
+    };
+    const staleSuggestion = {
+      id: "way/1",
+      displayName: "Room A",
+      levels: [0],
+      type: "room",
+      feature: staleFeature,
+    };
+    const currentSuggestion = {
+      id: "way/2",
+      displayName: "Room B",
+      levels: [0],
+      type: "room",
+      feature: currentFeature,
+    };
     (BuildingService.searchSuggestions as jest.Mock)
       .mockReturnValueOnce([staleSuggestion])
       .mockReturnValueOnce([currentSuggestion]);
@@ -149,7 +186,12 @@ describe("searchForm", () => {
   });
 
   it("selects the first result when the Search button is clicked", () => {
-    const feature: GeoJSON.Feature = { id: "way/2", type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [] } };
+    const feature: GeoJSON.Feature = {
+      id: "way/2",
+      type: "Feature",
+      properties: {},
+      geometry: { type: "Polygon", coordinates: [] },
+    };
     const suggestion = { id: "way/2", displayName: "Room B", levels: [0], type: "room", feature };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 

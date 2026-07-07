@@ -8,7 +8,7 @@ export type LayerVisibility = "visible" | "none";
 export function createLayerSet(
   level: number,
   name: string,
-  layerNames: string[]
+  layerNames: string[],
 ): MapLibreIndoorLevelLayerSet {
   return {
     sourceId: getSourceId(level, name),

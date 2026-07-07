@@ -1,5 +1,5 @@
-export enum UserGroupEnum{
-    wheelchairUsers,
-    blindPeople,
-    noImpairments
+export enum UserGroupEnum {
+  wheelchairUsers,
+  blindPeople,
+  noImpairments,
 }

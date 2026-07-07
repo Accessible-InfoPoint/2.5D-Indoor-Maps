@@ -10,9 +10,8 @@ export function translate(): void {
   getRequiredElement("languageList").ariaLabel = lang.languageHeader;
 
   const switch2D = getRequiredElement("switch2D");
-  const switch2DLabel = switch2D.getAttribute("aria-pressed") === "true"
-    ? lang.switchFlatButton
-    : lang.switch2DButton;
+  const switch2DLabel =
+    switch2D.getAttribute("aria-pressed") === "true" ? lang.switchFlatButton : lang.switch2DButton;
   setButtonLabel(switch2D, switch2DLabel);
   setButtonLabel(getRequiredElement("switchWheelchairMode"), lang.switchWheelchairModeButton);
   setButtonLabel(getRequiredElement("zoomControlIn"), lang.zoomInButton);
@@ -23,8 +22,7 @@ export function translate(): void {
 
   for (const element of getRequiredElement("levelControl").children) {
     const levelButton = element.firstElementChild;
-    if (!(levelButton instanceof HTMLElement) || levelButton.textContent === null)
-      continue;
+    if (!(levelButton instanceof HTMLElement) || levelButton.textContent === null) continue;
 
     const changeToLevel = lang.changeLevel + levelButton.textContent;
     levelButton.title = changeToLevel;
@@ -32,10 +30,10 @@ export function translate(): void {
   }
 
   for (const element of document.getElementsByClassName("saveButton")) {
-    element.textContent = lang.saveButton
+    element.textContent = lang.saveButton;
   }
   for (const element of document.getElementsByClassName("closeButton")) {
-    element.textContent = lang.closeButton
+    element.textContent = lang.closeButton;
   }
   for (const element of document.getElementsByClassName("btn-close")) {
     if (element instanceof HTMLElement) {

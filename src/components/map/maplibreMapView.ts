@@ -6,10 +6,7 @@ import type {
   TransformConstrainFunction,
 } from "maplibre-gl";
 import constants from "../../../public/strings/constants.json";
-import {
-  MAP_START_LAT,
-  MAP_START_LNG,
-} from "../../../public/strings/settings.json";
+import { MAP_START_LAT, MAP_START_LNG } from "../../../public/strings/settings.json";
 import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
 import { MapLibreIndoorLevelView } from "../indoorLevel/maplibreIndoorLevelView";
 import { getRequiredElement } from "../../utils/domHelpers";
@@ -21,12 +18,8 @@ import { MapBounds, MapCenterConstraint, MapView, MapViewportPadding } from "./m
 const MAX_PITCH = 85;
 const DEFAULT_MIN_ZOOM = -2;
 const DEFAULT_MAX_ZOOM = 22;
-const {
-  CARTO_ATTRIBUTION,
-  CARTO_TILE_SERVER,
-  CARTO_TILE_SUBDOMAINS,
-  MAPLIBRE_ATTRIBUTION,
-} = constants;
+const { CARTO_ATTRIBUTION, CARTO_TILE_SERVER, CARTO_TILE_SUBDOMAINS, MAPLIBRE_ATTRIBUTION } =
+  constants;
 
 interface MapLibreMapViewOptions {
   configMode: boolean;
@@ -83,7 +76,7 @@ export class MapLibreMapView implements MapView {
         compact: true,
         customAttribution: MAPLIBRE_ATTRIBUTION,
       }),
-      "top-right"
+      "top-right",
     );
 
     this.camera = new MapLibreMapCamera(this.map, options.configMode);
@@ -93,7 +86,7 @@ export class MapLibreMapView implements MapView {
   createIndoorLevelView(
     level: number,
     _altitude: number,
-    events: IndoorLevelViewEvents
+    events: IndoorLevelViewEvents,
   ): IndoorLevelView {
     return new MapLibreIndoorLevelView(level, this.map, events);
   }
@@ -111,11 +104,7 @@ export class MapLibreMapView implements MapView {
         }
       : undefined;
 
-    this.map.setTransformConstrain(
-      this.centerConstraint
-        ? this.constrainTransform
-        : null
-    );
+    this.map.setTransformConstrain(this.centerConstraint ? this.constrainTransform : null);
   }
 
   setViewportPadding(padding: MapViewportPadding): void {
@@ -147,7 +136,7 @@ export class MapLibreMapView implements MapView {
         carto: {
           type: "raster",
           tiles: CARTO_TILE_SUBDOMAINS.map((subdomain) =>
-            CARTO_TILE_SERVER.replace("{s}", subdomain)
+            CARTO_TILE_SERVER.replace("{s}", subdomain),
           ),
           tileSize: 256,
           attribution: CARTO_ATTRIBUTION,
@@ -220,17 +209,11 @@ export class MapLibreMapView implements MapView {
   }
 
   private unprojectCenter(center: ProjectedPoint): LngLat {
-    return new maplibregl.LngLat(
-      center.x,
-      CoordinateHelpers.y2lat(center.y)
-    );
+    return new maplibregl.LngLat(center.x, CoordinateHelpers.y2lat(center.y));
   }
 
   private getConstrainedZoom(zoom: number): number {
-    return Math.max(
-      this.zoomBounds.min,
-      Math.min(this.zoomBounds.max, zoom)
-    );
+    return Math.max(this.zoomBounds.min, Math.min(this.zoomBounds.max, zoom));
   }
 
   private syncDebugLogging(configMode: boolean): void {

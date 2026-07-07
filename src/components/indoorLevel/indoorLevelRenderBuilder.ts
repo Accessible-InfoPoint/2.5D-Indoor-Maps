@@ -21,7 +21,9 @@ interface IndoorLevelRenderBuilderOptions {
   userProfile: UserGroupEnum;
 }
 
-export function buildIndoorLevelRenderModel(options: IndoorLevelRenderBuilderOptions): IndoorLevelRenderModel {
+export function buildIndoorLevelRenderModel(
+  options: IndoorLevelRenderBuilderOptions,
+): IndoorLevelRenderModel {
   const rooms: RoomRenderItem[] = [];
   const tactilePaving: StyledFeatureRenderItem[] = [];
   const pointMarkerFeatures: GeoJSON.Feature[] = [];
@@ -58,27 +60,33 @@ export function buildIndoorLevelRenderModel(options: IndoorLevelRenderBuilderOpt
     staircase: {
       doorCoordinates: getDoorCoordinates(options.geoJSON),
       lowestPoints: options.buildingGeoJSON.features.filter(
-        (feature) => "point:lowest" in getRequiredFeatureProperties(feature)
+        (feature) => "point:lowest" in getRequiredFeatureProperties(feature),
       ),
-      pathways: options.geoJSON.features.filter(
-        (feature) => {
-          const properties = getRequiredFeatureProperties(feature);
+      pathways: options.geoJSON.features.filter((feature) => {
+        const properties = getRequiredFeatureProperties(feature);
 
-          return "indoor" in properties && properties["indoor"] == "pathway";
-        }
-      ),
+        return "indoor" in properties && properties["indoor"] == "pathway";
+      }),
       allNodes: options.buildingGeoJSON.features.filter(
-        (feature) => feature.geometry.type == "Point"
+        (feature) => feature.geometry.type == "Point",
       ),
-      simpleFeatures: getStaircaseFeatures(options.geoJSON, options, FeatureService.isSimpleStaircase),
-      complexFeatures: getStaircaseFeatures(options.geoJSON, options, FeatureService.isComplexStaircase),
+      simpleFeatures: getStaircaseFeatures(
+        options.geoJSON,
+        options,
+        FeatureService.isSimpleStaircase,
+      ),
+      complexFeatures: getStaircaseFeatures(
+        options.geoJSON,
+        options,
+        FeatureService.isComplexStaircase,
+      ),
     },
   };
 }
 
 function buildRoomRenderItem(
   feature: GeoJSON.Feature,
-  options: IndoorLevelRenderBuilderOptions
+  options: IndoorLevelRenderBuilderOptions,
 ): RoomRenderItem {
   const isSelected = options.selectedFeatureIds.includes(getRequiredFeatureId(feature));
 
@@ -87,7 +95,9 @@ function buildRoomRenderItem(
     isSelected,
     isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
     label: getRoomLabel(feature),
-    style: isSelected ? buildSelectedFeatureStyle(feature, options.userProfile) : FeatureService.getFeatureStyle(feature),
+    style: isSelected
+      ? buildSelectedFeatureStyle(feature, options.userProfile)
+      : FeatureService.getFeatureStyle(feature),
     selectedPositionMarker: isSelected ? buildSelectedPositionMarker(feature, options) : undefined,
   };
 }
@@ -100,14 +110,18 @@ function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unkno
   };
 }
 
-function buildSelectedFeatureStyle(feature: GeoJSON.Feature, userProfile: UserGroupEnum): Record<string, unknown> {
+function buildSelectedFeatureStyle(
+  feature: GeoJSON.Feature,
+  userProfile: UserGroupEnum,
+): Record<string, unknown> {
   const properties = getRequiredFeatureProperties(feature);
   let patternFill: string | null = null;
 
   if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
     const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
-    const size = lineWidth <= 2 ? "small" : (lineWidth <= 4 ? "medium" : "large");
-    patternFill = "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
+    const size = lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
+    patternFill =
+      "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
   }
 
   return {
@@ -118,7 +132,7 @@ function buildSelectedFeatureStyle(feature: GeoJSON.Feature, userProfile: UserGr
 
 function buildSelectedPositionMarker(
   feature: GeoJSON.Feature,
-  options: IndoorLevelRenderBuilderOptions
+  options: IndoorLevelRenderBuilderOptions,
 ): PositionMarkerRenderItem | undefined {
   const properties = getRequiredFeatureProperties(feature);
   const diff = options.level - options.infoPointLevel;
@@ -126,7 +140,9 @@ function buildSelectedPositionMarker(
 
   if (
     Array.isArray(properties["level"]) &&
-    Math.min(...(properties["level"] as number[]).map(level => Math.abs(level - options.infoPointLevel))) != Math.abs(diff)
+    Math.min(
+      ...(properties["level"] as number[]).map((level) => Math.abs(level - options.infoPointLevel)),
+    ) != Math.abs(diff)
   ) {
     return undefined;
   }
@@ -138,14 +154,7 @@ function buildSelectedPositionMarker(
 }
 
 function getRoomLabel(feature: GeoJSON.Feature): string | undefined {
-  const {
-    indoor,
-    stairs,
-    ref,
-    name,
-    handrail,
-    amenity,
-  } = getRequiredFeatureProperties(feature);
+  const { indoor, stairs, ref, name, handrail, amenity } = getRequiredFeatureProperties(feature);
 
   const label = name || ref;
 
@@ -165,24 +174,26 @@ function getDoorCoordinates(geoJSON: GeoJSON.FeatureCollection): GeoJSON.Positio
 function getStaircaseFeatures(
   geoJSON: GeoJSON.FeatureCollection,
   options: IndoorLevelRenderBuilderOptions,
-  isStaircaseType: (feature: GeoJSON.Feature) => boolean
+  isStaircaseType: (feature: GeoJSON.Feature) => boolean,
 ): GeoJSON.Feature[] {
-  return geoJSON.features.filter(feat => {
-    const properties = getRequiredFeatureProperties(feat);
+  return geoJSON.features
+    .filter((feat) => {
+      const properties = getRequiredFeatureProperties(feat);
 
-    return isStaircaseType(feat) &&
-      (
-        !Array.isArray(properties.level) ||
-        Array.isArray(properties.level) &&
-        (properties.level.at(-1) != options.level)
+      return (
+        isStaircaseType(feat) &&
+        (!Array.isArray(properties.level) ||
+          (Array.isArray(properties.level) && properties.level.at(-1) != options.level))
       );
-  }).filter(feat => {
-    const properties = getRequiredFeatureProperties(feat);
+    })
+    .filter((feat) => {
+      const properties = getRequiredFeatureProperties(feat);
 
-    return options.userProfile != UserGroupEnum.wheelchairUsers ||
-      (
-        options.userProfile == UserGroupEnum.wheelchairUsers &&
-        "wheelchair" in properties && properties["wheelchair"] == "yes"
+      return (
+        options.userProfile != UserGroupEnum.wheelchairUsers ||
+        (options.userProfile == UserGroupEnum.wheelchairUsers &&
+          "wheelchair" in properties &&
+          properties["wheelchair"] == "yes")
       );
-  });
+    });
 }

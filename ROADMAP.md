@@ -49,4 +49,3 @@ mixed into unrelated refactors.
   Overpass downloads.
 - Add deployment notes for a static host plus Node server, or for a container
   setup if production hosting becomes relevant.
-

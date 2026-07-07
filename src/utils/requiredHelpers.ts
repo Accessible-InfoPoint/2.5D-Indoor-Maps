@@ -1,8 +1,4 @@
-export function getRequiredMapValue<K, V>(
-  map: Map<K, V>,
-  key: K,
-  context = "Map"
-): V {
+export function getRequiredMapValue<K, V>(map: Map<K, V>, key: K, context = "Map"): V {
   const value = map.get(key);
 
   if (value === undefined) {
@@ -12,11 +8,7 @@ export function getRequiredMapValue<K, V>(
   return value;
 }
 
-export function getRequiredArrayValue<T>(
-  values: T[],
-  index: number,
-  context = "Array"
-): T {
+export function getRequiredArrayValue<T>(values: T[], index: number, context = "Array"): T {
   const value = values.at(index);
 
   if (value === undefined) {
@@ -26,10 +18,7 @@ export function getRequiredArrayValue<T>(
   return value;
 }
 
-export function getRequiredMatch<T>(
-  value: T | undefined,
-  context = "Value"
-): T {
+export function getRequiredMatch<T>(value: T | undefined, context = "Value"): T {
   if (value === undefined) {
     throw new Error(`${context} was not found.`);
   }

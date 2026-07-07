@@ -52,7 +52,7 @@ describe("extractLevels", () => {
 
   it("handles semicolon-separated values", () => {
     mockArrayRange.mockImplementation((start, stop) =>
-      Array.from({ length: stop - start + 1 }, (_, i) => start + i)
+      Array.from({ length: stop - start + 1 }, (_, i) => start + i),
     );
 
     const result = extractLevels("1;3-5");
@@ -70,7 +70,7 @@ describe("extractLevels", () => {
 
   it("recursively handles nested semicolon + range", () => {
     mockArrayRange.mockImplementation((start, stop) =>
-      Array.from({ length: stop - start + 1 }, (_, i) => start + i)
+      Array.from({ length: stop - start + 1 }, (_, i) => start + i),
     );
 
     const result = extractLevels("1;2-3;5");

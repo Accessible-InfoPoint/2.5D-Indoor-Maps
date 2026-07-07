@@ -19,7 +19,7 @@ export class IndoorLevel {
     geoJSON: GeoJSON.FeatureCollection,
     level: number,
     private readonly view: IndoorLevelView,
-    private readonly state: IndoorLevelState
+    private readonly state: IndoorLevelState,
   ) {
     this.level = level;
 
@@ -89,12 +89,15 @@ export class IndoorLevel {
         renderModel.infoPoint.feature,
         renderModel.infoPoint.levels.length == 1
           ? renderModel.infoPoint.levels[0]
-          : this.state.getInfoPointLevel()
+          : this.state.getInfoPointLevel(),
       );
     }
 
     this.view.render(renderModel, this.state.getSelectedFeatureIds());
-    this.view.drawDoors(DoorService.getDoorsByLevel(this.level), this.state.getSelectedFeatureIds());
+    this.view.drawDoors(
+      DoorService.getDoorsByLevel(this.level),
+      this.state.getSelectedFeatureIds(),
+    );
   }
 
   /**
@@ -110,7 +113,7 @@ export class IndoorLevel {
     end: number,
     opacityStart: number,
     opacityEnd: number,
-    duration = 0.5
+    duration = 0.5,
   ): Promise<void> {
     await this.view.animateAltitude(start, end, opacityStart, opacityEnd, duration);
   }

@@ -120,6 +120,4 @@
   "buildingAccessibilityTactileWritingFalse": "there are no objects with tactile writing on them",
   "buildingAccessibilityElevatorSpeechTrue": "there are elevators with speech output",
   "buildingAccessibilityElevatorSpeechFalse": "there are no elevators with speech output"
-
-
 }
