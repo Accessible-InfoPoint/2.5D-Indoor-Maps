@@ -22,13 +22,14 @@
     "test:e2e": "node scripts/runPlaywright.mjs",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
+    "check:config": "node scripts/validateConfig.mjs",
     "typecheck": "tsc --noEmit && npm run typecheck:server",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
     "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
     "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json",
     "check:bundle": "node scripts/checkBundleBudget.mjs",
-    "check": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle && npm run test:e2e"
+    "check": "npm run check:config && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -63,6 +64,7 @@
     "@types/three": "^0.175.0",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.61.1",
+    "ajv": "^8.20.0",
     "concurrently": "^10.0.3",
     "css-loader": "^7.1.4",
     "css-minimizer-webpack-plugin": "^8.0.0",
