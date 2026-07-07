@@ -137,22 +137,23 @@ releases. A release can be a Git tag plus release notes.
 Create a release locally:
 
 ```sh
+git switch -c release/v0.2.0
 npm version minor --no-git-tag-version
 git add package.json package-lock.json CHANGELOG.md
 git commit -m "release: prepare 0.2.0"
-git tag v0.2.0
-git push origin main
-git push origin v0.2.0
+git push origin release/v0.2.0
 ```
 
 On GitHub:
 
 1. Go to the repository page.
-2. Open "Releases".
-3. Choose "Draft a new release".
-4. Select the pushed tag, for example `v0.2.0`.
-5. Use the changelog section as the release notes.
-6. Publish the release.
+2. Open a Pull Request for the release prepare branch.
+3. Merge the Pull Request.
+4. Open "Releases".
+5. Choose "Draft a new release".
+6. Add the fitting tag, for example `v0.2.0`.
+7. Use the changelog section as the release notes.
+8. Publish the release.
 
 Optional release attachments can be added later, such as a zip archive of a
 production build, but they are not required for this project.
