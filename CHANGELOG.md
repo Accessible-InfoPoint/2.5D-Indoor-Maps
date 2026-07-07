@@ -14,6 +14,22 @@ useful for the project.
 
 ### Added
 
+- 
+
+### Changed
+
+- 
+
+### Fixed
+
+- 
+
+### Removed
+
+## 1.2.0 - 2026-07-07
+
+### Added
+
 - Live search suggestion cards with category icons, room-type labels, and keyboard-accessible buttons/ARIA combobox pattern.
 - Clear buttons for search input and errors, plus a suggestion sort-order debug view.
 - Multi-key suggestion sorting (per-field match score, level, wheelchair accessibility, selection/infopoint proximity) via a reusable comparator-chain utility.
@@ -32,7 +48,7 @@ useful for the project.
 - Fixed complex staircases not rendering when their feature contains lowest points on another level.
 - Suggestions now filter out features without a level, indoor-type features, waste baskets, and can filter out OSM name artifacts, e.g. ("yes"/"no").
 
-### Reworked
+### Removed
 
 - Removed the unused maptalks dependency and documentation references.
 
