@@ -159,7 +159,7 @@ function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): D
   const renderData: DoorRenderData[] = [];
 
   // linear door (e.g. hinged, sliding, opening etc)
-  let color = "";
+  let color: string;
 
   if (
     door.rooms.every((feature) => {
