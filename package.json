@@ -59,7 +59,7 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.61.1",
-    "@types/bootstrap": "^5.2.10",
+    "@types/bootstrap": "^5.2.11",
     "@types/compression": "^1.8.1",
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
