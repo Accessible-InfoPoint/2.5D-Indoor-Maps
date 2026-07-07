@@ -21,6 +21,8 @@
     "test": "jest",
     "test:e2e": "node scripts/runPlaywright.mjs",
     "test:coverage": "jest --coverage",
+    "format": "prettier . --write",
+    "check:format": "prettier . --check",
     "lint": "eslint . --ext .ts",
     "check:config": "node scripts/validateConfig.mjs",
     "typecheck": "tsc --noEmit && npm run typecheck:server",
@@ -29,7 +31,7 @@
     "analyze:stats": "webpack --mode production --profile --json=tmp/webpack-stats.json",
     "analyze": "npm run analyze:stats && webpack-bundle-analyzer tmp/webpack-stats.json",
     "check:bundle": "node scripts/checkBundleBudget.mjs",
-    "check": "npm run check:config && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle && npm run test:e2e"
+    "check": "npm run check:config && npm run check:format && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run check:bundle && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -74,6 +76,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "mini-css-extract-plugin": "^2.10.2",
+    "prettier": "^3.9.4",
     "sass-embedded": "^1.100.0",
     "sass-loader": "^16.0.8",
     "ts-jest": "^29.4.11",

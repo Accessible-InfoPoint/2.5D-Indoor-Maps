@@ -1,0 +1,11 @@
+node_modules
+dist
+public/dist
+public/geojson
+public/overpass/*.json
+public/overpass/*.xml
+coverage
+tmp
+playwright-report
+test-results
+debug.log

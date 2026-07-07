@@ -8,37 +8,40 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: ".node-version"
-        cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+          cache: "npm"
 
-    - name: Install modules
-      run: npm ci
+      - name: Install modules
+        run: npm ci
 
-    - name: Install Playwright browser
-      run: npx playwright install --with-deps chromium
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
 
-    - name: Validate config
-      run: npm run check:config
+      - name: Validate config
+        run: npm run check:config
 
-    - name: Run lint
-      run: npm run lint
+      - name: Check formatting
+        run: npm run check:format
 
-    - name: Run typecheck
-      run: npm run typecheck
+      - name: Run lint
+        run: npm run lint
 
-    - name: Run tests
-      run: npm test
+      - name: Run typecheck
+        run: npm run typecheck
 
-    - name: Run build
-      run: npm run build
+      - name: Run tests
+        run: npm test
 
-    - name: Check bundle budget
-      run: npm run check:bundle
+      - name: Run build
+        run: npm run build
 
-    - name: Run Playwright tests
-      run: npm run test:e2e
+      - name: Check bundle budget
+        run: npm run check:bundle
+
+      - name: Run Playwright tests
+        run: npm run test:e2e

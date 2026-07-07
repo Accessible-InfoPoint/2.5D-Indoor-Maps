@@ -33,6 +33,12 @@ For local dependency updates while developing, use:
 npm install
 ```
 
+Format source, tests, documentation, and config files with:
+
+```sh
+npm run format
+```
+
 ## Running the Application
 
 During development, start the application with:
@@ -82,9 +88,9 @@ Run the same checks locally that GitHub Actions runs for pull requests:
 npm run check
 ```
 
-This runs configuration validation, linting, type checking, the Jest test suite,
-a production build, the bundle budget check, and Playwright browser smoke tests.
-For stricter migration work, also run:
+This runs configuration validation, formatting checks, linting, type checking,
+the Jest test suite, a production build, the bundle budget check, and Playwright
+browser smoke tests. For stricter migration work, also run:
 
 ```sh
 npm run typecheck:strict
