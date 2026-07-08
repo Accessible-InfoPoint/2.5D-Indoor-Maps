@@ -7,26 +7,45 @@ import { resolveProjectPath } from "./paths";
 const BUILDINGS_DATA_PATH = "public/overpass/buildings.json";
 const INDOOR_DATA_PATH = "public/overpass/indoor.json";
 
-type BuildingId = keyof typeof BuildingConstantsDefinition;
+type BuildingId = string;
+type BuildingDefinitions = Record<string, { SEARCH_STRING: string }>;
+
+export interface FilteredIndoorDataRouteOptions {
+  buildingsDataPath?: string;
+  indoorDataPath?: string;
+  buildingDefinitions?: BuildingDefinitions;
+}
 
 interface FilteredIndoorDataResponse {
   buildingInterface: BuildingInterface;
   geoJson: GeoJSON.FeatureCollection;
 }
 
-export function registerFilteredIndoorDataRoute(app: any): void {
+interface RouteApp {
+  get(
+    path: string,
+    handler: (request: RouteRequest, response: RouteResponse) => Promise<void>,
+  ): void;
+}
+
+export function registerFilteredIndoorDataRoute(
+  app: RouteApp,
+  options: FilteredIndoorDataRouteOptions = {},
+): void {
+  const routeOptions = normalizeRouteOptions(options);
+
   app.get(
     "/api/buildings/:building/indoor",
     async (request: RouteRequest, response: RouteResponse) => {
       try {
         const building = request.params.building;
 
-        if (!isBuildingId(building)) {
+        if (!isBuildingId(building, routeOptions.buildingDefinitions)) {
           response.status(404).json({ error: `Unknown building "${building}".` });
           return;
         }
 
-        response.json(await loadFilteredIndoorData(building));
+        response.json(await loadFilteredIndoorData(building, routeOptions));
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown server error.";
         response.status(500).json({ error: message });
@@ -46,10 +65,30 @@ interface RouteResponse {
   json: (body: unknown) => void;
 }
 
-async function loadFilteredIndoorData(building: BuildingId): Promise<FilteredIndoorDataResponse> {
-  const buildingDefinition = BuildingConstantsDefinition[building];
-  const buildings = await readFeatureCollection(BUILDINGS_DATA_PATH);
-  const indoor = await readFeatureCollection(INDOOR_DATA_PATH);
+interface NormalizedFilteredIndoorDataRouteOptions {
+  buildingsDataPath: string;
+  indoorDataPath: string;
+  buildingDefinitions: BuildingDefinitions;
+}
+
+function normalizeRouteOptions(
+  options: FilteredIndoorDataRouteOptions,
+): NormalizedFilteredIndoorDataRouteOptions {
+  return {
+    buildingsDataPath: options.buildingsDataPath ?? BUILDINGS_DATA_PATH,
+    indoorDataPath: options.indoorDataPath ?? INDOOR_DATA_PATH,
+    buildingDefinitions:
+      options.buildingDefinitions ?? (BuildingConstantsDefinition as BuildingDefinitions),
+  };
+}
+
+async function loadFilteredIndoorData(
+  building: BuildingId,
+  options: NormalizedFilteredIndoorDataRouteOptions,
+): Promise<FilteredIndoorDataResponse> {
+  const buildingDefinition = options.buildingDefinitions[building];
+  const buildings = await readFeatureCollection(options.buildingsDataPath);
+  const indoor = await readFeatureCollection(options.indoorDataPath);
   const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
 
   if (!buildingInterface) {
@@ -70,6 +109,9 @@ async function readFeatureCollection(path: string): Promise<GeoJSON.FeatureColle
   return JSON.parse(data) as GeoJSON.FeatureCollection;
 }
 
-function isBuildingId(value: string): value is BuildingId {
-  return value in BuildingConstantsDefinition;
+function isBuildingId(
+  value: string,
+  buildingDefinitions: BuildingDefinitions,
+): value is BuildingId {
+  return value in buildingDefinitions;
 }

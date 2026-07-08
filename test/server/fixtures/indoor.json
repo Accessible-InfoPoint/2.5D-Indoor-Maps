@@ -1,0 +1,43 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "indoor/inside-room",
+      "properties": {
+        "indoor": "room",
+        "level": "0",
+        "ref": "A.001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5, 5]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "indoor/outside-room",
+      "properties": {
+        "indoor": "room",
+        "level": "0",
+        "ref": "B.001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [20, 20]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "indoor/no-level",
+      "properties": {
+        "indoor": "room",
+        "ref": "A.002"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5, 5]
+      }
+    }
+  ]
+}
