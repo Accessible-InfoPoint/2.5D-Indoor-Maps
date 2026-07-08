@@ -6,9 +6,11 @@ import {
 } from "./filteredIndoorDataRoute";
 import { registerHealthRoute } from "./healthRoute";
 import { resolveProjectPath } from "./paths";
+import { registerRequestLogger, RequestLogger } from "./requestLogger";
 
 export interface CreateAppOptions {
   filteredIndoorData?: FilteredIndoorDataRouteOptions;
+  requestLogger?: RequestLogger;
   staticRoot?: string;
 }
 
@@ -16,6 +18,7 @@ export function createApp(options: CreateAppOptions = {}): ReturnType<typeof exp
   const app = express();
 
   app.use(compression());
+  registerRequestLogger(app, options.requestLogger);
   app.use(express.json());
   registerHealthRoute(app);
   registerFilteredIndoorDataRoute(app, options.filteredIndoorData);

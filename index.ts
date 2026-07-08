@@ -1,10 +1,12 @@
 import { createApp } from "./server/app";
 import { createPatternFillImages } from "./server/createPatternFillImages";
 import { getOverpassData } from "./server/getOverpassData";
+import { validateStartupConfig } from "./server/startupConfigValidation";
 
 const port = Number(process.env.PORT ?? 3000);
 
 async function startServer(): Promise<void> {
+  await validateStartupConfig();
   await createPatternFillImages();
   await getOverpassData();
 

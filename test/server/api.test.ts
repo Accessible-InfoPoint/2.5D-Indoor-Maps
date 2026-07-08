@@ -14,6 +14,17 @@ describe("server API", () => {
     });
   });
 
+  it("logs completed requests", async () => {
+    const logger = jest.fn();
+
+    await withFixtureServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/health`);
+      await response.text();
+
+      expect(logger).toHaveBeenCalledWith(expect.stringMatching(/^GET \/api\/health 200 \d+ms$/));
+    }, logger);
+  });
+
   it("returns indoor data filtered to the configured building bounds", async () => {
     await withFixtureServer(async (baseUrl) => {
       const response = await fetch(`${baseUrl}/api/buildings/fixture/indoor`);
@@ -43,7 +54,10 @@ interface GeoJSONResponse {
   geoJson: GeoJSON.FeatureCollection;
 }
 
-async function withFixtureServer(callback: (baseUrl: string) => Promise<void>): Promise<void> {
+async function withFixtureServer(
+  callback: (baseUrl: string) => Promise<void>,
+  logger = jest.fn(),
+): Promise<void> {
   const app = createApp({
     filteredIndoorData: {
       buildingsDataPath: path.resolve(process.cwd(), "test/server/fixtures/buildings.json"),
@@ -54,6 +68,7 @@ async function withFixtureServer(callback: (baseUrl: string) => Promise<void>): 
         },
       },
     },
+    requestLogger: logger,
   });
   const server = createServer(app as Parameters<typeof createServer>[0]);
 
