@@ -1,5 +1,5 @@
 import compression from "compression";
-import express from "express";
+import express, { Application } from "express";
 import {
   FilteredIndoorDataRouteOptions,
   registerFilteredIndoorDataRoute,
@@ -14,7 +14,7 @@ export interface CreateAppOptions {
   staticRoot?: string;
 }
 
-export function createApp(options: CreateAppOptions = {}): ReturnType<typeof express> {
+export function createApp(options: CreateAppOptions = {}): Application {
   const app = express();
 
   app.use(compression());

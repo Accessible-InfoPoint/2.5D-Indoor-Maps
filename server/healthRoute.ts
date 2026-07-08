@@ -1,13 +1,7 @@
-interface HealthRouteApp {
-  get(path: string, handler: (_request: unknown, response: HealthRouteResponse) => void): void;
-}
+import { Application, Request, Response } from "express";
 
-interface HealthRouteResponse {
-  json: (body: unknown) => void;
-}
-
-export function registerHealthRoute(app: HealthRouteApp): void {
-  app.get("/api/health", (_request: unknown, response: HealthRouteResponse) => {
+export function registerHealthRoute(app: Application): void {
+  app.get("/api/health", (_request: Request, response: Response) => {
     response.json({
       status: "ok",
     });

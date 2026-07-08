@@ -1,3 +1,4 @@
+import { Application, Request, Response } from "express";
 import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
@@ -22,15 +23,8 @@ interface FilteredIndoorDataResponse {
   geoJson: GeoJSON.FeatureCollection;
 }
 
-interface RouteApp {
-  get(
-    path: string,
-    handler: (request: RouteRequest, response: RouteResponse) => Promise<void>,
-  ): void;
-}
-
 export function registerFilteredIndoorDataRoute(
-  app: RouteApp,
+  app: Application,
   options: FilteredIndoorDataRouteOptions = {},
 ): void {
   const routeOptions = normalizeRouteOptions(options);
@@ -61,16 +55,8 @@ export function registerFilteredIndoorDataRoute(
   );
 }
 
-interface RouteRequest {
-  params: {
-    building: string;
-  };
-}
-
-interface RouteResponse {
-  status: (statusCode: number) => RouteResponse;
-  json: (body: unknown) => void;
-}
+type RouteRequest = Request<{ building: string }>;
+type RouteResponse = Response;
 
 interface NormalizedFilteredIndoorDataRouteOptions {
   buildingsDataPath: string;
