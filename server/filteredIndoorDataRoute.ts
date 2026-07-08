@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
 import { filterByBounds, findBuildingBySearchString } from "../src/utils/buildingGeoJsonFilters";
+import { apiError } from "./apiError";
 import { resolveProjectPath } from "./paths";
 
 const BUILDINGS_DATA_PATH = "public/overpass/buildings.json";
@@ -41,14 +42,20 @@ export function registerFilteredIndoorDataRoute(
         const building = request.params.building;
 
         if (!isBuildingId(building, routeOptions.buildingDefinitions)) {
-          response.status(404).json({ error: `Unknown building "${building}".` });
+          response
+            .status(404)
+            .json(apiError("unknown_building", `Unknown building "${building}".`, { building }));
           return;
         }
 
         response.json(await loadFilteredIndoorData(building, routeOptions));
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown server error.";
-        response.status(500).json({ error: message });
+        const message = getErrorMessage(error);
+        response.status(500).json(
+          apiError("cached_indoor_data_unavailable", message, {
+            building: request.params.building,
+          }),
+        );
       }
     },
   );
@@ -114,4 +121,21 @@ function isBuildingId(
   buildingDefinitions: BuildingDefinitions,
 ): value is BuildingId {
   return value in buildingDefinitions;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  return "Unknown server error.";
 }

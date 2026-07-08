@@ -12,10 +12,12 @@ const OVERPASS_QUERIES = {
 
 export const RESOURCES_TO_DOWNLOAD = [
   {
+    label: "indoor data",
     url: URLS.OVERPASS_API + encodeURI(OVERPASS_QUERIES.INDOOR),
     dest: "public/overpass/indoor.json",
   },
   {
+    label: "SIT buildings",
     url: URLS.OVERPASS_API + encodeURI(OVERPASS_QUERIES.SIT_BUILDINGS),
     dest: "public/overpass/buildings.json",
   },

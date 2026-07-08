@@ -18,6 +18,7 @@ async function startServer(): Promise<void> {
 }
 
 startServer().catch((reason: unknown) => {
-  console.error("### Error: " + reason + " ###");
+  const message = reason instanceof Error ? reason.message : String(reason);
+  console.error("### Error ###\n" + message);
   process.exitCode = 1;
 });

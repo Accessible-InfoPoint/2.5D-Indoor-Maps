@@ -1,6 +1,7 @@
 import { createServer, Server } from "node:http";
 import { AddressInfo } from "node:net";
 import path from "node:path";
+import { FilteredIndoorDataRouteOptions } from "../../server/filteredIndoorDataRoute";
 import { createApp } from "../../server/app";
 
 describe("server API", () => {
@@ -39,13 +40,49 @@ describe("server API", () => {
   it("returns a 404 for unknown buildings", async () => {
     await withFixtureServer(async (baseUrl) => {
       const response = await fetch(`${baseUrl}/api/buildings/unknown/indoor`);
-      const body = (await response.json()) as { error: string };
+      const body = (await response.json()) as ApiErrorResponse;
 
       expect(response.status).toBe(404);
-      expect(body.error).toBe('Unknown building "unknown".');
+      expect(body).toEqual({
+        error: {
+          code: "unknown_building",
+          message: 'Unknown building "unknown".',
+          details: {
+            building: "unknown",
+          },
+        },
+      });
     });
   });
+
+  it("returns a structured error when cached indoor data is unavailable", async () => {
+    await withFixtureServer(
+      async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/api/buildings/fixture/indoor`);
+        const body = (await response.json()) as ApiErrorResponse;
+
+        expect(response.status).toBe(500);
+        expect(body.error.code).toBe("cached_indoor_data_unavailable");
+        expect(body.error.message).toContain("missing-indoor.json");
+        expect(body.error.details).toEqual({
+          building: "fixture",
+        });
+      },
+      jest.fn(),
+      {
+        indoorDataPath: path.resolve(process.cwd(), "test/server/fixtures/missing-indoor.json"),
+      },
+    );
+  });
 });
+
+interface ApiErrorResponse {
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
+  };
+}
 
 interface GeoJSONResponse {
   buildingInterface: {
@@ -57,6 +94,7 @@ interface GeoJSONResponse {
 async function withFixtureServer(
   callback: (baseUrl: string) => Promise<void>,
   logger = jest.fn(),
+  filteredIndoorDataOptions: Partial<FilteredIndoorDataRouteOptions> = {},
 ): Promise<void> {
   const app = createApp({
     filteredIndoorData: {
@@ -67,6 +105,7 @@ async function withFixtureServer(
           SEARCH_STRING: "Fixture Building",
         },
       },
+      ...filteredIndoorDataOptions,
     },
     requestLogger: logger,
   });

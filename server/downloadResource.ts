@@ -1,8 +1,10 @@
+import { OverpassDownloadError, previewResponse } from "./overpassErrors";
 import { transformToGeoJsonAndSaveFile } from "./transformToGeoJsonAndSaveFile";
 
 interface DownloadResourceOptions {
   headers?: Record<string, string>;
   maxRateLimitRetries?: number;
+  resourceLabel?: string;
 }
 
 const DEFAULT_RATE_LIMIT_DELAY_MS = 10_000;
@@ -17,7 +19,17 @@ export async function downloadResource(
   const maxRateLimitRetries = options.maxRateLimitRetries ?? 0;
 
   for (let attempt = 0; ; attempt++) {
-    const response = await fetch(url, { headers: options.headers });
+    let response: Response;
+    try {
+      response = await fetch(url, { headers: options.headers });
+    } catch (error) {
+      throw new OverpassDownloadError({
+        dest,
+        resourceLabel: options.resourceLabel,
+        url,
+        cause: error,
+      });
+    }
 
     if (response.status === 429 && attempt < maxRateLimitRetries) {
       const retryDelay = getRetryDelay(response.headers.get("retry-after"), attempt);
@@ -29,14 +41,21 @@ export async function downloadResource(
     }
 
     if (!response.ok) {
-      const rateLimitMessage =
-        response.status === 429 ? " The rate limit was reached; try again later." : "";
-      throw new Error(
-        `File could not be downloaded! (${response.status} - ${response.statusText}).${rateLimitMessage}`,
-      );
+      const responseText = await response.text();
+      throw new OverpassDownloadError({
+        dest,
+        resourceLabel: options.resourceLabel,
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        responsePreview: previewResponse(responseText),
+      });
     }
 
-    await transformToGeoJsonAndSaveFile(await response.text(), dest);
+    await transformToGeoJsonAndSaveFile(await response.text(), dest, {
+      resourceLabel: options.resourceLabel,
+      url,
+    });
     return;
   }
 }

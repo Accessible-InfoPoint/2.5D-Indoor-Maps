@@ -34,6 +34,7 @@ export async function getOverpassData(): Promise<void> {
         "User-Agent": OVERPASS_USER_AGENT,
       },
       maxRateLimitRetries: MAX_OVERPASS_RATE_LIMIT_RETRIES,
+      resourceLabel: resource.label,
     });
     cache[resource.dest] = Date.now();
   }

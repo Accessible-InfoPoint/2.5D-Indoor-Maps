@@ -3,6 +3,7 @@ jest.mock("../../server/transformToGeoJsonAndSaveFile", () => ({
 }));
 
 import { downloadResource } from "../../server/downloadResource";
+import { OverpassDownloadError } from "../../server/overpassErrors";
 import { transformToGeoJsonAndSaveFile } from "../../server/transformToGeoJsonAndSaveFile";
 
 const fetchMock = jest.fn();
@@ -37,7 +38,10 @@ describe("downloadResource", () => {
         "User-Agent": "test-application/1.0",
       },
     });
-    expect(transformMock).toHaveBeenCalledWith('{"elements":[]}', "output.geojson");
+    expect(transformMock).toHaveBeenCalledWith('{"elements":[]}', "output.geojson", {
+      resourceLabel: undefined,
+      url: "https://example.com",
+    });
   });
 
   it("retries HTTP 429 responses using Retry-After", async () => {
@@ -58,8 +62,29 @@ describe("downloadResource", () => {
     fetchMock.mockResolvedValue(createResponse(429, "Too Many Requests"));
 
     await expect(downloadResource("https://example.com", "output.geojson")).rejects.toThrow(
-      "The rate limit was reached; try again later.",
+      "HTTP status: 429 Too Many Requests",
     );
+  });
+
+  it("includes response context in HTTP errors", async () => {
+    fetchMock.mockResolvedValue(
+      createResponse(504, "Gateway Timeout", "runtime error: Query timed out"),
+    );
+
+    await expect(
+      downloadResource("https://example.com", "output.geojson", {
+        resourceLabel: "test resource",
+      }),
+    ).rejects.toMatchObject<Partial<OverpassDownloadError>>({
+      name: "OverpassDownloadError",
+      code: "overpass_download_failed",
+      resourceLabel: "test resource",
+      url: "https://example.com",
+      dest: "output.geojson",
+      status: 504,
+      statusText: "Gateway Timeout",
+      responsePreview: "runtime error: Query timed out",
+    });
   });
 });
 
