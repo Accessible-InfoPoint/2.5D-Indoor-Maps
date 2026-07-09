@@ -96,8 +96,6 @@ async function loadFilteredIndoorData(
     );
   }
 
-  console.log(indoor.features.find(f => f.id == "node/9227302890"))
-
   return {
     buildingInterface,
     geoJson: filterByBounds(indoor, buildingInterface.boundingBox),
