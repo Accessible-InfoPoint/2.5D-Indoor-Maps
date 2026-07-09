@@ -78,6 +78,12 @@ without changing official config. The script writes files under
 `indoor.json`, `report.json`, and a suggested `buildingSources` snippet.
 Quoted option values are supported for area names and tags with spaces.
 
+Use `npm run overpass:list-buildings -- --area-name "<name>"` or
+`--bbox west,south,east,north` to list SIT-conform buildings in an area before
+choosing a candidate. The command writes a compact
+`sit-buildings.features.json` file with only feature ids and properties, plus
+the Overpass query and an Overpass Turbo URL for visual inspection.
+
 ## Documentation Options
 
 For human-readable notes, keep this Markdown file next to the source. For editor

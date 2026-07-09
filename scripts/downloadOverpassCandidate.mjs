@@ -12,17 +12,17 @@ const outputRoot = join(process.cwd(), "tmp", "overpass-candidates");
 
 const args = parseArgs(process.argv.slice(2));
 
-if (!args.id || (!args.areaName && !args.bbox) || Object.keys(args.tags).length === 0) {
+if (!isValidArgs(args)) {
   printUsage();
   process.exit(1);
 }
 
-if (!/^[a-z0-9_]+$/.test(args.id)) {
+if (args.id && !/^[a-z0-9_]+$/.test(args.id)) {
   console.log("Building ID must use lowercase characters and underscore.");
   process.exit(1);
 }
 
-const outputDir = join(outputRoot, args.id);
+const outputDir = join(outputRoot, args.id || `sit_buildings_${buildRegionSlug(args)}`);
 const region = args.areaName
   ? { type: "area", name: args.areaName }
   : { type: "bbox", bbox: args.bbox };
@@ -32,6 +32,11 @@ const source = {
 };
 
 await mkdir(outputDir, { recursive: true });
+
+if (args.listBuildings) {
+  await listSitBuildings(source, args);
+  process.exit(0);
+}
 
 const buildings = await downloadAndConvert(buildBuildingsQuery(source, args.tags), "buildings");
 const indoor = await downloadAndConvert(buildIndoorQuery(source), "indoor");
@@ -57,6 +62,18 @@ await writeJson("buildingSources.snippet.json", snippet);
 console.log(`Candidate files written to ${outputDir}`);
 console.log(report.ok ? "Candidate validation passed." : "Candidate validation failed.");
 process.exitCode = report.ok ? 0 : 1;
+
+function isValidArgs(options) {
+  if (!options.areaName && !options.bbox) {
+    return false;
+  }
+
+  if (options.listBuildings) {
+    return true;
+  }
+
+  return Boolean(options.id) && Object.keys(options.tags).length > 0;
+}
 
 async function downloadAndConvert(query, label) {
   for (let attempt = 0; ; attempt++) {
@@ -106,15 +123,51 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+async function listSitBuildings(source, options) {
+  const query = buildBuildingsQuery(source, options.tags, { requireMaxLevel: true });
+  const turboUrl = buildOverpassTurboUrl(query);
+
+  await writeFile(join(outputDir, "sit-buildings.overpassql"), query);
+  await writeFile(join(outputDir, "sit-buildings.overpass-turbo-url.txt"), `${turboUrl}\n`);
+  console.log(`Overpass Turbo: ${turboUrl}`);
+
+  const buildings = await downloadAndConvert(query, "SIT building list");
+  const features = buildings.features.filter(isSitBuilding).map(toFeatureSummary);
+
+  await writeJson("sit-buildings.features.json", features);
+
+  console.log(`Found ${features.length} SIT-conform building(s).`);
+  console.log(`Candidate files written to ${outputDir}`);
+}
+
+function isSitBuilding(feature) {
+  const properties = feature.properties ?? {};
+
+  return (
+    properties.building !== undefined &&
+    properties.min_level !== undefined &&
+    properties.max_level !== undefined
+  );
+}
+
+function toFeatureSummary(feature) {
+  return {
+    id: feature.id,
+    properties: feature.properties ?? {},
+  };
+}
+
+function buildOverpassTurboUrl(query) {
+  return `https://overpass-turbo.eu/?Q=${encodeURIComponent(query)}`;
+}
+
 function buildReport(options, buildings, indoor, buildingConstants) {
   const failures = [];
   const matchingBuildings = buildings.features.filter((feature) => {
     const properties = feature.properties ?? {};
 
     return (
-      properties.building !== undefined &&
-      properties.min_level !== undefined &&
-      properties.max_level !== undefined &&
+      isSitBuilding(feature) &&
       Object.entries(options.tags).every(([key, value]) => properties[key] === value)
     );
   });
@@ -181,15 +234,19 @@ function validateBearingNode(indoor, nodeId, fieldName, failures) {
   }
 }
 
-function buildBuildingsQuery(source, tags) {
+function buildBuildingsQuery(source, tags, options = {}) {
   const tagSelector = Object.entries(tags)
     .map(([key, value]) => `["${escapeOverpassValue(key)}"="${escapeOverpassValue(value)}"]`)
     .join("");
+  const maxLevelSelector = options.requireMaxLevel ? '["max_level"]' : "";
 
   return [
     "[out:json];",
     buildRegionStatement(source),
-    `(${buildRegionSelector(`nwr["building"]["min_level"]${tagSelector}`, source)};);`,
+    `(${buildRegionSelector(
+      `nwr["building"]["min_level"]${maxLevelSelector}${tagSelector}`,
+      source,
+    )};);`,
     "(._;>;);",
     "out;",
   ].join("");
@@ -232,6 +289,7 @@ function parseArgs(argv) {
     bbox: undefined,
     tags: {},
     constantsId: undefined,
+    listBuildings: false,
   };
 
   for (let index = 0; index < argv.length; index++) {
@@ -272,6 +330,9 @@ function parseArgs(argv) {
         index = optionValue.index;
         break;
       }
+      case "--list-buildings":
+        parsed.listBuildings = true;
+        break;
       default:
         throw new Error(`Unknown option ${arg}.`);
     }
@@ -287,6 +348,23 @@ function parseBbox(value) {
   }
 
   return coordinates;
+}
+
+function buildRegionSlug(options) {
+  if (options.areaName) {
+    return sanitizeId(options.areaName);
+  }
+
+  return sanitizeId(options.bbox.join("_"));
+}
+
+function sanitizeId(value) {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "area"
+  );
 }
 
 function readOptionValue(argv, optionIndex) {
@@ -388,6 +466,8 @@ function printUsage() {
       "Usage:",
       '  npm run overpass:candidate -- --id <id> --area-name "<name>" --tag key=value',
       "  npm run overpass:candidate -- --id <id> --bbox west,south,east,north --tag key=value",
+      '  npm run overpass:list-buildings -- --area-name "<name>"',
+      "  npm run overpass:list-buildings -- --bbox west,south,east,north",
     ].join("\n"),
   );
 }

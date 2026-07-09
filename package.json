@@ -26,6 +26,7 @@
     "lint": "eslint . --ext .ts",
     "check:config": "node scripts/validateConfig.mjs",
     "overpass:candidate": "node scripts/downloadOverpassCandidate.mjs",
+    "overpass:list-buildings": "node scripts/downloadOverpassCandidate.mjs --list-buildings",
     "typecheck": "tsc --noEmit && npm run typecheck:server",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",

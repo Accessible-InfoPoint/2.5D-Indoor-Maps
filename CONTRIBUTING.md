@@ -131,9 +131,26 @@ npm run overpass:candidate -- --id my_building --bbox 13.70,51.02,13.73,51.04 --
 
 The candidate downloader also sends `OVERPASS_USER_AGENT`. For repeated or
 shared testing, set it to an identifier with contact information, just as you
-would for `npm start`.
-Quoted option values such as `--area-name "Berlin Hauptbahnhof"` and
-`--tag name="Example Building"` are supported for names with spaces.
+would for `npm start`. Quoted option values such as
+`--area-name "Berlin Hauptbahnhof"` and `--tag name="Example Building"` are
+supported for names with spaces.
+
+To discover SIT-conform buildings in an area before choosing one candidate, run:
+
+```sh
+npm run overpass:list-buildings -- --area-name "Dresden"
+```
+
+or with a bounding box:
+
+```sh
+npm run overpass:list-buildings -- --bbox 13.70,51.02,13.73,51.04
+```
+
+This writes `sit-buildings.features.json` with only `id` and `properties`,
+`sit-buildings.overpassql` for manual copy/paste, and
+`sit-buildings.overpass-turbo-url.txt` with a link that opens the query in
+Overpass Turbo. Add `--tag key=value` if you want to narrow the list.
 
 The script writes to `tmp/overpass-candidates/<id>/` and does not modify
 official config. Review `report.json`, `buildings.json`, `indoor.json`, and

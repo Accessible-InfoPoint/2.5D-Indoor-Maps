@@ -91,7 +91,8 @@ definitions in `public/strings/buildingSources.json`, are documented in
 Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING`
 when the building exists in both `buildingConstants.json` and
 `buildingSources.json`. For local experiments with new buildings, use
-`npm run overpass:candidate -- ...`; the full workflow is documented in
+`npm run overpass:candidate -- ...` or
+`npm run overpass:list-buildings -- ...`; the full workflow is documented in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project structure
