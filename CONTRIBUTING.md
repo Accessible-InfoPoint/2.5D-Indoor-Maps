@@ -96,6 +96,58 @@ browser smoke tests. For stricter migration work, also run:
 npm run typecheck:strict
 ```
 
+## Overpass Building Sources
+
+Official buildings loaded through the `cachedOverpass` backend are configured in
+two files:
+
+- `public/strings/buildingConstants.json` contains camera, bearing, zoom, and
+  rendering-facing building constants.
+- `public/strings/buildingSources.json` contains the official Overpass source
+  region and OSM tag selector for each building.
+
+Every official building id must exist in both files. `npm run check:config`
+validates that relation, the source ids, region shapes, and bounding box order.
+
+To switch the app to another official building, change `CURRENT_BUILDING` in
+`public/strings/settings.json` to a building id that exists in both config
+files. When the backend source is `cachedOverpass`, server startup downloads or
+reuses the cache for that building's configured source.
+
+### Testing a New Building Candidate
+
+Use the candidate downloader for local experiments before adding a building to
+official config:
+
+```sh
+npm run overpass:candidate -- --id my_building --area-name "Dresden" --tag loc_ref=ABC
+```
+
+or with a bounding box:
+
+```sh
+npm run overpass:candidate -- --id my_building --bbox 13.70,51.02,13.73,51.04 --tag name="Example Building"
+```
+
+The candidate downloader also sends `OVERPASS_USER_AGENT`. For repeated or
+shared testing, set it to an identifier with contact information, just as you
+would for `npm start`.
+Quoted option values such as `--area-name "Berlin Hauptbahnhof"` and
+`--tag name="Example Building"` are supported for names with spaces.
+
+The script writes to `tmp/overpass-candidates/<id>/` and does not modify
+official config. Review `report.json`, `buildings.json`, `indoor.json`, and
+`buildingSources.snippet.json`. A candidate should only be promoted when the
+report passes and the building has suitable `buildingConstants.json` values.
+
+Promotion workflow:
+
+1. Run the candidate download.
+2. Review the generated report and data.
+3. Add or update the building in `buildingConstants.json`.
+4. Add the matching official source entry in `buildingSources.json`.
+5. Run `npm run check:config` and the relevant server/API tests.
+
 ## Branches
 
 Keep `main` stable. Work on features and fixes in branches:

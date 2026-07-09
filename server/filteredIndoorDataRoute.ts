@@ -4,10 +4,12 @@ import * as BuildingConstantsDefinition from "../public/strings/buildingConstant
 import { BuildingInterface } from "../src/models/buildingInterface";
 import { filterByBounds, findBuildingBySearchString } from "../src/utils/buildingGeoJsonFilters";
 import { apiError } from "./apiError";
+import {
+  BuildingSourceRegistry,
+  getCachedOverpassPathsForBuilding,
+  getBuildingSourceDefinition,
+} from "./buildingSources";
 import { resolveProjectPath } from "./paths";
-
-const BUILDINGS_DATA_PATH = "public/overpass/buildings.json";
-const INDOOR_DATA_PATH = "public/overpass/indoor.json";
 
 type BuildingId = string;
 type BuildingDefinitions = Record<string, { SEARCH_STRING: string }>;
@@ -16,6 +18,7 @@ export interface FilteredIndoorDataRouteOptions {
   buildingsDataPath?: string;
   indoorDataPath?: string;
   buildingDefinitions?: BuildingDefinitions;
+  buildingSources?: BuildingSourceRegistry;
 }
 
 interface FilteredIndoorDataResponse {
@@ -35,7 +38,7 @@ export function registerFilteredIndoorDataRoute(
       try {
         const building = request.params.building;
 
-        if (!isBuildingId(building, routeOptions.buildingDefinitions)) {
+        if (!isBuildingId(building, routeOptions)) {
           response
             .status(404)
             .json(apiError("unknown_building", `Unknown building "${building}".`, { building }));
@@ -59,19 +62,21 @@ type RouteRequest = Request<{ building: string }>;
 type RouteResponse = Response;
 
 interface NormalizedFilteredIndoorDataRouteOptions {
-  buildingsDataPath: string;
-  indoorDataPath: string;
+  buildingsDataPath?: string;
+  indoorDataPath?: string;
   buildingDefinitions: BuildingDefinitions;
+  buildingSources?: BuildingSourceRegistry;
 }
 
 function normalizeRouteOptions(
   options: FilteredIndoorDataRouteOptions,
 ): NormalizedFilteredIndoorDataRouteOptions {
   return {
-    buildingsDataPath: options.buildingsDataPath ?? BUILDINGS_DATA_PATH,
-    indoorDataPath: options.indoorDataPath ?? INDOOR_DATA_PATH,
+    buildingsDataPath: options.buildingsDataPath,
+    indoorDataPath: options.indoorDataPath,
     buildingDefinitions:
       options.buildingDefinitions ?? (BuildingConstantsDefinition as BuildingDefinitions),
+    buildingSources: options.buildingSources,
   };
 }
 
@@ -80,8 +85,9 @@ async function loadFilteredIndoorData(
   options: NormalizedFilteredIndoorDataRouteOptions,
 ): Promise<FilteredIndoorDataResponse> {
   const buildingDefinition = options.buildingDefinitions[building];
-  const buildings = await readFeatureCollection(options.buildingsDataPath);
-  const indoor = await readFeatureCollection(options.indoorDataPath);
+  const cachedPaths = getCachedPaths(building, options);
+  const buildings = await readFeatureCollection(cachedPaths.buildingsDataPath);
+  const indoor = await readFeatureCollection(cachedPaths.indoorDataPath);
   const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
 
   if (!buildingInterface) {
@@ -90,10 +96,30 @@ async function loadFilteredIndoorData(
     );
   }
 
+  console.log(indoor.features.find(f => f.id == "node/9227302890"))
+
   return {
     buildingInterface,
     geoJson: filterByBounds(indoor, buildingInterface.boundingBox),
   };
+}
+
+function getCachedPaths(
+  building: BuildingId,
+  options: NormalizedFilteredIndoorDataRouteOptions,
+): { buildingsDataPath: string; indoorDataPath: string } {
+  if (options.buildingsDataPath !== undefined && options.indoorDataPath !== undefined) {
+    return {
+      buildingsDataPath: options.buildingsDataPath,
+      indoorDataPath: options.indoorDataPath,
+    };
+  }
+
+  if (options.buildingSources !== undefined) {
+    return getCachedOverpassPathsForBuilding(building, options.buildingSources);
+  }
+
+  return getCachedOverpassPathsForBuilding(building);
 }
 
 async function readFeatureCollection(path: string): Promise<GeoJSON.FeatureCollection> {
@@ -104,9 +130,22 @@ async function readFeatureCollection(path: string): Promise<GeoJSON.FeatureColle
 
 function isBuildingId(
   value: string,
-  buildingDefinitions: BuildingDefinitions,
+  options: NormalizedFilteredIndoorDataRouteOptions,
 ): value is BuildingId {
-  return value in buildingDefinitions;
+  if (!(value in options.buildingDefinitions)) {
+    return false;
+  }
+
+  if (options.buildingsDataPath !== undefined && options.indoorDataPath !== undefined) {
+    return true;
+  }
+
+  try {
+    getBuildingSourceDefinition(value, options.buildingSources);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getErrorMessage(error: unknown): string {

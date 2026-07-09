@@ -3,26 +3,7 @@ const URLS = {
   OSM_TILE_SERVER: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 };
 
-const OVERPASS_QUERIES = {
-  INDOOR:
-    '[out:json];(area["name"="Dresden"];- nwr[building][!min_level](area.a);)->.a;(nwr[indoor](area.a););(._;>;); out;',
-  SIT_BUILDINGS:
-    '[out:json];(area["name"="Dresden"];)->.a;(nwr[building][min_level](area.a););(._;>;); out;',
-};
-
-export const RESOURCES_TO_DOWNLOAD = [
-  {
-    label: "indoor data",
-    url: URLS.OVERPASS_API + encodeURI(OVERPASS_QUERIES.INDOOR),
-    dest: "public/overpass/indoor.json",
-  },
-  {
-    label: "SIT buildings",
-    url: URLS.OVERPASS_API + encodeURI(OVERPASS_QUERIES.SIT_BUILDINGS),
-    dest: "public/overpass/buildings.json",
-  },
-] as const;
-
+export const OVERPASS_API_URL = URLS.OVERPASS_API;
 export const MAX_OVERPASS_FILE_AGE_IN_DAYS = 5;
 export const MAX_OVERPASS_RATE_LIMIT_RETRIES = 3;
 export const OVERPASS_USER_AGENT =

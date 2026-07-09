@@ -1,5 +1,5 @@
 import { BACKEND_SOURCE, CURRENT_BUILDING } from "../public/strings/settings.json";
-import { RESOURCES_TO_DOWNLOAD } from "./constants";
+import { getOverpassResourcesForBuilding } from "./buildingSources";
 import { resolveProjectPath } from "./paths";
 
 export interface StartupSummaryOptions {
@@ -10,7 +10,9 @@ export interface StartupSummaryOptions {
 export function logStartupSummary(options: StartupSummaryOptions): void {
   const staticRoot = options.staticRoot ?? resolveProjectPath("public");
   const overpassDownload = process.env.SKIP_OVERPASS_DOWNLOAD === "true" ? "disabled" : "enabled";
-  const overpassResources = RESOURCES_TO_DOWNLOAD.map((resource) => resource.label).join(", ");
+  const overpassResources = getOverpassResourcesForBuilding(CURRENT_BUILDING)
+    .map((resource) => resource.label)
+    .join(", ");
 
   console.log("=== Server ready ===");
   console.log(`URL: http://localhost:${options.port}`);

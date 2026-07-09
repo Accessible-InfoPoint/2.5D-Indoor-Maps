@@ -25,6 +25,30 @@
     "STANDARD_PITCH_3D_MODE": 72,
     "STANDARD_ZOOM_3D_MODE": 20.72
   },
+  "gerber_bau": {
+    "SEARCH_STRING": "GER",
+    "BEARING_OFFSET": 0,
+    "BEARING_CALC_NODE1": "9227302890",
+    "BEARING_CALC_NODE2": "9227302848",
+    "STANDARD_ZOOM": 20.675,
+    "MAX_ZOOM": 21.2,
+    "MIN_ZOOM": 20,
+    "STANDARD_BEARING_3D_MODE": -75,
+    "STANDARD_PITCH_3D_MODE": 72,
+    "STANDARD_ZOOM_3D_MODE": 20.72
+  },
+  "kit_mathe": {
+    "SEARCH_STRING": "Kollegiengebäude Mathematik",
+    "BEARING_OFFSET": 90,
+    "BEARING_CALC_NODE1": "10699945024",
+    "BEARING_CALC_NODE2": "10699945025",
+    "STANDARD_ZOOM": 20.675,
+    "MAX_ZOOM": 21.2,
+    "MIN_ZOOM": 20,
+    "STANDARD_BEARING_3D_MODE": -75,
+    "STANDARD_PITCH_3D_MODE": 72,
+    "STANDARD_ZOOM_3D_MODE": 20.72
+  },
   "berlin_hbf": {
     "SEARCH_STRING": "Berlin Hauptbahnhof",
     "BEARING_OFFSET": 90,

@@ -1,0 +1,63 @@
+{
+  "sources": {
+    "dresden_sit": {
+      "label": "Dresden SIT buildings",
+      "region": {
+        "type": "area",
+        "name": "Dresden"
+      }
+    },
+    "karlsruhe_sit": {
+      "label": "Karlsruhe SIT buildings",
+      "region": {
+        "type": "area",
+        "name": "Karlsruhe"
+      }
+    },
+    "berlin_hbf": {
+      "label": "Berlin Hauptbahnhof",
+      "region": {
+        "type": "bbox",
+        "bbox": [13.365, 52.522, 13.374, 52.528]
+      }
+    }
+  },
+  "buildings": {
+    "apb": {
+      "source": "dresden_sit",
+      "buildingTags": {
+        "loc_ref": "APB"
+      }
+    },
+    "hsz": {
+      "source": "dresden_sit",
+      "buildingTags": {
+        "loc_ref": "HSZ"
+      }
+    },
+    "gerber_bau": {
+      "source": "dresden_sit",
+      "buildingTags": {
+        "name": "von-Gerber-Bau"
+      }
+    },
+    "kit_mathe": {
+      "source": "karlsruhe_sit",
+      "buildingTags": {
+        "name": "Kollegiengebäude Mathematik"
+      }
+    },
+    "berlin_hbf": {
+      "source": "berlin_hbf",
+      "buildingTags": {
+        "name": "Berlin Hauptbahnhof"
+      }
+    },
+    "berlin_hbf_with_platforms": {
+      "source": "berlin_hbf",
+      "buildingTags": {
+        "name": "Berlin Hauptbahnhof"
+      }
+    }
+  }
+}
