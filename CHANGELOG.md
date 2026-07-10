@@ -33,7 +33,7 @@ useful for the project.
 
 ### Fixed
 
--
+- Map bearing no longer snaps to zero on low values
 
 ### Removed
 

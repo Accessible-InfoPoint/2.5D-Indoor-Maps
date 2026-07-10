@@ -2,8 +2,8 @@ node_modules
 dist
 public/dist
 public/geojson
-public/overpass/*.json
-public/overpass/*.xml
+public/overpass/**/*.json
+public/overpass/**/*.xml
 coverage
 tmp
 playwright-report

@@ -70,6 +70,7 @@ export class MapLibreMapView implements MapView {
         antialias: true,
       },
       attributionControl: false,
+      bearingSnap: 0,
     });
     this.map.addControl(
       new maplibregl.AttributionControl({
