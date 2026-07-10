@@ -103,7 +103,10 @@ function setWindow(): void {
   const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
   const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
 
-  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
+  if (
+    getRequiredElement("uiWrapper").classList.contains("wheelchairMode") &&
+    !getRequiredElement("uiWrapper").classList.contains("mobileMode")
+  ) {
     levelControlWindow.style.width = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.height = "auto";
   } else {
@@ -115,7 +118,10 @@ function setWindow(): void {
 function setMargin(): void {
   const levelControl = getRequiredElement("levelControl");
 
-  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
+  if (
+    getRequiredElement("uiWrapper").classList.contains("wheelchairMode") &&
+    !getRequiredElement("uiWrapper").classList.contains("mobileMode")
+  ) {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
     levelControl.style.marginLeft = -1 * (size + gap) * offset + "px";

@@ -19,6 +19,9 @@ export function translate(): void {
   setButtonLabel(getRequiredElement("levelShiftUp"), lang.showPreviousLevels);
   setButtonLabel(getRequiredElement("levelShiftDown"), lang.showNextLevels);
   setButtonLabel(getRequiredElement("centeringButton"), lang.centeringButton);
+  setButtonLabel(getRequiredElement("mobileLegendTrigger"), lang.mobileLegendButton);
+  setButtonLabel(getRequiredElement("mobileProfileTrigger"), lang.mobileProfileButton);
+  setButtonLabel(getRequiredElement("mobileSettingsTrigger"), lang.mobileSettingsButton);
 
   for (const element of getRequiredElement("levelControl").children) {
     const levelButton = element.firstElementChild;

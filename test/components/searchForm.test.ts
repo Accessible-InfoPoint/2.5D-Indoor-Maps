@@ -33,6 +33,9 @@ jest.mock("../../src/services/userService", () => ({
   __esModule: true,
   default: { getCurrentProfile: jest.fn(() => 2) }, // UserGroupEnum.noImpairments
 }));
+jest.mock("../../src/utils/motionPreferences", () => ({
+  prefersReducedMotion: jest.fn(() => false),
+}));
 
 import type { GeoMap } from "../../src/components/geoMap";
 import type BuildingServiceType from "../../src/services/buildingService";
@@ -57,6 +60,7 @@ describe("searchForm", () => {
       <input id="indoorSearchInput" />
       <button id="indoorSearchClear"></button>
       <button id="indoorSearchSubmit"></button>
+      <div id="searchOverlayBackdrop"></div>
       <div id="searchErrorMessage">
         <span id="searchErrorText"></span>
         <button id="searchErrorClear"></button>
@@ -228,5 +232,35 @@ describe("searchForm", () => {
     expect(input.value).toBe("xyzzy");
     expect(errorText.textContent).toBe("");
     expect(errorMessage.classList.contains("visible")).toBe(false);
+  });
+
+  it("auto-dismisses the search error after 5 seconds, canceling any prior pending timer", () => {
+    jest.useFakeTimers();
+    try {
+      (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+      SearchForm.render(geoMap);
+
+      input.value = "xyzzy";
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // Re-trigger the error before the first timer fires; this should cancel
+      // the first timer rather than leaving it to fire later against fresh state.
+      jest.advanceTimersByTime(4000);
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // The first timer's original 5s deadline has now passed, but it was
+      // canceled, so the banner should still be visible.
+      jest.advanceTimersByTime(1500);
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // The second timer's own 5s deadline (started at the re-trigger) fires now.
+      jest.advanceTimersByTime(3500);
+      expect(errorMessage.classList.contains("visible")).toBe(false);
+      expect(errorText.textContent).toBe("");
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

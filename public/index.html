@@ -25,6 +25,14 @@
 
       <div id="uiWrapper">
         <!--           LEGEND           -->
+        <button
+          id="mobileLegendTrigger"
+          class="square mobileOnly"
+          aria-label="Legend"
+          title="Legend"
+        >
+          <span class="material-icons" aria-hidden="true">layers</span>
+        </button>
         <div id="legendWrapper">
           <ul id="legendList" aria-label="Legend">
             <li aria-hidden="true" class="label">Legend</li>
@@ -58,6 +66,18 @@
           <strong id="selectedBuilding"></strong>
           <span id="description"></span>
         </aside>
+
+        <!--           MOBILE DESCRIPTION CARD           -->
+        <div id="mobileDescriptionCard" class="mobileOnly">
+          <button
+            id="mobileDescriptionTrigger"
+            aria-label="Description"
+            title="Description"
+          >
+            <span id="mobileDescriptionTitle"></span>
+          </button>
+          <div id="mobileDescriptionBody"></div>
+        </div>
 
         <!--           INDOOR ROOM SEARCH           -->
         <div id="indoorSearchWrapper">
@@ -98,6 +118,7 @@
             </div>
           </div>
           <ul id="searchSuggestionsList" role="listbox" aria-label="Search suggestions"></ul>
+          <div id="searchOverlayBackdrop"></div>
           <div
             id="searchAnnouncement"
             class="visually-hidden"
@@ -117,31 +138,52 @@
           </div>
         </div>
 
-        <!--           LEVEL CONTROL           -->
-        <div id="levelControlWrapper">
-          <button
-            id="levelShiftUp"
-            class="square"
-            aria-label="Show higher levels"
-            title="Show higher levels"
-          >
-            <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true"
-              >expand_less</span
-            >
-          </button>
-          <div id="levelControlWindow">
-            <ul id="levelControl" aria-label="Change displayed level" class="transition"></ul>
+        <!--           LEVEL CONTROL + ZOOM           -->
+        <!-- Grouped so mobile can stack zoom directly below the level control
+             regardless of its dynamic height; #mobileLevelZoomStack is
+             display:contents on desktop, where the two keep their own
+             independent positioning (see #mobileLevelExpandedGroup above for
+             the same pattern). -->
+        <div id="mobileLevelZoomStack">
+          <div id="levelControlWrapper">
+            <div id="mobileLevelExpandedGroup">
+              <button
+                id="levelShiftUp"
+                class="square"
+                aria-label="Show higher levels"
+                title="Show higher levels"
+              >
+                <span id="levelShiftUpLabel" class="material-icons" aria-hidden="true"
+                  >expand_less</span
+                >
+              </button>
+              <div id="levelControlWindow">
+                <ul id="levelControl" aria-label="Change displayed level" class="transition"></ul>
+              </div>
+              <button
+                id="levelShiftDown"
+                class="square"
+                aria-label="Show lower levels"
+                title="Show lower levels"
+              >
+                <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true"
+                  >expand_more</span
+                >
+              </button>
+            </div>
           </div>
-          <button
-            id="levelShiftDown"
-            class="square"
-            aria-label="Show lower levels"
-            title="Show lower levels"
-          >
-            <span id="levelShiftDownLabel" class="material-icons" aria-hidden="true"
-              >expand_more</span
-            >
-          </button>
+
+          <!--           ZOOM CONTROL           -->
+          <div id="zoomControlWrapper">
+            <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
+              <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
+            </button>
+            <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
+              <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true"
+                >remove</span
+              >
+            </button>
+          </div>
         </div>
 
         <!--           WHEELCHAIR-MODE SWITCHER           -->
@@ -165,16 +207,6 @@
           </button>
         </div>
 
-        <!--           ZOOM CONTROL           -->
-        <div id="zoomControlWrapper">
-          <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
-            <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
-          </button>
-          <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
-            <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
-          </button>
-        </div>
-
         <!--           2.5D SWITCHER           -->
         <div id="switch2DViewWrapper">
           <button
@@ -190,12 +222,32 @@
         </div>
 
         <!--           QUICK SETTINGS           -->
+        <button
+          id="mobileProfileTrigger"
+          class="square mobileOnly"
+          aria-label="Change user profile"
+          title="Change user profile"
+        >
+          <span class="material-icons" aria-hidden="true">person</span>
+        </button>
+        <button
+          id="mobileSettingsTrigger"
+          class="square mobileOnly"
+          aria-label="Settings"
+          title="Settings"
+        >
+          <span class="material-icons" aria-hidden="true">settings</span>
+        </button>
         <div id="quickSettingsWrapper">
-          <ul id="userProfileList" aria-label="Profiles quick switch"></ul>
+          <div id="mobileProfilePanel">
+            <ul id="userProfileList" aria-label="Profiles quick switch"></ul>
+          </div>
           <hr style="margin: 0" />
-          <ul id="userSettingsList" aria-label="Settings"></ul>
-          <hr style="margin: 0" />
-          <ul id="languageList" aria-label="Language"></ul>
+          <div id="mobileSettingsPanel">
+            <ul id="userSettingsList" aria-label="Settings"></ul>
+            <hr style="margin: 0" />
+            <ul id="languageList" aria-label="Language"></ul>
+          </div>
         </div>
       </div>
     </main>
@@ -268,6 +320,10 @@
 
             <h6 id="contrastSettingsHeader">Contrast settings</h6>
             <div class="collection" id="contrastSettingsList"></div>
+
+            <h6 id="mobileLayoutHeader"></h6>
+            <div class="collection" id="mobileHandednessList"></div>
+            <div class="collection" id="mobileZoomButtonsList"></div>
           </div>
           <div class="modal-footer">
             <button

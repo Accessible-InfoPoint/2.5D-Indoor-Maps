@@ -77,3 +77,23 @@ test("feature selection modal has no serious accessibility violations", async ({
 
   await expectNoSeriousAccessibilityViolations(page);
 });
+
+test("mobile layout has no serious accessibility violations", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await loadTestApp(page);
+  await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+  await expect(page.locator("#uiWrapper")).toHaveClass(/mobileMode/);
+
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
+test("mobile popovers have no serious accessibility violations when open", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await loadTestApp(page);
+  await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+  await page.locator("#mobileLegendTrigger").click();
+  await expect(page.locator("#legendWrapper")).toHaveClass(/open/);
+
+  await expectNoSeriousAccessibilityViolations(page);
+});

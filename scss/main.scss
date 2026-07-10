@@ -4,7 +4,74 @@
 
 $legendWidth: 150px;
 $uiPadding: 15px;
-$mapAttributionHeight: 28px;
+// MapLibre's attribution control defaults to its EXPANDED (compact-show) state on
+// first paint, not the collapsed icon-only state — and at the $attributionMaxWidth
+// cap below, real attribution text wraps tall enough to measure ~98px in a live
+// browser (confirmed empirically, not assumed). This used to be 28px, which badly
+// under-reserved space for anything positioned relative to attribution's real
+// height, letting other elements (e.g. #mobileDescriptionCard) physically cover
+// and intercept clicks meant for the attribution toggle button.
+$mapAttributionHeight: 100px;
+// Shared with .description's clearance math below. .description is horizontally
+// centered, so keeping its edge N px clear of a corner-anchored attribution box
+// costs 2*N px of max-width (half the reduction lands on each side) — that 2x
+// factor is a direct consequence of centering, not a knob to tune away. The
+// previous 420px absolute cap left almost no room for .description at moderate
+// desktop widths (e.g. 900px: 2 * 420px = 840px reserved out of 900px total).
+// This smaller cap keeps attribution readable (wraps onto a couple more lines
+// instead of hugging one wide line) while leaving .description a usable width.
+$attributionMaxWidth: min(35vw, 240px);
+// On mobile, attribution isn't capped by $attributionMaxWidth (see the
+// media-breakpoint-down(md) override below) and wraps onto at most 3 lines
+// across real phone widths (measured empirically: 320-360px viewports wrap to
+// ~50.8px tall, 375px+ to ~35.2px), never the ~98px worst case that constant
+// assumes. Using $mapAttributionHeight for #mobileDescriptionCard's mobile-only
+// clearance below over-reserved by roughly 44px, creating a visibly oversized
+// gap above the card — this smaller, mobile-specific ceiling (with a few px of
+// buffer) fixes that without touching $mapAttributionHeight's other call sites.
+$mobileAttributionHeight: 56px;
+
+.maplibregl-ctrl-attrib {
+  max-width: $attributionMaxWidth;
+  white-space: normal !important;
+  line-height: 1.3;
+  // MapLibre's own compact/compact-show styles set box-sizing: content-box,
+  // which would let horizontal padding add on top of max-width and blow past
+  // the cap that .description's clearance math below assumes.
+  box-sizing: border-box !important;
+}
+
+// $attributionMaxWidth exists to share horizontal space with .description, which
+// is hidden entirely on mobile (#uiWrapper.mobileMode below) — so that clearance
+// math doesn't apply there. Let attribution use nearly the full width instead,
+// stopping just clear of the bottom-corner button (#centeringButton) on the
+// opposite side. #map (and this control, which lives inside it) is a sibling of
+// #uiWrapper, not a descendant, so this can't be scoped through
+// #uiWrapper.mobileMode and needs its own media query instead — matching the
+// same breakpoint as MOBILE_BREAKPOINT_PX (src/utils/breakpoints.ts), like
+// #toastWrapper's mobile override below already does. var(--button-size) isn't
+// reachable here for the same sibling reason, hence the literal 50px.
+@include media-breakpoint-down(md) {
+  .maplibregl-ctrl-attrib {
+    max-width: calc(100vw - 50px - 2 *#{$uiPadding} - 10px);
+  }
+}
+
+// MapLibre's own CSS overrides the attribution toggle button's horizontal anchor
+// per corner (left:0 in left corners, default right:0 in right corners) but never
+// its vertical anchor — the button always keeps `top: 0` from its base rule, even
+// inside a BOTTOM-anchored corner container (.maplibregl-ctrl-bottom-left/-right,
+// used when mobile repositions attribution). Since that container is anchored at
+// its own BOTTOM edge, only its TOP edge moves as the box's height changes between
+// collapsed/expanded (compact/compact-show) states — so a `top: 0` button visibly
+// shifts on screen every time the box's height changes, even though nothing about
+// the button's own state changed. Anchoring it to `bottom: 0` instead — matching
+// the container's own anchor — keeps it visually fixed regardless of box height.
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-button {
+  top: auto;
+  bottom: 0;
+}
 
 html,
 body {
@@ -59,6 +126,46 @@ nav {
 
 .text-danger {
   color: var(--bs-danger) !important;
+}
+
+// Any per-element rule that needs to show a .mobileOnly element with a
+// display value other than inline-block (e.g. block, flex) must also use
+// !important, or it will silently lose the cascade to this rule.
+.mobileOnly {
+  display: none !important;
+}
+
+#uiWrapper.mobileMode .mobileOnly {
+  display: inline-block !important;
+}
+
+#uiWrapper.mobileMode #mobileDescriptionCard.mobileOnly {
+  display: block !important;
+}
+
+#searchOverlayBackdrop {
+  display: none;
+}
+
+#uiWrapper.mobileMode #searchSuggestionsList.visible ~ #searchOverlayBackdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+#mobileLevelExpandedGroup {
+  display: contents;
+}
+
+#mobileLevelZoomStack {
+  display: contents;
+}
+
+#mobileProfilePanel,
+#mobileSettingsPanel {
+  display: contents;
 }
 
 @media screen and (max-width: 1469px) {
@@ -406,6 +513,12 @@ nav {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      opacity: 1;
+      transition: opacity 0.3s ease-out;
+
+      &:not(.visible) {
+        opacity: 0;
+      }
 
       #searchErrorText {
         min-width: 0;
@@ -447,7 +560,10 @@ nav {
     left: 50%;
     transform: translate(-50%, 0);
     width: max-content;
-    max-width: calc(100% - 2 * var(--button-size) - 4 *#{$uiPadding});
+    max-width: min(
+      calc(100% - 2 * var(--button-size) - 4 *#{$uiPadding}),
+      calc(100% - 2 * #{$attributionMaxWidth} - 4 *#{$uiPadding})
+    );
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -586,7 +702,7 @@ nav {
   }
 }
 
-#uiWrapper.wheelchairMode {
+#uiWrapper.wheelchairMode:not(.mobileMode) {
   #indoorSearchWrapper {
     bottom: calc(#{$uiPadding} + 15px + 1px);
     left: 40%;
@@ -603,6 +719,12 @@ nav {
     top: $uiPadding + $mapAttributionHeight;
     bottom: auto;
     right: $uiPadding;
+    // Anchored from top (unlike the base rule, which anchors from bottom and
+    // grows upward), so unlike that rule this one needs an explicit ceiling —
+    // otherwise a short viewport height plus $mapAttributionHeight's real-world
+    // size could push tall legend content off the bottom of the screen.
+    max-height: calc(100% - 2 *#{$uiPadding} - #{$mapAttributionHeight});
+    overflow-y: auto;
   }
 
   #levelControlWrapper {
@@ -662,6 +784,333 @@ nav {
   }
 }
 
+#uiWrapper.mobileMode {
+  .description {
+    display: none;
+  }
+
+  #indoorSearchWrapper {
+    top: $uiPadding;
+    bottom: auto;
+    left: $uiPadding;
+    right: $uiPadding;
+    width: auto;
+    transform: none;
+
+    // #indoorSearchWrapper establishes its own stacking context (position + z-index
+    // on the base desktop rule), so its z-index must outrank every OTHER #uiWrapper
+    // child that the search overlay (backdrop + results) needs to appear above —
+    // not just its own descendants' internal z-index values, which only rank against
+    // each other within this context.
+    z-index: 12;
+
+    #indoorSearchBar {
+      position: relative;
+      // Stays above this same wrapper's #searchOverlayBackdrop sibling (z-index 10)
+      // so the search bar itself is never dimmed while results are open.
+      z-index: 11;
+    }
+
+    #searchSuggestionsList {
+      top: 100%;
+      bottom: auto;
+      margin-bottom: 0;
+      margin-top: 6px;
+    }
+
+    #searchSuggestionsList.visible {
+      position: fixed;
+      top: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+      left: $uiPadding;
+      right: $uiPadding;
+      bottom: auto;
+      // Sized to content (up to this ceiling) instead of always stretching to
+      // the bottom of the screen, so a single result doesn't leave a big empty
+      // white panel below it.
+      max-height: calc(100% - #{$uiPadding} - var(--button-size) - #{$uiPadding} - #{$uiPadding});
+      overflow-y: auto;
+      z-index: 11;
+      background: #fff;
+      border-radius: var(--button-border-radius);
+      padding: 8px;
+      margin: 0;
+      // #searchOverlayBackdrop is independently full-viewport (position: fixed;
+      // inset: 0), so shrinking this list to content doesn't affect tap-to-dismiss
+      // outside it. This pointer-events split just lets a tap that lands on this
+      // box's own padding (rather than an actual row) still fall through to the
+      // backdrop beneath.
+      pointer-events: none;
+
+      > li {
+        pointer-events: auto;
+      }
+    }
+
+    #searchErrorMessage {
+      top: 100%;
+      bottom: auto;
+      margin-bottom: 0;
+      margin-top: 6px;
+      left: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+      right: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    }
+  }
+
+  #centeringButton {
+    position: fixed;
+    bottom: $uiPadding;
+    right: $uiPadding;
+    z-index: 1;
+  }
+
+  #switch2DViewWrapper {
+    top: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    left: auto;
+    right: $uiPadding;
+    // Harmless leftover from before Task 8 relocated #quickSettingsWrapper into the
+    // left stack; #quickSettingsWrapper no longer occupies this area, but keeping a
+    // slightly higher z-index here is inert and safe.
+    z-index: 2;
+  }
+
+  // Positioned by #mobileLevelZoomStack (its flex parent) instead of on its own,
+  // so #zoomControlWrapper below it can share the same stack and follow its real
+  // (level-count-dependent) height rather than a hardcoded offset.
+  #mobileLevelZoomStack {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: calc(#{$uiPadding} + 2 * var(--button-size) + 2 *#{$uiPadding});
+    left: auto;
+    right: $uiPadding;
+    bottom: auto;
+    gap: var(--level-control-gap);
+    z-index: 2;
+  }
+
+  #levelControlWrapper {
+    position: static;
+    transform: none;
+    flex-direction: column;
+    padding: 0;
+    background: none;
+    border: none;
+
+    div#levelControlWindow {
+      width: auto;
+    }
+  }
+
+  #switchWheelchairModeWrapper {
+    display: none;
+  }
+
+  #mobileLevelExpandedGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--level-control-gap);
+    padding: 0;
+    background: none;
+    border: none;
+  }
+
+  #mobileLegendTrigger,
+  #mobileProfileTrigger,
+  #mobileSettingsTrigger {
+    position: absolute;
+    left: $uiPadding;
+    z-index: 1;
+  }
+
+  #mobileLegendTrigger {
+    top: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+  }
+
+  #mobileProfileTrigger {
+    top: calc(#{$uiPadding} + 2 * var(--button-size) + 2 *#{$uiPadding});
+  }
+
+  #mobileSettingsTrigger {
+    top: calc(#{$uiPadding} + 3 * var(--button-size) + 3 *#{$uiPadding});
+  }
+
+  #legendWrapper {
+    display: none;
+    position: absolute;
+    top: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    left: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    right: auto;
+    bottom: auto;
+    max-height: calc(100% - #{$mapAttributionHeight} - 2 *#{$uiPadding});
+    overflow-y: auto;
+
+    &.open {
+      display: block;
+    }
+  }
+
+  #quickSettingsWrapper {
+    position: static;
+    background: none;
+    border: none;
+    padding: 0;
+    top: auto;
+    right: auto;
+    transform: none;
+    max-height: none;
+    overflow: visible;
+
+    hr {
+      display: none;
+    }
+
+    #mobileProfilePanel,
+    #mobileSettingsPanel {
+      display: none;
+      position: absolute;
+      left: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+      max-height: calc(100% - #{$mapAttributionHeight} - 2 *#{$uiPadding});
+      overflow-y: auto;
+      background-color: #fffffff0;
+      border: 1px solid gray;
+      border-radius: var(--button-border-radius);
+      padding: 10px 15px 15px;
+
+      &.open {
+        display: block;
+      }
+
+      ul {
+        width: calc(2 * var(--button-size) + var(--level-control-gap));
+      }
+    }
+
+    #mobileProfilePanel {
+      top: calc(#{$uiPadding} + 2 * var(--button-size) + 2 *#{$uiPadding});
+    }
+
+    #mobileSettingsPanel {
+      top: calc(#{$uiPadding} + 3 * var(--button-size) + 3 *#{$uiPadding});
+    }
+  }
+
+  #zoomControlWrapper {
+    display: none;
+  }
+
+  #mobileDescriptionCard {
+    position: fixed;
+    left: $uiPadding;
+    right: $uiPadding;
+    // Spans the full width (unlike the locate button or attribution, which each sit
+    // on one side), so it must clear whichever is taller: the locate-button row, or
+    // the map attribution control in its default expanded state. Uses
+    // $mobileAttributionHeight (not $mapAttributionHeight) since mobile attribution
+    // is no longer capped to the narrow desktop width — see that variable's comment.
+    bottom: calc(#{$uiPadding} + max(var(--button-size), #{$mobileAttributionHeight}) + #{$uiPadding});
+    z-index: 1;
+    background-color: #fffffff0;
+    border: 1px solid gray;
+    border-radius: var(--button-border-radius);
+    overflow: hidden;
+  }
+
+  #mobileDescriptionTrigger {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    font-weight: 700;
+    color: $primary;
+  }
+
+  #mobileDescriptionBody {
+    display: none;
+    padding: 0 15px 15px;
+    max-height: calc(50vh - 3 * var(--button-size));
+    overflow-y: auto;
+
+    &.open {
+      display: block;
+    }
+  }
+}
+
+#uiWrapper.mobileMode.mobileZoomVisible {
+  #zoomControlWrapper {
+    // Flex item of #mobileLevelZoomStack (see #levelControlWrapper's mobile
+    // rule) rather than independently positioned, so it sits directly below
+    // the level control regardless of how many levels it's showing. Full
+    // var(--button-size) width (no override) to match the level buttons above.
+    display: flex;
+    position: static;
+    flex-direction: column;
+    gap: var(--level-control-gap);
+  }
+}
+
+#uiWrapper.mobileMode.leftHanded {
+  #indoorSearchWrapper .input-group {
+    flex-direction: row-reverse;
+
+    // Bootstrap's input-group rounding (first-child/last-child) is DOM-order-based,
+    // so it no longer matches the reversed visual order above: the DOM-first child
+    // (#indoorSearchInput) is now visually last, and the DOM-last child
+    // (#indoorSearchSubmit) is now visually first. Swap which outer edge each
+    // keeps rounded to match.
+    > :first-child {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-top-right-radius: var(--bs-border-radius);
+      border-bottom-right-radius: var(--bs-border-radius);
+    }
+
+    > :last-child {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-top-left-radius: var(--bs-border-radius);
+      border-bottom-left-radius: var(--bs-border-radius);
+    }
+  }
+
+  #centeringButton {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #switch2DViewWrapper {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #mobileLevelZoomStack {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #mobileLegendTrigger,
+  #mobileProfileTrigger,
+  #mobileSettingsTrigger {
+    left: auto;
+    right: $uiPadding;
+  }
+
+  #legendWrapper {
+    left: auto;
+    right: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+  }
+
+  #quickSettingsWrapper {
+    #mobileProfilePanel,
+    #mobileSettingsPanel {
+      left: auto;
+      right: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    }
+  }
+}
+
 #toastWrapper {
   position: absolute;
   top: 70px;
@@ -697,5 +1146,9 @@ nav {
     -moz-transition: none !important;
     -ms-transition: none !important;
     -o-transition: none !important;
+  }
+
+  #searchErrorMessage {
+    transition: none !important;
   }
 }

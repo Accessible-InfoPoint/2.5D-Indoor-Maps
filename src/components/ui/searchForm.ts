@@ -8,6 +8,7 @@ import BuildingService, {
 import SearchSuggestions from "./searchSuggestions";
 import UserService from "../../services/userService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
+import { prefersReducedMotion } from "../../utils/motionPreferences";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
@@ -16,12 +17,28 @@ const searchErrorMessage = getRequiredElement<HTMLDivElement>("searchErrorMessag
 const searchErrorText = getRequiredElement<HTMLSpanElement>("searchErrorText");
 const searchErrorClear = getRequiredElement<HTMLButtonElement>("searchErrorClear");
 
+let searchErrorDismissTimer: ReturnType<typeof setTimeout> | undefined;
+
+const SEARCH_ERROR_AUTO_DISMISS_MS = 5000;
+
 function showSearchError(message: string): void {
   searchErrorText.textContent = message;
   searchErrorMessage.classList.add("visible");
+
+  if (searchErrorDismissTimer) {
+    clearTimeout(searchErrorDismissTimer);
+  }
+
+  const delay = prefersReducedMotion() ? 0 : SEARCH_ERROR_AUTO_DISMISS_MS;
+  searchErrorDismissTimer = setTimeout(clearSearchError, delay);
 }
 
 function clearSearchError(): void {
+  if (searchErrorDismissTimer) {
+    clearTimeout(searchErrorDismissTimer);
+    searchErrorDismissTimer = undefined;
+  }
+
   searchErrorText.textContent = "";
   searchErrorMessage.classList.remove("visible");
 }
@@ -98,6 +115,10 @@ function render(geoMap: GeoMap): void {
 
   searchErrorClear.addEventListener("click", () => {
     clearSearchError();
+  });
+
+  getRequiredElement("searchOverlayBackdrop").addEventListener("click", () => {
+    SearchSuggestions.hide();
   });
 
   indoorSearchInput.addEventListener("keydown", (e) => {

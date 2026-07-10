@@ -240,4 +240,4 @@ function clearAnnouncement(): void {
   searchAnnouncement.textContent = "";
 }
 
-export default { render, update, clear };
+export default { render, update, clear, hide };

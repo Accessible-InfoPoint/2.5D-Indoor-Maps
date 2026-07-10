@@ -13,6 +13,9 @@
   "currentRoom": "Current Room",
 
   "legendLabel": "Legend",
+  "mobileLegendButton": "Legend",
+  "mobileProfileButton": "Change user profile",
+  "mobileSettingsButton": "Settings",
 
   "userProfileModalLabel": "Change user profile",
   "profileQuickSwitchHeader": "Profiles quick switch",
@@ -31,6 +34,10 @@
   "lineThickness": "Line thickness",
   "closeVisualSettings": "Close",
   "saveVisualSettings": "Save changes",
+  "mobileLayoutSectionHeader": "Mobile layout",
+  "mobileHandednessRight": "Right-handed (default)",
+  "mobileHandednessLeft": "Left-handed (mirrored)",
+  "mobileShowZoomButtonsLabel": "Show zoom buttons on mobile",
   "languageHeader": "Language",
 
   "switch2DButton": "Switch to 2.5D View",
@@ -70,6 +77,7 @@
   "legendStairs": "Stairs",
   "legendSelected": "Selected",
   "legendAccessible": "Wheelchair<br>Accessible",
+  "noDescriptionAvailable": "No description available.",
 
   "userProfileVisImpairments": "Users with visual impairments",
   "userProfileNoSpecialNeeds": "Users with no special needs",

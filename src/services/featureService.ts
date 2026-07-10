@@ -25,17 +25,23 @@ export interface AccessibilityMarkerData {
   };
 }
 
-function getAccessibilityDescription(feature: GeoJSON.Feature): string {
+function getFeatureTitle(feature: GeoJSON.Feature): string {
   const properties = getRequiredFeatureProperties(feature);
-  let popUpText = properties.ref ?? "(no name)";
+  let title = properties.ref ?? "(no name)";
 
   if (properties.name !== undefined && properties.name.length !== 0) {
-    popUpText += " (" + properties.name + ")";
+    title += " (" + properties.name + ")";
   }
 
-  popUpText += featureDescriptionHelper(feature, featureAccessibilityProperties);
+  return title;
+}
 
-  return lang.selectedMapObjectPrefix + popUpText;
+function getAccessibilityDescription(feature: GeoJSON.Feature): string {
+  return (
+    lang.selectedMapObjectPrefix +
+    getFeatureTitle(feature) +
+    featureDescriptionHelper(feature, featureAccessibilityProperties)
+  );
 }
 
 function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
@@ -236,6 +242,7 @@ export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
 
 export default {
   getAccessibilityDescription,
+  getFeatureTitle,
   getAccessibilityMarkerData,
   getFeatureStyle,
   getWallWeight,

@@ -16,9 +16,10 @@ import LevelService from "../services/levelService";
 import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
+import MobileDescriptionControl from "./ui/mobileDescriptionControl";
 import BackendService, { type BuildingCenter } from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
+import { MapBounds, MapCenterConstraint, MapView, AttributionCorner } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
@@ -79,6 +80,14 @@ export class GeoMap {
     this.camera = this.mapView.camera;
 
     this.applyStyleFilters();
+  }
+
+  setAttributionCorner(corner: AttributionCorner): void {
+    this.mapView.setAttributionCorner(corner);
+  }
+
+  getFitZoom(bearing: number, pitch: number, maxZoom: number): number {
+    return this.mapView.getFitZoom(this.getBuildingBounds(), { bearing, pitch, maxZoom });
   }
 
   showBuilding(): string {
@@ -144,11 +153,16 @@ export class GeoMap {
     this.indoorLayers.forEach((layer) => {
       layer.hideAll();
     });
+
+    // Set the mobile description card's title before handleLevelChange() renders the
+    // card's body, since that render uses whatever title is currently stored.
+    const message = BuildingService.getBuildingDescription();
+    MobileDescriptionControl.setBuildingTitle(message);
+
     this.handleLevelChange(INDOOR_LEVEL);
 
     AccessibilityService.reset();
 
-    const message = BuildingService.getBuildingDescription();
     DescriptionArea.update(message, "selectedBuilding");
   }
 
@@ -157,15 +171,12 @@ export class GeoMap {
 
     const center = this.getInitialMapCenter();
     this.standardCenter = [center.x, center.y];
+    const fitZoom = this.getFitZoom(this.standardBearing, 0, this.standardZoom);
 
     this.camera.animateToCenter(center, getMotionDuration(350));
     setTimeout(() => {
-      this.camera.animateToZoom(this.standardZoom, getMotionDuration(350));
+      this.camera.animateToZoom(fitZoom, getMotionDuration(350));
     }, getMotionDuration(350));
-    setTimeout(() => {
-      // this.indoorLevel.animateAltitude(10, 0, 0, 0.25, 0.5)
-      console.log(this.camera.getPosition());
-    }, 1000);
   }
 
   private getInitialMapCenter(): { x: number; y: number } {
@@ -374,6 +385,7 @@ export class GeoMap {
 
     const message = LevelService.getCurrentLevelDescription(this.currentLevel);
     DescriptionArea.update(message);
+    MobileDescriptionControl.setLevelDefault(this.currentLevel);
     return true;
   }
 
@@ -393,6 +405,7 @@ export class GeoMap {
 
     const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
     DescriptionArea.update(accessibilityDescription, "description");
+    MobileDescriptionControl.setFeatureSelected(feature);
 
     this.selectedFeatures = [getRequiredFeatureId(feature)];
     // TODO: might need to optimize this, needs a long time to update all layers at the moment
@@ -416,6 +429,7 @@ export class GeoMap {
 
     const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
     DescriptionArea.update(accessibilityDescription);
+    MobileDescriptionControl.setFeatureSelected(feature);
   }
 
   applyStyleFilters = (): void => {
@@ -431,6 +445,7 @@ export class GeoMap {
     this.indoorLayers.forEach((layer) => layer.updateLayer());
     const message = LevelService.getCurrentLevelDescription(this.currentLevel);
     DescriptionArea.update(message);
+    MobileDescriptionControl.setLevelDefault(this.currentLevel);
   }
 
   private getIndoorLevel(level: number): IndoorLevel {
