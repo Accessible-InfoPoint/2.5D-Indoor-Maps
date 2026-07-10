@@ -3,8 +3,8 @@
 .idea
 /dist/
 /public/dist/
-/public/overpass/*.xml
-/public/overpass/*.json
+/public/overpass/**/*.xml
+/public/overpass/**/*.json
 /tmp
 .vscode
 /coverage/
