@@ -46,6 +46,7 @@ describe("translate()", () => {
       <button id="centeringButton"><span aria-hidden="true"></span></button>
       <button id="levelShiftUp"></button>
       <button id="levelShiftDown"></button>
+      <button id="levelControlToggle"><span id="levelControlToggleLabel">1</span></button>
       <ul id="levelControl">
         <li><button>1</button></li>
       </ul>
@@ -54,6 +55,9 @@ describe("translate()", () => {
       <button id="mobileLegendTrigger"></button>
       <button id="mobileProfileTrigger"></button>
       <button id="mobileSettingsTrigger"></button>
+      <button id="shortLegendTrigger"></button>
+      <button id="shortProfileTrigger"></button>
+      <button id="shortSettingsTrigger"></button>
     `;
   });
 
@@ -72,6 +76,7 @@ describe("translate()", () => {
     const mobileProfileTrigger = getRequiredElement("mobileProfileTrigger");
     const mobileSettingsTrigger = getRequiredElement("mobileSettingsTrigger");
     const levelShiftUp = getRequiredElement("levelShiftUp");
+    const levelControlToggle = getRequiredElement("levelControlToggle");
     const levelButton = getRequiredElement("levelControl").children[0]
       .firstElementChild as HTMLElement;
 
@@ -90,6 +95,8 @@ describe("translate()", () => {
     expect(mobileSettingsTrigger.ariaLabel).toBe("Settings");
     expect(levelShiftUp.title).toBe("Show previous levels");
     expect(levelShiftUp.ariaLabel).toBe("Show previous levels");
+    expect(levelControlToggle.title).toBe("Change to level 1");
+    expect(levelControlToggle.ariaLabel).toBe("Change to level 1");
     expect(levelButton.title).toBe("Change to level 1");
     expect(levelButton.ariaLabel).toBe("Change to level 1");
   });

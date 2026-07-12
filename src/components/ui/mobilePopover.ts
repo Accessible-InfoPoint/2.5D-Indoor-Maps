@@ -1,7 +1,7 @@
 import { getRequiredElement } from "../../utils/domHelpers";
 
 export interface PopoverOptions {
-  triggerId: string;
+  triggerId: string | string[];
   panelId: string;
 }
 
@@ -17,12 +17,15 @@ const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export function setupPopover(options: PopoverOptions): PopoverController {
-  const trigger = getRequiredElement(options.triggerId);
+  const triggerIds = Array.isArray(options.triggerId) ? options.triggerId : [options.triggerId];
+  const triggers = triggerIds.map((id) => getRequiredElement(id));
   const panel = getRequiredElement(options.panelId);
 
-  trigger.setAttribute("aria-haspopup", "true");
-  trigger.setAttribute("aria-controls", options.panelId);
-  trigger.setAttribute("aria-expanded", "false");
+  triggers.forEach((trigger) => {
+    trigger.setAttribute("aria-haspopup", "true");
+    trigger.setAttribute("aria-controls", options.panelId);
+    trigger.setAttribute("aria-expanded", "false");
+  });
 
   if (!panel.hasAttribute("tabindex")) {
     panel.setAttribute("tabindex", "-1");
@@ -47,23 +50,24 @@ export function setupPopover(options: PopoverOptions): PopoverController {
     }
 
     open = nextOpen;
-    trigger.setAttribute("aria-expanded", open.toString());
+    triggers.forEach((trigger) => trigger.setAttribute("aria-expanded", open.toString()));
     panel.classList.toggle("open", open);
 
     if (open) {
       focusFirstFocusable(panel);
     } else if (flags.returnFocus) {
-      trigger.focus();
+      const visibleTrigger = triggers.find(isVisible) ?? triggers[0];
+      visibleTrigger.focus();
     }
   }
 
-  trigger.addEventListener("click", () => setOpen(!open));
+  triggers.forEach((trigger) => trigger.addEventListener("click", () => setOpen(!open)));
 
   document.addEventListener("click", (event) => {
     if (!open) return;
     const target = event.target;
     if (!(target instanceof Node)) return;
-    if (trigger.contains(target) || panel.contains(target)) return;
+    if (triggers.some((trigger) => trigger.contains(target)) || panel.contains(target)) return;
     setOpen(false);
   });
 

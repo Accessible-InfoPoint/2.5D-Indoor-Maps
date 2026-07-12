@@ -57,6 +57,8 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
         }
       }
       updateLevelButtonState(levelBtn, true);
+      updateToggleLabel(level);
+      collapseLevelControl();
     });
 
     levelLi.appendChild(levelBtn);
@@ -64,6 +66,7 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
   });
 
   setWindow();
+  updateToggleLabel(INDOOR_LEVEL.toString());
 
   const index = allLevelNames.findIndex((level) => level == INDOOR_LEVEL.toString());
   offset = index - START_LEVEL_CONTROL_POSITION; // current should be second to last in visible
@@ -103,10 +106,7 @@ function setWindow(): void {
   const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
   const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
 
-  if (
-    getRequiredElement("uiWrapper").classList.contains("wheelchairMode") &&
-    !getRequiredElement("uiWrapper").classList.contains("mobileMode")
-  ) {
+  if (isHorizontalLevelLayout()) {
     levelControlWindow.style.width = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.height = "auto";
   } else {
@@ -118,10 +118,7 @@ function setWindow(): void {
 function setMargin(): void {
   const levelControl = getRequiredElement("levelControl");
 
-  if (
-    getRequiredElement("uiWrapper").classList.contains("wheelchairMode") &&
-    !getRequiredElement("uiWrapper").classList.contains("mobileMode")
-  ) {
+  if (isHorizontalLevelLayout()) {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
     levelControl.style.marginLeft = -1 * (size + gap) * offset + "px";
@@ -172,6 +169,8 @@ function focusOnLevel(selectedLevel: number): void {
     }
   }
 
+  updateToggleLabel(selectedLevel.toString());
+
   const index = allLevelNames.findIndex((level) => level == selectedLevel.toString());
   if (index < offset) {
     // level is above in height what is currently visible
@@ -208,10 +207,39 @@ function updateLevelButtonState(button: HTMLButtonElement, active: boolean): voi
   }
 }
 
+function setupCollapseToggle(): void {
+  const toggle = getRequiredElement("levelControlToggle");
+  const wrapper = getRequiredElement("levelControlWrapper");
+
+  toggle.addEventListener("click", () => {
+    const expanded = wrapper.classList.toggle("expanded");
+    toggle.setAttribute("aria-expanded", expanded.toString());
+  });
+}
+
+function collapseLevelControl(): void {
+  getRequiredElement("levelControlWrapper").classList.remove("expanded");
+  getRequiredElement("levelControlToggle").setAttribute("aria-expanded", "false");
+}
+
+function updateToggleLabel(level: string): void {
+  getRequiredElement("levelControlToggleLabel").textContent = level;
+}
+
+function isHorizontalLevelLayout(): boolean {
+  const uiWrapper = getRequiredElement("uiWrapper");
+  if (uiWrapper.classList.contains("lowHeightMode")) return true;
+
+  return (
+    uiWrapper.classList.contains("wheelchairMode") && !uiWrapper.classList.contains("mobileMode")
+  );
+}
+
 export default {
   handleChange: handleLoad,
   focusOnLevel,
   setupControlShifter,
+  setupCollapseToggle,
   setMargin,
   setWindow,
   setLevelSelectionDisabled,

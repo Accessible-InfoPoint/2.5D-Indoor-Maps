@@ -23,19 +23,15 @@ describe("levelControl wheelchairMode/mobileMode layout branch", () => {
     // Use a level order where the active INDOOR_LEVEL ("0") sits away from the start,
     // so the resulting offset (and therefore the margin) is non-zero — this lets us
     // tell apart which margin property setMargin() actually populated.
-    (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce([
-      "5",
-      "4",
-      "3",
-      "2",
-      "1",
-      "0",
-    ]);
+    (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce(["5", "4", "3", "2", "1", "0"]);
     document.body.innerHTML = `
       <div id="uiWrapper" class="wheelchairMode">
-        <button id="levelShiftUp"></button>
-        <button id="levelShiftDown"></button>
-        <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
+        <div id="levelControlWrapper">
+          <button id="levelControlToggle"><span id="levelControlToggleLabel"></span></button>
+          <button id="levelShiftUp"></button>
+          <button id="levelShiftDown"></button>
+          <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
+        </div>
       </div>
     `;
 
@@ -54,19 +50,15 @@ describe("levelControl wheelchairMode/mobileMode layout branch", () => {
   it("uses the vertical (mobile) layout when wheelchairMode and mobileMode are both present", () => {
     // Same non-zero-offset level ordering as the wheelchair-only case above, so the
     // margin comparison below is meaningful.
-    (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce([
-      "5",
-      "4",
-      "3",
-      "2",
-      "1",
-      "0",
-    ]);
+    (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce(["5", "4", "3", "2", "1", "0"]);
     document.body.innerHTML = `
       <div id="uiWrapper" class="wheelchairMode mobileMode">
-        <button id="levelShiftUp"></button>
-        <button id="levelShiftDown"></button>
-        <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
+        <div id="levelControlWrapper">
+          <button id="levelControlToggle"><span id="levelControlToggleLabel"></span></button>
+          <button id="levelShiftUp"></button>
+          <button id="levelShiftDown"></button>
+          <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
+        </div>
       </div>
     `;
 

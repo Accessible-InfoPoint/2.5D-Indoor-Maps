@@ -33,6 +33,9 @@
         >
           <span class="material-icons" aria-hidden="true">layers</span>
         </button>
+        <button id="shortLegendTrigger" class="square shortOnly" aria-label="Legend" title="Legend">
+          <span class="material-icons" aria-hidden="true">layers</span>
+        </button>
         <div id="legendWrapper">
           <ul id="legendList" aria-label="Legend">
             <li aria-hidden="true" class="label">Legend</li>
@@ -69,11 +72,7 @@
 
         <!--           MOBILE DESCRIPTION CARD           -->
         <div id="mobileDescriptionCard" class="mobileOnly">
-          <button
-            id="mobileDescriptionTrigger"
-            aria-label="Description"
-            title="Description"
-          >
+          <button id="mobileDescriptionTrigger" aria-label="Description" title="Description">
             <span id="mobileDescriptionTitle"></span>
           </button>
           <div id="mobileDescriptionBody"></div>
@@ -146,6 +145,15 @@
              the same pattern). -->
         <div id="mobileLevelZoomStack">
           <div id="levelControlWrapper">
+            <button
+              id="levelControlToggle"
+              class="square active"
+              aria-label="Change level"
+              title="Change level"
+              aria-expanded="false"
+            >
+              <span id="levelControlToggleLabel"></span>
+            </button>
             <div id="mobileLevelExpandedGroup">
               <button
                 id="levelShiftUp"
@@ -179,9 +187,7 @@
               <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
             </button>
             <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
-              <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true"
-                >remove</span
-              >
+              <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
             </button>
           </div>
         </div>
@@ -231,8 +237,24 @@
           <span class="material-icons" aria-hidden="true">person</span>
         </button>
         <button
+          id="shortProfileTrigger"
+          class="square shortOnly"
+          aria-label="Change user profile"
+          title="Change user profile"
+        >
+          <span class="material-icons" aria-hidden="true">person</span>
+        </button>
+        <button
           id="mobileSettingsTrigger"
           class="square mobileOnly"
+          aria-label="Settings"
+          title="Settings"
+        >
+          <span class="material-icons" aria-hidden="true">settings</span>
+        </button>
+        <button
+          id="shortSettingsTrigger"
+          class="square shortOnly"
           aria-label="Settings"
           title="Settings"
         >

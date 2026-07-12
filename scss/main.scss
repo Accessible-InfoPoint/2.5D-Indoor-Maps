@@ -49,6 +49,15 @@ $attributionMaxWidth: min(35vw, 240px);
   }
 }
 
+// Same constraint as the width-based override above: #map (and this control) is
+// a sibling of #uiWrapper, not a descendant, so this can't be scoped through
+// #uiWrapper.lowHeightMode and needs its own height-based media query instead.
+@media (max-height: 600px) {
+  .maplibregl-ctrl-attrib {
+    max-width: 100%;
+  }
+}
+
 // MapLibre's own CSS overrides the attribution toggle button's horizontal anchor
 // per corner (left:0 in left corners, default right:0 in right corners) but never
 // its vertical anchor — the button always keeps `top: 0` from its base rule, even
@@ -145,8 +154,17 @@ nav {
   display: inline-block !important;
 }
 
-#uiWrapper.mobileMode #mobileDescriptionCard.mobileOnly {
+#uiWrapper.mobileMode #mobileDescriptionCard.mobileOnly,
+#uiWrapper.lowHeightMode:not(.mobileMode) #mobileDescriptionCard.mobileOnly {
   display: block !important;
+}
+
+.shortOnly {
+  display: none !important;
+}
+
+#uiWrapper.shortMode:not(.mobileMode) .shortOnly {
+  display: inline-block !important;
 }
 
 #searchOverlayBackdrop {
@@ -708,84 +726,245 @@ nav {
   }
 }
 
-#uiWrapper.wheelchairMode:not(.mobileMode) {
-  #indoorSearchWrapper {
-    bottom: calc(#{$uiPadding} + 15px + 1px);
-    left: 40%;
-    right: 40%;
-    width: auto;
-    transform: none;
-    -webkit-transform: none;
-    -moz-transform: none;
-    -ms-transform: none;
-    -o-transform: none;
+// button.square inside the #uiWrapper base block sets display: inline-block
+// with specificity (#uiWrapper button.square = 1 id + 1 class + 1 element).
+// A bare #levelControlToggle selector (1 id) loses that tiebreak on class
+// count regardless of source order, so this needs the #uiWrapper prefix to
+// win on ID count instead.
+#uiWrapper #levelControlToggle {
+  display: none;
+}
+
+#uiWrapper.lowHeightMode {
+  #levelControlToggle {
+    display: inline-block;
   }
 
-  #legendWrapper {
-    top: $uiPadding + $mapAttributionHeight;
-    bottom: auto;
-    right: $uiPadding;
-    // Anchored from top (unlike the base rule, which anchors from bottom and
-    // grows upward), so unlike that rule this one needs an explicit ceiling —
-    // otherwise a short viewport height plus $mapAttributionHeight's real-world
-    // size could push tall legend content off the bottom of the screen.
-    max-height: calc(100% - 2 *#{$uiPadding} - #{$mapAttributionHeight});
-    overflow-y: auto;
+  #levelControlWrapper #mobileLevelExpandedGroup {
+    display: none;
   }
 
-  #levelControlWrapper {
-    bottom: $uiPadding;
-    left: calc(3 * 15px + 2 * var(--button-size));
-    transform: none;
+  #levelControlWrapper.expanded {
     flex-direction: row;
-    top: auto;
+    align-items: center;
+
+    #mobileLevelExpandedGroup {
+      display: contents;
+    }
 
     div#levelControlWindow {
-      height: 230px; // 4 * 50 + 3 * 10
-      overflow: hidden;
+      height: auto;
 
       ul#levelControl {
         flex-direction: row;
         justify-content: flex-start;
-        width: auto;
-        flex-wrap: nowrap;
       }
     }
   }
+}
 
-  #switch2DViewWrapper {
-    top: auto;
-    bottom: calc(2 *#{$uiPadding} + var(--button-size));
-    left: $uiPadding;
+#uiWrapper.lowHeightMode {
+  #switchWheelchairModeWrapper {
+    display: none;
+  }
+}
+
+#uiWrapper.lowHeightMode:not(.mobileZoomVisible) {
+  #zoomControlWrapper {
+    display: none;
+  }
+}
+
+#uiWrapper.wheelchairMode:not(.mobileMode) {
+  &:not(.lowHeightMode) {
+    #indoorSearchWrapper {
+      bottom: calc(#{$uiPadding} + 15px + 1px);
+      left: 40%;
+      right: 40%;
+      width: auto;
+      transform: none;
+      -webkit-transform: none;
+      -moz-transform: none;
+      -ms-transform: none;
+      -o-transform: none;
+    }
+
+    #levelControlWrapper {
+      bottom: $uiPadding;
+      left: calc(3 * 15px + 2 * var(--button-size));
+      transform: none;
+      flex-direction: row;
+      top: auto;
+
+      div#levelControlWindow {
+        height: 230px; // 4 * 50 + 3 * 10
+        overflow: hidden;
+
+        ul#levelControl {
+          flex-direction: row;
+          justify-content: flex-start;
+          width: auto;
+          flex-wrap: nowrap;
+        }
+      }
+    }
+
+    #switch2DViewWrapper {
+      top: auto;
+      bottom: calc(2 *#{$uiPadding} + var(--button-size));
+      left: $uiPadding;
+    }
+
+    #zoomControlWrapper {
+      bottom: $uiPadding;
+      left: calc(var(--button-size) + 2 *#{$uiPadding});
+      gap: $uiPadding;
+      flex-direction: column;
+    }
   }
 
-  #zoomControlWrapper {
+  // Legend/quick-settings positioning below only applies once shortMode hasn't
+  // already taken over the same two elements (see the shortMode block further
+  // down) — otherwise the two would fight over #legendWrapper's and
+  // #quickSettingsWrapper's position at equal CSS specificity.
+  &:not(.shortMode) {
+    #legendWrapper {
+      top: $uiPadding + $mapAttributionHeight;
+      bottom: auto;
+      right: $uiPadding;
+      max-height: calc(100% - 2 *#{$uiPadding} - #{$mapAttributionHeight});
+      overflow-y: auto;
+    }
+
+    #quickSettingsWrapper {
+      flex-direction: row;
+      right: 15px;
+      top: auto;
+      transform: none;
+      bottom: 15px;
+      max-height: none;
+      overflow-y: visible;
+
+      ul {
+        width: calc(2 * var(--button-size) + 1 * var(--level-control-gap));
+      }
+
+      ul#userProfileList {
+        width: calc(3 * var(--button-size) + 2 * var(--level-control-gap));
+      }
+
+      hr {
+        border-top: none;
+        border-right: var(--bs-border-width) solid;
+      }
+    }
+  }
+}
+
+#uiWrapper.shortMode:not(.mobileMode) {
+  #shortLegendTrigger {
+    position: absolute;
     bottom: $uiPadding;
-    left: calc(var(--button-size) + 2 *#{$uiPadding});
-    gap: $uiPadding;
-    flex-direction: column;
+    right: $uiPadding;
+    z-index: 1;
+  }
+
+  #legendWrapper {
+    display: none;
+    position: absolute;
+    bottom: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+    right: $uiPadding;
+    left: auto;
+    top: auto;
+    overflow-y: auto;
+
+    &.open {
+      display: block;
+    }
+  }
+
+  #shortProfileTrigger,
+  #shortSettingsTrigger {
+    position: absolute;
+    right: $uiPadding;
+    z-index: 1;
+  }
+
+  #shortProfileTrigger {
+    top: calc(50% - var(--button-size) - var(--level-control-gap) / 2);
+  }
+
+  #shortSettingsTrigger {
+    top: calc(50% + var(--level-control-gap) / 2);
   }
 
   #quickSettingsWrapper {
-    flex-direction: row;
-    right: 15px;
+    position: static;
+    background: none;
+    border: none;
+    padding: 0;
     top: auto;
+    right: auto;
     transform: none;
-    bottom: 15px;
     max-height: none;
-    overflow-y: visible;
-
-    ul {
-      width: calc(2 * var(--button-size) + 1 * var(--level-control-gap));
-    }
-
-    ul#userProfileList {
-      width: calc(3 * var(--button-size) + 2 * var(--level-control-gap));
-    }
+    overflow: visible;
 
     hr {
-      border-top: none;
-      border-right: var(--bs-border-width) solid;
+      display: none;
+    }
+
+    #mobileProfilePanel,
+    #mobileSettingsPanel {
+      display: none;
+      position: absolute;
+      right: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
+      overflow-y: auto;
+      background-color: #fffffff0;
+      border: 1px solid gray;
+      border-radius: var(--button-border-radius);
+      padding: 10px 15px 15px;
+
+      &.open {
+        display: block;
+      }
+
+      ul {
+        width: calc(2 * var(--button-size) + var(--level-control-gap));
+      }
+    }
+
+    #mobileProfilePanel {
+      top: calc(50% - var(--button-size) - var(--level-control-gap) / 2);
+    }
+
+    #mobileSettingsPanel {
+      top: calc(50% + var(--level-control-gap) / 2);
+    }
+  }
+}
+
+#uiWrapper.shortMode.leftHanded:not(.mobileMode) {
+  #shortLegendTrigger {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #legendWrapper {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #shortProfileTrigger,
+  #shortSettingsTrigger {
+    right: auto;
+    left: $uiPadding;
+  }
+
+  #quickSettingsWrapper {
+    #mobileProfilePanel,
+    #mobileSettingsPanel {
+      right: auto;
+      left: calc(#{$uiPadding} + var(--button-size) + #{$uiPadding});
     }
   }
 }
@@ -1019,27 +1198,56 @@ nav {
     border-radius: var(--button-border-radius);
     overflow: hidden;
   }
+}
 
-  #mobileDescriptionTrigger {
+#uiWrapper.mobileMode #mobileDescriptionTrigger,
+#uiWrapper.lowHeightMode:not(.mobileMode) #mobileDescriptionTrigger {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 15px;
+  font-weight: 700;
+  color: $primary;
+}
+
+#uiWrapper.mobileMode #mobileDescriptionBody,
+#uiWrapper.lowHeightMode:not(.mobileMode) #mobileDescriptionBody {
+  display: none;
+  padding: 0 15px 15px;
+  max-height: calc(50vh - 3 * var(--button-size));
+  overflow-y: auto;
+
+  &.open {
     display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    padding: 10px 15px;
-    font-weight: 700;
-    color: $primary;
+  }
+}
+
+#uiWrapper.lowHeightMode:not(.mobileMode) {
+  .description {
+    display: none;
   }
 
-  #mobileDescriptionBody {
-    display: none;
-    padding: 0 15px 15px;
-    max-height: calc(50vh - 3 * var(--button-size));
-    overflow-y: auto;
+  #mobileDescriptionCard {
+    position: fixed;
+    top: $uiPadding;
+    bottom: auto;
+    left: $uiPadding;
+    right: auto;
+    max-width: calc(50% - #{$uiPadding});
+    z-index: 1;
+    background-color: #fffffff0;
+    border: 1px solid gray;
+    border-radius: var(--button-border-radius);
+    overflow: hidden;
+  }
+}
 
-    &.open {
-      display: block;
-    }
+#uiWrapper.lowHeightMode.leftHanded:not(.mobileMode) {
+  #mobileDescriptionCard {
+    left: auto;
+    right: $uiPadding;
   }
 }
 
@@ -1160,5 +1368,19 @@ nav {
 
   #searchErrorMessage {
     transition: none !important;
+  }
+}
+
+// !important (rather than relying on source order) so this always wins over
+// the equal- or higher-specificity max-height rules that #legendWrapper /
+// #mobileProfilePanel / #mobileSettingsPanel pick up elsewhere (e.g. the
+// #uiWrapper.mobileMode #quickSettingsWrapper #mobileProfilePanel rule, which
+// has one more ID in its selector and would otherwise always win regardless
+// of where this block sits in the file).
+#uiWrapper.shortMode {
+  #legendWrapper,
+  #mobileProfilePanel,
+  #mobileSettingsPanel {
+    max-height: var(--popover-clamp-height, calc(100% - 2 * #{$uiPadding})) !important;
   }
 }

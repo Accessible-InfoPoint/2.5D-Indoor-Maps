@@ -23,6 +23,7 @@ import {
   MapBounds,
   MapCenterConstraint,
   MapView,
+  MapViewportPadding,
   AttributionCorner,
   AttributionOffset,
 } from "./map/mapView";
@@ -36,6 +37,7 @@ import { getFeatureLevels } from "../utils/featureLevels";
 
 export class GeoMap {
   private readonly mapView: MapView;
+  private uiViewportPadding: MapViewportPadding = { top: 0, right: 0, bottom: 0, left: 0 };
   camera: MapCamera;
   currentLevel = INDOOR_LEVEL;
   indoorLayers: Map<number, IndoorLevel> = new Map();
@@ -94,6 +96,11 @@ export class GeoMap {
 
   setAttributionOffset(offset: AttributionOffset | null): void {
     this.mapView.setAttributionOffset(offset);
+  }
+
+  setDescriptionCardPadding(padding: MapViewportPadding): void {
+    this.uiViewportPadding = padding;
+    this.mapView.setViewportPadding(padding);
   }
 
   getFitZoom(bearing: number, pitch: number, maxZoom: number): number {
@@ -231,12 +238,7 @@ export class GeoMap {
     this.updateStandardCenter();
     const bounds = this.expandBuildingBounds(this.getBuildingBounds());
 
-    this.mapView.setViewportPadding({
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-    });
+    this.mapView.setViewportPadding(this.uiViewportPadding);
     this.mapView.setMaxBounds(bounds);
     this.mapView.setCenterConstraint(
       this.flatMode ? this.getCircularCenterConstraint(bounds) : this.getLockedCenterConstraint(),

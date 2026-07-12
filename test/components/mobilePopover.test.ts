@@ -60,6 +60,22 @@ describe("mobilePopover", () => {
     expect(panelB.classList.contains("open")).toBe(true);
   });
 
+  it("supports multiple trigger ids sharing one panel", () => {
+    document.body.insertAdjacentHTML("beforeend", `<button id="triggerC"></button>`);
+    const triggerC = document.getElementById("triggerC") as HTMLButtonElement;
+
+    setupPopover({ triggerId: ["triggerA", "triggerC"], panelId: "panelA" });
+
+    triggerC.click();
+    expect(panelA.classList.contains("open")).toBe(true);
+    expect(triggerA.getAttribute("aria-expanded")).toBe("true");
+    expect(triggerC.getAttribute("aria-expanded")).toBe("true");
+
+    triggerA.click();
+    expect(panelA.classList.contains("open")).toBe(false);
+    expect(triggerC.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("closes on Escape and returns focus to the trigger", () => {
     setupPopover({ triggerId: "triggerA", panelId: "panelA" });
 

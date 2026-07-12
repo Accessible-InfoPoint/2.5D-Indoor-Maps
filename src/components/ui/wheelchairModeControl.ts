@@ -88,6 +88,14 @@ function replaceIcons(): void {
 
 function setIndoorSearchWheelchairLayout(): void {
   const indoorSearchWrapper = getRequiredElement("indoorSearchWrapper");
+  const uiWrapper = getRequiredElement("uiWrapper");
+
+  if (uiWrapper.classList.contains("shortMode") || uiWrapper.classList.contains("mobileMode")) {
+    indoorSearchWrapper.style.removeProperty("left");
+    indoorSearchWrapper.style.removeProperty("right");
+    return;
+  }
+
   const levelControlWrapper = getRequiredElement("levelControlWrapper");
   const quickSettingsWrapper = getRequiredElement("quickSettingsWrapper");
 
@@ -95,6 +103,11 @@ function setIndoorSearchWheelchairLayout(): void {
     levelControlWrapper.offsetLeft + levelControlWrapper.offsetWidth + 15 + 12 + "px";
   indoorSearchWrapper.style.right =
     document.body.clientWidth - quickSettingsWrapper.offsetLeft + 15 + 50 + "px";
+}
+
+function refreshIndoorSearchWheelchairLayout(): void {
+  if (!getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) return;
+  setIndoorSearchWheelchairLayout();
 }
 
 function setupQuickSettingsLayoutObserver(): void {
@@ -159,4 +172,5 @@ function getUiPadding(uiWrapper: HTMLElement): number {
 export default {
   applyStoredLayout,
   setup,
+  refreshIndoorSearchWheelchairLayout,
 };

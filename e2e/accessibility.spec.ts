@@ -55,6 +55,7 @@ test("wheelchair mode has no serious accessibility violations", async ({ page })
 });
 
 test("visual settings modal has no serious accessibility violations", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
@@ -67,6 +68,7 @@ test("visual settings modal has no serious accessibility violations", async ({ p
 });
 
 test("feature selection modal has no serious accessibility violations", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 });
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
