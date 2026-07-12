@@ -8,7 +8,6 @@ import BuildingService, {
 import SearchSuggestions from "./searchSuggestions";
 import UserService from "../../services/userService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
-import { prefersReducedMotion } from "../../utils/motionPreferences";
 
 const indoorSearchSubmit = getRequiredElement<HTMLButtonElement>("indoorSearchSubmit");
 const indoorSearchInput = getRequiredElement<HTMLInputElement>("indoorSearchInput");
@@ -29,8 +28,7 @@ function showSearchError(message: string): void {
     clearTimeout(searchErrorDismissTimer);
   }
 
-  const delay = prefersReducedMotion() ? 0 : SEARCH_ERROR_AUTO_DISMISS_MS;
-  searchErrorDismissTimer = setTimeout(clearSearchError, delay);
+  searchErrorDismissTimer = setTimeout(clearSearchError, SEARCH_ERROR_AUTO_DISMISS_MS);
 }
 
 function clearSearchError(): void {

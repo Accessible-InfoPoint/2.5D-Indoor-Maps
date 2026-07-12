@@ -19,7 +19,13 @@ import FeatureService from "../services/featureService";
 import MobileDescriptionControl from "./ui/mobileDescriptionControl";
 import BackendService, { type BuildingCenter } from "../services/backendService";
 import { MapCamera } from "./map/mapCamera";
-import { MapBounds, MapCenterConstraint, MapView, AttributionCorner } from "./map/mapView";
+import {
+  MapBounds,
+  MapCenterConstraint,
+  MapView,
+  AttributionCorner,
+  AttributionOffset,
+} from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
 import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
@@ -84,6 +90,10 @@ export class GeoMap {
 
   setAttributionCorner(corner: AttributionCorner): void {
     this.mapView.setAttributionCorner(corner);
+  }
+
+  setAttributionOffset(offset: AttributionOffset | null): void {
+    this.mapView.setAttributionOffset(offset);
   }
 
   getFitZoom(bearing: number, pitch: number, maxZoom: number): number {

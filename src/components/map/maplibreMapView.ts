@@ -19,6 +19,7 @@ import {
   MapView,
   MapViewportPadding,
   AttributionCorner,
+  AttributionOffset,
   FitZoomOptions,
 } from "./mapView";
 
@@ -147,6 +148,7 @@ export class MapLibreMapView implements MapView {
   setAttributionCorner(corner: AttributionCorner): void {
     if (this.attributionCorner === corner) return;
 
+    this.clearCornerPositionOverride(this.attributionCorner);
     this.map.removeControl(this.attributionControl);
     this.attributionControl = new maplibregl.AttributionControl({
       compact: true,
@@ -154,6 +156,44 @@ export class MapLibreMapView implements MapView {
     });
     this.map.addControl(this.attributionControl, corner);
     this.attributionCorner = corner;
+  }
+
+  // The corner container (not the inner .maplibregl-ctrl-attrib) is what MapLibre
+  // itself positions absolutely at 0/0 within that corner — overriding it directly
+  // with `position: fixed` plus explicit left/right/bottom lets a fixed-position
+  // sibling element (#mobileDescriptionCard) drive its placement without needing
+  // to know #map's own offset/size. Setting both left and right stretches the
+  // container (and the block-level .maplibregl-ctrl-attrib inside it) to exactly
+  // that width, matching the tracked element's own width.
+  setAttributionOffset(offset: AttributionOffset | null): void {
+    const corner = this.map
+      .getContainer()
+      .querySelector<HTMLElement>(`.maplibregl-ctrl-${this.attributionCorner}`);
+    if (!corner) return;
+
+    if (!offset) {
+      this.clearCornerPositionOverride(this.attributionCorner);
+      return;
+    }
+
+    corner.style.position = "fixed";
+    corner.style.left = `${offset.left}px`;
+    corner.style.right = `${offset.right}px`;
+    corner.style.bottom = `${offset.bottom}px`;
+    corner.style.top = "auto";
+  }
+
+  private clearCornerPositionOverride(corner: AttributionCorner): void {
+    const element = this.map
+      .getContainer()
+      .querySelector<HTMLElement>(`.maplibregl-ctrl-${corner}`);
+    if (!element) return;
+
+    element.style.removeProperty("position");
+    element.style.removeProperty("left");
+    element.style.removeProperty("right");
+    element.style.removeProperty("bottom");
+    element.style.removeProperty("top");
   }
 
   getFitZoom(bounds: MapBounds, options: FitZoomOptions): number {

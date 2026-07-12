@@ -9,6 +9,7 @@ export class MapLibreLeftButtonRotateHandler {
   private enabled = false;
   private dragState:
     | {
+        pointerId: number;
         lastX: number;
         lastY: number;
         startX: number;
@@ -29,7 +30,16 @@ export class MapLibreLeftButtonRotateHandler {
     }
 
     this.enabled = true;
-    this.map.getCanvasContainer().addEventListener("mousedown", this.handleMouseDown);
+    const canvas = this.map.getCanvas();
+    // MapLibre's own touch-action CSS (toggled via classes on the canvas based on
+    // which of ITS handlers are enabled) permits native single-finger panning
+    // whenever its touch-drag-pan handler is off — exactly the state this app is in
+    // while this handler is active (dragPan: false in 3D mode). Without overriding
+    // it here, a touch drag gets consumed by the browser's native scroll/pan before
+    // our pointermove listener ever sees it. Inline style wins over MapLibre's
+    // class-based rule regardless of which combination of its own handlers is on.
+    canvas.style.touchAction = "none";
+    this.map.getCanvasContainer().addEventListener("pointerdown", this.handlePointerDown);
   }
 
   disable(): void {
@@ -38,17 +48,21 @@ export class MapLibreLeftButtonRotateHandler {
     }
 
     this.enabled = false;
-    this.map.getCanvasContainer().removeEventListener("mousedown", this.handleMouseDown);
+    this.map.getCanvas().style.removeProperty("touch-action");
+    this.map.getCanvasContainer().removeEventListener("pointerdown", this.handlePointerDown);
     this.endDrag();
   }
 
-  private handleMouseDown = (event: MouseEvent): void => {
-    if (event.button !== LEFT_MOUSE_BUTTON || event.ctrlKey) {
+  private handlePointerDown = (event: PointerEvent): void => {
+    // Ignore a second pointer (e.g. a second finger) while one drag is already
+    // active, and ignore anything but the primary mouse button / touch contact.
+    if (this.dragState || event.button !== LEFT_MOUSE_BUTTON || event.ctrlKey) {
       return;
     }
 
     const canvas = this.map.getCanvas();
     this.dragState = {
+      pointerId: event.pointerId,
       lastX: event.clientX,
       lastY: event.clientY,
       startX: event.clientX,
@@ -57,12 +71,16 @@ export class MapLibreLeftButtonRotateHandler {
       cursor: canvas.style.cursor,
     };
     canvas.style.cursor = "grabbing";
-    window.addEventListener("mousemove", this.handleMouseMove);
-    window.addEventListener("mouseup", this.handleMouseUp);
+    // Keeps receiving pointermove/pointerup for this contact even if the finger/
+    // cursor leaves the canvas mid-drag.
+    this.map.getCanvasContainer().setPointerCapture(event.pointerId);
+    window.addEventListener("pointermove", this.handlePointerMove);
+    window.addEventListener("pointerup", this.handlePointerUp);
+    window.addEventListener("pointercancel", this.handlePointerUp);
   };
 
-  private handleMouseMove = (event: MouseEvent): void => {
-    if (!this.dragState) {
+  private handlePointerMove = (event: PointerEvent): void => {
+    if (!this.dragState || event.pointerId !== this.dragState.pointerId) {
       return;
     }
 
@@ -90,8 +108,12 @@ export class MapLibreLeftButtonRotateHandler {
     }
   };
 
-  private handleMouseUp = (): void => {
-    if (this.dragState?.moved) {
+  private handlePointerUp = (event: PointerEvent): void => {
+    if (!this.dragState || event.pointerId !== this.dragState.pointerId) {
+      return;
+    }
+
+    if (this.dragState.moved) {
       this.preventNextClick();
     }
 
@@ -103,10 +125,15 @@ export class MapLibreLeftButtonRotateHandler {
       return;
     }
 
+    const canvasContainer = this.map.getCanvasContainer();
+    if (canvasContainer.hasPointerCapture(this.dragState.pointerId)) {
+      canvasContainer.releasePointerCapture(this.dragState.pointerId);
+    }
     this.map.getCanvas().style.cursor = this.dragState.cursor;
     this.dragState = undefined;
-    window.removeEventListener("mousemove", this.handleMouseMove);
-    window.removeEventListener("mouseup", this.handleMouseUp);
+    window.removeEventListener("pointermove", this.handlePointerMove);
+    window.removeEventListener("pointerup", this.handlePointerUp);
+    window.removeEventListener("pointercancel", this.handlePointerUp);
   }
 
   private preventNextClick(): void {

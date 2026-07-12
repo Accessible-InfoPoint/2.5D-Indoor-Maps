@@ -458,14 +458,14 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
     // The mobile description card and the attribution control both live near the
-    // bottom of the screen; they must never overlap, or clicks meant for one land
-    // on the other instead.
+    // bottom of the screen, attribution now pinned directly above the card; they
+    // must never overlap, or clicks meant for one land on the other instead.
     const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
     const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
     expect(attribBox).not.toBeNull();
     expect(cardBox).not.toBeNull();
     if (attribBox && cardBox) {
-      expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(attribBox.y);
+      expect(attribBox.y + attribBox.height).toBeLessThanOrEqual(cardBox.y);
     }
 
     const attribToggle = page.locator(".maplibregl-ctrl-attrib-button");
@@ -473,7 +473,9 @@ test.describe("mobile layout", () => {
 
     // A real click (not force:true) proves nothing else intercepts the tap.
     await attribToggle.click();
-    await expect(page.locator(".maplibregl-ctrl-attrib")).not.toHaveClass(/maplibregl-compact-show/);
+    await expect(page.locator(".maplibregl-ctrl-attrib")).not.toHaveClass(
+      /maplibregl-compact-show/,
+    );
 
     const boxAfter = await attribToggle.boundingBox();
     expect(boxBefore).not.toBeNull();
@@ -500,7 +502,9 @@ test.describe("mobile layout", () => {
     const boxBefore = await attribToggle.boundingBox();
 
     await attribToggle.click();
-    await expect(page.locator(".maplibregl-ctrl-attrib")).not.toHaveClass(/maplibregl-compact-show/);
+    await expect(page.locator(".maplibregl-ctrl-attrib")).not.toHaveClass(
+      /maplibregl-compact-show/,
+    );
 
     const boxAfter = await attribToggle.boundingBox();
     expect(boxBefore).not.toBeNull();
@@ -511,25 +515,22 @@ test.describe("mobile layout", () => {
     }
   });
 
-  test("widens the map attribution to reach the centering button on mobile, in both handedness modes", async ({
+  test("matches the map attribution's width and position to the description card, in both handedness modes", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await loadTestApp(page);
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-    // On mobile .description is hidden, so attribution no longer needs to share
-    // horizontal space with it — it should stretch out close to the centering
-    // button on the opposite corner, not stay capped at the desktop-oriented
-    // width meant to protect .description's readability.
+    // Attribution no longer stretches toward the centering button's corner — it
+    // tracks the description card's own bounds, directly above it.
     const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
-    const centeringBox = await page.locator("#centeringButton").boundingBox();
+    const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
     expect(attribBox).not.toBeNull();
-    expect(centeringBox).not.toBeNull();
-    if (attribBox && centeringBox) {
-      expect(attribBox.width).toBeGreaterThan(250);
-      expect(attribBox.x + attribBox.width).toBeLessThanOrEqual(centeringBox.x);
-      expect(centeringBox.x - (attribBox.x + attribBox.width)).toBeLessThan(30);
+    expect(cardBox).not.toBeNull();
+    if (attribBox && cardBox) {
+      expect(Math.abs(attribBox.x - cardBox.x)).toBeLessThan(5);
+      expect(Math.abs(attribBox.x + attribBox.width - (cardBox.x + cardBox.width))).toBeLessThan(5);
     }
 
     await page.locator("#mobileSettingsTrigger").click();
@@ -538,21 +539,22 @@ test.describe("mobile layout", () => {
     await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
 
     const attribBoxLeftHanded = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
-    const centeringBoxLeftHanded = await page.locator("#centeringButton").boundingBox();
+    const cardBoxLeftHanded = await page.locator("#mobileDescriptionCard").boundingBox();
     expect(attribBoxLeftHanded).not.toBeNull();
-    expect(centeringBoxLeftHanded).not.toBeNull();
-    if (attribBoxLeftHanded && centeringBoxLeftHanded) {
-      expect(attribBoxLeftHanded.width).toBeGreaterThan(250);
-      expect(centeringBoxLeftHanded.x + centeringBoxLeftHanded.width).toBeLessThanOrEqual(
-        attribBoxLeftHanded.x,
-      );
+    expect(cardBoxLeftHanded).not.toBeNull();
+    if (attribBoxLeftHanded && cardBoxLeftHanded) {
+      expect(Math.abs(attribBoxLeftHanded.x - cardBoxLeftHanded.x)).toBeLessThan(5);
       expect(
-        attribBoxLeftHanded.x - (centeringBoxLeftHanded.x + centeringBoxLeftHanded.width),
-      ).toBeLessThan(30);
+        Math.abs(
+          attribBoxLeftHanded.x +
+            attribBoxLeftHanded.width -
+            (cardBoxLeftHanded.x + cardBoxLeftHanded.width),
+        ),
+      ).toBeLessThan(5);
     }
   });
 
-  test("keeps the mobile description card close to the bottom row instead of leaving a wide gap", async ({
+  test("groups the description card with the centering button in the same bottom row, mirrored by handedness", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
@@ -560,17 +562,92 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
     const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
-    const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    const centeringBox = await page.locator("#centeringButton").boundingBox();
     expect(cardBox).not.toBeNull();
-    expect(attribBox).not.toBeNull();
-    if (cardBox && attribBox) {
-      // Must still clear attribution (no overlap)...
-      expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(attribBox.y);
-      // ...but shouldn't reserve so much clearance that a big empty gap opens up
-      // between the card and the row below it (the old $mapAttributionHeight-based
-      // reservation left ~85px here; a tight mobile-specific ceiling should leave well
-      // under half of that).
-      expect(attribBox.y - (cardBox.y + cardBox.height)).toBeLessThan(50);
+    expect(centeringBox).not.toBeNull();
+    if (cardBox && centeringBox) {
+      // Same bottom row...
+      expect(
+        Math.abs(cardBox.y + cardBox.height - (centeringBox.y + centeringBox.height)),
+      ).toBeLessThan(2);
+      // ...with a visible gap between them, card ending before the button starts.
+      expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(centeringBox.x);
+      expect(centeringBox.x - (cardBox.x + cardBox.width)).toBeLessThan(20);
+    }
+
+    await page.locator("#mobileSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileHandedness_left").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    const cardBoxLeftHanded = await page.locator("#mobileDescriptionCard").boundingBox();
+    const centeringBoxLeftHanded = await page.locator("#centeringButton").boundingBox();
+    expect(cardBoxLeftHanded).not.toBeNull();
+    expect(centeringBoxLeftHanded).not.toBeNull();
+    if (cardBoxLeftHanded && centeringBoxLeftHanded) {
+      expect(
+        Math.abs(
+          cardBoxLeftHanded.y +
+            cardBoxLeftHanded.height -
+            (centeringBoxLeftHanded.y + centeringBoxLeftHanded.height),
+        ),
+      ).toBeLessThan(2);
+      // Left-handed: the button now sits to the LEFT of the card.
+      expect(centeringBoxLeftHanded.x + centeringBoxLeftHanded.width).toBeLessThanOrEqual(
+        cardBoxLeftHanded.x,
+      );
+      expect(
+        cardBoxLeftHanded.x - (centeringBoxLeftHanded.x + centeringBoxLeftHanded.width),
+      ).toBeLessThan(20);
+    }
+  });
+
+  test("moves the attribution up when the description card expands, and back down when it collapses", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const attribBoxCollapsed = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    expect(attribBoxCollapsed).not.toBeNull();
+
+    await page.locator("#mobileDescriptionTrigger").click();
+    await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
+
+    if (attribBoxCollapsed) {
+      // Waits for the ResizeObserver callback (queued for the next frame) and its
+      // requestAnimationFrame-debounced position update to actually settle, instead
+      // of guessing a fixed sleep duration.
+      await expect
+        .poll(async () => (await page.locator(".maplibregl-ctrl-attrib").boundingBox())?.y ?? null)
+        .toBeLessThan(attribBoxCollapsed.y);
+    }
+
+    const attribBoxExpanded = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    const cardBoxExpanded = await page.locator("#mobileDescriptionCard").boundingBox();
+    expect(attribBoxExpanded).not.toBeNull();
+    expect(cardBoxExpanded).not.toBeNull();
+    if (attribBoxCollapsed && attribBoxExpanded && cardBoxExpanded) {
+      // The card grew taller, pushing its top edge up — attribution should have
+      // followed, moving strictly further up the screen (smaller y).
+      expect(attribBoxExpanded.y).toBeLessThan(attribBoxCollapsed.y);
+      expect(attribBoxExpanded.y + attribBoxExpanded.height).toBeLessThanOrEqual(cardBoxExpanded.y);
+    }
+
+    await page.locator("#mobileDescriptionTrigger").click();
+    await expect(page.locator("#mobileDescriptionBody")).toBeHidden();
+
+    if (attribBoxExpanded) {
+      await expect
+        .poll(async () => (await page.locator(".maplibregl-ctrl-attrib").boundingBox())?.y ?? null)
+        .toBeGreaterThan(attribBoxExpanded.y);
+    }
+
+    const attribBoxCollapsedAgain = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    expect(attribBoxCollapsedAgain).not.toBeNull();
+    if (attribBoxCollapsed && attribBoxCollapsedAgain) {
+      expect(Math.abs(attribBoxCollapsedAgain.y - attribBoxCollapsed.y)).toBeLessThan(2);
     }
   });
 });

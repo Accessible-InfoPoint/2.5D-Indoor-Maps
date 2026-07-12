@@ -21,15 +21,6 @@ $mapAttributionHeight: 100px;
 // This smaller cap keeps attribution readable (wraps onto a couple more lines
 // instead of hugging one wide line) while leaving .description a usable width.
 $attributionMaxWidth: min(35vw, 240px);
-// On mobile, attribution isn't capped by $attributionMaxWidth (see the
-// media-breakpoint-down(md) override below) and wraps onto at most 3 lines
-// across real phone widths (measured empirically: 320-360px viewports wrap to
-// ~50.8px tall, 375px+ to ~35.2px), never the ~98px worst case that constant
-// assumes. Using $mapAttributionHeight for #mobileDescriptionCard's mobile-only
-// clearance below over-reserved by roughly 44px, creating a visibly oversized
-// gap above the card — this smaller, mobile-specific ceiling (with a few px of
-// buffer) fixes that without touching $mapAttributionHeight's other call sites.
-$mobileAttributionHeight: 56px;
 
 .maplibregl-ctrl-attrib {
   max-width: $attributionMaxWidth;
@@ -41,19 +32,20 @@ $mobileAttributionHeight: 56px;
   box-sizing: border-box !important;
 }
 
-// $attributionMaxWidth exists to share horizontal space with .description, which
-// is hidden entirely on mobile (#uiWrapper.mobileMode below) — so that clearance
-// math doesn't apply there. Let attribution use nearly the full width instead,
-// stopping just clear of the bottom-corner button (#centeringButton) on the
-// opposite side. #map (and this control, which lives inside it) is a sibling of
-// #uiWrapper, not a descendant, so this can't be scoped through
-// #uiWrapper.mobileMode and needs its own media query instead — matching the
-// same breakpoint as MOBILE_BREAKPOINT_PX (src/utils/breakpoints.ts), like
-// #toastWrapper's mobile override below already does. var(--button-size) isn't
-// reachable here for the same sibling reason, hence the literal 50px.
+// The corner container's width is now driven by MapLibreMapView.setAttributionOffset
+// (see maplibreMapView.ts), which fixes its left/right inline styles to exactly
+// match #mobileDescriptionCard's live width — so the container itself is already
+// the correct width. This override just needs to stop the base max-width cap above
+// (sized for desktop's much narrower corner-anchored box) from clipping the child
+// below that: 100% of the parent tracks the JS-driven width exactly, with no
+// separate formula to keep in sync. #map (and this control, which lives inside it)
+// is a sibling of #uiWrapper, not a descendant, so this can't be scoped through
+// #uiWrapper.mobileMode and needs its own media query instead — matching the same
+// breakpoint as MOBILE_BREAKPOINT_PX (src/utils/breakpoints.ts), like #toastWrapper's
+// mobile override below already does.
 @include media-breakpoint-down(md) {
   .maplibregl-ctrl-attrib {
-    max-width: calc(100vw - 50px - 2 *#{$uiPadding} - 10px);
+    max-width: 100%;
   }
 }
 
@@ -71,6 +63,20 @@ $mobileAttributionHeight: 56px;
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-button {
   top: auto;
   bottom: 0;
+}
+
+// MapLibre's compact-mode CSS (.maplibregl-compact) bakes in a 10px margin on
+// .maplibregl-ctrl-attrib itself, on top of the corner container's own
+// position. MapLibreMapView.setAttributionOffset positions the CORNER
+// container to pixel-match #mobileDescriptionCard's live left/right/bottom
+// (see mobileLayoutControl.ts), but that inbuilt margin then insets the
+// visible attrib box a further 10px from every edge of that container —
+// most visibly a 10px rightward shift plus a 20px narrower box than the
+// card it's meant to track. Zeroing it lets the container's own bounds (set
+// directly from the card's bounds) equal the attrib box's rendered bounds.
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib,
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
+  margin: 0;
 }
 
 html,
@@ -1001,13 +1007,12 @@ nav {
   #mobileDescriptionCard {
     position: fixed;
     left: $uiPadding;
-    right: $uiPadding;
-    // Spans the full width (unlike the locate button or attribution, which each sit
-    // on one side), so it must clear whichever is taller: the locate-button row, or
-    // the map attribution control in its default expanded state. Uses
-    // $mobileAttributionHeight (not $mapAttributionHeight) since mobile attribution
-    // is no longer capped to the narrow desktop width — see that variable's comment.
-    bottom: calc(#{$uiPadding} + max(var(--button-size), #{$mobileAttributionHeight}) + #{$uiPadding});
+    // Stops short of #centeringButton (same bottom row, handed side) instead of
+    // spanning full width, so the two read as one group. Mirrored in
+    // #uiWrapper.mobileMode.leftHanded below.
+    right: calc(#{$uiPadding} + var(--button-size) + var(--level-control-gap));
+    // Matches #centeringButton's own bottom offset so both sit in the same row.
+    bottom: $uiPadding;
     z-index: 1;
     background-color: #fffffff0;
     border: 1px solid gray;
@@ -1078,6 +1083,11 @@ nav {
   #centeringButton {
     right: auto;
     left: $uiPadding;
+  }
+
+  #mobileDescriptionCard {
+    right: $uiPadding;
+    left: calc(#{$uiPadding} + var(--button-size) + var(--level-control-gap));
   }
 
   #switch2DViewWrapper {

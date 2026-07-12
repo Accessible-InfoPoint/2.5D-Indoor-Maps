@@ -263,4 +263,33 @@ describe("searchForm", () => {
       jest.useRealTimers();
     }
   });
+
+  it("still auto-dismisses the search error at the full duration when the user prefers reduced motion", () => {
+    const { prefersReducedMotion } = jest.requireMock("../../src/utils/motionPreferences") as {
+      prefersReducedMotion: jest.Mock;
+    };
+    prefersReducedMotion.mockReturnValueOnce(true);
+
+    jest.useFakeTimers();
+    try {
+      (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+      SearchForm.render(geoMap);
+
+      input.value = "xyzzy";
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // The auto-dismiss timer duration must not be gated by prefers-reduced-motion
+      // (only the CSS fade transition is) — a reduced-motion user still needs time
+      // to read the banner before it disappears.
+      jest.advanceTimersByTime(4999);
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      jest.advanceTimersByTime(1);
+      expect(errorMessage.classList.contains("visible")).toBe(false);
+      expect(errorText.textContent).toBe("");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
