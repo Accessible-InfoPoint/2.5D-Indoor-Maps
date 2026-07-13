@@ -1,4 +1,6 @@
 import { getRequiredElement } from "../../utils/domHelpers";
+import OverlayExclusivityService from "../../services/overlayExclusivityService";
+import PopoverClampControl from "./popoverClampControl";
 
 export interface PopoverOptions {
   triggerId: string | string[];
@@ -12,7 +14,6 @@ export interface PopoverController {
   close(): void;
 }
 
-const registry: PopoverController[] = [];
 const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -40,13 +41,13 @@ export function setupPopover(options: PopoverOptions): PopoverController {
     close: () => setOpen(false),
   };
 
+  OverlayExclusivityService.registerOverlay(options.panelId, () => setOpen(false));
+
   function setOpen(nextOpen: boolean, flags: { returnFocus?: boolean } = {}): void {
     if (nextOpen === open) return;
 
     if (nextOpen) {
-      registry.forEach((other) => {
-        if (other !== controller) other.close();
-      });
+      OverlayExclusivityService.notifyOpened(options.panelId);
     }
 
     open = nextOpen;
@@ -54,10 +55,14 @@ export function setupPopover(options: PopoverOptions): PopoverController {
     panel.classList.toggle("open", open);
 
     if (open) {
+      PopoverClampControl.applyPositionFallback(options.panelId);
       focusFirstFocusable(panel);
-    } else if (flags.returnFocus) {
-      const visibleTrigger = triggers.find(isVisible) ?? triggers[0];
-      visibleTrigger.focus();
+    } else {
+      panel.classList.remove("centered");
+      if (flags.returnFocus) {
+        const visibleTrigger = triggers.find(isVisible) ?? triggers[0];
+        visibleTrigger.focus();
+      }
     }
   }
 
@@ -82,13 +87,11 @@ export function setupPopover(options: PopoverOptions): PopoverController {
     }
   });
 
-  registry.push(controller);
-
   return controller;
 }
 
 export function closeAllPopovers(): void {
-  registry.forEach((controller) => controller.close());
+  OverlayExclusivityService.closeAll();
 }
 
 // `offsetParent !== null` is the usual way to detect `display: none`, but jsdom's

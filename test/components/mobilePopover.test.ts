@@ -114,6 +114,31 @@ describe("mobilePopover", () => {
     expect(panelA.classList.contains("open")).toBe(false);
   });
 
+  it("closeAllPopovers also closes overlays registered directly with overlayExclusivityService", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+    const closeFakeOverlay = jest.fn();
+    OverlayExclusivityService.registerOverlay("fakeOverlay", closeFakeOverlay);
+
+    closeAllPopovers();
+
+    expect(closeFakeOverlay).toHaveBeenCalledTimes(1);
+  });
+
+  it("opening a popover closes an overlay registered directly with overlayExclusivityService", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+    const closeFakeOverlay = jest.fn();
+    OverlayExclusivityService.registerOverlay("fakeOverlay", closeFakeOverlay);
+
+    setupPopover({ triggerId: "triggerA", panelId: "panelA" });
+    triggerA.click();
+
+    expect(closeFakeOverlay).toHaveBeenCalledTimes(1);
+  });
+
   it("skips a display:none first child and focuses the next visible focusable child on open", () => {
     const hiddenFirst = document.createElement("button");
     hiddenFirst.id = "hiddenFirst";

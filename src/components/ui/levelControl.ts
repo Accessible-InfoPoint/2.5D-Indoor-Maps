@@ -7,6 +7,8 @@ import LevelService from "../../services/levelService";
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
+import OverlayExclusivityService from "../../services/overlayExclusivityService";
+import LayoutObstacles from "../../utils/layoutObstacles";
 
 let offset = 1;
 const minOffset = 0;
@@ -94,8 +96,22 @@ function setWindow(): void {
   const levelShiftUp = getRequiredElement("levelShiftUp");
   const levelShiftDown = getRequiredElement("levelShiftDown");
   const levelControlWindow = getRequiredElement("levelControlWindow");
-  const shownLevels = Math.min(VISIBLE_LEVEL_CONTROLS, numLevels);
-  if (numLevels <= VISIBLE_LEVEL_CONTROLS) {
+  const levelControlWrapper = getRequiredElement("levelControlWrapper");
+
+  const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
+  const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
+
+  let shownLevels = Math.min(VISIBLE_LEVEL_CONTROLS, numLevels);
+  applyWindowSize(levelControlWindow, shownLevels, size, gap);
+
+  if (levelControlWrapper.classList.contains("expanded")) {
+    while (shownLevels > 1 && collidesWithOtherUi(levelControlWrapper)) {
+      shownLevels -= 1;
+      applyWindowSize(levelControlWindow, shownLevels, size, gap);
+    }
+  }
+
+  if (numLevels <= shownLevels) {
     levelShiftUp.style.display = "none";
     levelShiftDown.style.display = "none";
   } else {
@@ -103,15 +119,53 @@ function setWindow(): void {
     levelShiftDown.style.display = "inline-block";
   }
 
-  const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
-  const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
+  updateShiftIcons();
+}
 
+function applyWindowSize(
+  levelControlWindow: HTMLElement,
+  shownLevels: number,
+  size: number,
+  gap: number,
+): void {
   if (isHorizontalLevelLayout()) {
     levelControlWindow.style.width = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.height = "auto";
   } else {
     levelControlWindow.style.height = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.width = "auto";
+  }
+}
+
+// Measures the wrapper's OWN current rendered rect (rather than modeling
+// which edge it grows from) so this works regardless of whether the control
+// is left- or right-anchored, on mobile or desktop, handed or not — the
+// browser has already resolved the anchor direction by the time this reads
+// getBoundingClientRect().
+function collidesWithOtherUi(levelControlWrapper: HTMLElement): boolean {
+  const rect = levelControlWrapper.getBoundingClientRect();
+  const obstacles = LayoutObstacles.getObstacleRects(["levelControlWrapper"]);
+  return (
+    !LayoutObstacles.isWithinViewport(rect) ||
+    obstacles.some((obstacle) => LayoutObstacles.rectsOverlap(rect, obstacle.rect))
+  );
+}
+
+// The paging icons must point along whichever axis the control currently
+// pages on. isHorizontalLevelLayout() can flip on a live viewport resize
+// (shortMode/lowHeightMode) with no explicit user action, so this needs to
+// run everywhere setWindow() does — not just on the wheelchair toggle, which
+// used to be the only thing that ever changed the layout axis.
+function updateShiftIcons(): void {
+  const levelShiftUpLabel = getRequiredElement("levelShiftUpLabel");
+  const levelShiftDownLabel = getRequiredElement("levelShiftDownLabel");
+
+  if (isHorizontalLevelLayout()) {
+    levelShiftUpLabel.textContent = "chevron_left";
+    levelShiftDownLabel.textContent = "navigate_next";
+  } else {
+    levelShiftUpLabel.textContent = "expand_less";
+    levelShiftDownLabel.textContent = "expand_more";
   }
 }
 
@@ -211,9 +265,15 @@ function setupCollapseToggle(): void {
   const toggle = getRequiredElement("levelControlToggle");
   const wrapper = getRequiredElement("levelControlWrapper");
 
+  OverlayExclusivityService.registerOverlay("levelControlWrapper", collapseLevelControl);
+
   toggle.addEventListener("click", () => {
     const expanded = wrapper.classList.toggle("expanded");
     toggle.setAttribute("aria-expanded", expanded.toString());
+    if (expanded) {
+      OverlayExclusivityService.notifyOpened("levelControlWrapper");
+    }
+    setWindow();
   });
 }
 

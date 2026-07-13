@@ -10,12 +10,12 @@ import {
 } from "../../utils/breakpoints";
 import MobileLayoutService from "../../services/mobileLayoutService";
 import WheelchairModeControl from "./wheelchairModeControl";
+import LevelControl from "./levelControl";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { setupPopover, closeAllPopovers } from "./mobilePopover";
 import PopoverClampControl from "./popoverClampControl";
 
 const LEVEL_CONTROL_GAP_FALLBACK_PX = 10;
-const UI_PADDING_FALLBACK_PX = 15;
 
 let widthMediaQueryList: MediaQueryList | undefined;
 let shortMediaQueryList: MediaQueryList | undefined;
@@ -60,8 +60,18 @@ function setup(geoMap: GeoMap): void {
 function refresh(geoMap: GeoMap): void {
   applyStoredLayout();
   WheelchairModeControl.refreshIndoorSearchWheelchairLayout();
+  // The level control's window sizing (row vs. column) and paging margin axis
+  // depend on the current mode (see isHorizontalLevelLayout in levelControl.ts)
+  // but are only otherwise recomputed on explicit user actions (paging click,
+  // level click, wheelchair toggle) — a live viewport resize crossing a
+  // breakpoint needs the same recompute, or the window keeps stale
+  // dimensions/margin-axis from whatever orientation was active last.
+  LevelControl.setWindow();
+  LevelControl.setMargin();
   geoMap.setAttributionCorner(getAttributionCorner());
   updateAttributionOffset(geoMap);
+  updateDescriptionCardMapPadding(geoMap);
+  updateDescriptionMaxHeight();
   PopoverClampControl.update();
 }
 
@@ -81,17 +91,33 @@ function registerPopovers(): void {
     triggerId: ["mobileSettingsTrigger", "shortSettingsTrigger"],
     panelId: "mobileSettingsPanel",
   });
-  setupPopover({ triggerId: "mobileDescriptionTrigger", panelId: "mobileDescriptionBody" });
+  setupPopover({
+    triggerId: "mobileDescriptionTrigger",
+    panelId: "mobileDescriptionBody",
+    closeOnOutsideClick: false,
+  });
 }
 
 function getAttributionCorner(): AttributionCorner {
-  if (!isCompactAttribution()) return "top-right";
+  if (matchesMobileViewport()) {
+    return MobileLayoutService.getHandedness() === "left" ? "bottom-right" : "bottom-left";
+  }
 
-  return MobileLayoutService.getHandedness() === "left" ? "bottom-right" : "bottom-left";
-}
+  // At desktop width, attribution only needs to move off its default
+  // top-right corner once shortMode moves #switch2DViewWrapper to the
+  // opposite side for left-handed users (or, under lowHeightMode
+  // specifically, once the description card claims a top corner too) —
+  // attribution moves to the opposite top corner from whichever UI occupies
+  // the handed side so the two never compete for the same space.
+  // matchesShortViewport() also covers lowHeightMode, since lowHeightMode's
+  // height threshold is strictly tighter than shortMode's (see
+  // breakpoints.ts) — the two classes are never applied one without the
+  // other in that direction.
+  if (matchesShortViewport()) {
+    return MobileLayoutService.getHandedness() === "left" ? "top-left" : "top-right";
+  }
 
-function isCompactAttribution(): boolean {
-  return matchesMobileViewport() || matchesLowHeightViewport();
+  return "top-right";
 }
 
 function matchesMobileViewport(): boolean {
@@ -118,13 +144,24 @@ function setupDescriptionCardObserver(geoMap: GeoMap): void {
   descriptionCardObserverSetup = true;
 
   window.addEventListener("resize", () => requestAttributionOffsetUpdate(geoMap));
+  // Deliberately keyed to window.innerWidth (via updateDescriptionCardMapPadding
+  // itself), not the ResizeObserver below — that observer also fires when the
+  // card's own CONTENT changes (e.g. expanding its body), and the reserved
+  // map-padding footprint must stay fixed through that, only actually
+  // changing when the viewport itself resizes.
+  window.addEventListener("resize", () => updateDescriptionCardMapPadding(geoMap));
+  window.addEventListener("resize", updateDescriptionMaxHeight);
 
   if (typeof ResizeObserver === "undefined") {
     return;
   }
 
-  const observer = new ResizeObserver(() => requestAttributionOffsetUpdate(geoMap));
+  const observer = new ResizeObserver(() => {
+    requestAttributionOffsetUpdate(geoMap);
+    updateDescriptionMaxHeight();
+  });
   observer.observe(getRequiredElement("mobileDescriptionCard"));
+  observer.observe(getRequiredElement("levelControlWrapper"));
 }
 
 function requestAttributionOffsetUpdate(geoMap: GeoMap): void {
@@ -139,42 +176,70 @@ function requestAttributionOffsetUpdate(geoMap: GeoMap): void {
 }
 
 function updateAttributionOffset(geoMap: GeoMap): void {
-  if (!isCompactAttribution()) {
+  if (!matchesMobileViewport()) {
     geoMap.setAttributionOffset(null);
-    geoMap.setDescriptionCardPadding({ top: 0, right: 0, bottom: 0, left: 0 });
     return;
   }
 
   const rect = getRequiredElement("mobileDescriptionCard").getBoundingClientRect();
   const gap = getLevelControlGap();
-  const isDesktopWidthLowHeight = matchesLowHeightViewport() && !matchesMobileViewport();
 
   const offset: AttributionOffset = {
     left: rect.left,
     right: window.innerWidth - rect.right,
-    bottom: isDesktopWidthLowHeight ? getUiPadding() : window.innerHeight - rect.top + gap,
+    bottom: window.innerHeight - rect.top + gap,
   };
 
   geoMap.setAttributionOffset(offset);
+}
 
-  if (!isDesktopWidthLowHeight) {
+// The description card's reserved footprint (and therefore how much the map
+// recenters to compensate) is deliberately based on the viewport width alone,
+// not the card's own live rendered size — the card's CSS gives it a fixed
+// width in this mode specifically so opening/closing its body never changes
+// that footprint, and this mirrors that fixed width rather than tracking
+// content-driven fluctuation (which would shift the map's center every time
+// the card's content changed).
+// The visible map content centers itself within whatever's NOT reserved by
+// this padding — so this ratio directly trades off "how far the effective
+// center sits from true screen-middle" against "how much room the card gets
+// clear of the map." 0.45 pushed the center roughly 270px off true middle
+// (on a 1200px-wide viewport) — a much smaller reservation here still gives
+// a visible nudge away from the card's side without dominating the view.
+const DESCRIPTION_CARD_WIDTH_RATIO = 0.15;
+
+function updateDescriptionCardMapPadding(geoMap: GeoMap): void {
+  if (!matchesLowHeightViewport() || matchesMobileViewport()) {
     geoMap.setDescriptionCardPadding({ top: 0, right: 0, bottom: 0, left: 0 });
     return;
   }
 
-  const cardWidth = rect.width;
+  const reservedWidth = window.innerWidth * DESCRIPTION_CARD_WIDTH_RATIO;
   geoMap.setDescriptionCardPadding(
     MobileLayoutService.getHandedness() === "left"
-      ? { top: 0, right: cardWidth, bottom: 0, left: 0 }
-      : { top: 0, right: 0, bottom: 0, left: cardWidth },
+      ? { top: 0, right: reservedWidth, bottom: 0, left: 0 }
+      : { top: 0, right: 0, bottom: 0, left: reservedWidth },
   );
 }
 
-function getUiPadding(): number {
-  const padding = parseFloat(
-    getComputedStyle(getRequiredElement("uiWrapper")).getPropertyValue("--ui-padding"),
-  );
-  return Number.isFinite(padding) ? padding : UI_PADDING_FALLBACK_PX;
+// The description card's max-height is capped to stop right above the level
+// control, which sits vertically centered on the same left/right edge under
+// lowHeightMode:not(.mobileMode) — otherwise a long description can grow
+// down far enough to visually overlap the level control's expanded row.
+function updateDescriptionMaxHeight(): void {
+  const uiWrapper = getRequiredElement("uiWrapper");
+
+  if (!matchesLowHeightViewport() || matchesMobileViewport()) {
+    uiWrapper.style.removeProperty("--description-max-height");
+    return;
+  }
+
+  const bodyTop = getRequiredElement("mobileDescriptionBody").getBoundingClientRect().top;
+  const levelControlTop = getRequiredElement("levelControlWrapper").getBoundingClientRect().top;
+  const gap = getLevelControlGap();
+  const maxHeight = Math.max(0, levelControlTop - bodyTop - gap);
+
+  uiWrapper.style.setProperty("--description-max-height", `${maxHeight}px`);
 }
 
 function getLevelControlGap(): number {

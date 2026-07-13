@@ -763,7 +763,33 @@ nav {
   }
 }
 
-#uiWrapper.lowHeightMode {
+#levelControlBackdrop {
+  display: none;
+}
+
+// Mirrors #searchOverlayBackdrop's dim-everything-else treatment, scoped to
+// the same shortMode/lowHeightMode condition the .expanded row layout itself
+// uses above. #levelControlWrapper.expanded gets an elevated z-index so it
+// renders above its own backdrop instead of being dimmed by it — matching
+// how #indoorSearchWrapper (z-index 12) stays above its backdrop (10).
+#uiWrapper.shortMode:not(.mobileMode) #levelControlWrapper.expanded ~ #levelControlBackdrop,
+#uiWrapper.lowHeightMode #levelControlWrapper.expanded ~ #levelControlBackdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+#uiWrapper.shortMode:not(.mobileMode) #levelControlWrapper.expanded,
+#uiWrapper.lowHeightMode #levelControlWrapper.expanded {
+  z-index: 11;
+}
+
+// Same threshold as the wheelchair block's own :not(.shortMode) guard below —
+// there's no room to keep it a separate, differentiable mode once shortMode's
+// compact layout takes over.
+#uiWrapper.shortMode {
   #switchWheelchairModeWrapper {
     display: none;
   }
@@ -1241,6 +1267,17 @@ nav {
     border: 1px solid gray;
     border-radius: var(--button-border-radius);
     overflow: hidden;
+
+    // Routed through #mobileDescriptionCard (adding an ID) rather than
+    // relying on file position to win the tie against the universal
+    // mobileMode/lowHeightMode rule above, which shares this same
+    // #uiWrapper.lowHeightMode:not(.mobileMode) #mobileDescriptionBody
+    // selector at equal specificity otherwise. Reaches down to roughly the
+    // level control's own vertical center (50vh), instead of mobile's
+    // shorter cap sized for a bottom-anchored card.
+    #mobileDescriptionBody {
+      max-height: var(--description-max-height, calc(50vh - #{$uiPadding} - var(--button-size)));
+    }
   }
 }
 
@@ -1383,4 +1420,31 @@ nav {
   #mobileSettingsPanel {
     max-height: var(--popover-clamp-height, calc(100% - 2 * #{$uiPadding})) !important;
   }
+}
+
+// More specific than the shared rule above (:not(.mobileMode) adds a class),
+// so this wins for #legendWrapper specifically at desktop width — see
+// updateLegendClamp() in popoverClampControl.ts for why it needs its own,
+// tighter ceiling (the profile/settings trigger column it now shares) on
+// top of the shared floor/ceiling every popover already respects.
+#uiWrapper.shortMode:not(.mobileMode) {
+  #legendWrapper {
+    max-height: min(
+      var(--popover-clamp-height, calc(100% - 2 * #{$uiPadding})),
+      var(--legend-clamp-height, calc(100% - 2 * #{$uiPadding}))
+    ) !important;
+  }
+}
+
+// Fallback positioning for #2: when a popover's normal corner/edge position
+// would go out of bounds or collide with another UI element (checked in
+// popoverClampControl.ts's applyPositionFallback), it's centered in the free
+// vertical gap instead — same --quick-settings-center-y pattern already used
+// for #quickSettingsWrapper further up.
+#legendWrapper.centered,
+#mobileProfilePanel.centered,
+#mobileSettingsPanel.centered {
+  top: var(--popover-clamp-top) !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
 }
