@@ -64,7 +64,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
     "@types/three": "^0.185.0",
-    "@typescript-eslint/eslint-plugin": "^8.63.0",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.61.1",
     "ajv": "^8.20.0",
     "concurrently": "^10.0.3",
