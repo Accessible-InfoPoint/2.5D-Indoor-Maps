@@ -1,7 +1,7 @@
 import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
 import { MapCamera, MapCenter } from "./mapCamera";
 
-export type AttributionCorner = "top-right" | "bottom-left" | "bottom-right";
+export type AttributionCorner = "top-right" | "top-left" | "bottom-left" | "bottom-right";
 
 export interface AttributionOffset {
   left: number;

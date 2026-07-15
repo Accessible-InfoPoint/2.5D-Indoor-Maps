@@ -153,9 +153,8 @@ function collidesWithOtherUi(levelControlWrapper: HTMLElement): boolean {
 
 // The paging icons must point along whichever axis the control currently
 // pages on. isHorizontalLevelLayout() can flip on a live viewport resize
-// (shortMode/lowHeightMode) with no explicit user action, so this needs to
-// run everywhere setWindow() does — not just on the wheelchair toggle, which
-// used to be the only thing that ever changed the layout axis.
+// (shortMode/lowHeightMode) with no explicit user action, so this runs
+// everywhere setWindow() does, not only on the wheelchair toggle.
 function updateShiftIcons(): void {
   const levelShiftUpLabel = getRequiredElement("levelShiftUpLabel");
   const levelShiftDownLabel = getRequiredElement("levelShiftDownLabel");
@@ -289,6 +288,15 @@ function updateToggleLabel(level: string): void {
 function isHorizontalLevelLayout(): boolean {
   const uiWrapper = getRequiredElement("uiWrapper");
   if (uiWrapper.classList.contains("lowHeightMode")) return true;
+
+  // At mobile width, only the tighter lowHeightMode threshold (600px, above)
+  // collapses the level control — mobile's own moderate-height portrait
+  // viewports (e.g. 375x667) commonly fall under shortMode's more lenient
+  // 767.98px threshold and must keep the full vertical list. Desktop width
+  // collapses as soon as the rest of the compact layout does (shortMode).
+  if (uiWrapper.classList.contains("shortMode") && !uiWrapper.classList.contains("mobileMode")) {
+    return true;
+  }
 
   return (
     uiWrapper.classList.contains("wheelchairMode") && !uiWrapper.classList.contains("mobileMode")

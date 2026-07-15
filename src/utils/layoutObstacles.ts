@@ -3,10 +3,9 @@ export interface Obstacle {
   rect: DOMRect;
 }
 
-// Every fixed/absolutely-positioned UI element a popover, the description
-// card, or the level control might need to avoid overlapping. Hidden
-// elements (display: none) are skipped automatically, so callers don't need
-// to know which of these actually exist in the current mode.
+// Elements a popover, the description card, or the level control may need to
+// avoid overlapping. Hidden elements are filtered out below, so this list can
+// include ids that don't exist in every mode.
 const OBSTACLE_ELEMENT_IDS = [
   "indoorSearchWrapper",
   "searchSuggestionsList",
@@ -23,11 +22,13 @@ const OBSTACLE_ELEMENT_IDS = [
 ];
 
 function getObstacleRects(excludeIds: string[] = []): Obstacle[] {
-  return OBSTACLE_ELEMENT_IDS.filter((id) => !excludeIds.includes(id))
-    // Use document.getElementById directly (not getRequiredElement) to tolerate missing/hidden elements
-    .map((id) => document.getElementById(id))
-    .filter((element): element is HTMLElement => element !== null && isVisible(element))
-    .map((element) => ({ id: element.id, rect: element.getBoundingClientRect() }));
+  return (
+    OBSTACLE_ELEMENT_IDS.filter((id) => !excludeIds.includes(id))
+      // Use document.getElementById directly (not getRequiredElement) to tolerate missing/hidden elements
+      .map((id) => document.getElementById(id))
+      .filter((element): element is HTMLElement => element !== null && isVisible(element))
+      .map((element) => ({ id: element.id, rect: element.getBoundingClientRect() }))
+  );
 }
 
 function isVisible(element: HTMLElement): boolean {

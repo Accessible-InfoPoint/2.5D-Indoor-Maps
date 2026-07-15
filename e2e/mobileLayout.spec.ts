@@ -107,7 +107,7 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#zoomControlWrapper")).toBeVisible();
   });
 
-  test("stacks the zoom buttons directly below the level control, full width, plus above minus", async ({
+  test("puts the zoom buttons in the legend/profile/settings column below settings, full width, plus above minus", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
@@ -120,24 +120,20 @@ test.describe("mobile layout", () => {
     await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
     await expect(page.locator("#zoomControlWrapper")).toBeVisible();
 
-    const levelBox = await page.locator("#levelControlWrapper").boundingBox();
+    const settingsBox = await page.locator("#mobileSettingsTrigger").boundingBox();
     const zoomInBox = await page.locator("#zoomControlIn").boundingBox();
     const zoomOutBox = await page.locator("#zoomControlOut").boundingBox();
-    expect(levelBox).not.toBeNull();
+    expect(settingsBox).not.toBeNull();
     expect(zoomInBox).not.toBeNull();
     expect(zoomOutBox).not.toBeNull();
-    if (levelBox && zoomInBox && zoomOutBox) {
-      // Directly below the level control, same column, one level-button's width.
-      expect(zoomInBox.x).toBe(levelBox.x);
-      expect(zoomInBox.width).toBe(levelBox.width);
-      expect(zoomInBox.y).toBeGreaterThanOrEqual(levelBox.y + levelBox.height);
-      // Close (not a leftover fixed-position gap) — same rhythm as the level buttons' own gap.
-      expect(zoomInBox.y - (levelBox.y + levelBox.height)).toBeLessThan(20);
-      // Plus (zoom in) above minus (zoom out).
+    if (settingsBox && zoomInBox && zoomOutBox) {
+      expect(zoomInBox.x).toBe(settingsBox.x);
+      expect(zoomInBox.width).toBe(settingsBox.width);
+      expect(zoomInBox.y).toBeGreaterThan(settingsBox.y + settingsBox.height);
+      expect(zoomInBox.y - (settingsBox.y + settingsBox.height)).toBeGreaterThan(20);
       expect(zoomInBox.y).toBeLessThan(zoomOutBox.y);
     }
 
-    // A real click proves nothing else in the stack intercepts the tap.
     await page.locator("#zoomControlIn").click();
   });
 
@@ -166,7 +162,7 @@ test.describe("mobile layout", () => {
     }
   });
 
-  test("shows zoom buttons on the left side when left-handed and zoom buttons are both enabled", async ({
+  test("keeps the zoom buttons in the same (now-mirrored) column as settings when left-handed and zoom buttons are both enabled", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
@@ -182,13 +178,16 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#zoomControlWrapper")).toBeVisible();
 
     const zoomBox = await page.locator("#zoomControlWrapper").boundingBox();
+    const settingsBox = await page.locator("#mobileSettingsTrigger").boundingBox();
     const viewport = page.viewportSize();
 
     expect(zoomBox).not.toBeNull();
+    expect(settingsBox).not.toBeNull();
     expect(viewport).not.toBeNull();
 
-    if (zoomBox && viewport) {
-      expect(zoomBox.x).toBeLessThan(viewport.width / 2);
+    if (zoomBox && settingsBox && viewport) {
+      expect(zoomBox.x).toBeGreaterThan(viewport.width / 2);
+      expect(Math.abs(zoomBox.x - settingsBox.x)).toBeLessThan(5);
     }
   });
 
@@ -252,10 +251,6 @@ test.describe("mobile layout", () => {
       expect(submitBoxAfter.x).toBeLessThan(inputBoxAfter.x);
     }
 
-    // Bootstrap's input-group corner rounding is DOM-order-based (first-child/
-    // last-child), so it must be explicitly flipped to follow the reversed visual
-    // order above — otherwise the now-leftmost submit button keeps its old flat
-    // outer-left/rounded inner-right corners instead of the reverse.
     const submitRadius = await page
       .locator("#indoorSearchSubmit")
       .evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
@@ -277,9 +272,6 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#searchSuggestionsList")).toHaveClass(/visible/);
     await expect(page.locator("#searchOverlayBackdrop")).toBeVisible();
 
-    // The backdrop (which taps dismiss against) is full-screen; the results list
-    // itself sizes to its content instead, so a short result set doesn't leave a
-    // big empty white panel below it.
     const backdropBox = await page.locator("#searchOverlayBackdrop").boundingBox();
     const suggestionsBox = await page.locator("#searchSuggestionsList").boundingBox();
     const viewport = page.viewportSize();
@@ -303,7 +295,6 @@ test.describe("mobile layout", () => {
     await loadTestApp(page);
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-    // wait for the initial center animation to finish
     await page.waitForTimeout(1000);
 
     const mapBox = await page.locator("#map").boundingBox();
@@ -378,7 +369,6 @@ test.describe("mobile layout", () => {
     await page.locator("#indoorSearchInput").fill("room");
     await expect(page.locator("#searchSuggestionsList")).toHaveClass(/visible/);
 
-    // The search bar row itself must render above its own backdrop, not be dimmed by it.
     const searchBarZ = await page
       .locator("#indoorSearchBar")
       .evaluate((el) => parseInt(getComputedStyle(el).zIndex, 10) || 0);
@@ -387,8 +377,8 @@ test.describe("mobile layout", () => {
       .evaluate((el) => parseInt(getComputedStyle(el).zIndex, 10) || 0);
     expect(searchBarZ).toBeGreaterThan(backdropZ);
 
-    // Persistent buttons (switch2D, level control) must render behind the search overlay
-    // as a whole, not just behind its internal backdrop/list in isolation.
+    // Persistent buttons must render behind the search overlay as a whole, not just
+    // behind its internal backdrop/list in isolation.
     const switch2DBox = await page.locator("#switch2DViewWrapper").boundingBox();
     const suggestionsBox = await page.locator("#searchSuggestionsList").boundingBox();
     expect(switch2DBox).not.toBeNull();
@@ -396,13 +386,13 @@ test.describe("mobile layout", () => {
 
     if (switch2DBox && suggestionsBox) {
       // If switch2D's box overlaps the suggestions box in screen space, it must be
-      // stacked BELOW it (a lower effective z-index at the #uiWrapper level).
+      // stacked below it (a lower effective z-index at the #uiWrapper level).
       const overlaps =
         switch2DBox.x < suggestionsBox.x + suggestionsBox.width &&
         switch2DBox.x + switch2DBox.width > suggestionsBox.x &&
         switch2DBox.y < suggestionsBox.y + suggestionsBox.height &&
         switch2DBox.y + switch2DBox.height > suggestionsBox.y;
-      expect(overlaps).toBe(true); // sanity check: they DO occupy overlapping space today
+      expect(overlaps).toBe(true); // sanity check that the two boxes do overlap
 
       const searchWrapperZ = await page
         .locator("#indoorSearchWrapper")
@@ -457,9 +447,6 @@ test.describe("mobile layout", () => {
     await loadTestApp(page);
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-    // The mobile description card and the attribution control both live near the
-    // bottom of the screen, attribution now pinned directly above the card; they
-    // must never overlap, or clicks meant for one land on the other instead.
     const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
     const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
     expect(attribBox).not.toBeNull();
@@ -522,8 +509,6 @@ test.describe("mobile layout", () => {
     await loadTestApp(page);
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-    // Attribution no longer stretches toward the centering button's corner — it
-    // tracks the description card's own bounds, directly above it.
     const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
     const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
     expect(attribBox).not.toBeNull();
@@ -566,11 +551,9 @@ test.describe("mobile layout", () => {
     expect(cardBox).not.toBeNull();
     expect(centeringBox).not.toBeNull();
     if (cardBox && centeringBox) {
-      // Same bottom row...
       expect(
         Math.abs(cardBox.y + cardBox.height - (centeringBox.y + centeringBox.height)),
       ).toBeLessThan(2);
-      // ...with a visible gap between them, card ending before the button starts.
       expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(centeringBox.x);
       expect(centeringBox.x - (cardBox.x + cardBox.width)).toBeLessThan(20);
     }
@@ -592,7 +575,6 @@ test.describe("mobile layout", () => {
             (centeringBoxLeftHanded.y + centeringBoxLeftHanded.height),
         ),
       ).toBeLessThan(2);
-      // Left-handed: the button now sits to the LEFT of the card.
       expect(centeringBoxLeftHanded.x + centeringBoxLeftHanded.width).toBeLessThanOrEqual(
         cardBoxLeftHanded.x,
       );
@@ -616,9 +598,6 @@ test.describe("mobile layout", () => {
     await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
 
     if (attribBoxCollapsed) {
-      // Waits for the ResizeObserver callback (queued for the next frame) and its
-      // requestAnimationFrame-debounced position update to actually settle, instead
-      // of guessing a fixed sleep duration.
       await expect
         .poll(async () => (await page.locator(".maplibregl-ctrl-attrib").boundingBox())?.y ?? null)
         .toBeLessThan(attribBoxCollapsed.y);
@@ -629,8 +608,6 @@ test.describe("mobile layout", () => {
     expect(attribBoxExpanded).not.toBeNull();
     expect(cardBoxExpanded).not.toBeNull();
     if (attribBoxCollapsed && attribBoxExpanded && cardBoxExpanded) {
-      // The card grew taller, pushing its top edge up — attribution should have
-      // followed, moving strictly further up the screen (smaller y).
       expect(attribBoxExpanded.y).toBeLessThan(attribBoxCollapsed.y);
       expect(attribBoxExpanded.y + attribBoxExpanded.height).toBeLessThanOrEqual(cardBoxExpanded.y);
     }
@@ -648,6 +625,28 @@ test.describe("mobile layout", () => {
     expect(attribBoxCollapsedAgain).not.toBeNull();
     if (attribBoxCollapsed && attribBoxCollapsedAgain) {
       expect(Math.abs(attribBoxCollapsedAgain.y - attribBoxCollapsed.y)).toBeLessThan(2);
+    }
+  });
+
+  test("shows fewer than the configured level count when the full expansion would collide with other UI", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 408, height: 567 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+    await expect(page.locator("#uiWrapper")).toHaveClass(/mobileMode/);
+    await expect(page.locator("#uiWrapper")).toHaveClass(/lowHeightMode/);
+
+    await page.locator("#levelControlToggle").click();
+    await expect(page.locator("#levelControlWrapper")).toHaveClass(/expanded/);
+
+    const wrapperBox = await page.locator("#levelControlWrapper").boundingBox();
+    const viewport = page.viewportSize();
+    expect(wrapperBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (wrapperBox && viewport) {
+      expect(wrapperBox.x).toBeGreaterThanOrEqual(0);
+      expect(wrapperBox.x + wrapperBox.width).toBeLessThanOrEqual(viewport.width);
     }
   });
 });

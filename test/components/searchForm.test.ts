@@ -244,18 +244,16 @@ describe("searchForm", () => {
       pressEnter();
       expect(errorMessage.classList.contains("visible")).toBe(true);
 
-      // Re-trigger the error before the first timer fires; this should cancel
-      // the first timer rather than leaving it to fire later against fresh state.
+      // Re-triggering before the first timer fires should cancel it.
       jest.advanceTimersByTime(4000);
       pressEnter();
       expect(errorMessage.classList.contains("visible")).toBe(true);
 
-      // The first timer's original 5s deadline has now passed, but it was
-      // canceled, so the banner should still be visible.
+      // First timer's 5s deadline has passed but was canceled; still visible.
       jest.advanceTimersByTime(1500);
       expect(errorMessage.classList.contains("visible")).toBe(true);
 
-      // The second timer's own 5s deadline (started at the re-trigger) fires now.
+      // Second timer's 5s deadline, counted from the re-trigger, fires now.
       jest.advanceTimersByTime(3500);
       expect(errorMessage.classList.contains("visible")).toBe(false);
       expect(errorText.textContent).toBe("");
@@ -279,9 +277,7 @@ describe("searchForm", () => {
       pressEnter();
       expect(errorMessage.classList.contains("visible")).toBe(true);
 
-      // The auto-dismiss timer duration must not be gated by prefers-reduced-motion
-      // (only the CSS fade transition is) — a reduced-motion user still needs time
-      // to read the banner before it disappears.
+      // Timer duration isn't gated by prefers-reduced-motion (only the CSS fade is).
       jest.advanceTimersByTime(4999);
       expect(errorMessage.classList.contains("visible")).toBe(true);
 

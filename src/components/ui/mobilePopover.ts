@@ -5,6 +5,13 @@ import PopoverClampControl from "./popoverClampControl";
 export interface PopoverOptions {
   triggerId: string | string[];
   panelId: string;
+  // Defaults to true. Set false for a popover whose open/closed state should
+  // persist through interactions elsewhere on the page (e.g. the mobile
+  // description card, which stays open across room/level selection instead
+  // of being dismissed by outside clicks). This also exempts the popover
+  // from the shared overlay-exclusivity mechanism: only its own trigger's
+  // click controls its state.
+  closeOnOutsideClick?: boolean;
 }
 
 export interface PopoverController {
@@ -21,6 +28,7 @@ export function setupPopover(options: PopoverOptions): PopoverController {
   const triggerIds = Array.isArray(options.triggerId) ? options.triggerId : [options.triggerId];
   const triggers = triggerIds.map((id) => getRequiredElement(id));
   const panel = getRequiredElement(options.panelId);
+  const closeOnOutsideClick = options.closeOnOutsideClick ?? true;
 
   triggers.forEach((trigger) => {
     trigger.setAttribute("aria-haspopup", "true");
@@ -41,12 +49,14 @@ export function setupPopover(options: PopoverOptions): PopoverController {
     close: () => setOpen(false),
   };
 
-  OverlayExclusivityService.registerOverlay(options.panelId, () => setOpen(false));
+  if (closeOnOutsideClick) {
+    OverlayExclusivityService.registerOverlay(options.panelId, () => setOpen(false));
+  }
 
   function setOpen(nextOpen: boolean, flags: { returnFocus?: boolean } = {}): void {
     if (nextOpen === open) return;
 
-    if (nextOpen) {
+    if (nextOpen && closeOnOutsideClick) {
       OverlayExclusivityService.notifyOpened(options.panelId);
     }
 
@@ -69,7 +79,7 @@ export function setupPopover(options: PopoverOptions): PopoverController {
   triggers.forEach((trigger) => trigger.addEventListener("click", () => setOpen(!open)));
 
   document.addEventListener("click", (event) => {
-    if (!open) return;
+    if (!open || !closeOnOutsideClick) return;
     const target = event.target;
     if (!(target instanceof Node)) return;
     if (triggers.some((trigger) => trigger.contains(target)) || panel.contains(target)) return;

@@ -159,12 +159,10 @@ export class MapLibreMapView implements MapView {
   }
 
   // The corner container (not the inner .maplibregl-ctrl-attrib) is what MapLibre
-  // itself positions absolutely at 0/0 within that corner — overriding it directly
-  // with `position: fixed` plus explicit left/right/bottom lets a fixed-position
-  // sibling element (#mobileDescriptionCard) drive its placement without needing
-  // to know #map's own offset/size. Setting both left and right stretches the
-  // container (and the block-level .maplibregl-ctrl-attrib inside it) to exactly
-  // that width, matching the tracked element's own width.
+  // positions absolutely, so overriding it with `position: fixed` plus explicit
+  // left/right/bottom lets #mobileDescriptionCard drive its placement without
+  // knowing #map's own offset/size. Setting both left and right stretches the
+  // container to match the tracked element's width.
   setAttributionOffset(offset: AttributionOffset | null): void {
     const corner = this.map
       .getContainer()
@@ -209,14 +207,10 @@ export class MapLibreMapView implements MapView {
     });
     const fitZoom = camera?.zoom ?? options.maxZoom;
 
-    // The configured minZoom (and the matching center-constraint clamp below)
-    // is a floor tuned for typical viewports. On a viewport too small/narrow
-    // to fit the building at that floor, relax it so the fit zoom is actually
-    // reachable - never zoom in past the configured maximum, but never let a
-    // stale minZoom force the building to overflow the viewport either.
-    // Always recompute from the original configured floor (not from a
-    // possibly-already-relaxed zoomBounds.min) so a later call can re-tighten
-    // back up once the viewport is large enough again, not just loosen further.
+    // configuredMinZoom is a floor tuned for typical viewports; relax it when a
+    // viewport is too small to fit the building at that floor. Always recompute
+    // from configuredMinZoom rather than the current zoomBounds.min, so a later
+    // call can re-tighten once the viewport is large enough again.
     const effectiveMin = Math.min(fitZoom, this.configuredMinZoom);
     if (effectiveMin !== this.zoomBounds.min) {
       this.zoomBounds.min = effectiveMin;

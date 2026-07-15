@@ -67,22 +67,19 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
   requestQuickSettingsLayoutUpdate();
 }
 
+// The level-shift paging icons are handled by LevelControl.setWindow() (see
+// isHorizontalLevelLayout() in levelControl.ts); this only owns the
+// wheelchair button's own icon/pressed-state.
 function replaceIcons(): void {
   const switchWheelchairMode = getRequiredElement("switchWheelchairMode");
   const switchWheelchairModeIcon = getRequiredElement<HTMLImageElement>("switchWheelchairModeIcon");
-  const levelShiftUpLabel = getRequiredElement("levelShiftUpLabel");
-  const levelShiftDownLabel = getRequiredElement("levelShiftDownLabel");
 
   if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
     switchWheelchairMode.setAttribute("aria-pressed", "true");
     switchWheelchairModeIcon.src = "\\images\\screen_all.svg";
-    levelShiftUpLabel.innerHTML = "chevron_left";
-    levelShiftDownLabel.innerHTML = "navigate_next";
   } else {
     switchWheelchairMode.setAttribute("aria-pressed", "false");
     switchWheelchairModeIcon.src = "\\images\\screen_bottom.svg";
-    levelShiftUpLabel.innerHTML = "expand_less";
-    levelShiftDownLabel.innerHTML = "expand_more";
   }
 }
 

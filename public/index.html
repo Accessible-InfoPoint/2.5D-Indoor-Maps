@@ -70,7 +70,6 @@
           <span id="description"></span>
         </aside>
 
-        <!--           MOBILE DESCRIPTION CARD           -->
         <div id="mobileDescriptionCard" class="mobileOnly">
           <button id="mobileDescriptionTrigger" aria-label="Description" title="Description">
             <span id="mobileDescriptionTitle"></span>
@@ -137,12 +136,11 @@
           </div>
         </div>
 
-        <!--           LEVEL CONTROL + ZOOM           -->
-        <!-- Grouped so mobile can stack zoom directly below the level control
-             regardless of its dynamic height; #mobileLevelZoomStack is
-             display:contents on desktop, where the two keep their own
-             independent positioning (see #mobileLevelExpandedGroup above for
-             the same pattern). -->
+        <!--           LEVEL CONTROL           -->
+        <!-- #mobileLevelZoomStack is display:contents on desktop, so
+             #levelControlWrapper keeps its own independent absolute
+             positioning; #mobileLevelExpandedGroup below uses the same
+             display:contents pattern. -->
         <div id="mobileLevelZoomStack">
           <div id="levelControlWrapper">
             <button
@@ -179,16 +177,6 @@
                 >
               </button>
             </div>
-          </div>
-
-          <!--           ZOOM CONTROL           -->
-          <div id="zoomControlWrapper">
-            <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
-              <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
-            </button>
-            <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
-              <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
-            </button>
           </div>
           <div id="levelControlBackdrop"></div>
         </div>
@@ -261,6 +249,20 @@
         >
           <span class="material-icons" aria-hidden="true">settings</span>
         </button>
+
+        <!--           ZOOM CONTROL           -->
+        <!-- Not grouped with the level control's stack: on mobile it joins
+             the legend/profile/settings trigger column instead (see
+             #uiWrapper.mobileMode.mobileZoomVisible in main.scss). -->
+        <div id="zoomControlWrapper">
+          <button id="zoomControlIn" class="square" aria-label="Zoom in" title="Zoom in">
+            <span id="zoomControlInLabel" class="material-icons" aria-hidden="true">add</span>
+          </button>
+          <button id="zoomControlOut" class="square" aria-label="Zoom out" title="Zoom out">
+            <span id="zoomControlOutLabel" class="material-icons" aria-hidden="true">remove</span>
+          </button>
+        </div>
+
         <div id="quickSettingsWrapper">
           <div id="mobileProfilePanel">
             <ul id="userProfileList" aria-label="Profiles quick switch"></ul>

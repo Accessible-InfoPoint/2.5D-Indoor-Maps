@@ -96,6 +96,52 @@ describe("mobilePopover", () => {
     expect(document.activeElement).not.toBe(triggerA);
   });
 
+  it("stays open on an outside click when closeOnOutsideClick is false", () => {
+    setupPopover({ triggerId: "triggerA", panelId: "panelA", closeOnOutsideClick: false });
+
+    triggerA.click();
+    document.body.click();
+
+    expect(panelA.classList.contains("open")).toBe(true);
+  });
+
+  it("still closes via its own trigger when closeOnOutsideClick is false", () => {
+    setupPopover({ triggerId: "triggerA", panelId: "panelA", closeOnOutsideClick: false });
+
+    triggerA.click();
+    triggerA.click();
+
+    expect(panelA.classList.contains("open")).toBe(false);
+  });
+
+  it("is not force-closed by another overlay opening when closeOnOutsideClick is false", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+
+    setupPopover({ triggerId: "triggerA", panelId: "panelA", closeOnOutsideClick: false });
+    triggerA.click();
+    expect(panelA.classList.contains("open")).toBe(true);
+
+    OverlayExclusivityService.notifyOpened("someOtherOverlay");
+
+    expect(panelA.classList.contains("open")).toBe(true);
+  });
+
+  it("does not force-close a different open overlay when opened, when closeOnOutsideClick is false", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+    const closeFakeOverlay = jest.fn();
+    OverlayExclusivityService.registerOverlay("fakeOverlay", closeFakeOverlay);
+
+    setupPopover({ triggerId: "triggerA", panelId: "panelA", closeOnOutsideClick: false });
+    triggerA.click();
+
+    expect(panelA.classList.contains("open")).toBe(true);
+    expect(closeFakeOverlay).not.toHaveBeenCalled();
+  });
+
   it("makes a panel without focusable children still programmatically focusable", () => {
     setupPopover({ triggerId: "triggerB", panelId: "panelB" });
 
@@ -155,8 +201,7 @@ describe("mobilePopover", () => {
   });
 
   it("wraps Tab focus between visible focusable children, skipping hidden first/last ones", () => {
-    // Mimic the level-control popover: hidden level-shift buttons at both ends,
-    // with the actually-visible/focusable controls sandwiched in between.
+    // Mimics the level-control popover: hidden buttons at both ends around visible/focusable controls.
     const hiddenFirst = document.createElement("button");
     hiddenFirst.id = "hiddenFirst";
     hiddenFirst.style.display = "none";
@@ -177,13 +222,11 @@ describe("mobilePopover", () => {
 
     triggerA.click();
 
-    // Forward Tab from the last visible element wraps to the first visible element.
     lastVisible.focus();
     const tabEvent = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
     panelA.dispatchEvent(tabEvent);
     expect(document.activeElement).toBe(firstVisible);
 
-    // Shift+Tab from the first visible element wraps to the last visible element.
     firstVisible.focus();
     const shiftTabEvent = new KeyboardEvent("keydown", {
       key: "Tab",

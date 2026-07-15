@@ -60,12 +60,10 @@ function setup(geoMap: GeoMap): void {
 function refresh(geoMap: GeoMap): void {
   applyStoredLayout();
   WheelchairModeControl.refreshIndoorSearchWheelchairLayout();
-  // The level control's window sizing (row vs. column) and paging margin axis
-  // depend on the current mode (see isHorizontalLevelLayout in levelControl.ts)
-  // but are only otherwise recomputed on explicit user actions (paging click,
-  // level click, wheelchair toggle) — a live viewport resize crossing a
-  // breakpoint needs the same recompute, or the window keeps stale
-  // dimensions/margin-axis from whatever orientation was active last.
+  // Window sizing and margin axis depend on the current mode (see
+  // isHorizontalLevelLayout in levelControl.ts) but are otherwise only
+  // recomputed on explicit user actions, so a resize crossing a breakpoint
+  // needs this recompute too, or the window keeps a stale axis.
   LevelControl.setWindow();
   LevelControl.setMargin();
   geoMap.setAttributionCorner(getAttributionCorner());
@@ -103,16 +101,13 @@ function getAttributionCorner(): AttributionCorner {
     return MobileLayoutService.getHandedness() === "left" ? "bottom-right" : "bottom-left";
   }
 
-  // At desktop width, attribution only needs to move off its default
-  // top-right corner once shortMode moves #switch2DViewWrapper to the
-  // opposite side for left-handed users (or, under lowHeightMode
-  // specifically, once the description card claims a top corner too) —
-  // attribution moves to the opposite top corner from whichever UI occupies
-  // the handed side so the two never compete for the same space.
-  // matchesShortViewport() also covers lowHeightMode, since lowHeightMode's
-  // height threshold is strictly tighter than shortMode's (see
-  // breakpoints.ts) — the two classes are never applied one without the
-  // other in that direction.
+  // At desktop width, attribution moves off its default top-right corner
+  // once shortMode moves #switch2DViewWrapper to the opposite side for
+  // left-handed users (or lowHeightMode's description card claims a top
+  // corner) — it takes the opposite top corner from whichever UI occupies
+  // the handed side. matchesShortViewport() also covers lowHeightMode since
+  // its height threshold is strictly tighter (see breakpoints.ts), so the
+  // two classes are never applied one without the other in that direction.
   if (matchesShortViewport()) {
     return MobileLayoutService.getHandedness() === "left" ? "top-left" : "top-right";
   }
@@ -135,20 +130,18 @@ function matchesLowHeightViewport(): boolean {
 }
 
 // #mobileDescriptionCard lives inside #uiWrapper but the attribution control it
-// must stay clear of lives inside #map, a DOM sibling — no CSS selector can
-// condition attribution's position on the card's live size/position. Track the
-// card's box directly and push pixel offsets through the MapView interface
-// instead (see MapLibreMapView.setAttributionOffset).
+// must stay clear of lives inside #map, a DOM sibling, so no CSS selector can
+// condition attribution's position on the card's live size — track the card's
+// box directly and push pixel offsets through the MapView interface instead.
 function setupDescriptionCardObserver(geoMap: GeoMap): void {
   if (descriptionCardObserverSetup) return;
   descriptionCardObserverSetup = true;
 
   window.addEventListener("resize", () => requestAttributionOffsetUpdate(geoMap));
-  // Deliberately keyed to window.innerWidth (via updateDescriptionCardMapPadding
-  // itself), not the ResizeObserver below — that observer also fires when the
-  // card's own CONTENT changes (e.g. expanding its body), and the reserved
-  // map-padding footprint must stay fixed through that, only actually
-  // changing when the viewport itself resizes.
+  // Keyed to window.innerWidth (via updateDescriptionCardMapPadding), not the
+  // ResizeObserver below — that also fires when the card's own content
+  // changes (e.g. expanding its body), but the reserved map-padding
+  // footprint must stay fixed through that, only changing on viewport resize.
   window.addEventListener("resize", () => updateDescriptionCardMapPadding(geoMap));
   window.addEventListener("resize", updateDescriptionMaxHeight);
 
@@ -193,19 +186,13 @@ function updateAttributionOffset(geoMap: GeoMap): void {
   geoMap.setAttributionOffset(offset);
 }
 
-// The description card's reserved footprint (and therefore how much the map
-// recenters to compensate) is deliberately based on the viewport width alone,
-// not the card's own live rendered size — the card's CSS gives it a fixed
-// width in this mode specifically so opening/closing its body never changes
-// that footprint, and this mirrors that fixed width rather than tracking
-// content-driven fluctuation (which would shift the map's center every time
-// the card's content changed).
-// The visible map content centers itself within whatever's NOT reserved by
-// this padding — so this ratio directly trades off "how far the effective
-// center sits from true screen-middle" against "how much room the card gets
-// clear of the map." 0.45 pushed the center roughly 270px off true middle
-// (on a 1200px-wide viewport) — a much smaller reservation here still gives
-// a visible nudge away from the card's side without dominating the view.
+// The description card's reserved footprint is based on the viewport width
+// alone, not the card's own live rendered size — the card's CSS gives it a
+// fixed width in this mode so opening/closing its body never shifts the
+// map's center. The visible map content centers itself within whatever's
+// NOT reserved by this padding, so this ratio trades off how far the
+// effective center sits from true screen-middle against how much room the
+// card gets clear of the map.
 const DESCRIPTION_CARD_WIDTH_RATIO = 0.15;
 
 function updateDescriptionCardMapPadding(geoMap: GeoMap): void {

@@ -48,109 +48,95 @@ describe("popoverClampControl", () => {
       }) as DOMRect;
   }
 
-  it("clears both clamp custom properties when shortMode is not active", () => {
+  it("clears the popover clamp height when shortMode is not active", () => {
     const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
     uiWrapper.style.setProperty("--popover-clamp-height", "100px");
-    uiWrapper.style.setProperty("--legend-clamp-height", "100px");
 
     update();
 
     expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("");
-    expect(uiWrapper.style.getPropertyValue("--legend-clamp-height")).toBe("");
-  });
-
-  it("clamps between the search bar and description card on mobile, net of #legendWrapper's padding/border", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode", "mobileMode");
-    mockRect("indoorSearchWrapper", { bottom: 80 });
-    mockRect("mobileDescriptionCard", { top: 500 });
-
-    update();
-
-    // 500 - 80 - 2*10 (gap) - 27 (chrome) = 373
-    expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("373px");
-  });
-
-  it("clamps between the centered description and the search bar at desktop width", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode");
-    mockRect("descriptionArea", { bottom: 60 });
-    mockRect("indoorSearchWrapper", { top: 640 });
-
-    update();
-
-    // 640 - 60 - 20 - 27 = 533
-    expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("533px");
-  });
-
-  it("clamps between the top-left description card and the search bar once lowHeightMode also applies at desktop width", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode", "lowHeightMode");
-    mockRect("mobileDescriptionCard", { bottom: 120 });
-    mockRect("indoorSearchWrapper", { top: 540 });
-
-    update();
-
-    // 540 - 120 - 20 - 27 = 373
-    expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("373px");
-  });
-
-  it("never sets a negative clamp height", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode", "mobileMode");
-    mockRect("indoorSearchWrapper", { bottom: 300 });
-    mockRect("mobileDescriptionCard", { top: 305 });
-
-    update();
-
-    expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("0px");
-  });
-
-  it("clears --legend-clamp-height on mobile, where #mobileLegendTrigger keeps its own separate corner", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode", "mobileMode");
-    mockRect("indoorSearchWrapper", { bottom: 80, top: 0 });
-    mockRect("mobileDescriptionCard", { top: 500 });
-
-    update();
-
-    expect(uiWrapper.style.getPropertyValue("--legend-clamp-height")).toBe("");
-  });
-
-  it("clamps #legendWrapper against #shortSettingsTrigger's bottom edge at desktop width, not just the shared search-bar/description ceiling", () => {
-    const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-    uiWrapper.classList.add("shortMode");
-    mockRect("descriptionArea", { bottom: 20 });
-    mockRect("indoorSearchWrapper", { top: 640 });
-    // #shortLegendTrigger sits at bottom: uiPadding (15px fallback), so its
-    // top edge is 15px below where #legendWrapper's own "bottom" CSS offset
-    // (uiPadding + button-size + uiPadding) would place the panel's bottom
-    // edge — see the getUiPadding() subtraction in updateLegendClamp().
-    mockRect("shortLegendTrigger", { top: 435 });
-    mockRect("shortSettingsTrigger", { bottom: 305 });
-
-    update();
-
-    // panelBottom = 435 - 15 (uiPadding fallback) = 420
-    // 420 - 305 - 10 (gap) - 27 (chrome) = 78
-    expect(uiWrapper.style.getPropertyValue("--legend-clamp-height")).toBe("78px");
   });
 
   describe("applyPositionFallback", () => {
+    const originalInnerHeight = window.innerHeight;
+
     beforeEach(() => {
-      document.body.innerHTML = `
-        <div id="uiWrapper" class="shortMode">
-          <div id="indoorSearchWrapper"></div>
-          <div id="mobileDescriptionCard"></div>
-          <aside id="descriptionArea"></aside>
-          <div id="legendWrapper" class="open"></div>
-        </div>
-      `;
+      document.getElementById("uiWrapper")?.classList.add("shortMode");
+      document.getElementById("legendWrapper")?.classList.add("open");
+      Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "innerHeight", {
+        value: originalInnerHeight,
+        configurable: true,
+      });
+    });
+
+    it("clamps against an obstacle above that shares the panel's horizontal column", () => {
+      const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
+      mockRect("legendWrapper", { top: 100, bottom: 200, height: 100, left: 300, right: 500 });
+      mockRect("descriptionArea", { bottom: 60, left: 300, right: 500 });
+
+      applyPositionFallback("legendWrapper");
+
+      // floor defaults to innerHeight (800, no obstacle below) — 800 - 60 - 20 (gap) - 27 (chrome) = 693
+      expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("693px");
+    });
+
+    it("clamps against an obstacle below that shares the panel's horizontal column", () => {
+      const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
+      mockRect("legendWrapper", { top: 100, bottom: 200, height: 100, left: 300, right: 500 });
+      mockRect("indoorSearchWrapper", { top: 640, bottom: 700, left: 300, right: 500 });
+
+      applyPositionFallback("legendWrapper");
+
+      // ceiling defaults to 0 (no obstacle above) — 640 - 0 - 20 (gap) - 27 (chrome) = 593
+      expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("593px");
+    });
+
+    it("ignores an obstacle that overlaps vertically but sits in a different horizontal column", () => {
+      const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
+      // Panel sits in the right-hand column (left: 900-1100); the search bar spans
+      // the middle of the screen only (left: 100-700) and never reaches that column,
+      // so it must not constrain the panel's available height at all.
+      mockRect("legendWrapper", { top: 100, bottom: 200, height: 100, left: 900, right: 1100 });
+      mockRect("indoorSearchWrapper", { top: 250, bottom: 300, left: 100, right: 700 });
+      mockRect("descriptionArea", { top: 0, bottom: 60, left: 100, right: 700 });
+
+      applyPositionFallback("legendWrapper");
+
+      // Neither obstacle horizontally overlaps the panel's column, so both ceiling
+      // and floor fall back to the viewport edges: 800 - 0 - 20 (gap) - 27 (chrome) = 753
+      expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("753px");
+    });
+
+    it("falls back to the viewport edges when no obstacle shares the panel's column in either direction", () => {
+      const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
+      mockRect("legendWrapper", { top: 100, bottom: 200, height: 100, left: 300, right: 500 });
+      mockRect("indoorSearchWrapper", { top: 640, left: 900, right: 1100 });
+      mockRect("descriptionArea", { bottom: 60, left: 900, right: 1100 });
+
+      applyPositionFallback("legendWrapper");
+
+      // 800 - 0 - 20 (gap) - 27 (chrome) = 753
+      expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("753px");
+    });
+
+    it("never sets a negative clamp height", () => {
+      const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
+      mockRect("legendWrapper", { top: 100, bottom: 200, height: 100, left: 300, right: 500 });
+      mockRect("descriptionArea", { top: 0, bottom: 140, left: 300, right: 500 });
+      mockRect("indoorSearchWrapper", { top: 155, bottom: 200, left: 300, right: 500 });
+
+      applyPositionFallback("legendWrapper");
+
+      expect(uiWrapper.style.getPropertyValue("--popover-clamp-height")).toBe("0px");
     });
 
     it("adds the centered class and sets --popover-clamp-top when the default position collides with an obstacle", () => {
       const uiWrapper = document.getElementById("uiWrapper") as HTMLElement;
-      mockRect("descriptionArea", { bottom: 60 });
+      mockRect("descriptionArea", { bottom: 60, left: 0, right: 200 });
       mockRect("indoorSearchWrapper", { top: 640, left: 0, right: 200, bottom: 700 });
       mockRect("legendWrapper", { top: 600, left: 0, right: 100, bottom: 680 });
 
@@ -162,7 +148,7 @@ describe("popoverClampControl", () => {
     });
 
     it("does not add the centered class when the default position doesn't collide with anything", () => {
-      mockRect("descriptionArea", { bottom: 60 });
+      mockRect("descriptionArea", { bottom: 60, left: 0, right: 200 });
       mockRect("indoorSearchWrapper", { top: 640, left: 0, right: 200, bottom: 700 });
       mockRect("legendWrapper", { top: 100, left: 300, right: 400, bottom: 180 });
 
@@ -173,7 +159,7 @@ describe("popoverClampControl", () => {
 
     it("removes a stale centered class before re-measuring", () => {
       document.getElementById("legendWrapper")?.classList.add("centered");
-      mockRect("descriptionArea", { bottom: 60 });
+      mockRect("descriptionArea", { bottom: 60, left: 0, right: 200 });
       mockRect("indoorSearchWrapper", { top: 640, left: 0, right: 200, bottom: 700 });
       mockRect("legendWrapper", { top: 100, left: 300, right: 400, bottom: 180 });
 

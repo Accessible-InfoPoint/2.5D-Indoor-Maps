@@ -45,6 +45,10 @@ test("initial UI has no serious accessibility violations", async ({ page }) => {
 });
 
 test("wheelchair mode has no serious accessibility violations", async ({ page }) => {
+  // Explicit viewport: the wheelchair toggle hides under shortMode
+  // (<=767.98px height), which the default Desktop Chrome viewport (720px
+  // tall) falls under.
+  await page.setViewportSize({ width: 1200, height: 900 });
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 

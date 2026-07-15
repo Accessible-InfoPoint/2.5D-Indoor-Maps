@@ -85,7 +85,10 @@ test.describe("low height layout", () => {
     const wrapperBox = await page.locator("#levelControlWrapper").boundingBox();
     expect(wrapperBox).not.toBeNull();
     if (wrapperBox) {
-      expect(wrapperBox.width).toBeGreaterThan(wrapperBox.height);
+      // The toggle is hidden while expanded (.expanded #levelControlToggle { display:
+      // none }), so with this fixture's single level the row is just one button — a
+      // stale vertical layout would still show up as far taller than one button.
+      expect(wrapperBox.height).toBeLessThan(80);
     }
 
     await page.locator("#levelControl button", { hasText: "0" }).click();
@@ -106,7 +109,7 @@ test.describe("low height layout", () => {
     await expect(page.locator("#mobileLevelExpandedGroup")).toBeHidden();
   });
 
-  test("keeps the level control in its normal vertical form above lowHeightMode's threshold", async ({
+  test("keeps the level control in its normal vertical form above shortMode's threshold", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
@@ -137,7 +140,7 @@ test.describe("low height layout", () => {
     await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
   });
 
-  test("anchors attribution to the bottom-left corner, matching the description card's width, at desktop width under lowHeightMode", async ({
+  test("keeps attribution in the top-right corner at desktop width under lowHeightMode, and puts zoom buttons bottom-left when enabled", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1200, height: 500 });
@@ -145,13 +148,68 @@ test.describe("low height layout", () => {
     await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
     const attribBox = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
-    const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
+    const viewport = page.viewportSize();
     expect(attribBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (attribBox && viewport) {
+      expect(attribBox.y).toBeLessThan(50);
+      expect(attribBox.x + attribBox.width).toBeGreaterThan(viewport.width - 50);
+    }
+
+    await page.locator("#shortSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileShowZoomButtons").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    await expect(page.locator("#zoomControlWrapper")).toBeVisible();
+    const zoomBox = await page.locator("#zoomControlWrapper").boundingBox();
+    const zoomInBox = await page.locator("#zoomControlIn").boundingBox();
+    const zoomOutBox = await page.locator("#zoomControlOut").boundingBox();
+    expect(zoomBox).not.toBeNull();
+    expect(zoomInBox).not.toBeNull();
+    expect(zoomOutBox).not.toBeNull();
+    if (zoomBox && viewport) {
+      expect(zoomBox.x).toBeLessThan(150);
+      expect(zoomBox.y + zoomBox.height).toBeGreaterThan(viewport.height - 100);
+    }
+    if (zoomInBox && zoomOutBox) {
+      expect(zoomInBox.y).toBeLessThan(zoomOutBox.y);
+    }
+  });
+
+  test("reserves a fixed map-padding footprint for the description card that doesn't change when its body opens", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const cardBoxCollapsed = await page.locator("#mobileDescriptionCard").boundingBox();
+    await page.locator("#mobileDescriptionTrigger").click();
+    await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
+    const cardBoxExpanded = await page.locator("#mobileDescriptionCard").boundingBox();
+
+    expect(cardBoxCollapsed).not.toBeNull();
+    expect(cardBoxExpanded).not.toBeNull();
+    if (cardBoxCollapsed && cardBoxExpanded) {
+      expect(cardBoxExpanded.width).toBeCloseTo(cardBoxCollapsed.width, 0);
+      expect(cardBoxExpanded.height).toBeGreaterThan(cardBoxCollapsed.height);
+    }
+  });
+
+  test("clears the description card's switch2D button and doesn't overlap it, at desktop width under lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
+    const switchBox = await page.locator("#switch2DViewWrapper").boundingBox();
     expect(cardBox).not.toBeNull();
-    if (attribBox && cardBox) {
-      expect(Math.abs(attribBox.x - cardBox.x)).toBeLessThan(5);
-      expect(Math.abs(attribBox.x + attribBox.width - (cardBox.x + cardBox.width))).toBeLessThan(5);
-      expect(attribBox.y).toBeGreaterThan(cardBox.y + cardBox.height);
+    expect(switchBox).not.toBeNull();
+    if (cardBox && switchBox) {
+      expect(cardBox.x).toBeGreaterThanOrEqual(switchBox.x + switchBox.width);
     }
   });
 
@@ -187,11 +245,9 @@ test.describe("low height layout", () => {
     const searchBoxShort = await page.locator("#indoorSearchWrapper").boundingBox();
     const levelBoxShort = await page.locator("#levelControlWrapper").boundingBox();
 
-    // The wheelchair-mode positioning logic (setIndoorSearchWheelchairLayout)
-    // writes inline left/right styles directly onto #indoorSearchWrapper, which
-    // beat any CSS selector regardless of specificity. Once lowHeightMode takes
-    // over it must actively clear those inline styles (not just stop writing new
-    // ones) or the search bar stays pinned to its stale wheelchair-tall position.
+    // setIndoorSearchWheelchairLayout writes inline left/right styles directly onto
+    // #indoorSearchWrapper, which beat any CSS selector; lowHeightMode must actively
+    // clear those inline styles, not just stop writing new ones.
     const inlineLeftAfterResize = await page
       .locator("#indoorSearchWrapper")
       .evaluate((el) => (el as HTMLElement).style.left);
@@ -206,13 +262,9 @@ test.describe("low height layout", () => {
     expect(levelBoxTall).not.toBeNull();
     expect(levelBoxShort).not.toBeNull();
     if (searchBoxTall && searchBoxShort && levelBoxTall && levelBoxShort) {
-      // wheelchairMode's own layout is horizontal-bottom for both search bar and
-      // level control; lowHeightMode instead keeps level control at its normal
-      // left-center X and the search bar at its normal centered X — assert the
-      // wheelchair-specific horizontal offset formula is gone by checking the
-      // level control stayed near the left edge rather than jumping past the
-      // (now-hidden) zoom/wheelchair column wheelchairMode's formula reserves
-      // room for.
+      // wheelchairMode's horizontal offset formula reserves room past the (now-hidden)
+      // zoom/wheelchair column; lowHeightMode instead keeps the level control at its
+      // normal left-center X, so it sits left of the wheelchair-mode position.
       expect(levelBoxShort.x).toBeLessThan(levelBoxTall.x);
     }
   });
@@ -237,11 +289,6 @@ test.describe("low height layout", () => {
     await expect(page.locator("#uiWrapper")).toHaveClass(/mobileMode/);
     await expect(page.locator("#uiWrapper")).not.toHaveClass(/lowHeightMode/);
 
-    // Regression: setIndoorSearchWheelchairLayout used to only clear its inline
-    // left/right offsets when lowHeightMode was active, not mobileMode. On a
-    // width-only resize into mobile, refresh() still invoked it, and it recomputed
-    // the desktop wheelchair-mode formula against elements now laid out for mobile,
-    // collapsing #indoorSearchWrapper to zero width.
     const searchBox = await page.locator("#indoorSearchWrapper").boundingBox();
     expect(searchBox).not.toBeNull();
     if (searchBox) {
@@ -274,14 +321,6 @@ test.describe("low height layout", () => {
     await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
     await expect(page.locator("#uiWrapper")).not.toHaveClass(/lowHeightMode/);
 
-    // Regression: setIndoorSearchWheelchairLayout used to only clear its inline
-    // left/right offsets when lowHeightMode (or mobileMode) was active. In
-    // shortMode-only desktop width, wheelchairMode's own CSS block disables
-    // #quickSettingsWrapper's wheelchair-specific positioning (it switches to
-    // shortMode's own position:static layout) while #levelControlWrapper stays
-    // in wheelchair's row layout — a mismatch. Reading
-    // quickSettingsWrapper.offsetLeft under position:static produced a
-    // nonsensical computed `right` value, collapsing the search bar.
     const searchBox = await page.locator("#indoorSearchWrapper").boundingBox();
     expect(searchBox).not.toBeNull();
     if (searchBox) {
@@ -324,6 +363,477 @@ test.describe("low height layout", () => {
     if (legendBox && searchBox && cardBox) {
       expect(legendBox.y).toBeGreaterThanOrEqual(searchBox.y + searchBox.height);
       expect(legendBox.y + legendBox.height).toBeLessThanOrEqual(cardBox.y);
+    }
+  });
+
+  test("removes the level control's border and background once collapsed under shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const background = await page
+      .locator("#levelControlWrapper")
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    const borderWidth = await page
+      .locator("#levelControlWrapper")
+      .evaluate((el) => getComputedStyle(el).borderTopWidth);
+    expect(background).toBe("rgba(0, 0, 0, 0)");
+    expect(borderWidth).toBe("0px");
+  });
+
+  test("collapses the level control at shortMode's threshold (767.98px), not just lowHeightMode's tighter 600px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#uiWrapper")).not.toHaveClass(/lowHeightMode/);
+
+    await expect(page.locator("#levelControlToggle")).toBeVisible();
+    await expect(page.locator("#mobileLevelExpandedGroup")).toBeHidden();
+  });
+
+  test("keeps correct level control window sizing and paging after a live resize crosses into shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+    await expect(page.locator("#levelControlToggle")).toBeHidden();
+
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#levelControlToggle")).toBeVisible();
+
+    await page.locator("#levelControlToggle").click();
+    await expect(page.locator("#levelControlWrapper")).toHaveClass(/expanded/);
+
+    const windowBox = await page.locator("#levelControlWindow").boundingBox();
+    const wrapperBox = await page.locator("#levelControlWrapper").boundingBox();
+    const viewport = page.viewportSize();
+    expect(windowBox).not.toBeNull();
+    expect(wrapperBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (windowBox && wrapperBox && viewport) {
+      expect(wrapperBox.y).toBeGreaterThan(0);
+      expect(wrapperBox.y + wrapperBox.height).toBeLessThan(viewport.height);
+      expect(windowBox.height).toBeLessThan(80);
+    }
+  });
+
+  test("mirrors switch2D, level control position, and the search bar under left-handed at desktop width shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const switchBoxBefore = await page.locator("#switch2DViewWrapper").boundingBox();
+    const levelBoxBefore = await page.locator("#levelControlWrapper").boundingBox();
+    const centeringBoxBefore = await page.locator("#centeringButton").boundingBox();
+
+    await page.locator("#shortSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileHandedness_left").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    await expect(page.locator("#uiWrapper")).toHaveClass(/leftHanded/);
+
+    const switchBoxAfter = await page.locator("#switch2DViewWrapper").boundingBox();
+    const levelBoxAfter = await page.locator("#levelControlWrapper").boundingBox();
+    const centeringBoxAfter = await page.locator("#centeringButton").boundingBox();
+
+    expect(switchBoxBefore).not.toBeNull();
+    expect(switchBoxAfter).not.toBeNull();
+    expect(levelBoxBefore).not.toBeNull();
+    expect(levelBoxAfter).not.toBeNull();
+    expect(centeringBoxBefore).not.toBeNull();
+    expect(centeringBoxAfter).not.toBeNull();
+    if (
+      switchBoxBefore &&
+      switchBoxAfter &&
+      levelBoxBefore &&
+      levelBoxAfter &&
+      centeringBoxBefore &&
+      centeringBoxAfter
+    ) {
+      expect(switchBoxAfter.x).toBeGreaterThan(switchBoxBefore.x);
+      expect(levelBoxAfter.x).toBeGreaterThan(levelBoxBefore.x);
+      expect(centeringBoxAfter.x).not.toBe(centeringBoxBefore.x);
+    }
+  });
+
+  test("puts the mobile zoom buttons in the legend/profile/settings column, clear of the settings trigger", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await page.locator("#mobileSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileShowZoomButtons").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    const settingsBox = await page.locator("#mobileSettingsTrigger").boundingBox();
+    const zoomBox = await page.locator("#zoomControlWrapper").boundingBox();
+    const legendBox = await page.locator("#mobileLegendTrigger").boundingBox();
+    expect(settingsBox).not.toBeNull();
+    expect(zoomBox).not.toBeNull();
+    expect(legendBox).not.toBeNull();
+    if (settingsBox && zoomBox && legendBox) {
+      expect(Math.abs(zoomBox.x - legendBox.x)).toBeLessThan(5);
+      expect(zoomBox.y).toBeGreaterThan(settingsBox.y + settingsBox.height * 1.5);
+    }
+  });
+
+  test("hides the collapsed level toggle while expanded, so the active level isn't shown twice", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await expect(page.locator("#levelControlToggle")).toBeVisible();
+
+    await page.locator("#levelControlToggle").click();
+    await expect(page.locator("#levelControlWrapper")).toHaveClass(/expanded/);
+    await expect(page.locator("#levelControlToggle")).toBeHidden();
+
+    await page.locator("#levelControl button", { hasText: "0" }).click();
+    await expect(page.locator("#levelControlWrapper")).not.toHaveClass(/expanded/);
+    await expect(page.locator("#levelControlToggle")).toBeVisible();
+  });
+
+  test("keeps the level-shift paging icons correct after a live resize crosses into shortMode, with no explicit action taken", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await expect(page.locator("#levelShiftUpLabel")).toHaveText("expand_less");
+    await expect(page.locator("#levelShiftDownLabel")).toHaveText("expand_more");
+
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#levelShiftUpLabel")).toHaveText("chevron_left");
+    await expect(page.locator("#levelShiftDownLabel")).toHaveText("navigate_next");
+
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await expect(page.locator("#levelShiftUpLabel")).toHaveText("expand_less");
+    await expect(page.locator("#levelShiftDownLabel")).toHaveText("expand_more");
+  });
+
+  test("hides the wheelchair toggle and keeps the search bar full width once shortMode is active, even with wheelchairMode already set", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.addInitScript(() => {
+      window.localStorage.setItem("wheelchairMode", "true");
+    });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+    await expect(page.locator("#uiWrapper")).toHaveClass(/wheelchairMode/);
+    await expect(page.locator("#switchWheelchairModeWrapper")).toBeVisible();
+
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#switchWheelchairModeWrapper")).toBeHidden();
+
+    const searchBox = await page.locator("#indoorSearchWrapper").boundingBox();
+    const viewport = page.viewportSize();
+    expect(searchBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (searchBox && viewport) {
+      expect(searchBox.width).toBeGreaterThan(viewport.width * 0.5);
+    }
+  });
+
+  test("puts zoom buttons in the level control's column at desktop width under lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await page.addInitScript(() => {
+      window.localStorage.setItem("mobileShowZoomButtons", "true");
+    });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const levelBox = await page.locator("#levelControlWrapper").boundingBox();
+    const zoomBox = await page.locator("#zoomControlWrapper").boundingBox();
+    expect(levelBox).not.toBeNull();
+    expect(zoomBox).not.toBeNull();
+    if (levelBox && zoomBox) {
+      expect(Math.abs(zoomBox.x - levelBox.x)).toBeLessThan(5);
+    }
+  });
+
+  test("caps attribution at half the screen width at desktop width under lowHeightMode, so it can't cross into the description card's territory", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const maxWidth = await page.evaluate(
+      () => getComputedStyle(document.querySelector(".maplibregl-ctrl-attrib")!).maxWidth,
+    );
+    expect(maxWidth).toBe("600px"); // 50vw of a 1200px-wide viewport
+  });
+
+  test("gives the description card a width of calc(35% - 15px) at desktop width under lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const cardBox = await page.locator("#mobileDescriptionCard").boundingBox();
+    expect(cardBox).not.toBeNull();
+    if (cardBox) {
+      // calc(35% - 15px) of 1200px = 405px.
+      expect(cardBox.width).toBeCloseTo(405, 0);
+    }
+  });
+
+  test("keeps the description card's open/closed state when a different level is selected", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await page.locator("#mobileDescriptionTrigger").click();
+    await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
+
+    await page.locator("#levelControlToggle").click();
+    await page.locator("#levelControl button", { hasText: "0" }).click();
+
+    await expect(page.locator("#mobileDescriptionBody")).toBeVisible();
+  });
+
+  test("turns a popover trigger dark green with a white icon while its panel is open, at desktop width under shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const before = await page
+      .locator("#shortLegendTrigger")
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(before).not.toBe("rgb(2, 85, 88)");
+
+    await page.locator("#shortLegendTrigger").click();
+    await expect(page.locator("#shortLegendTrigger")).toHaveAttribute("aria-expanded", "true");
+
+    await expect(page.locator("#shortLegendTrigger")).toHaveCSS(
+      "background-color",
+      "rgb(2, 85, 88)",
+    );
+    await expect(page.locator("#shortLegendTrigger .material-icons")).toHaveCSS(
+      "color",
+      "rgb(255, 255, 255)",
+    );
+  });
+
+  test("stacks zoom buttons in the level control's column with zoom-in above zoom-out, at desktop width under lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await page.addInitScript(() => {
+      window.localStorage.setItem("mobileShowZoomButtons", "true");
+    });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const levelBox = await page.locator("#levelControlWrapper").boundingBox();
+    const zoomInBox = await page.locator("#zoomControlIn").boundingBox();
+    const zoomOutBox = await page.locator("#zoomControlOut").boundingBox();
+    expect(levelBox).not.toBeNull();
+    expect(zoomInBox).not.toBeNull();
+    expect(zoomOutBox).not.toBeNull();
+    if (levelBox && zoomInBox && zoomOutBox) {
+      expect(Math.abs(zoomInBox.x - levelBox.x)).toBeLessThan(2);
+      expect(zoomInBox.y).toBeLessThan(zoomOutBox.y);
+    }
+  });
+
+  test("puts the legend trigger in the same column as profile/settings, at the bottom-right corner, at desktop width under shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    const legendBox = await page.locator("#shortLegendTrigger").boundingBox();
+    const profileBox = await page.locator("#shortProfileTrigger").boundingBox();
+    expect(legendBox).not.toBeNull();
+    expect(profileBox).not.toBeNull();
+    if (legendBox && profileBox) {
+      expect(Math.abs(legendBox.x - profileBox.x)).toBeLessThan(2);
+    }
+  });
+
+  test("moves attribution to the opposite top corner from the description card when handedness switches, at desktop width under lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await expect(page.locator(".maplibregl-ctrl-top-right .maplibregl-ctrl-attrib")).toHaveCount(1);
+
+    await page.locator("#shortSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileHandedness_left").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    await expect(page.locator(".maplibregl-ctrl-top-left .maplibregl-ctrl-attrib")).toHaveCount(1);
+  });
+
+  test("shows the search results dropdown with mobile's dark backdrop and above every other UI element, at desktop width under shortMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await page.locator("#indoorSearchInput").fill("room");
+    await expect(page.locator("#searchSuggestionsList")).toHaveClass(/visible/);
+    await expect(page.locator("#searchOverlayBackdrop")).toBeVisible();
+
+    const backdropZ = await page
+      .locator("#searchOverlayBackdrop")
+      .evaluate((el) => Number(getComputedStyle(el).zIndex));
+    const listZ = await page
+      .locator("#searchSuggestionsList")
+      .evaluate((el) => Number(getComputedStyle(el).zIndex));
+    const legendTriggerZ = await page
+      .locator("#shortLegendTrigger")
+      .evaluate((el) => Number(getComputedStyle(el).zIndex));
+
+    expect(listZ).toBeGreaterThan(backdropZ);
+    expect(backdropZ).toBeGreaterThan(legendTriggerZ);
+  });
+
+  test("moves attribution with handedness under shortMode alone, not just lowHeightMode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#uiWrapper")).not.toHaveClass(/lowHeightMode/);
+
+    const attribBoxRightHanded = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    const viewport = page.viewportSize();
+    expect(attribBoxRightHanded).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (attribBoxRightHanded && viewport) {
+      expect(attribBoxRightHanded.x).toBeGreaterThan(viewport.width / 2);
+    }
+
+    await page.locator("#shortSettingsTrigger").click();
+    await page.getByRole("button", { name: /visual settings|grafische einstellungen/i }).click();
+    await page.locator("#mobileHandedness_left").check();
+    await page.getByRole("button", { name: /^save$|^speichern$/i }).click();
+
+    const attribBoxLeftHanded = await page.locator(".maplibregl-ctrl-attrib").boundingBox();
+    expect(attribBoxLeftHanded).not.toBeNull();
+    if (attribBoxLeftHanded && viewport) {
+      expect(attribBoxLeftHanded.x).toBeLessThan(viewport.width / 2);
+    }
+  });
+
+  test("shows a dark backdrop when the level control expands, and closing it is mutually exclusive with the search overlay", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await expect(page.locator("#levelControlBackdrop")).toBeHidden();
+    await page.locator("#levelControlToggle").click();
+    await expect(page.locator("#levelControlWrapper")).toHaveClass(/expanded/);
+    await expect(page.locator("#levelControlBackdrop")).toBeVisible();
+
+    await page.locator("#indoorSearchInput").fill("room");
+    await expect(page.locator("#searchSuggestionsList")).toHaveClass(/visible/);
+    await expect(page.locator("#levelControlWrapper")).not.toHaveClass(/expanded/);
+    await expect(page.locator("#levelControlBackdrop")).toBeHidden();
+  });
+
+  test("centers the legend popover in the free vertical gap when its default position would collide", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await page.locator("#shortLegendTrigger").click();
+    await expect(page.locator("#legendWrapper")).toHaveClass(/open/);
+
+    const legendBox = await page.locator("#legendWrapper").boundingBox();
+    const searchBox = await page.locator("#indoorSearchWrapper").boundingBox();
+    const descriptionBox = await page.locator("#mobileDescriptionCard").boundingBox();
+    expect(legendBox).not.toBeNull();
+    expect(searchBox).not.toBeNull();
+    expect(descriptionBox).not.toBeNull();
+    if (legendBox && searchBox && descriptionBox) {
+      // Must not overlap the search bar or description card, whether centered or
+      // left at its default position.
+      expect(legendBox.y + legendBox.height).toBeLessThanOrEqual(searchBox.y + 1);
+      expect(legendBox.y).toBeGreaterThanOrEqual(descriptionBox.y + descriptionBox.height - 1);
+    }
+  });
+
+  test("clamps the description card's max-height to stay clear of the level control", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 500 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+
+    await page.locator("#mobileDescriptionTrigger").click();
+    await expect(page.locator("#mobileDescriptionBody")).toHaveClass(/open/);
+
+    const bodyBox = await page.locator("#mobileDescriptionBody").boundingBox();
+    const levelControlBox = await page.locator("#levelControlWrapper").boundingBox();
+    expect(bodyBox).not.toBeNull();
+    expect(levelControlBox).not.toBeNull();
+    if (bodyBox && levelControlBox) {
+      expect(bodyBox.y + bodyBox.height).toBeLessThanOrEqual(levelControlBox.y + 1);
+    }
+  });
+
+  test("opens the legend in the same position as the profile/settings popovers in landscape mode", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await loadTestApp(page);
+    await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
+    await expect(page.locator("#uiWrapper")).toHaveClass(/shortMode/);
+    await expect(page.locator("#uiWrapper")).not.toHaveClass(/mobileMode/);
+
+    await page.locator("#shortProfileTrigger").click();
+    const profileBox = await page.locator("#mobileProfilePanel").boundingBox();
+    await page.locator("#shortProfileTrigger").click();
+
+    await page.locator("#shortLegendTrigger").click();
+    await expect(page.locator("#legendWrapper")).toHaveClass(/open/);
+    const legendBox = await page.locator("#legendWrapper").boundingBox();
+
+    expect(profileBox).not.toBeNull();
+    expect(legendBox).not.toBeNull();
+    if (profileBox && legendBox) {
+      expect(legendBox.x).toBeCloseTo(profileBox.x, 0);
+      expect(legendBox.y).toBeCloseTo(profileBox.y, 0);
     }
   });
 });

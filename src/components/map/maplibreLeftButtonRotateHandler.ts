@@ -31,13 +31,9 @@ export class MapLibreLeftButtonRotateHandler {
 
     this.enabled = true;
     const canvas = this.map.getCanvas();
-    // MapLibre's own touch-action CSS (toggled via classes on the canvas based on
-    // which of ITS handlers are enabled) permits native single-finger panning
-    // whenever its touch-drag-pan handler is off — exactly the state this app is in
-    // while this handler is active (dragPan: false in 3D mode). Without overriding
-    // it here, a touch drag gets consumed by the browser's native scroll/pan before
-    // our pointermove listener ever sees it. Inline style wins over MapLibre's
-    // class-based rule regardless of which combination of its own handlers is on.
+    // MapLibre's touch-action CSS permits native single-finger panning whenever its
+    // own touch-drag-pan handler is off (as it is here). Override it so a touch drag
+    // reaches our pointermove listener instead of being consumed as a native scroll.
     canvas.style.touchAction = "none";
     this.map.getCanvasContainer().addEventListener("pointerdown", this.handlePointerDown);
   }
@@ -54,8 +50,6 @@ export class MapLibreLeftButtonRotateHandler {
   }
 
   private handlePointerDown = (event: PointerEvent): void => {
-    // Ignore a second pointer (e.g. a second finger) while one drag is already
-    // active, and ignore anything but the primary mouse button / touch contact.
     if (this.dragState || event.button !== LEFT_MOUSE_BUTTON || event.ctrlKey) {
       return;
     }

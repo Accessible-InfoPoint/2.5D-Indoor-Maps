@@ -20,16 +20,14 @@ describe("levelControl wheelchairMode/mobileMode layout branch", () => {
   });
 
   it("uses the horizontal (wheelchair) layout when only wheelchairMode is present", () => {
-    // Use a level order where the active INDOOR_LEVEL ("0") sits away from the start,
-    // so the resulting offset (and therefore the margin) is non-zero — this lets us
-    // tell apart which margin property setMargin() actually populated.
+    // Non-zero offset from "0" so the populated margin property is distinguishable.
     (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce(["5", "4", "3", "2", "1", "0"]);
     document.body.innerHTML = `
       <div id="uiWrapper" class="wheelchairMode">
         <div id="levelControlWrapper">
           <button id="levelControlToggle"><span id="levelControlToggleLabel"></span></button>
-          <button id="levelShiftUp"></button>
-          <button id="levelShiftDown"></button>
+          <button id="levelShiftUp"><span id="levelShiftUpLabel"></span></button>
+          <button id="levelShiftDown"><span id="levelShiftDownLabel"></span></button>
           <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
         </div>
       </div>
@@ -45,18 +43,19 @@ describe("levelControl wheelchairMode/mobileMode layout branch", () => {
     expect(levelControlWindow.style.width).not.toBe("");
     expect(levelControl.style.marginTop).toBe("0px");
     expect(levelControl.style.marginLeft).not.toBe("0px");
+    expect(document.getElementById("levelShiftUpLabel")?.textContent).toBe("chevron_left");
+    expect(document.getElementById("levelShiftDownLabel")?.textContent).toBe("navigate_next");
   });
 
   it("uses the vertical (mobile) layout when wheelchairMode and mobileMode are both present", () => {
-    // Same non-zero-offset level ordering as the wheelchair-only case above, so the
-    // margin comparison below is meaningful.
+    // Same non-zero-offset ordering as the wheelchair-only case, so the margin comparison is meaningful.
     (LevelService.getLevelNames as jest.Mock).mockReturnValueOnce(["5", "4", "3", "2", "1", "0"]);
     document.body.innerHTML = `
       <div id="uiWrapper" class="wheelchairMode mobileMode">
         <div id="levelControlWrapper">
           <button id="levelControlToggle"><span id="levelControlToggleLabel"></span></button>
-          <button id="levelShiftUp"></button>
-          <button id="levelShiftDown"></button>
+          <button id="levelShiftUp"><span id="levelShiftUpLabel"></span></button>
+          <button id="levelShiftDown"><span id="levelShiftDownLabel"></span></button>
           <div id="levelControlWindow"><ul id="levelControl" style="--button-size: 40px; --level-control-gap: 8px;"></ul></div>
         </div>
       </div>
@@ -160,12 +159,20 @@ describe("levelControl expand/collapse exclusivity and dynamic count", () => {
     mockRect("indoorSearchWrapper", { left: 150, right: 400, top: 0, bottom: 100 });
     const levelControlWrapper = document.getElementById("levelControlWrapper") as HTMLElement;
     const levelControlWindow = document.getElementById("levelControlWindow") as HTMLElement;
-    // The wrapper's rect grows with whatever width setWindow() has currently
-    // applied, mimicking real layout without needing jsdom to actually
-    // perform CSS layout.
+    // Wrapper's rect grows with setWindow()'s applied width, mimicking layout without jsdom actually computing CSS.
     levelControlWrapper.getBoundingClientRect = () => {
       const width = parseFloat(levelControlWindow.style.width) || 0;
-      return { top: 0, left: 0, bottom: 40, right: width, width, height: 40, x: 0, y: 0, toJSON: () => "" } as DOMRect;
+      return {
+        top: 0,
+        left: 0,
+        bottom: 40,
+        right: width,
+        width,
+        height: 40,
+        x: 0,
+        y: 0,
+        toJSON: () => "",
+      } as DOMRect;
     };
 
     LevelControl.handleChange(geoMap);
@@ -183,7 +190,17 @@ describe("levelControl expand/collapse exclusivity and dynamic count", () => {
     const levelControlWindow = document.getElementById("levelControlWindow") as HTMLElement;
     levelControlWrapper.getBoundingClientRect = () => {
       const width = parseFloat(levelControlWindow.style.width) || 0;
-      return { top: 0, left: 0, bottom: 40, right: width, width, height: 40, x: 0, y: 0, toJSON: () => "" } as DOMRect;
+      return {
+        top: 0,
+        left: 0,
+        bottom: 40,
+        right: width,
+        width,
+        height: 40,
+        x: 0,
+        y: 0,
+        toJSON: () => "",
+      } as DOMRect;
     };
 
     LevelControl.handleChange(geoMap);
@@ -200,7 +217,17 @@ describe("levelControl expand/collapse exclusivity and dynamic count", () => {
     const levelControlWindow = document.getElementById("levelControlWindow") as HTMLElement;
     levelControlWrapper.getBoundingClientRect = () => {
       const width = parseFloat(levelControlWindow.style.width) || 0;
-      return { top: 0, left: 0, bottom: 40, right: width, width, height: 40, x: 0, y: 0, toJSON: () => "" } as DOMRect;
+      return {
+        top: 0,
+        left: 0,
+        bottom: 40,
+        right: width,
+        width,
+        height: 40,
+        x: 0,
+        y: 0,
+        toJSON: () => "",
+      } as DOMRect;
     };
 
     LevelControl.handleChange(geoMap);

@@ -79,7 +79,10 @@ describe("layoutObstacles", () => {
     });
 
     afterEach(() => {
-      Object.defineProperty(window, "innerWidth", { value: originalInnerWidth, configurable: true });
+      Object.defineProperty(window, "innerWidth", {
+        value: originalInnerWidth,
+        configurable: true,
+      });
       Object.defineProperty(window, "innerHeight", {
         value: originalInnerHeight,
         configurable: true,

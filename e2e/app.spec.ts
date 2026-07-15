@@ -2,6 +2,11 @@ import { expect, test } from "@playwright/test";
 import { loadTestApp } from "./testApp";
 
 test("loads the map shell and core controls", async ({ page }) => {
+  // Explicit viewport: the wheelchair toggle button hides under shortMode
+  // (<=767.98px height), which the default Desktop Chrome viewport (720px
+  // tall) falls under. This test wants the always-visible plain-desktop
+  // treatment, not shortMode's compact layout.
+  await page.setViewportSize({ width: 1200, height: 900 });
   await loadTestApp(page);
 
   await expect(page).toHaveTitle(/AccessibleMaps Mobile/);
@@ -17,6 +22,8 @@ test("loads the map shell and core controls", async ({ page }) => {
 });
 
 test("supports basic control interactions", async ({ page }) => {
+  // See the identical viewport note in "loads the map shell and core controls".
+  await page.setViewportSize({ width: 1200, height: 900 });
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
@@ -62,12 +69,6 @@ test("keeps the description area reasonably wide at a moderate desktop window si
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-  // .description sizes to its content (width: max-content) up to its max-width cap,
-  // so a short mock title never actually reaches the cap either way — that made an
-  // earlier version of this test pass/fail independent of the cap's real value. Force
-  // in realistically long content (matching what the real level/accessibility text
-  // looks like, per the reported bug) so the box's rendered width actually reflects
-  // whether the cap is generous enough, not just how short the test fixture's text is.
   await page.locator("#description").evaluate((el) => {
     el.textContent =
       "Ausgewählte Etage: 0 [Taktiles Pflaster vorhanden, Objekte mit taktiler Beschriftung verfügbar, Aufzüge mit Sprachausgabe vorhanden]";
@@ -77,9 +78,6 @@ test("keeps the description area reasonably wide at a moderate desktop window si
   expect(descriptionBox).not.toBeNull();
 
   if (descriptionBox) {
-    // Not a pixel-exact target — just enough to catch the box being squeezed down to
-    // a near-unreadable single-word column, which is what the old formula did at this
-    // width (2 * 420px reserved 840px out of 900px total, leaving ~0px of max-width).
     expect(descriptionBox.width).toBeGreaterThan(300);
   }
 });
