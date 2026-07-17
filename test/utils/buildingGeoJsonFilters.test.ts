@@ -1,5 +1,6 @@
 import {
   filterByBounds,
+  filterByBoundsOrBearingNode,
   filterFeaturesByIndoorSearch,
   filterInsideAndLevel,
   findBuildingBySearchString,
@@ -131,6 +132,23 @@ describe("buildingGeoJsonFilters", () => {
         "inside-line",
         "inside-polygon",
       ]);
+    });
+
+    it("keeps configured bearing nodes even when they are outside the bounding box", () => {
+      const collection: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features: [
+          pointFeature("node/1", [0.5, 0.5], { level: "0" }),
+          pointFeature("node/2", [20, 20], {}),
+          pointFeature("node/3", [30, 30], {}),
+        ],
+      };
+
+      const result = filterByBoundsOrBearingNode(collection, [0, 0, 1, 1], {
+        bearingNodeIds: [2],
+      });
+
+      expect(result.features.map((feature) => feature.id)).toEqual(["node/1", "node/2"]);
     });
   });
 

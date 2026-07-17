@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
-import { filterByBounds, findFeatureById } from "../src/utils/buildingGeoJsonFilters";
+import { filterByBoundsOrBearingNode, findFeatureById } from "../src/utils/buildingGeoJsonFilters";
 import { getRequiredFeatureProperties } from "../src/utils/geoJsonHelpers";
 import { getBuildingSourceDefinition, matchesBuildingTags } from "./buildingSources";
 import { resolveProjectPath } from "./paths";
@@ -43,7 +43,9 @@ export async function validateCachedOverpassDataForBuilding(
   }
 
   const buildingBounds = getBoundingBox(buildingFeature);
-  const indoorFeatures = filterByBounds(indoor, buildingBounds).features.filter((feature) => {
+  const indoorFeatures = filterByBoundsOrBearingNode(indoor, buildingBounds, {
+    bearingNodeIds: [buildingConstants.BEARING_CALC_NODE1, buildingConstants.BEARING_CALC_NODE2],
+  }).features.filter((feature) => {
     const properties = getRequiredFeatureProperties(feature);
 
     return properties.indoor !== undefined || properties.level !== undefined;

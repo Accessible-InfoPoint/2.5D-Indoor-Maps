@@ -2,7 +2,10 @@ import { Application, Request, Response } from "express";
 import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
-import { filterByBounds, findBuildingBySearchString } from "../src/utils/buildingGeoJsonFilters";
+import {
+  filterByBoundsOrBearingNode,
+  findBuildingBySearchString,
+} from "../src/utils/buildingGeoJsonFilters";
 import { apiError } from "./apiError";
 import {
   BuildingSourceRegistry,
@@ -12,7 +15,14 @@ import {
 import { resolveProjectPath } from "./paths";
 
 type BuildingId = string;
-type BuildingDefinitions = Record<string, { SEARCH_STRING: string }>;
+type BuildingDefinitions = Record<
+  string,
+  {
+    SEARCH_STRING: string;
+    BEARING_CALC_NODE1?: string | number;
+    BEARING_CALC_NODE2?: string | number;
+  }
+>;
 
 export interface FilteredIndoorDataRouteOptions {
   buildingsDataPath?: string;
@@ -98,8 +108,18 @@ async function loadFilteredIndoorData(
 
   return {
     buildingInterface,
-    geoJson: filterByBounds(indoor, buildingInterface.boundingBox),
+    geoJson: filterByBoundsOrBearingNode(indoor, buildingInterface.boundingBox, {
+      bearingNodeIds: getBearingNodeIds(buildingDefinition),
+    }),
   };
+}
+
+function getBearingNodeIds(
+  buildingDefinition: BuildingDefinitions[BuildingId],
+): Array<string | number> {
+  return [buildingDefinition.BEARING_CALC_NODE1, buildingDefinition.BEARING_CALC_NODE2].filter(
+    (nodeId): nodeId is string | number => nodeId !== undefined,
+  );
 }
 
 function getCachedPaths(

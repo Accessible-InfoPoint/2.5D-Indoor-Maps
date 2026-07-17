@@ -38,6 +38,24 @@
         "type": "Point",
         "coordinates": [5, 5]
       }
+    },
+    {
+      "type": "Feature",
+      "id": "node/100",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [20, 20]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/101",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [30, 30]
+      }
     }
   ]
 }

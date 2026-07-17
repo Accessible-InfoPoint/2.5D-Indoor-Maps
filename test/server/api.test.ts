@@ -33,7 +33,10 @@ describe("server API", () => {
 
       expect(response.status).toBe(200);
       expect(body.buildingInterface.boundingBox).toEqual([0, 0, 10, 10]);
-      expect(body.geoJson.features.map((feature) => feature.id)).toEqual(["indoor/inside-room"]);
+      expect(body.geoJson.features.map((feature) => feature.id)).toEqual([
+        "indoor/inside-room",
+        "node/100",
+      ]);
     });
   });
 
@@ -103,6 +106,8 @@ async function withFixtureServer(
       buildingDefinitions: {
         fixture: {
           SEARCH_STRING: "Fixture Building",
+          BEARING_CALC_NODE1: "100",
+          BEARING_CALC_NODE2: "missing",
         },
       },
       ...filteredIndoorDataOptions,
