@@ -4,7 +4,7 @@ const URLS = {
 };
 
 export const OVERPASS_API_URL = URLS.OVERPASS_API;
-export const MAX_OVERPASS_FILE_AGE_IN_DAYS = 5;
+export const MAX_OVERPASS_FILE_AGE_IN_DAYS = 14;
 export const MAX_OVERPASS_RATE_LIMIT_RETRIES = 3;
 export const OVERPASS_USER_AGENT =
   process.env.OVERPASS_USER_AGENT?.trim() ||

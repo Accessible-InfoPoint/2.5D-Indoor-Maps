@@ -52,12 +52,6 @@
       "buildingTags": {
         "name": "Berlin Hauptbahnhof"
       }
-    },
-    "berlin_hbf_with_platforms": {
-      "source": "berlin_hbf",
-      "buildingTags": {
-        "name": "Berlin Hauptbahnhof"
-      }
     }
   }
 }
