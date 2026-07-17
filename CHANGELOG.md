@@ -23,6 +23,15 @@ useful for the project.
   profiles, icon references, and language key/placeholder parity.
 - Added a bundle budget check and server response compression.
 - Added Dependabot configuration and a pull request template.
+- Added testable Express app setup, a health endpoint, request logging, startup
+  config validation, startup summary logging, and graceful shutdown handling.
+- Added structured API/Overpass diagnostics with frontend error handling and
+  deterministic server/API fixture tests.
+- Added configurable cached Overpass building sources, source-specific cache
+  invalidation, SIT source-data validation, candidate/discovery CLI tooling,
+  and documentation for adding new buildings.
+- Added initial configurable Overpass entries for additional buildings, with
+  building constants that can be calibrated further.
 
 ### Changed
 
@@ -30,12 +39,18 @@ useful for the project.
   Playwright reports on failure.
 - Added Prettier formatting and formatted the repository.
 - Documented the local check and formatting workflow.
+- Cached Overpass indoor filtering now keeps configured bearing nodes even when
+  they are outside the selected building bounds.
 
 ### Fixed
 
-- Map bearing no longer snaps to zero on low values
+- Fixed map bearing handling so low values and 2D/2.5D switches preserve the
+  intended rotation.
 
 ### Removed
+
+- Removed the checked-in Berlin Hauptbahnhof generated GeoJSON in favor of the
+  configurable cached Overpass source workflow.
 
 ## 1.2.0 - 2026-07-07
 
