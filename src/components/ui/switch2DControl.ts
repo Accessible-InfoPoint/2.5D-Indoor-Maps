@@ -225,7 +225,8 @@ function animate(camera: MapCamera, options: AnimationOptions, duration = 0.5): 
   }
 
   let startTime: number | null = null;
-  const dir = ((options.bearingStart + 360) % 360) - ((options.bearingEnd + 360) % 360); // neg = clockwise, pos = counter-clockwise
+  // const dir = ((options.bearingStart + 360) % 360) - ((options.bearingEnd + 360) % 360); // neg = clockwise, pos = counter-clockwise
+  const dir = options.bearingStart - options.bearingEnd; // neg = clockwise, pos = counter-clockwise
   let bearingEnd = options.bearingEnd;
   if (dir < 0 && options.bearingStart > 0 && options.bearingEnd < 0) {
     bearingEnd = options.bearingEnd + 360;
