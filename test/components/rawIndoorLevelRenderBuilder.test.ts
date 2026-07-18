@@ -29,6 +29,11 @@ describe("buildRawIndoorLevelRenderModel", () => {
     });
     expect(renderModel.doors).toHaveLength(1);
     expect(renderModel.doors[0].debug?.door).toEqual([13.1, 51]);
+    expect(renderModel.walls.map((wall) => wall.feature.geometry.type)).toEqual([
+      "LineString",
+      "Polygon",
+    ]);
+    expect(renderModel.walls.map((wall) => wall.style.polygonFill)).toEqual(["#000000", "#000000"]);
   });
 
   it("marks selected raw rooms using the same ids as GeoJSON compatibility rooms", () => {
@@ -79,6 +84,7 @@ const rawOverpassData: RawOverpassDataResponse = {
       { type: "node", id: 1, lat: 51, lon: 13 },
       { type: "node", id: 2, lat: 51, lon: 13.1, tags: { door: "yes", level: "0" } },
       { type: "node", id: 3, lat: 51.1, lon: 13.1 },
+      { type: "node", id: 4, lat: 51.1, lon: 13 },
       {
         type: "way",
         id: 10,
@@ -90,6 +96,18 @@ const rawOverpassData: RawOverpassDataResponse = {
         id: 11,
         nodes: [1, 2, 3, 1],
         tags: { indoor: "room", level: "1", name: "Room B" },
+      },
+      {
+        type: "way",
+        id: 12,
+        nodes: [1, 2],
+        tags: { indoor: "wall", level: "0" },
+      },
+      {
+        type: "way",
+        id: 13,
+        nodes: [1, 2, 3, 4, 1],
+        tags: { indoor: "wall", area: "yes", level: "0" },
       },
     ],
   },

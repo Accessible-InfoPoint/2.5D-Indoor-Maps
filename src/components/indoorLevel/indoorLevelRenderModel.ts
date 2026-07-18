@@ -45,6 +45,7 @@ export interface IndoorLevelRenderModel {
   infoPoint?: InfoPointRenderItem;
   rooms: RoomRenderItem[];
   doors: DoorRenderItem[];
+  walls: StyledFeatureRenderItem[];
   tactilePaving: StyledFeatureRenderItem[];
   pointMarkerFeatures: GeoJSON.Feature[];
   staircase: StaircaseRenderModel;

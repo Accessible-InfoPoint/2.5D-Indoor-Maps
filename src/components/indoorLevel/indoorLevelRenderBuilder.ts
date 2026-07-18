@@ -56,6 +56,7 @@ export function buildIndoorLevelRenderModel(
     infoPoint,
     rooms,
     doors: [],
+    walls: [],
     tactilePaving,
     pointMarkerFeatures,
     staircase: {

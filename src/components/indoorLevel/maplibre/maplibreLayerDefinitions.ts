@@ -97,6 +97,31 @@ export function createDoorLayers(options: LayerDefinitionOptions): AddLayerObjec
   ];
 }
 
+export function createWallLayers(options: LayerDefinitionOptions): AddLayerObject[] {
+  return [
+    {
+      id: options.layerId("walls", "fill"),
+      type: "fill",
+      source: options.sourceId("walls"),
+      filter: ["==", ["geometry-type"], "Polygon"],
+      paint: {
+        "fill-color": ["coalesce", ["get", "fillColor"], "#000000"],
+        "fill-opacity": getOpacityExpression("fillOpacity", options.opacity),
+      },
+    },
+    {
+      id: options.layerId("walls", "line"),
+      type: "line",
+      source: options.sourceId("walls"),
+      paint: {
+        "line-color": ["coalesce", ["get", "lineColor"], "#000000"],
+        "line-width": ["coalesce", ["get", "lineWidth"], 1],
+        "line-opacity": getOpacityExpression("lineOpacity", options.opacity),
+      },
+    },
+  ];
+}
+
 export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayerObject[] {
   return [
     {

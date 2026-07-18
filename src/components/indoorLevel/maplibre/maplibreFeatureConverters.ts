@@ -78,6 +78,20 @@ export function buildMapLibreStyledLineFeature(item: StyledFeatureRenderItem): G
   };
 }
 
+export function buildMapLibreWallFeature(item: StyledFeatureRenderItem): GeoJSON.Feature {
+  return {
+    ...item.feature,
+    properties: {
+      ...item.feature.properties,
+      fillColor: getStyleString(item.style, "polygonFill", "#000000"),
+      fillOpacity: getStyleNumber(item.style, "polygonOpacity", 1),
+      lineColor: getStyleString(item.style, "lineColor", "#000000"),
+      lineWidth: getStyleNumber(item.style, "lineWidth", 1),
+      lineOpacity: getStyleNumber(item.style, "lineOpacity", 1),
+    },
+  };
+}
+
 export function buildMapLibreDoorFeature(
   item: DoorRenderItem,
 ): GeoJSON.Feature<GeoJSON.LineString> {

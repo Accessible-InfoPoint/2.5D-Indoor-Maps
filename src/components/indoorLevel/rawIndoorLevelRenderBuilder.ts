@@ -1,11 +1,16 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
+import { IndoorWall } from "../../indoor/elements/IndoorWall";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
-import { DoorRenderItem, IndoorLevelRenderModel } from "./indoorLevelRenderModel";
+import {
+  DoorRenderItem,
+  IndoorLevelRenderModel,
+  StyledFeatureRenderItem,
+} from "./indoorLevelRenderModel";
 import { PositionMarkerRenderItem, RoomRenderItem } from "./indoorLevelRenderModel";
 
 interface RawIndoorLevelRenderBuilderOptions {
@@ -23,6 +28,7 @@ export function buildRawIndoorLevelRenderModel(
     outlineCoordinates: options.model.outlineCoordinates,
     rooms: buildRoomRenderItems(options),
     doors: buildDoorRenderItems(options),
+    walls: buildWallRenderItems(options),
     tactilePaving: [],
     pointMarkerFeatures: [],
     staircase: {
@@ -36,12 +42,50 @@ export function buildRawIndoorLevelRenderModel(
   };
 }
 
+function buildWallRenderItems(
+  options: RawIndoorLevelRenderBuilderOptions,
+): StyledFeatureRenderItem[] {
+  return options.model.walls
+    .filter((wall) => wall.hasLevel(options.level))
+    .map((wall): StyledFeatureRenderItem | undefined => buildWallRenderItem(wall))
+    .filter((item): item is StyledFeatureRenderItem => item !== undefined);
+}
+
+function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefined {
+  const feature = wall.toGeoJsonFeature();
+
+  if (feature === undefined) {
+    return undefined;
+  }
+
+  return {
+    feature,
+    style: buildWallStyle(feature),
+  };
+}
+
+function buildWallStyle(feature: GeoJSON.Feature): Record<string, unknown> {
+  const featureStyle = FeatureService.getFeatureStyle(feature);
+  const wallColor = ColorService.getCurrentColors().wallColor;
+
+  return {
+    polygonFill: wallColor,
+    polygonOpacity: 1,
+    lineColor: wallColor,
+    lineWidth: featureStyle["lineWidth"],
+    lineOpacity: featureStyle["lineOpacity"] ?? 1,
+  };
+}
+
 function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
   const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
+  const wallsOnLevel = options.model.walls.filter((wall) => wall.hasLevel(options.level));
 
   return options.model.doors
-    .filter((door) => door.levels.length == 0 || door.hasLevel(options.level))
-    .flatMap((door) => door.buildRenderItems(roomsOnLevel, options.selectedFeatureIds));
+    .filter((door) => door.hasLevel(options.level))
+    .flatMap((door) =>
+      door.buildRenderItems(roomsOnLevel, wallsOnLevel, options.selectedFeatureIds),
+    );
 }
 
 function buildRoomRenderItems(options: RawIndoorLevelRenderBuilderOptions): RoomRenderItem[] {

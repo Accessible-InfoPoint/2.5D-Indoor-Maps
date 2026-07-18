@@ -7,8 +7,11 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/
 import { calculateDoorOrientationGeometry } from "../doorOrientation";
 import { IndoorRoom } from "./IndoorRoom";
 import { IndoorElement } from "./IndoorElement";
+import { IndoorWall } from "./IndoorWall";
 
 export class IndoorDoor extends IndoorElement {
+  private static readonly emittedWarnings = new Set<string>();
+
   static collectFromGraph(graph: OsmGraph): IndoorDoor[] {
     return Array.from(graph.nodesById.values())
       .filter((node) => isRawDoorNode(node))
@@ -42,20 +45,43 @@ export class IndoorDoor extends IndoorElement {
     return rooms.filter((room) => this.isPartOfRoom(room));
   }
 
-  buildRenderItems(rooms: IndoorRoom[], selectedFeatureIds: string[]): DoorRenderItem[] {
+  getConnectedWalls(walls: IndoorWall[]): IndoorWall[] {
+    const connectedWalls = walls.filter((wall) => wall.includesNode(this.sourceElement.id));
+
+    connectedWalls
+      .filter((wall) => wall.isAreaWall)
+      .forEach((wall) =>
+        this.warnOnce(
+          `area-wall-${wall.id}`,
+          `Cannot connect door ${this.id} to area wall ${wall.id}: area walls are renderable areas, not pass-through wall lines.`,
+        ),
+      );
+
+    return connectedWalls.filter((wall) => !wall.isAreaWall);
+  }
+
+  buildRenderItems(
+    rooms: IndoorRoom[],
+    walls: IndoorWall[],
+    selectedFeatureIds: string[],
+  ): DoorRenderItem[] {
     const connectedRooms = this.getConnectedRooms(rooms);
+    const connectedWalls = this.getConnectedWalls(walls);
     const connectedRoomFeatures = connectedRooms
       .map((room) => room.toGeoJsonFeature())
       .filter(
         (feature): feature is GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> =>
           feature !== undefined,
       );
+    const connectedWallFeatures = connectedWalls
+      .map((wall) => wall.toGeoJsonFeature())
+      .filter((feature): feature is GeoJSON.Feature<GeoJSON.LineString> => feature !== undefined);
 
-    if (connectedRoomFeatures.length == 0) {
+    if (connectedRoomFeatures.length == 0 && connectedWallFeatures.length == 0) {
       return [];
     }
 
-    const orientationGeometry = this.calculateOrientation(connectedRooms);
+    const orientationGeometry = this.calculateOrientation(connectedRooms, connectedWalls);
 
     if (orientationGeometry === undefined) {
       return [];
@@ -66,19 +92,19 @@ export class IndoorDoor extends IndoorElement {
         coordinates: orientationGeometry.orientation,
         symbol: {
           lineColor: getDoorColor(connectedRoomFeatures, selectedFeatureIds),
-          lineWidth: FeatureService.getFeatureStyle(connectedRoomFeatures[0])["lineWidth"],
+          lineWidth: getDoorLineWidth(connectedWallFeatures, connectedRoomFeatures),
         },
         debug: orientationGeometry.debug,
       },
     ];
   }
 
-  private calculateOrientation(rooms: IndoorRoom[]) {
-    const wayContext = this.findWayContext(rooms);
+  private calculateOrientation(rooms: IndoorRoom[], walls: IndoorWall[]) {
+    const wayContext = this.findWayContext(rooms, walls);
 
     if (wayContext === undefined) {
       console.warn(
-        `[IndoorDoor] Cannot calculate orientation for door ${this.id}: no containing room way was found.`,
+        `[IndoorDoor] Cannot calculate orientation for door ${this.id}: no containing room or wall way was found.`,
       );
       return undefined;
     }
@@ -101,7 +127,15 @@ export class IndoorDoor extends IndoorElement {
     );
   }
 
-  private findWayContext(rooms: IndoorRoom[]): DoorWayContext | undefined {
+  private findWayContext(rooms: IndoorRoom[], walls: IndoorWall[]): DoorWayContext | undefined {
+    for (const wall of walls) {
+      const context = getDoorWayContext(wall.sourceElement, this.sourceElement.id);
+
+      if (context !== undefined) {
+        return context;
+      }
+    }
+
     for (const room of rooms) {
       const way = this.findContainingWay(room);
 
@@ -136,6 +170,17 @@ export class IndoorDoor extends IndoorElement {
 
   private isPartOfRoom(room: IndoorRoom): boolean {
     return this.findContainingWay(room) !== undefined;
+  }
+
+  private warnOnce(code: string, message: string): void {
+    const warningKey = `${this.id}:${code}`;
+
+    if (IndoorDoor.emittedWarnings.has(warningKey)) {
+      return;
+    }
+
+    IndoorDoor.emittedWarnings.add(warningKey);
+    console.warn(`[IndoorDoor] ${message}`);
   }
 }
 
@@ -203,7 +248,26 @@ function getDoorColor(
     return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
   });
 
+  if (connectedRoomFeatures.length == 0) {
+    return "#ffffff";
+  }
+
   return FeatureService.getFeatureStyle(nonCorridorRoom ?? connectedRoomFeatures[0])["polygonFill"];
+}
+
+function getDoorLineWidth(
+  connectedWallFeatures: GeoJSON.Feature[],
+  connectedRoomFeatures: GeoJSON.Feature[],
+): number {
+  if (connectedWallFeatures.length > 0) {
+    return FeatureService.getFeatureStyle(connectedWallFeatures[0])["lineWidth"];
+  }
+
+  if (connectedRoomFeatures.length > 0) {
+    return FeatureService.getFeatureStyle(connectedRoomFeatures[0])["lineWidth"];
+  }
+
+  return 1;
 }
 
 function nodeToPosition(node: OverpassNode): GeoJSON.Position {
