@@ -19,6 +19,24 @@ export function getOverpassElementKey(element: OverpassElement): string {
   return `${element.type}/${element.id}`;
 }
 
+export function normalizeOverpassElementKey(
+  elementId: number | string,
+  defaultType?: OverpassElement["type"],
+): string | undefined {
+  const value = String(elementId);
+  const match = /^(node|way|relation)\/(\d+)$/.exec(value);
+
+  if (match !== null) {
+    return `${match[1]}/${match[2]}`;
+  }
+
+  if (/^\d+$/.test(value) && defaultType !== undefined) {
+    return `${defaultType}/${value}`;
+  }
+
+  return undefined;
+}
+
 function isOverpassElement(value: unknown): value is OverpassElement {
   if (typeof value !== "object" || value === null) {
     return false;

@@ -66,7 +66,10 @@ describe("server API", () => {
         ]);
         expect(body.indoor.elements.map((element) => `${element.type}/${element.id}`)).toEqual([
           "node/100",
-          "node/101",
+          "node/102",
+          "node/103",
+          "node/104",
+          "way/20",
         ]);
       },
       jest.fn(),
@@ -85,7 +88,11 @@ describe("server API", () => {
 
         expect(response.status).toBe(200);
         expect(body.buildingInterface.boundingBox).toEqual([0, 0, 10, 10]);
-        expect(body.geoJson.features.map((feature) => feature.id)).toEqual(["node/100"]);
+        expect(body.geoJson.features.map((feature) => feature.id)).toEqual([
+          "node/100",
+          "node/102",
+          "way/20",
+        ]);
       },
       jest.fn(),
       {

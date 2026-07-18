@@ -6,6 +6,8 @@ import {
   filterByBoundsOrBearingNode,
   findBuildingBySearchString,
 } from "../src/utils/buildingGeoJsonFilters";
+import { filterOverpassByBounds, filterOverpassByElementIds } from "../src/utils/overpassFilters";
+import { getRequiredFeatureId } from "../src/utils/geoJsonHelpers";
 import { apiError } from "./apiError";
 import {
   BuildingSourceRegistry,
@@ -148,11 +150,26 @@ async function loadRawOverpassData(
   building: BuildingId,
   options: NormalizedFilteredIndoorDataRouteOptions,
 ): Promise<RawOverpassDataResponse> {
+  const buildingDefinition = options.buildingDefinitions[building];
   const cachedPaths = getCachedPaths(building, options);
+  const rawBuildings = await readCachedOverpassJson(cachedPaths.buildingsDataPath);
+  const rawIndoor = await readCachedOverpassJson(cachedPaths.indoorDataPath);
+  const buildings = await readCachedGeoJsonCompat(cachedPaths.buildingsDataPath);
+  const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
+
+  if (!buildingInterface) {
+    throw new Error(
+      `Configured building "${buildingDefinition.SEARCH_STRING}" was not found in cached buildings data.`,
+    );
+  }
 
   return {
-    buildings: await readCachedOverpassJson(cachedPaths.buildingsDataPath),
-    indoor: await readCachedOverpassJson(cachedPaths.indoorDataPath),
+    buildings: filterOverpassByElementIds(rawBuildings, [
+      getRequiredFeatureId(buildingInterface.feature),
+    ]),
+    indoor: filterOverpassByBounds(rawIndoor, buildingInterface.boundingBox, {
+      bearingNodeIds: getBearingNodeIds(buildingDefinition),
+    }),
   };
 }
 

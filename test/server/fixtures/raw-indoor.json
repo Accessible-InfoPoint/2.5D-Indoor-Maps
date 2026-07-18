@@ -13,6 +13,46 @@
     },
     {
       "type": "node",
+      "id": 102,
+      "lat": 5,
+      "lon": 5,
+      "tags": {
+        "level": "0",
+        "indoor": "room"
+      }
+    },
+    {
+      "type": "node",
+      "id": 103,
+      "lat": 5,
+      "lon": 5
+    },
+    {
+      "type": "node",
+      "id": 104,
+      "lat": 50,
+      "lon": 50
+    },
+    {
+      "type": "way",
+      "id": 20,
+      "nodes": [103, 104],
+      "tags": {
+        "level": "0",
+        "indoor": "pathway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 21,
+      "nodes": [101, 104],
+      "tags": {
+        "level": "0",
+        "indoor": "room"
+      }
+    },
+    {
+      "type": "node",
       "id": 101,
       "lat": 30,
       "lon": 30,

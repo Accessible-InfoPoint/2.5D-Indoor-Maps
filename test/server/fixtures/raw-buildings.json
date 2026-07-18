@@ -6,6 +6,10 @@
     { "type": "node", "id": 2, "lat": 0, "lon": 10 },
     { "type": "node", "id": 3, "lat": 10, "lon": 10 },
     { "type": "node", "id": 4, "lat": 10, "lon": 0 },
+    { "type": "node", "id": 11, "lat": 20, "lon": 20 },
+    { "type": "node", "id": 12, "lat": 20, "lon": 30 },
+    { "type": "node", "id": 13, "lat": 30, "lon": 30 },
+    { "type": "node", "id": 14, "lat": 30, "lon": 20 },
     {
       "type": "way",
       "id": 10,
@@ -13,6 +17,17 @@
       "tags": {
         "building": "university",
         "name": "Fixture Building",
+        "min_level": "0",
+        "max_level": "1"
+      }
+    },
+    {
+      "type": "way",
+      "id": 11,
+      "nodes": [11, 12, 13, 14, 11],
+      "tags": {
+        "building": "university",
+        "name": "Other Fixture Building",
         "min_level": "0",
         "max_level": "1"
       }
