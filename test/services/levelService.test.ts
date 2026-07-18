@@ -2,6 +2,7 @@ import levelService from "../../src/services/levelService";
 import * as hasCurrentLevel from "../../src/utils/hasCurrentLevel";
 import AccessibilityService from "../../src/services/accessibilityService";
 import BackendService from "../../src/services/backendService";
+import { IndoorDataPipelineEnum } from "../../src/models/indoorDataPipelineEnum";
 
 jest.mock("../../src/services/buildingService");
 jest.mock("../../src/utils/hasCurrentLevel");
@@ -9,6 +10,9 @@ jest.mock("../../src/services/accessibilityService");
 jest.mock("../../src/services/backendService", () => ({
   getGeoJson: jest.fn(),
   getAllLevels: jest.fn(),
+  getBackendConfig: jest.fn(() => ({
+    indoorDataPipeline: "geoJsonCompatibility",
+  })),
 }));
 jest.mock("../../src/services/languageService", () => ({
   lang: {
@@ -20,6 +24,9 @@ describe("levelService", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();
+    (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+      indoorDataPipeline: IndoorDataPipelineEnum.geoJsonCompatibility,
+    });
     levelService.clearData();
   });
 
@@ -43,6 +50,20 @@ describe("levelService", () => {
       const cached = levelService.getLevelGeoJSON(1);
       expect(BackendService.getGeoJson).toHaveBeenCalledTimes(1);
       expect(cached).toBe(result);
+    });
+
+    it("returns an empty feature collection for the raw indoor model pipeline", () => {
+      (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+        indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+      });
+
+      const result = levelService.getLevelGeoJSON(1);
+
+      expect(result).toEqual({
+        type: "FeatureCollection",
+        features: [],
+      });
+      expect(BackendService.getGeoJson).not.toHaveBeenCalled();
     });
   });
 

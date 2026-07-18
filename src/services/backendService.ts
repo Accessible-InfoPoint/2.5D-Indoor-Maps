@@ -1,4 +1,5 @@
 import { BuildingInterface } from "../models/buildingInterface";
+import { createIndoorModel, IndoorModel, RawOverpassGraphs } from "../indoor/IndoorModel";
 import BuildingService from "./buildingService";
 import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
@@ -35,6 +36,7 @@ let buildingConstants: BuildingConstants | undefined;
 let buildingDescription = "";
 let geoJson: GeoJSON.FeatureCollection | undefined;
 let rawOverpassData: RawOverpassDataResponse | undefined;
+let indoorModel: IndoorModel | undefined;
 const allLevels = new Set<number>();
 
 let buildingInterface: BuildingInterface | undefined;
@@ -76,6 +78,7 @@ interface GeoJsonLoadedBackendData {
 interface RawOverpassLoadedBackendData {
   kind: "rawOverpass";
   rawOverpassData: RawOverpassDataResponse;
+  indoorModel: IndoorModel;
 }
 
 type LoadedBackendData = GeoJsonLoadedBackendData | RawOverpassLoadedBackendData;
@@ -121,6 +124,7 @@ function resetBackendData(): void {
   buildingDescription = "";
   geoJson = undefined;
   rawOverpassData = undefined;
+  indoorModel = undefined;
   allLevels.clear();
   buildingInterface = undefined;
   DoorService.clearDoorIndex();
@@ -136,7 +140,15 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 
   if (loadedData.kind === "rawOverpass") {
     rawOverpassData = loadedData.rawOverpassData;
-    throw new Error("The raw indoor model data pipeline is not implemented yet.");
+    indoorModel = loadedData.indoorModel;
+    buildingInterface = indoorModel.buildingInterface;
+    buildingDescription = buildBuildingDescription(buildingInterface);
+    indoorModel.levels.forEach((level) => allLevels.add(level));
+    buildingConstants = buildRawBuildingConstants(indoorModel, buildingDefinition);
+
+    console.log("BackendService BuildingInterface", structuredClone(buildingInterface));
+    console.log("BackendService IndoorModel", structuredClone(indoorModel));
+    return;
   }
 
   buildingInterface = loadedData.buildingInterface;
@@ -183,9 +195,17 @@ async function loadCachedOverpassData(): Promise<LoadedBackendData> {
 }
 
 async function loadRawOverpassData(): Promise<LoadedBackendData> {
+  const loadedRawOverpassData = await HttpService.fetchRawOverpassData(backendConfig.building);
+  const buildingsGeoJson = await overpassToGeoJson(loadedRawOverpassData.buildings);
+  const loadedBuildingInterface = await BuildingService.handleSearch(
+    buildingsGeoJson,
+    BuildingConstantsDefinition[backendConfig.building].SEARCH_STRING,
+  );
+
   return {
     kind: "rawOverpass",
-    rawOverpassData: await HttpService.fetchRawOverpassData(backendConfig.building),
+    rawOverpassData: loadedRawOverpassData,
+    indoorModel: createIndoorModel(loadedRawOverpassData, loadedBuildingInterface),
   };
 }
 
@@ -319,6 +339,23 @@ function buildBuildingConstants(
   buildingDefinition: BuildingDefinition,
 ): BuildingConstants {
   const standardBearing = calculateStandardBearing(indoorGeoJson, buildingDefinition);
+
+  return buildBuildingConstantsFromStandardBearing(standardBearing, buildingDefinition);
+}
+
+function buildRawBuildingConstants(
+  model: IndoorModel,
+  buildingDefinition: BuildingDefinition,
+): BuildingConstants {
+  const standardBearing = calculateRawStandardBearing(model.graphs, buildingDefinition);
+
+  return buildBuildingConstantsFromStandardBearing(standardBearing, buildingDefinition);
+}
+
+function buildBuildingConstantsFromStandardBearing(
+  standardBearing: number,
+  buildingDefinition: BuildingDefinition,
+): BuildingConstants {
   const buildingDefinitionWithCenters = buildingDefinition as BuildingDefinitionWithCenters;
 
   return {
@@ -405,7 +442,46 @@ function getBearingCalculationNode(
   ).coordinates;
 }
 
+function calculateRawStandardBearing(
+  graphs: RawOverpassGraphs,
+  buildingDefinition: BuildingDefinition,
+): number {
+  const p1 = getRawBearingCalculationNode(
+    graphs,
+    buildingDefinition.BEARING_CALC_NODE1,
+    "Bearing calculation node 1",
+  );
+  const p2 = getRawBearingCalculationNode(
+    graphs,
+    buildingDefinition.BEARING_CALC_NODE2,
+    "Bearing calculation node 2",
+  );
+
+  return (
+    ((Math.atan2(p2[0] - p1[0], CoordinateHelpers.lat2y(p2[1]) - CoordinateHelpers.lat2y(p1[1])) *
+      (180 / Math.PI) +
+      buildingDefinition.BEARING_OFFSET +
+      180) %
+      360) -
+    180
+  );
+}
+
+function getRawBearingCalculationNode(
+  graphs: RawOverpassGraphs,
+  nodeId: number | string,
+  label: string,
+): GeoJSON.Position {
+  const node = getRequiredMatch(graphs.indoor.getNode(nodeId), label);
+
+  return [node.lon, node.lat];
+}
+
 function getOutline(): number[][] {
+  if (indoorModel !== undefined) {
+    return indoorModel.outlineCoordinates;
+  }
+
   return getRequiredArrayValue(
     (getLoadedBuildingInterface().feature.geometry as GeoJSON.Polygon).coordinates,
     0,
@@ -457,6 +533,18 @@ function getRawOverpassData(): RawOverpassDataResponse {
   return rawOverpassData;
 }
 
+function getIndoorModel(): IndoorModel {
+  if (indoorModel === undefined) {
+    throw new Error("Indoor model has not been loaded.");
+  }
+
+  return indoorModel;
+}
+
+function getRawOverpassGraphs(): RawOverpassGraphs {
+  return getIndoorModel().graphs;
+}
+
 function getLoadedBuildingInterface(): BuildingInterface {
   if (buildingInterface === undefined) {
     throw new Error("Building interface has not been loaded.");
@@ -476,4 +564,6 @@ export default {
   configureBackend,
   getBackendConfig,
   getRawOverpassData,
+  getIndoorModel,
+  getRawOverpassGraphs,
 };

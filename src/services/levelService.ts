@@ -3,6 +3,7 @@ import AccessibilityService from "./accessibilityService";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
+import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 
 const geoJSONByLevel = new Map<number, GeoJSON.FeatureCollection>();
 
@@ -19,6 +20,15 @@ function getLevelGeoJSON(level: number): GeoJSON.FeatureCollection {
     return getRequiredMapValue(geoJSONByLevel, level, "GeoJSON by level");
   }
 
+  if (
+    BackendService.getBackendConfig().indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel
+  ) {
+    const emptyLevelFeatureCollection = emptyFeatureCollection();
+
+    geoJSONByLevel.set(level, emptyLevelFeatureCollection);
+    return emptyLevelFeatureCollection;
+  }
+
   const currentBuildingIndoorData = BackendService.getGeoJson();
 
   const levelFilteredFeatures = currentBuildingIndoorData.features.filter((feat) =>
@@ -31,6 +41,13 @@ function getLevelGeoJSON(level: number): GeoJSON.FeatureCollection {
 
   geoJSONByLevel.set(level, levelFilteredFeatureCollection);
   return levelFilteredFeatureCollection;
+}
+
+function emptyFeatureCollection(): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: [],
+  };
 }
 
 function getLevelNames(): string[] {

@@ -77,6 +77,40 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
     expect(BackendService.getGeoJson()).toBe(indoorGeoJson);
     expect(BackendService.getRawOverpassData()).toBe(rawOverpassData);
   });
+
+  it("builds the raw indoor model and graph indexes for the raw pipeline", async () => {
+    const rawOverpassData: RawOverpassDataResponse = {
+      buildings: rawBuildingOverpass,
+      indoor: rawIndoorOverpass,
+    };
+    const buildingGeoJson: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: [buildingFeature],
+    };
+
+    (HttpService.fetchRawOverpassData as jest.Mock).mockResolvedValue(rawOverpassData);
+    (overpassToGeoJson as jest.Mock).mockResolvedValueOnce(buildingGeoJson);
+    (BuildingService.handleSearch as jest.Mock).mockResolvedValue(buildingInterface);
+
+    await BackendService.fetchBackendData({
+      source: BackendSourceEnum.cachedOverpass,
+      indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+      building: "apb",
+    });
+
+    expect(HttpService.fetchRawOverpassData).toHaveBeenCalledWith("apb");
+    expect(overpassToGeoJson).toHaveBeenCalledWith(rawOverpassData.buildings);
+    expect(BackendService.getIndoorModel().levels).toEqual([1, 0]);
+    expect(BackendService.getRawOverpassGraphs().indoor.getNode("8109446525")?.lon).toBe(0);
+    expect(
+      BackendService.getRawOverpassGraphs()
+        .indoor.getWaysForNode(3)
+        .map((way) => way.id),
+    ).toEqual([2]);
+    expect(BackendService.getAllLevels()).toEqual([1, 0]);
+    expect(BackendService.getOutline()).toEqual(buildingFeature.geometry.coordinates[0]);
+    expect(() => BackendService.getGeoJson()).toThrow("Indoor GeoJSON has not been loaded.");
+  });
 });
 
 const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
@@ -144,4 +178,57 @@ const roomFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
       ],
     ],
   },
+};
+
+const rawBuildingOverpass: RawOverpassDataResponse["buildings"] = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    { type: "node", id: 4, lat: 1, lon: 0 },
+    {
+      type: "way",
+      id: 1,
+      nodes: [1, 2, 3, 4, 1],
+      tags: {
+        building: "university",
+        name: "APB",
+      },
+    },
+  ],
+};
+
+const rawIndoorOverpass: RawOverpassDataResponse["indoor"] = {
+  elements: [
+    {
+      type: "node",
+      id: 8109446525,
+      lat: 0,
+      lon: 0,
+      tags: { level: "0" },
+    },
+    {
+      type: "node",
+      id: 8109446619,
+      lat: 1,
+      lon: 0,
+      tags: { level: "99" },
+    },
+    {
+      type: "node",
+      id: 3,
+      lat: 0.5,
+      lon: 0.5,
+    },
+    {
+      type: "way",
+      id: 2,
+      nodes: [3],
+      tags: {
+        indoor: "room",
+        level: "0",
+        repeat_on: "1",
+      },
+    },
+  ],
 };

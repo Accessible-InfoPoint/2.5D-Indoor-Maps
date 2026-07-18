@@ -7,6 +7,7 @@ import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
+import { buildRawIndoorLevelRenderModel } from "./indoorLevel/rawIndoorLevelRenderBuilder";
 
 interface IndoorLevelState {
   getSelectedFeatureIds: () => string[];
@@ -108,7 +109,10 @@ export class IndoorLevel {
           userProfile: UserService.getCurrentProfile(),
         });
       case IndoorDataPipelineEnum.rawIndoorModel:
-        throw new Error("The raw indoor model render pipeline is not implemented yet.");
+        return buildRawIndoorLevelRenderModel({
+          model: BackendService.getIndoorModel(),
+          level: this.level,
+        });
     }
   }
 

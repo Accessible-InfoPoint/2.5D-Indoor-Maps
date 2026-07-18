@@ -10,7 +10,7 @@
   "STAIRCASE_HANDRAIL_HEIGHT": 1,
   "DOOR_MATCH_TOLERANCE_M": 0.25,
   "BACKEND_SOURCE": "cachedOverpass",
-  "INDOOR_DATA_PIPELINE": "clientGeoJsonCompatibility",
+  "INDOOR_DATA_PIPELINE": "rawIndoorModel",
   "CURRENT_BUILDING": "apb",
   "MAP_START_LAT": "51.02546115",
   "MAP_START_LNG": "13.72293115",
