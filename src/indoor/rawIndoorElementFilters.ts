@@ -13,7 +13,10 @@ export function isRawIndoorRoomElement(element: OverpassElement): boolean {
     return false;
   }
 
-  return INDOOR_LEVEL_CONTRIBUTOR_TAGS.has(tags.indoor) && tags.landing === undefined;
+  return (
+    (INDOOR_LEVEL_CONTRIBUTOR_TAGS.has(tags.indoor) && tags.landing === undefined) || // roms, areas and corridors, excluding stair landings, which are also areas
+    (tags.indoor === "yes" && tags.tourism === "artwork") // TODO: might be replaced by different tagging, currently only for apb bubbles artwork
+  );
 }
 
 export function contributesToIndoorLevels(element: OverpassElement): boolean {
