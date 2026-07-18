@@ -53,6 +53,24 @@ export class OverpassTransformError extends Error {
   }
 }
 
+export class OverpassCacheWriteError extends Error {
+  readonly code = "overpass_cache_write_failed";
+  readonly resourceLabel?: string;
+  readonly url?: string;
+  readonly dest: string;
+  readonly responsePreview?: string;
+
+  constructor(details: OverpassErrorDetails) {
+    super(formatOverpassCacheWriteError(details));
+    this.name = "OverpassCacheWriteError";
+    this.resourceLabel = details.resourceLabel;
+    this.url = details.url;
+    this.dest = details.dest;
+    this.responsePreview = details.responsePreview;
+    this.cause = details.cause;
+  }
+}
+
 export function previewResponse(responseText: string): string {
   return responseText.replace(/\s+/g, " ").trim().slice(0, RESPONSE_PREVIEW_LENGTH);
 }
@@ -99,6 +117,29 @@ function formatOverpassTransformError(details: OverpassErrorDetails): string {
   }
 
   lines.push("Hint: Overpass may have returned invalid JSON or data the converter cannot handle.");
+
+  return lines.join("\n");
+}
+
+function formatOverpassCacheWriteError(details: OverpassErrorDetails): string {
+  const lines = [
+    `Failed to save raw Overpass response${formatResourceLabel(details.resourceLabel)}.`,
+    `Destination: ${details.dest}`,
+  ];
+
+  if (details.url !== undefined) {
+    lines.push(`URL: ${details.url}`);
+  }
+
+  if (details.cause instanceof Error) {
+    lines.push(`Cause: ${details.cause.message}`);
+  }
+
+  if (details.responsePreview) {
+    lines.push(`Response preview: ${details.responsePreview}`);
+  }
+
+  lines.push("Hint: Overpass may have returned invalid JSON instead of an Overpass response.");
 
   return lines.join("\n");
 }

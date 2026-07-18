@@ -1,5 +1,5 @@
 import { OverpassDownloadError, previewResponse } from "./overpassErrors";
-import { transformToGeoJsonAndSaveFile } from "./transformToGeoJsonAndSaveFile";
+import { saveOverpassJsonAndSaveFile } from "./saveOverpassJsonAndSaveFile";
 
 interface DownloadResourceOptions {
   headers?: Record<string, string>;
@@ -52,7 +52,7 @@ export async function downloadResource(
       });
     }
 
-    await transformToGeoJsonAndSaveFile(await response.text(), dest, {
+    await saveOverpassJsonAndSaveFile(await response.text(), dest, {
       resourceLabel: options.resourceLabel,
       url,
     });

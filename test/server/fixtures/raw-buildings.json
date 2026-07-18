@@ -1,0 +1,21 @@
+{
+  "version": 0.6,
+  "generator": "test",
+  "elements": [
+    { "type": "node", "id": 1, "lat": 0, "lon": 0 },
+    { "type": "node", "id": 2, "lat": 0, "lon": 10 },
+    { "type": "node", "id": 3, "lat": 10, "lon": 10 },
+    { "type": "node", "id": 4, "lat": 10, "lon": 0 },
+    {
+      "type": "way",
+      "id": 10,
+      "nodes": [1, 2, 3, 4, 1],
+      "tags": {
+        "building": "university",
+        "name": "Fixture Building",
+        "min_level": "0",
+        "max_level": "1"
+      }
+    }
+  ]
+}

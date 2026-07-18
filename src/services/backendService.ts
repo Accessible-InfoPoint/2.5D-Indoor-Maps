@@ -1,6 +1,6 @@
 import { BuildingInterface } from "../models/buildingInterface";
 import BuildingService from "./buildingService";
-import HttpService from "./httpService";
+import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { extractLevels } from "../utils/extractLevels";
@@ -33,6 +33,7 @@ export interface BuildingConstants {
 let buildingConstants: BuildingConstants | undefined;
 let buildingDescription = "";
 let geoJson: GeoJSON.FeatureCollection | undefined;
+let rawOverpassData: RawOverpassDataResponse | undefined;
 const allLevels = new Set<number>();
 
 let buildingInterface: BuildingInterface | undefined;
@@ -64,10 +65,18 @@ type BuildingDefinitionWithCenters = BuildingDefinition & {
   STANDARD_CENTER_WHEELCHAIR_MODE?: number[];
 };
 
-interface LoadedBackendData {
+interface GeoJsonLoadedBackendData {
+  kind: "geoJson";
   buildingInterface: BuildingInterface;
   geoJson: GeoJSON.FeatureCollection;
 }
+
+interface RawOverpassLoadedBackendData {
+  kind: "rawOverpass";
+  rawOverpassData: RawOverpassDataResponse;
+}
+
+type LoadedBackendData = GeoJsonLoadedBackendData | RawOverpassLoadedBackendData;
 
 function parseBackendSource(value: string): BackendSourceEnum {
   if (Object.values(BackendSourceEnum).includes(value as BackendSourceEnum))
@@ -109,6 +118,7 @@ function resetBackendData(): void {
   buildingConstants = undefined;
   buildingDescription = "";
   geoJson = undefined;
+  rawOverpassData = undefined;
   allLevels.clear();
   buildingInterface = undefined;
   DoorService.clearDoorIndex();
@@ -121,6 +131,11 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
   const currentBuilding = backendConfig.building;
   const buildingDefinition = BuildingConstantsDefinition[currentBuilding];
   const loadedData = await loadBackendData(backendConfig, buildingDefinition);
+
+  if (loadedData.kind === "rawOverpass") {
+    rawOverpassData = loadedData.rawOverpassData;
+    throw new Error("The raw indoor model data pipeline is not implemented yet.");
+  }
 
   buildingInterface = loadedData.buildingInterface;
   geoJson = loadedData.geoJson;
@@ -143,6 +158,9 @@ async function loadBackendData(
 ): Promise<LoadedBackendData> {
   switch (config.source) {
     case BackendSourceEnum.cachedOverpass:
+      if (config.indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel) {
+        return loadRawOverpassData();
+      }
       return loadCachedOverpassData();
     case BackendSourceEnum.localGeojson:
       return loadLocalGeoJsonData(config.building, buildingDefinition);
@@ -152,7 +170,17 @@ async function loadBackendData(
 }
 
 async function loadCachedOverpassData(): Promise<LoadedBackendData> {
-  return HttpService.fetchFilteredIndoorData(backendConfig.building);
+  return {
+    kind: "geoJson",
+    ...(await HttpService.fetchFilteredIndoorData(backendConfig.building)),
+  };
+}
+
+async function loadRawOverpassData(): Promise<LoadedBackendData> {
+  return {
+    kind: "rawOverpass",
+    rawOverpassData: await HttpService.fetchRawOverpassData(backendConfig.building),
+  };
 }
 
 async function loadLocalGeoJsonData(
@@ -166,6 +194,7 @@ async function loadLocalGeoJsonData(
   );
 
   return {
+    kind: "geoJson",
     buildingInterface: loadedBuildingInterface,
     geoJson: BuildingService.filterInsideAndLevel(fullGeoJson),
   };
@@ -393,6 +422,14 @@ function getLoadedGeoJson(): GeoJSON.FeatureCollection {
   return geoJson;
 }
 
+function getRawOverpassData(): RawOverpassDataResponse {
+  if (rawOverpassData === undefined) {
+    throw new Error("Raw Overpass data has not been loaded.");
+  }
+
+  return rawOverpassData;
+}
+
 function getLoadedBuildingInterface(): BuildingInterface {
   if (buildingInterface === undefined) {
     throw new Error("Building interface has not been loaded.");
@@ -411,4 +448,5 @@ export default {
   getAllLevels,
   configureBackend,
   getBackendConfig,
+  getRawOverpassData,
 };

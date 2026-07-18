@@ -5,6 +5,7 @@ jest.mock("../../src/services/languageService", () => ({
 }));
 
 import HttpService, { HttpRequestError } from "../../src/services/httpService";
+import { OverpassJson } from "../../src/models/overpassJson";
 
 describe("httpService", () => {
   const originalXMLHttpRequest = globalThis.XMLHttpRequest;
@@ -53,6 +54,21 @@ describe("httpService", () => {
     await expect(HttpService.fetchFilteredIndoorData("apb")).rejects.toThrow(
       "An error occurred while fetching building data: Service Unavailable",
     );
+  });
+
+  it("fetches raw Overpass data from the raw endpoint", async () => {
+    const responseBody: { buildings: OverpassJson; indoor: OverpassJson } = {
+      buildings: { elements: [] },
+      indoor: { elements: [] },
+    };
+
+    installMockXmlHttpRequest({
+      status: 200,
+      statusText: "OK",
+      responseText: JSON.stringify(responseBody),
+    });
+
+    await expect(HttpService.fetchRawOverpassData("apb")).resolves.toEqual(responseBody);
   });
 });
 

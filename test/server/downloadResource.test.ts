@@ -1,18 +1,18 @@
-jest.mock("../../server/transformToGeoJsonAndSaveFile", () => ({
-  transformToGeoJsonAndSaveFile: jest.fn().mockResolvedValue(undefined),
+jest.mock("../../server/saveOverpassJsonAndSaveFile", () => ({
+  saveOverpassJsonAndSaveFile: jest.fn().mockResolvedValue(undefined),
 }));
 
 import { downloadResource } from "../../server/downloadResource";
 import { OverpassDownloadError } from "../../server/overpassErrors";
-import { transformToGeoJsonAndSaveFile } from "../../server/transformToGeoJsonAndSaveFile";
+import { saveOverpassJsonAndSaveFile } from "../../server/saveOverpassJsonAndSaveFile";
 
 const fetchMock = jest.fn();
-const transformMock = jest.mocked(transformToGeoJsonAndSaveFile);
+const saveMock = jest.mocked(saveOverpassJsonAndSaveFile);
 
 describe("downloadResource", () => {
   beforeEach(() => {
     fetchMock.mockReset();
-    transformMock.mockClear();
+    saveMock.mockClear();
     Object.defineProperty(globalThis, "fetch", {
       configurable: true,
       writable: true,
@@ -38,7 +38,7 @@ describe("downloadResource", () => {
         "User-Agent": "test-application/1.0",
       },
     });
-    expect(transformMock).toHaveBeenCalledWith('{"elements":[]}', "output.geojson", {
+    expect(saveMock).toHaveBeenCalledWith('{"elements":[]}', "output.geojson", {
       resourceLabel: undefined,
       url: "https://example.com",
     });
@@ -55,7 +55,7 @@ describe("downloadResource", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(transformMock).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenCalledTimes(1);
   });
 
   it("reports HTTP 429 after all retries are exhausted", async () => {

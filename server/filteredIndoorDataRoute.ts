@@ -1,7 +1,7 @@
 import { Application, Request, Response } from "express";
-import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
+import { OverpassJson } from "../src/models/overpassJson";
 import {
   filterByBoundsOrBearingNode,
   findBuildingBySearchString,
@@ -12,7 +12,7 @@ import {
   getCachedOverpassPathsForBuilding,
   getBuildingSourceDefinition,
 } from "./buildingSources";
-import { resolveProjectPath } from "./paths";
+import { readCachedGeoJsonCompat, readCachedOverpassJson } from "./readCachedOverpassData";
 
 type BuildingId = string;
 type BuildingDefinitions = Record<
@@ -34,6 +34,11 @@ export interface FilteredIndoorDataRouteOptions {
 interface FilteredIndoorDataResponse {
   buildingInterface: BuildingInterface;
   geoJson: GeoJSON.FeatureCollection;
+}
+
+interface RawOverpassDataResponse {
+  buildings: OverpassJson;
+  indoor: OverpassJson;
 }
 
 export function registerFilteredIndoorDataRoute(
@@ -60,6 +65,31 @@ export function registerFilteredIndoorDataRoute(
         const message = getErrorMessage(error);
         response.status(500).json(
           apiError("cached_indoor_data_unavailable", message, {
+            building: request.params.building,
+          }),
+        );
+      }
+    },
+  );
+
+  app.get(
+    "/api/buildings/:building/overpass",
+    async (request: RouteRequest, response: RouteResponse) => {
+      try {
+        const building = request.params.building;
+
+        if (!isBuildingId(building, routeOptions)) {
+          response
+            .status(404)
+            .json(apiError("unknown_building", `Unknown building "${building}".`, { building }));
+          return;
+        }
+
+        response.json(await loadRawOverpassData(building, routeOptions));
+      } catch (error) {
+        const message = getErrorMessage(error);
+        response.status(500).json(
+          apiError("cached_overpass_data_unavailable", message, {
             building: request.params.building,
           }),
         );
@@ -96,8 +126,8 @@ async function loadFilteredIndoorData(
 ): Promise<FilteredIndoorDataResponse> {
   const buildingDefinition = options.buildingDefinitions[building];
   const cachedPaths = getCachedPaths(building, options);
-  const buildings = await readFeatureCollection(cachedPaths.buildingsDataPath);
-  const indoor = await readFeatureCollection(cachedPaths.indoorDataPath);
+  const buildings = await readCachedGeoJsonCompat(cachedPaths.buildingsDataPath);
+  const indoor = await readCachedGeoJsonCompat(cachedPaths.indoorDataPath);
   const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
 
   if (!buildingInterface) {
@@ -111,6 +141,18 @@ async function loadFilteredIndoorData(
     geoJson: filterByBoundsOrBearingNode(indoor, buildingInterface.boundingBox, {
       bearingNodeIds: getBearingNodeIds(buildingDefinition),
     }),
+  };
+}
+
+async function loadRawOverpassData(
+  building: BuildingId,
+  options: NormalizedFilteredIndoorDataRouteOptions,
+): Promise<RawOverpassDataResponse> {
+  const cachedPaths = getCachedPaths(building, options);
+
+  return {
+    buildings: await readCachedOverpassJson(cachedPaths.buildingsDataPath),
+    indoor: await readCachedOverpassJson(cachedPaths.indoorDataPath),
   };
 }
 
@@ -138,12 +180,6 @@ function getCachedPaths(
   }
 
   return getCachedOverpassPathsForBuilding(building);
-}
-
-async function readFeatureCollection(path: string): Promise<GeoJSON.FeatureCollection> {
-  const data = await fs.readFile(resolveProjectPath(path), "utf8");
-
-  return JSON.parse(data) as GeoJSON.FeatureCollection;
 }
 
 function isBuildingId(

@@ -1,9 +1,8 @@
-import fs from "node:fs/promises";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { filterByBoundsOrBearingNode, findFeatureById } from "../src/utils/buildingGeoJsonFilters";
 import { getRequiredFeatureProperties } from "../src/utils/geoJsonHelpers";
 import { getBuildingSourceDefinition, matchesBuildingTags } from "./buildingSources";
-import { resolveProjectPath } from "./paths";
+import { readCachedGeoJsonCompat } from "./readCachedOverpassData";
 
 interface CachedOverpassPaths {
   buildingsDataPath: string;
@@ -18,8 +17,8 @@ export async function validateCachedOverpassDataForBuilding(
 ): Promise<void> {
   const buildingConstants = getBuildingConstants(building);
   const buildingSource = getBuildingSourceDefinition(building);
-  const buildings = await readFeatureCollection(paths.buildingsDataPath);
-  const indoor = await readFeatureCollection(paths.indoorDataPath);
+  const buildings = await readCachedGeoJsonCompat(paths.buildingsDataPath);
+  const indoor = await readCachedGeoJsonCompat(paths.indoorDataPath);
   const matchingBuildings = buildings.features.filter((feature) => {
     const properties = feature.properties;
 
@@ -57,12 +56,6 @@ export async function validateCachedOverpassDataForBuilding(
 
   validateBearingNode(indoor, buildingConstants.BEARING_CALC_NODE1, "BEARING_CALC_NODE1", building);
   validateBearingNode(indoor, buildingConstants.BEARING_CALC_NODE2, "BEARING_CALC_NODE2", building);
-}
-
-async function readFeatureCollection(path: string): Promise<GeoJSON.FeatureCollection> {
-  const data = await fs.readFile(resolveProjectPath(path), "utf8");
-
-  return JSON.parse(data) as GeoJSON.FeatureCollection;
 }
 
 function getBuildingConstants(building: string): (typeof BuildingConstantsDefinition)[BuildingId] {

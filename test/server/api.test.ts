@@ -4,6 +4,16 @@ import path from "node:path";
 import { FilteredIndoorDataRouteOptions } from "../../server/filteredIndoorDataRoute";
 import { createApp } from "../../server/app";
 
+jest.mock("osm2geojson-ultra", () => ({
+  __esModule: true,
+  default: (overpassJson: MockOverpassJson): GeoJSON.FeatureCollection => ({
+    type: "FeatureCollection",
+    features: overpassJson.elements
+      .filter((element) => element.tags !== undefined)
+      .map((element) => toMockGeoJsonFeature(element, overpassJson.elements)),
+  }),
+}));
+
 describe("server API", () => {
   it("reports health status", async () => {
     await withFixtureServer(async (baseUrl) => {
@@ -38,6 +48,51 @@ describe("server API", () => {
         "node/100",
       ]);
     });
+  });
+
+  it("returns raw Overpass data for the configured building source", async () => {
+    await withFixtureServer(
+      async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/api/buildings/fixture/overpass`);
+        const body = (await response.json()) as RawOverpassResponse;
+
+        expect(response.status).toBe(200);
+        expect(body.buildings.elements.map((element) => `${element.type}/${element.id}`)).toEqual([
+          "node/1",
+          "node/2",
+          "node/3",
+          "node/4",
+          "way/10",
+        ]);
+        expect(body.indoor.elements.map((element) => `${element.type}/${element.id}`)).toEqual([
+          "node/100",
+          "node/101",
+        ]);
+      },
+      jest.fn(),
+      {
+        buildingsDataPath: path.resolve(process.cwd(), "test/server/fixtures/raw-buildings.json"),
+        indoorDataPath: path.resolve(process.cwd(), "test/server/fixtures/raw-indoor.json"),
+      },
+    );
+  });
+
+  it("returns compatibility GeoJSON when cached data is raw Overpass JSON", async () => {
+    await withFixtureServer(
+      async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/api/buildings/fixture/indoor`);
+        const body = (await response.json()) as GeoJSONResponse;
+
+        expect(response.status).toBe(200);
+        expect(body.buildingInterface.boundingBox).toEqual([0, 0, 10, 10]);
+        expect(body.geoJson.features.map((feature) => feature.id)).toEqual(["node/100"]);
+      },
+      jest.fn(),
+      {
+        buildingsDataPath: path.resolve(process.cwd(), "test/server/fixtures/raw-buildings.json"),
+        indoorDataPath: path.resolve(process.cwd(), "test/server/fixtures/raw-indoor.json"),
+      },
+    );
   });
 
   it("returns a 404 for unknown buildings", async () => {
@@ -92,6 +147,78 @@ interface GeoJSONResponse {
     boundingBox: number[];
   };
   geoJson: GeoJSON.FeatureCollection;
+}
+
+interface RawOverpassResponse {
+  buildings: {
+    elements: Array<{ type: string; id: number }>;
+  };
+  indoor: {
+    elements: Array<{ type: string; id: number }>;
+  };
+}
+
+interface MockOverpassJson {
+  elements: MockOverpassElement[];
+}
+
+type MockOverpassElement = MockOverpassNode | MockOverpassWay;
+
+interface MockOverpassNode {
+  type: "node";
+  id: number;
+  lat: number;
+  lon: number;
+  tags?: GeoJSON.GeoJsonProperties;
+}
+
+interface MockOverpassWay {
+  type: "way";
+  id: number;
+  nodes: number[];
+  tags?: GeoJSON.GeoJsonProperties;
+}
+
+function toMockGeoJsonFeature(
+  element: MockOverpassElement,
+  elements: MockOverpassElement[],
+): GeoJSON.Feature {
+  return {
+    type: "Feature",
+    id: `${element.type}/${element.id}`,
+    properties: element.tags ?? {},
+    geometry:
+      element.type === "node"
+        ? {
+            type: "Point",
+            coordinates: [element.lon, element.lat],
+          }
+        : {
+            type: "Polygon",
+            coordinates: [getMockWayCoordinates(element, elements)],
+          },
+  };
+}
+
+function getMockWayCoordinates(
+  way: MockOverpassWay,
+  elements: MockOverpassElement[],
+): GeoJSON.Position[] {
+  const nodesById = new Map(
+    elements
+      .filter((element): element is MockOverpassNode => element.type === "node")
+      .map((node) => [node.id, node]),
+  );
+
+  return way.nodes.map((nodeId) => {
+    const node = nodesById.get(nodeId);
+
+    if (node === undefined) {
+      throw new Error(`Missing node ${nodeId}.`);
+    }
+
+    return [node.lon, node.lat];
+  });
 }
 
 async function withFixtureServer(

@@ -1,0 +1,24 @@
+{
+  "version": 0.6,
+  "generator": "test",
+  "elements": [
+    {
+      "type": "node",
+      "id": 100,
+      "lat": 20,
+      "lon": 20,
+      "tags": {
+        "level": "0"
+      }
+    },
+    {
+      "type": "node",
+      "id": 101,
+      "lat": 30,
+      "lon": 30,
+      "tags": {
+        "level": "0"
+      }
+    }
+  ]
+}
