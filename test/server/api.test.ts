@@ -4,9 +4,8 @@ import path from "node:path";
 import { FilteredIndoorDataRouteOptions } from "../../server/filteredIndoorDataRoute";
 import { createApp } from "../../server/app";
 
-jest.mock("osm2geojson-ultra", () => ({
-  __esModule: true,
-  default: (overpassJson: MockOverpassJson): GeoJSON.FeatureCollection => ({
+jest.mock("../../src/utils/overpassToGeoJson", () => ({
+  overpassToGeoJson: (overpassJson: MockOverpassJson): GeoJSON.FeatureCollection => ({
     type: "FeatureCollection",
     features: overpassJson.elements
       .filter((element) => element.tags !== undefined)

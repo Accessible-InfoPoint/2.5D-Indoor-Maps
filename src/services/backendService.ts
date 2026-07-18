@@ -9,6 +9,7 @@ import { BackendSourceEnum } from "../models/backendSourceEnum";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { overpassToGeoJson } from "../utils/overpassToGeoJson";
 import { getRequiredArrayValue, getRequiredMatch } from "../utils/requiredHelpers";
 import {
   BACKEND_SOURCE,
@@ -69,6 +70,7 @@ interface GeoJsonLoadedBackendData {
   kind: "geoJson";
   buildingInterface: BuildingInterface;
   geoJson: GeoJSON.FeatureCollection;
+  rawOverpassData?: RawOverpassDataResponse;
 }
 
 interface RawOverpassLoadedBackendData {
@@ -139,6 +141,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 
   buildingInterface = loadedData.buildingInterface;
   geoJson = loadedData.geoJson;
+  rawOverpassData = loadedData.rawOverpassData;
 
   console.log("BackendService BuildingInterface", structuredClone(buildingInterface));
   console.log("BackendService GeoJSON", structuredClone(geoJson));
@@ -161,6 +164,9 @@ async function loadBackendData(
       if (config.indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel) {
         return loadRawOverpassData();
       }
+      if (config.indoorDataPipeline === IndoorDataPipelineEnum.clientGeoJsonCompatibility) {
+        return loadClientGeoJsonCompatibilityData(buildingDefinition);
+      }
       return loadCachedOverpassData();
     case BackendSourceEnum.localGeojson:
       return loadLocalGeoJsonData(config.building, buildingDefinition);
@@ -180,6 +186,27 @@ async function loadRawOverpassData(): Promise<LoadedBackendData> {
   return {
     kind: "rawOverpass",
     rawOverpassData: await HttpService.fetchRawOverpassData(backendConfig.building),
+  };
+}
+
+async function loadClientGeoJsonCompatibilityData(
+  buildingDefinition: BuildingDefinition,
+): Promise<LoadedBackendData> {
+  const loadedRawOverpassData = await HttpService.fetchRawOverpassData(backendConfig.building);
+  const [buildingsGeoJson, indoorGeoJson] = await Promise.all([
+    overpassToGeoJson(loadedRawOverpassData.buildings),
+    overpassToGeoJson(loadedRawOverpassData.indoor),
+  ]);
+  const loadedBuildingInterface = await BuildingService.handleSearch(
+    buildingsGeoJson,
+    buildingDefinition.SEARCH_STRING,
+  );
+
+  return {
+    kind: "geoJson",
+    buildingInterface: loadedBuildingInterface,
+    geoJson: indoorGeoJson,
+    rawOverpassData: loadedRawOverpassData,
   };
 }
 

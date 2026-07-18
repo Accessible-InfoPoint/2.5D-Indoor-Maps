@@ -97,6 +97,7 @@ export class IndoorLevel {
   private buildRenderModel(geoJSON: GeoJSON.FeatureCollection): IndoorLevelRenderModel {
     switch (BackendService.getBackendConfig().indoorDataPipeline) {
       case IndoorDataPipelineEnum.geoJsonCompatibility:
+      case IndoorDataPipelineEnum.clientGeoJsonCompatibility:
         return buildIndoorLevelRenderModel({
           geoJSON,
           buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
