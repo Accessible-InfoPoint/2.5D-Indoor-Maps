@@ -1,19 +1,9 @@
 import { DoorDataInterface } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
-import ColorService from "../services/colorService";
-import FeatureService from "../services/featureService";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { calculateDoorOrientationGeometry } from "../indoor/doorOrientation";
 
 const doorIndex = new Map<string, DoorDataInterface[]>();
-
-export interface DoorRenderData {
-  coordinates: GeoJSON.Position[];
-  symbol: {
-    lineColor: string;
-    lineWidth: number;
-  };
-}
 
 function coordKey(coord: GeoJSON.Position): string {
   return coord.join(",");
@@ -89,41 +79,20 @@ function calculateDoorOrientation(
 
   if (door && door.orientation == undefined) {
     const matchedDoorCoord = door.coord;
-    // door should be scaled to common width
-    const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, matchedDoorCoord);
-    const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, matchedDoorCoord);
     const doorWidth = door.properties.width ?? 1; // in meters
-    // we need to take spherical earth into account, therefore we must project into mercator, then calculate the door and project back
-    const prevDoorCoord = [
-      matchedDoorCoord[0] + ((previous[0] - matchedDoorCoord[0]) * doorWidth) / (2 * prevDist),
-      CoordinateHelpers.y2lat(
-        CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
-          ((CoordinateHelpers.lat2y(previous[1]) - CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
-            doorWidth) /
-            (2 * prevDist),
-      ),
-    ];
-    const afterDoorCoord = [
-      matchedDoorCoord[0] + ((after[0] - matchedDoorCoord[0]) * doorWidth) / (2 * afterDist),
-      CoordinateHelpers.y2lat(
-        CoordinateHelpers.lat2y(matchedDoorCoord[1]) +
-          ((CoordinateHelpers.lat2y(after[1]) - CoordinateHelpers.lat2y(matchedDoorCoord[1])) *
-            doorWidth) /
-            (2 * afterDist),
-      ),
-    ];
-
-    door.orientation = [prevDoorCoord, afterDoorCoord];
-    door.orientationDebug = {
+    const orientationGeometry = calculateDoorOrientationGeometry(
+      matchedDoorCoord,
       previous,
-      door: matchedDoorCoord,
       after,
-      previousDistanceM: prevDist,
-      afterDistanceM: afterDist,
-      widthM: doorWidth,
-      calculatedPrevious: prevDoorCoord,
-      calculatedAfter: afterDoorCoord,
-    };
+      doorWidth,
+    );
+
+    if (orientationGeometry === undefined) {
+      return;
+    }
+
+    door.orientation = orientationGeometry.orientation;
+    door.orientationDebug = orientationGeometry.debug;
   }
 }
 
@@ -154,46 +123,6 @@ function hasSameLevelSet(a: Set<number>, b: Set<number>): boolean {
   return a.size == b.size && Array.from(a).every((level) => b.has(level));
 }
 
-function getRenderData(door: DoorDataInterface, selectedFeatureIds: string[]): DoorRenderData[] {
-  // TODO: other types of doors need different visualizations, especially revolving doors
-  const renderData: DoorRenderData[] = [];
-
-  // linear door (e.g. hinged, sliding, opening etc)
-  let color: string;
-
-  if (
-    door.rooms.every((feature) => {
-      const properties = getRequiredFeatureProperties(feature);
-
-      return ["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes";
-    })
-  )
-    color = FeatureService.getFeatureStyle(door.rooms[0])["polygonFill"]; // if every room connected is a corridor or an area (for rooms bordering an area, and it is not a free standing staircase), we draw it in corridor color
-  else
-    color = FeatureService.getFeatureStyle(
-      door.rooms.filter((feature) => {
-        const properties = getRequiredFeatureProperties(feature);
-
-        return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
-      })[0],
-    )["polygonFill"]; // else we draw it in the color of the not-corridor (or not-area)
-
-  if (door.rooms.some((feature) => selectedFeatureIds.includes(getRequiredFeatureId(feature))))
-    color = ColorService.getCurrentColors().roomColorS; // at least one room is selected, color door in selected room color
-
-  if (!door.orientation) return renderData;
-
-  renderData.push({
-    coordinates: door.orientation,
-    symbol: {
-      lineColor: color,
-      lineWidth: FeatureService.getFeatureStyle(Array.from(door.rooms)[0])["lineWidth"],
-    },
-  });
-
-  return renderData;
-}
-
 export default {
   clearDoorIndex,
   addDoor,
@@ -201,6 +130,5 @@ export default {
   addRoomToDoor,
   calculateDoorOrientation,
   getDoorsByLevel,
-  getRenderData,
   findDoorByCoordinate,
 };

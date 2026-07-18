@@ -5,7 +5,7 @@ import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
-import { IndoorLevelRenderModel } from "./indoorLevelRenderModel";
+import { DoorRenderItem, IndoorLevelRenderModel } from "./indoorLevelRenderModel";
 import { PositionMarkerRenderItem, RoomRenderItem } from "./indoorLevelRenderModel";
 
 interface RawIndoorLevelRenderBuilderOptions {
@@ -22,6 +22,7 @@ export function buildRawIndoorLevelRenderModel(
   return {
     outlineCoordinates: options.model.outlineCoordinates,
     rooms: buildRoomRenderItems(options),
+    doors: buildDoorRenderItems(options),
     tactilePaving: [],
     pointMarkerFeatures: [],
     staircase: {
@@ -33,6 +34,14 @@ export function buildRawIndoorLevelRenderModel(
       complexFeatures: [],
     },
   };
+}
+
+function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
+  const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
+
+  return options.model.doors
+    .filter((door) => door.levels.length == 0 || door.hasLevel(options.level))
+    .flatMap((door) => door.buildRenderItems(roomsOnLevel, options.selectedFeatureIds));
 }
 
 function buildRoomRenderItems(options: RawIndoorLevelRenderBuilderOptions): RoomRenderItem[] {

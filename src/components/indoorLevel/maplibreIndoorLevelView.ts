@@ -4,9 +4,7 @@ import type {
   Map as MapLibreMap,
   MapLayerMouseEvent,
 } from "maplibre-gl";
-import { DoorDataInterface } from "../../models/doorDataInterface";
 import ColorService from "../../services/colorService";
-import DoorService from "../../services/doorService";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import {
   InfoPointRenderItem,
@@ -157,25 +155,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
-  drawDoors(doors: DoorDataInterface[], selectedFeatureIds: string[]): void {
-    this.whenLayersInitialized(() => {
-      this.setSourceData(this.doors.sourceId, {
-        type: "FeatureCollection",
-        features: doors
-          .filter((door) => door.rooms.length > 0)
-          .flatMap((door) => DoorService.getRenderData(door, selectedFeatureIds))
-          .map((doorRenderData) => buildMapLibreDoorFeature(doorRenderData)),
-      });
-
-      this.setSourceData(this.doorDebug.sourceId, {
-        type: "FeatureCollection",
-        features: SHOW_DOOR_ORIENTATION_DEBUG
-          ? doors.flatMap((door) => buildMapLibreDoorDebugFeatures(door))
-          : [],
-      });
-    });
-  }
-
   hideAll(): void {
     this.visibleLayerIds.clear();
     this.setLayerSetsVisibility("none");
@@ -322,6 +301,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.renderOutline(renderModel.outlineCoordinates);
     this.renderInfoPoint(renderModel);
     this.renderRooms(renderModel.rooms);
+    this.renderDoors(renderModel);
     this.renderStaircases(renderModel, selectedFeatureIds);
     this.renderTactilePaving(renderModel.tactilePaving);
     this.renderRoomNumbers(renderModel.rooms);
@@ -370,6 +350,20 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.setSourceData(this.rooms.sourceId, {
       type: "FeatureCollection",
       features: roomFeatures.map((roomFeature) => roomFeature.feature),
+    });
+  }
+
+  private renderDoors(renderModel: IndoorLevelRenderModel): void {
+    this.setSourceData(this.doors.sourceId, {
+      type: "FeatureCollection",
+      features: renderModel.doors.map((doorRenderData) => buildMapLibreDoorFeature(doorRenderData)),
+    });
+
+    this.setSourceData(this.doorDebug.sourceId, {
+      type: "FeatureCollection",
+      features: SHOW_DOOR_ORIENTATION_DEBUG
+        ? renderModel.doors.flatMap((door) => buildMapLibreDoorDebugFeatures(door))
+        : [],
     });
   }
 

@@ -1,6 +1,7 @@
 import doorService from "../../src/services/doorService";
 import { DoorDataInterface } from "../../src/models/doorDataInterface";
 import FeatureService from "../../src/services/featureService";
+import { buildDoorRenderItemsFromLegacyDoors } from "../../src/indoor/doorRenderBuilder";
 
 jest.mock("../../src/services/featureService", () => ({
   getFeatureStyle: jest.fn(),
@@ -199,7 +200,7 @@ describe("doorService", () => {
     });
   });
 
-  describe("getRenderData", () => {
+  describe("buildDoorRenderItemsFromLegacyDoors", () => {
     const createMockRoom = (id: string, indoorType: string) => ({
       id,
       properties: { indoor: indoorType },
@@ -237,7 +238,7 @@ describe("doorService", () => {
         properties: {},
       };
 
-      const result = doorService.getRenderData(door, []);
+      const result = buildDoorRenderItemsFromLegacyDoors([door], []);
       expect(result.length).toBe(1);
 
       expect(result[0].coordinates).toEqual(mockOrientation);
@@ -266,7 +267,7 @@ describe("doorService", () => {
         properties: {},
       };
 
-      const result = doorService.getRenderData(door, []);
+      const result = buildDoorRenderItemsFromLegacyDoors([door], []);
 
       expect(result[0].symbol.lineColor).toBe("#123456");
       expect(result[0].symbol.lineWidth).toBe(4);
@@ -292,7 +293,7 @@ describe("doorService", () => {
         properties: {},
       };
 
-      const result = doorService.getRenderData(door, ["1"]);
+      const result = buildDoorRenderItemsFromLegacyDoors([door], ["1"]);
 
       expect(result[0].symbol.lineColor).toBe("#ff0000"); // colors.roomColorS
       expect(result[0].symbol.lineWidth).toBe(5);

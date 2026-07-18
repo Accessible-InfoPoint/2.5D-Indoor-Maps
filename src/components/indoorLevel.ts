@@ -4,6 +4,7 @@ import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import DoorService from "../services/doorService";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
+import { buildDoorRenderItemsFromLegacyDoors } from "../indoor/doorRenderBuilder";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
@@ -89,25 +90,27 @@ export class IndoorLevel {
     }
 
     this.view.render(renderModel, this.state.getSelectedFeatureIds());
-    this.view.drawDoors(
-      DoorService.getDoorsByLevel(this.level),
-      this.state.getSelectedFeatureIds(),
-    );
   }
 
   private buildRenderModel(geoJSON: GeoJSON.FeatureCollection): IndoorLevelRenderModel {
     switch (BackendService.getBackendConfig().indoorDataPipeline) {
       case IndoorDataPipelineEnum.geoJsonCompatibility:
       case IndoorDataPipelineEnum.clientGeoJsonCompatibility:
-        return buildIndoorLevelRenderModel({
-          geoJSON,
-          buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
-          outlineCoordinates: BackendService.getOutline(),
-          level: this.level,
-          selectedFeatureIds: this.state.getSelectedFeatureIds(),
-          infoPointLevel: this.state.getInfoPointLevel(),
-          userProfile: UserService.getCurrentProfile(),
-        });
+        return {
+          ...buildIndoorLevelRenderModel({
+            geoJSON,
+            buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
+            outlineCoordinates: BackendService.getOutline(),
+            level: this.level,
+            selectedFeatureIds: this.state.getSelectedFeatureIds(),
+            infoPointLevel: this.state.getInfoPointLevel(),
+            userProfile: UserService.getCurrentProfile(),
+          }),
+          doors: buildDoorRenderItemsFromLegacyDoors(
+            DoorService.getDoorsByLevel(this.level),
+            this.state.getSelectedFeatureIds(),
+          ),
+        };
       case IndoorDataPipelineEnum.rawIndoorModel:
         return buildRawIndoorLevelRenderModel({
           model: BackendService.getIndoorModel(),

@@ -5,8 +5,6 @@ export class PendingIndoorLevelView implements IndoorLevelView {
 
   render(): void {}
 
-  drawDoors(): void {}
-
   hideAll(): void {}
 
   showAll(): void {}

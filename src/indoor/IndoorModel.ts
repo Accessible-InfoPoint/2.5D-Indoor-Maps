@@ -2,6 +2,7 @@ import { BuildingInterface } from "../models/buildingInterface";
 import { RawOverpassDataResponse } from "../services/httpService";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRequiredArrayValue } from "../utils/requiredHelpers";
+import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorRoom } from "./elements/IndoorRoom";
 
 export interface RawOverpassGraphs {
@@ -16,6 +17,7 @@ export interface IndoorModel {
   outlineCoordinates: number[][];
   levels: number[];
   rooms: IndoorRoom[];
+  doors: IndoorDoor[];
 }
 
 export function createIndoorModel(
@@ -27,6 +29,7 @@ export function createIndoorModel(
     indoor: new OsmGraph(rawOverpassData.indoor),
   };
   const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
+  const doors = IndoorDoor.collectFromGraph(graphs.indoor);
 
   return {
     rawOverpassData,
@@ -35,6 +38,7 @@ export function createIndoorModel(
     outlineCoordinates: getBuildingOutlineCoordinates(buildingInterface),
     levels: collectIndoorLevels(rooms),
     rooms,
+    doors,
   };
 }
 

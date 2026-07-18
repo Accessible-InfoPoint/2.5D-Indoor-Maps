@@ -1,3 +1,5 @@
+import { DoorOrientationDebugData } from "../../models/doorDataInterface";
+
 export interface StyledFeatureRenderItem {
   feature: GeoJSON.Feature;
   style: Record<string, unknown>;
@@ -20,6 +22,15 @@ export interface PositionMarkerRenderItem {
   label: string;
 }
 
+export interface DoorRenderItem {
+  coordinates: [GeoJSON.Position, GeoJSON.Position];
+  symbol: {
+    lineColor: string;
+    lineWidth: number;
+  };
+  debug?: DoorOrientationDebugData;
+}
+
 export interface StaircaseRenderModel {
   doorCoordinates: GeoJSON.Position[];
   lowestPoints: GeoJSON.Feature[];
@@ -33,6 +44,7 @@ export interface IndoorLevelRenderModel {
   outlineCoordinates: number[][];
   infoPoint?: InfoPointRenderItem;
   rooms: RoomRenderItem[];
+  doors: DoorRenderItem[];
   tactilePaving: StyledFeatureRenderItem[];
   pointMarkerFeatures: GeoJSON.Feature[];
   staircase: StaircaseRenderModel;

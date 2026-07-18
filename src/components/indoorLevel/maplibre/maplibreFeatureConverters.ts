@@ -1,7 +1,5 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
-import type { DoorRenderData } from "../../../services/doorService";
-import type { DoorDataInterface } from "../../../models/doorDataInterface";
-import { RoomRenderItem, StyledFeatureRenderItem } from "../indoorLevelRenderModel";
+import { DoorRenderItem, RoomRenderItem, StyledFeatureRenderItem } from "../indoorLevelRenderModel";
 import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
 import { getPatternImageId } from "./maplibreIndoorLevelTypes";
 import { getStyleNumber, getStyleNumberArray, getStyleString } from "./maplibreStyleHelpers";
@@ -81,7 +79,7 @@ export function buildMapLibreStyledLineFeature(item: StyledFeatureRenderItem): G
 }
 
 export function buildMapLibreDoorFeature(
-  item: DoorRenderData,
+  item: DoorRenderItem,
 ): GeoJSON.Feature<GeoJSON.LineString> {
   return {
     type: "Feature",
@@ -97,8 +95,8 @@ export function buildMapLibreDoorFeature(
   };
 }
 
-export function buildMapLibreDoorDebugFeatures(door: DoorDataInterface): GeoJSON.Feature[] {
-  const debug = door.orientationDebug;
+export function buildMapLibreDoorDebugFeatures(door: DoorRenderItem): GeoJSON.Feature[] {
+  const debug = door.debug;
 
   if (!debug) {
     return [];
