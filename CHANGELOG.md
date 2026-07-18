@@ -14,6 +14,24 @@ useful for the project.
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
+### Removed
+
+-
+
+## 1.3.0 - 2026-07-18
+
+### Added
+
 - Added a shared `npm run check` command that runs config validation, formatting,
   linting, type checking, tests, production build, bundle budget checks, and
   Playwright checks.
