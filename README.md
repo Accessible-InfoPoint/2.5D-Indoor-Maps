@@ -84,8 +84,16 @@ release steps. Planned work and larger refactoring ideas are tracked in
 [CHANGELOG.md](CHANGELOG.md).
 
 Configuration fields in `public/strings/settings.json` and
-`public/strings/buildingConstants.json` are documented in
+`public/strings/buildingConstants.json`, plus official Overpass building source
+definitions in `public/strings/buildingSources.json`, are documented in
 [docs/configuration.md](docs/configuration.md).
+
+Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING`
+when the building exists in both `buildingConstants.json` and
+`buildingSources.json`. For local experiments with new buildings, use
+`npm run overpass:candidate -- ...` or
+`npm run overpass:list-buildings -- ...`; the full workflow is documented in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project structure
 

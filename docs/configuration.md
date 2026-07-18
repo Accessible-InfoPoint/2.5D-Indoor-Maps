@@ -33,7 +33,8 @@ General application, rendering, backend, and UI settings.
 ## `buildingConstants.json`
 
 Per-building settings keyed by building id. The `CURRENT_BUILDING` setting must
-match one of these top-level keys when loading local GeoJSON data.
+match one of these top-level keys. For cached Overpass data, the same building
+id must also exist in `buildingSources.json`.
 
 | Field                             | Unit / Type             | Description                                                                                                                         |
 | --------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -49,6 +50,39 @@ match one of these top-level keys when loading local GeoJSON data.
 | `STANDARD_BEARING_3D_MODE`        | degrees                 | Bearing used when entering 2.5D mode.                                                                                               |
 | `STANDARD_PITCH_3D_MODE`          | degrees                 | Pitch used when entering 2.5D mode. MapLibre defaults to a 60 degree max pitch unless the map view raises it.                       |
 | `STANDARD_ZOOM_3D_MODE`           | map zoom                | Zoom used when entering 2.5D mode.                                                                                                  |
+
+## `buildingSources.json`
+
+Official Overpass source settings for buildings that can be loaded through the
+`cachedOverpass` backend.
+
+| Field                                 | Unit / Type                       | Description                                                                     |
+| ------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------- |
+| `sources.<sourceId>.label`            | string                            | Human-readable label used in logs and diagnostics.                              |
+| `sources.<sourceId>.region`           | object                            | Overpass search region. Supported types are `area` and `bbox`.                  |
+| `region.type`                         | enum string                       | `area` uses an Overpass area name. `bbox` uses explicit coordinates.            |
+| `region.name`                         | string                            | Area name used when `type` is `area`, for example `Dresden`.                    |
+| `region.bbox`                         | `[west, south, east, north]`      | Bounding box used when `type` is `bbox`.                                        |
+| `buildings.<buildingId>.source`       | source id string                  | Source id from `sources`.                                                       |
+| `buildings.<buildingId>.buildingTags` | object of OSM tag key/value pairs | Tags that must identify exactly one SIT building in the downloaded source data. |
+
+Every building id in `buildingSources.json/buildings` must have a matching
+entry in `buildingConstants.json`, and vice versa.
+
+## Local Overpass Candidates
+
+Use `npm run overpass:candidate -- --id <id> --area-name "<name>" --tag key=value`
+or `--bbox west,south,east,north` to download and validate a candidate building
+without changing official config. The script writes files under
+`tmp/overpass-candidates/<id>/`, including transformed `buildings.json`,
+`indoor.json`, `report.json`, and a suggested `buildingSources` snippet.
+Quoted option values are supported for area names and tags with spaces.
+
+Use `npm run overpass:list-buildings -- --area-name "<name>"` or
+`--bbox west,south,east,north` to list SIT-conform buildings in an area before
+choosing a candidate. The command writes a compact
+`sit-buildings.features.json` file with only feature ids and properties, plus
+the Overpass query and an Overpass Turbo URL for visual inspection.
 
 ## Documentation Options
 

@@ -7,6 +7,32 @@ export interface FilteredIndoorDataResponse {
   geoJson: GeoJSON.FeatureCollection;
 }
 
+interface ApiErrorResponse {
+  error?:
+    | string
+    | {
+        code?: unknown;
+        message?: unknown;
+        details?: unknown;
+      };
+}
+
+export class HttpRequestError extends Error {
+  readonly url: string;
+  readonly status: number;
+  readonly statusText: string;
+  readonly responseBody: unknown;
+
+  constructor(url: string, xhr: XMLHttpRequest, message: string, responseBody: unknown) {
+    super(lang.buildingErrorFetching + message);
+    this.name = "HttpRequestError";
+    this.url = url;
+    this.status = xhr.status;
+    this.statusText = xhr.statusText;
+    this.responseBody = responseBody;
+  }
+}
+
 function getLocalData<T = GeoJSON.FeatureCollection<any, any>>(overpassQuery: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -16,7 +42,15 @@ function getLocalData<T = GeoJSON.FeatureCollection<any, any>>(overpassQuery: st
           const returnValue = JSON.parse(xhr.responseText);
           resolve(returnValue);
         } else if (xhr.status >= 400) {
-          reject(new Error(lang.buildingErrorFetching + getErrorMessage(xhr)));
+          const parsedResponse = parseResponseBody(xhr.responseText);
+          reject(
+            new HttpRequestError(
+              overpassQuery,
+              xhr,
+              getErrorMessage(xhr, parsedResponse),
+              parsedResponse,
+            ),
+          );
         }
       }
     };
@@ -29,15 +63,27 @@ function getLocalData<T = GeoJSON.FeatureCollection<any, any>>(overpassQuery: st
   });
 }
 
-function getErrorMessage(xhr: XMLHttpRequest): string {
+function parseResponseBody(responseText: string): unknown {
   try {
-    const response = JSON.parse(xhr.responseText) as { error?: unknown };
-
-    if (typeof response.error === "string") {
-      return response.error;
-    }
+    return JSON.parse(responseText) as unknown;
   } catch {
-    // Fall back to the HTTP status text below.
+    return responseText;
+  }
+}
+
+function getErrorMessage(xhr: XMLHttpRequest, responseBody: unknown): string {
+  const response = responseBody as ApiErrorResponse;
+
+  if (typeof response?.error === "string") {
+    return response.error;
+  }
+
+  if (
+    typeof response?.error === "object" &&
+    response.error !== null &&
+    typeof response.error.message === "string"
+  ) {
+    return response.error.message;
   }
 
   return xhr.statusText || `HTTP ${xhr.status}`;

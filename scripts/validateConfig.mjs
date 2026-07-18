@@ -110,6 +110,70 @@ const buildingConstantsSchema = {
   minProperties: 1,
 };
 
+const buildingSourcesSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["sources", "buildings"],
+  properties: {
+    sources: {
+      type: "object",
+      minProperties: 1,
+      additionalProperties: {
+        type: "object",
+        additionalProperties: false,
+        required: ["label", "region"],
+        properties: {
+          label: nonEmptyString,
+          region: {
+            oneOf: [
+              {
+                type: "object",
+                additionalProperties: false,
+                required: ["type", "name"],
+                properties: {
+                  type: { const: "area" },
+                  name: nonEmptyString,
+                },
+              },
+              {
+                type: "object",
+                additionalProperties: false,
+                required: ["type", "bbox"],
+                properties: {
+                  type: { const: "bbox" },
+                  bbox: {
+                    type: "array",
+                    minItems: 4,
+                    maxItems: 4,
+                    items: { type: "number" },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+    buildings: {
+      type: "object",
+      minProperties: 1,
+      additionalProperties: {
+        type: "object",
+        additionalProperties: false,
+        required: ["source", "buildingTags"],
+        properties: {
+          source: nonEmptyString,
+          buildingTags: {
+            type: "object",
+            minProperties: 1,
+            additionalProperties: nonEmptyString,
+          },
+        },
+      },
+    },
+  },
+};
+
 const constantsSchema = {
   type: "object",
   additionalProperties: false,
@@ -248,6 +312,7 @@ const languageSchema = {
 
 const settings = readJson("settings.json");
 const buildingConstants = readJson("buildingConstants.json");
+const buildingSources = readJson("buildingSources.json");
 const constants = readJson("constants.json");
 const colorProfileIndex = readJson("colorProfiles.json");
 const languages = {
@@ -264,6 +329,7 @@ const colorProfiles = Object.fromEntries(
 const failures = [
   ...validateSchema("settings.json", settingsSchema, settings),
   ...validateSchema("buildingConstants.json", buildingConstantsSchema, buildingConstants),
+  ...validateSchema("buildingSources.json", buildingSourcesSchema, buildingSources),
   ...validateSchema("constants.json", constantsSchema, constants),
   ...validateSchema("colorProfiles.json", colorProfileIndexSchema, colorProfileIndex),
   ...Object.entries(colorProfiles).flatMap(([fileName, colorProfile]) =>
@@ -273,6 +339,7 @@ const failures = [
     validateSchema(fileName, languageSchema, language),
   ),
   ...validateConfigRelations(settings, buildingConstants),
+  ...validateBuildingSourceRelations(buildingSources, buildingConstants),
   ...validateConstantsRelations(constants),
   ...validateColorProfileRelations(colorProfileIndex, languages),
   ...validateLanguageRelations(languages),
@@ -351,6 +418,61 @@ function validateConstantsRelations(constantsData) {
   for (const [iconName, iconFile] of Object.entries(constantsData.ICONS)) {
     if (!existsSync(join(imageDir, iconFile))) {
       errors.push(`constants.json/ICONS/${iconName} references missing image ${iconFile}.`);
+    }
+  }
+
+  return errors;
+}
+
+function validateBuildingSourceRelations(buildingSourcesData, buildingConstantsData) {
+  const errors = [];
+  const sourceIds = Object.keys(buildingSourcesData.sources);
+  const sourceIdSet = new Set(sourceIds);
+  const buildingSourceIds = Object.keys(buildingSourcesData.buildings);
+  const buildingConstantIds = Object.keys(buildingConstantsData);
+  const buildingConstantIdSet = new Set(buildingConstantIds);
+
+  for (const [sourceId, source] of Object.entries(buildingSourcesData.sources)) {
+    if (!/^[a-z0-9_]+$/.test(sourceId)) {
+      errors.push(
+        `buildingSources.json/sources/${sourceId} must use lowercase and underscore id characters.`,
+      );
+    }
+
+    if (source.region.type === "bbox") {
+      validateBoundingBox(
+        errors,
+        `buildingSources.json/sources/${sourceId}/region/bbox`,
+        source.region.bbox,
+      );
+    }
+  }
+
+  for (const [buildingId, buildingSource] of Object.entries(buildingSourcesData.buildings)) {
+    if (!/^[a-z0-9_]+$/.test(buildingId)) {
+      errors.push(
+        `buildingSources.json/buildings/${buildingId} must use lowercase and underscore id characters.`,
+      );
+    }
+
+    if (!sourceIdSet.has(buildingSource.source)) {
+      errors.push(
+        `buildingSources.json/buildings/${buildingId}/source references unknown source ${buildingSource.source}.`,
+      );
+    }
+
+    if (!buildingConstantIdSet.has(buildingId)) {
+      errors.push(
+        `buildingSources.json/buildings/${buildingId} must have matching buildingConstants.json entry.`,
+      );
+    }
+  }
+
+  for (const buildingId of buildingConstantIds) {
+    if (!(buildingId in buildingSourcesData.buildings)) {
+      errors.push(
+        `buildingConstants.json/${buildingId} must have matching buildingSources.json/buildings entry.`,
+      );
     }
   }
 
@@ -448,6 +570,18 @@ function validateOptionalCoordinatePair(errors, path, coordinates) {
   const [lng, lat] = coordinates;
   if (!isLongitude(lng) || !isLatitude(lat)) {
     errors.push(`${path} must be [longitude, latitude].`);
+  }
+}
+
+function validateBoundingBox(errors, path, bbox) {
+  const [west, south, east, north] = bbox;
+
+  if (!isLongitude(west) || !isLongitude(east) || west >= east) {
+    errors.push(`${path} must use west/east longitudes in increasing order.`);
+  }
+
+  if (!isLatitude(south) || !isLatitude(north) || south >= north) {
+    errors.push(`${path} must use south/north latitudes in increasing order.`);
   }
 }
 

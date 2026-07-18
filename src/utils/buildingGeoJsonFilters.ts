@@ -49,20 +49,33 @@ export function filterFeaturesByIndoorSearch(
   );
 }
 
-export function filterByBounds(
+export interface FilterByBoundsOptions {
+  bearingNodeIds?: Array<number | string>;
+}
+
+export function filterByBoundsOrBearingNode(
   geoJSON: GeoJsonObject,
   buildingBBox: Array<number>,
+  options: FilterByBoundsOptions = {},
 ): GeoJSON.FeatureCollection {
   const featureCollection = geoJSON as GeoJSON.FeatureCollection;
+  const bearingNodeIds = new Set((options.bearingNodeIds ?? []).map(normalizeBearingNodeId));
 
   const filteredFeatures = featureCollection.features.filter((feature) =>
-    doFilterByBounds(feature, buildingBBox),
+    doFilterByBoundsOrBearingNode(feature, buildingBBox, bearingNodeIds),
   );
 
   return {
     type: "FeatureCollection",
     features: filteredFeatures,
   };
+}
+
+export function filterByBounds(
+  geoJSON: GeoJsonObject,
+  buildingBBox: Array<number>,
+): GeoJSON.FeatureCollection {
+  return filterByBoundsOrBearingNode(geoJSON, buildingBBox);
 }
 
 export function filterInsideAndLevel(
@@ -90,7 +103,15 @@ function matchesIndoorSearch(feature: GeoJSON.Feature, normalizedSearchString: s
   );
 }
 
-function doFilterByBounds(feature: GeoJSON.Feature, buildingBBox: Array<number>): boolean {
+function doFilterByBoundsOrBearingNode(
+  feature: GeoJSON.Feature,
+  buildingBBox: Array<number>,
+  bearingNodeIds: Set<string>,
+): boolean {
+  if (checkIfBearingNode(feature, bearingNodeIds)) {
+    return true;
+  }
+
   if (feature.geometry.type === "GeometryCollection") {
     return false;
   }
@@ -98,6 +119,16 @@ function doFilterByBounds(feature: GeoJSON.Feature, buildingBBox: Array<number>)
   const { coordinates } = feature.geometry;
 
   return checkIfValid(feature) && checkIfInside(coordinates, buildingBBox);
+}
+
+function checkIfBearingNode(feature: GeoJSON.Feature, bearingNodeIds: Set<string>): boolean {
+  return bearingNodeIds.has(getRequiredFeatureId(feature));
+}
+
+function normalizeBearingNodeId(nodeId: number | string): string {
+  const value = String(nodeId);
+
+  return value.startsWith("node/") ? value : `node/${value}`;
 }
 
 function checkIfValid(feature: GeoJSON.Feature): boolean {
