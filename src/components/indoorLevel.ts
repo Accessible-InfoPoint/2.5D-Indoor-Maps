@@ -112,6 +112,9 @@ export class IndoorLevel {
         return buildRawIndoorLevelRenderModel({
           model: BackendService.getIndoorModel(),
           level: this.level,
+          selectedFeatureIds: this.state.getSelectedFeatureIds(),
+          infoPointLevel: this.state.getInfoPointLevel(),
+          userProfile: UserService.getCurrentProfile(),
         });
     }
   }

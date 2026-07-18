@@ -1,9 +1,8 @@
 import { BuildingInterface } from "../models/buildingInterface";
 import { RawOverpassDataResponse } from "../services/httpService";
 import { OsmGraph } from "../overpass/OsmGraph";
-import { extractLevels } from "../utils/extractLevels";
 import { getRequiredArrayValue } from "../utils/requiredHelpers";
-import { contributesToIndoorLevels } from "./rawIndoorElementFilters";
+import { IndoorRoom } from "./elements/IndoorRoom";
 
 export interface RawOverpassGraphs {
   buildings: OsmGraph;
@@ -16,6 +15,7 @@ export interface IndoorModel {
   buildingInterface: BuildingInterface;
   outlineCoordinates: number[][];
   levels: number[];
+  rooms: IndoorRoom[];
 }
 
 export function createIndoorModel(
@@ -26,27 +26,22 @@ export function createIndoorModel(
     buildings: new OsmGraph(rawOverpassData.buildings),
     indoor: new OsmGraph(rawOverpassData.indoor),
   };
+  const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
 
   return {
     rawOverpassData,
     graphs,
     buildingInterface,
     outlineCoordinates: getBuildingOutlineCoordinates(buildingInterface),
-    levels: collectIndoorLevels(graphs.indoor),
+    levels: collectIndoorLevels(rooms),
+    rooms,
   };
 }
 
-function collectIndoorLevels(indoorGraph: OsmGraph): number[] {
+function collectIndoorLevels(rooms: IndoorRoom[]): number[] {
   const levels = new Set<number>();
 
-  indoorGraph.elements.forEach((element) => {
-    if (!contributesToIndoorLevels(element)) {
-      return;
-    }
-
-    extractLevels(element.tags?.level).forEach((level) => levels.add(level));
-    extractLevels(element.tags?.repeat_on).forEach((level) => levels.add(level));
-  });
+  rooms.forEach((room) => room.levels.forEach((level) => levels.add(level)));
 
   return Array.from(levels).sort((a, b) => -a + b);
 }
