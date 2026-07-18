@@ -6,6 +6,7 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geo
 import { getFeatureLevels } from "../utils/featureLevels";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
+import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 
 export interface SearchSuggestion {
   id: string;
@@ -155,6 +156,11 @@ function searchSuggestions(
   context: SuggestionSortContext,
 ): SearchSuggestion[] {
   if (!searchString) return [];
+
+  if (usesRawIndoorModel()) {
+    return searchRawIndoorModelSuggestions(searchString, context);
+  }
+
   const geoJSON = getBuildingGeoJSON();
   const suggestions: SearchSuggestion[] = [];
   const scores = new Map<string, number>();
@@ -247,6 +253,32 @@ function searchSuggestions(
   return sortedSuggestions;
 }
 
+function searchRawIndoorModelSuggestions(
+  searchString: string,
+  context: SuggestionSortContext,
+): SearchSuggestion[] {
+  void searchString;
+  void context;
+
+  return [];
+}
+
+function getSearchSuggestionFeatureById(
+  featureId: string | undefined,
+): GeoJSON.Feature | undefined {
+  if (featureId === undefined || usesRawIndoorModel()) {
+    return undefined;
+  }
+
+  return getBuildingGeoJSON().features.find((feature) => feature.id?.toString() === featureId);
+}
+
+function usesRawIndoorModel(): boolean {
+  return (
+    BackendService.getBackendConfig().indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel
+  );
+}
+
 function logSearchSuggestionRanking(
   searchString: string,
   suggestions: SearchSuggestion[],
@@ -318,5 +350,6 @@ export default {
   getBuildingDescription,
   handleSearch,
   searchSuggestions,
+  getSearchSuggestionFeatureById,
   filterInsideAndLevel,
 };

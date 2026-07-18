@@ -34,13 +34,10 @@ function clearSearchInput(): void {
 
 function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
   const selectedId = geoMap.selectedFeatures[0];
-  const selectedFeature = selectedId
-    ? BuildingService.getBuildingGeoJSON().features.find((f) => f.id?.toString() === selectedId)
-    : undefined;
 
   return {
     currentLevel: geoMap.currentLevel,
-    selectedFeature,
+    selectedFeature: BuildingService.getSearchSuggestionFeatureById(selectedId),
     infoPointFeature:
       geoMap.infoPoint.geometry.type !== "GeometryCollection" ? geoMap.infoPoint : undefined,
     wheelchairMode: UserService.getCurrentProfile() === UserGroupEnum.wheelchairUsers,

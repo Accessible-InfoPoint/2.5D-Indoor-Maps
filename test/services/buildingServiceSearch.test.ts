@@ -1,5 +1,6 @@
 jest.mock("../../src/services/backendService", () => ({
   getGeoJson: jest.fn(),
+  getBackendConfig: jest.fn(),
 }));
 jest.mock("../../src/services/httpService", () => ({ default: {} }));
 jest.mock("../../src/services/languageService", () => ({
@@ -10,6 +11,7 @@ jest.mock("geojson-bounds", () => ({ extent: jest.fn() }));
 
 import BuildingService from "../../src/services/buildingService";
 import BackendService from "../../src/services/backendService";
+import { IndoorDataPipelineEnum } from "../../src/models/indoorDataPipelineEnum";
 
 const CTX = { currentLevel: 0 };
 
@@ -40,6 +42,9 @@ const mockFeaturePathway: GeoJSON.Feature = {
 
 describe("BuildingService.searchSuggestions", () => {
   beforeEach(() => {
+    (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+      indoorDataPipeline: IndoorDataPipelineEnum.geoJsonCompatibility,
+    });
     (BackendService.getGeoJson as jest.Mock).mockReturnValue({
       type: "FeatureCollection",
       features: [mockFeatureWithName, mockFeatureWithRef, mockFeatureToilet, mockFeaturePathway],
@@ -52,6 +57,28 @@ describe("BuildingService.searchSuggestions", () => {
 
   it("returns empty array for empty search string", () => {
     expect(BuildingService.searchSuggestions("", CTX)).toEqual([]);
+  });
+
+  it("returns no suggestions in the raw indoor model pipeline until raw search is implemented", () => {
+    (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+      indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+    });
+
+    expect(BuildingService.searchSuggestions("meeting", CTX)).toEqual([]);
+    expect(BackendService.getGeoJson).not.toHaveBeenCalled();
+  });
+
+  it("does not resolve selected search context features from GeoJSON in the raw indoor model pipeline", () => {
+    (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+      indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+    });
+
+    expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBeUndefined();
+    expect(BackendService.getGeoJson).not.toHaveBeenCalled();
+  });
+
+  it("resolves selected search context features from GeoJSON in compatibility pipelines", () => {
+    expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBe(mockFeatureWithName);
   });
 
   it("matches by name using substring (case-insensitive)", () => {

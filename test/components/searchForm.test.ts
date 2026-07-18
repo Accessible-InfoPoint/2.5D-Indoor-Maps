@@ -18,6 +18,7 @@ jest.mock("../../src/services/buildingService", () => ({
       type: "FeatureCollection",
       features: [] as GeoJSON.Feature[],
     })),
+    getSearchSuggestionFeatureById: jest.fn(),
     searchSuggestions: jest.fn(),
   },
 }));
