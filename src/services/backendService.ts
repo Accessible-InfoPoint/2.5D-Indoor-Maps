@@ -177,7 +177,7 @@ async function loadBackendData(
         return loadRawOverpassData();
       }
       if (config.indoorDataPipeline === IndoorDataPipelineEnum.clientGeoJsonCompatibility) {
-        return loadClientGeoJsonCompatibilityData(buildingDefinition);
+        return loadClientGeoJsonCompatibilityData();
       }
       return loadCachedOverpassData();
     case BackendSourceEnum.localGeojson:
@@ -196,35 +196,21 @@ async function loadCachedOverpassData(): Promise<LoadedBackendData> {
 
 async function loadRawOverpassData(): Promise<LoadedBackendData> {
   const loadedRawOverpassData = await HttpService.fetchRawOverpassData(backendConfig.building);
-  const buildingsGeoJson = await overpassToGeoJson(loadedRawOverpassData.buildings);
-  const loadedBuildingInterface = await BuildingService.handleSearch(
-    buildingsGeoJson,
-    BuildingConstantsDefinition[backendConfig.building].SEARCH_STRING,
-  );
 
   return {
     kind: "rawOverpass",
     rawOverpassData: loadedRawOverpassData,
-    indoorModel: createIndoorModel(loadedRawOverpassData, loadedBuildingInterface),
+    indoorModel: createIndoorModel(loadedRawOverpassData, loadedRawOverpassData.buildingInterface),
   };
 }
 
-async function loadClientGeoJsonCompatibilityData(
-  buildingDefinition: BuildingDefinition,
-): Promise<LoadedBackendData> {
+async function loadClientGeoJsonCompatibilityData(): Promise<LoadedBackendData> {
   const loadedRawOverpassData = await HttpService.fetchRawOverpassData(backendConfig.building);
-  const [buildingsGeoJson, indoorGeoJson] = await Promise.all([
-    overpassToGeoJson(loadedRawOverpassData.buildings),
-    overpassToGeoJson(loadedRawOverpassData.indoor),
-  ]);
-  const loadedBuildingInterface = await BuildingService.handleSearch(
-    buildingsGeoJson,
-    buildingDefinition.SEARCH_STRING,
-  );
+  const indoorGeoJson = await overpassToGeoJson(loadedRawOverpassData.indoor);
 
   return {
     kind: "geoJson",
-    buildingInterface: loadedBuildingInterface,
+    buildingInterface: loadedRawOverpassData.buildingInterface,
     geoJson: indoorGeoJson,
     rawOverpassData: loadedRawOverpassData,
   };

@@ -46,12 +46,9 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
 
   it("fetches filtered raw Overpass data and converts it to the existing GeoJSON backend data", async () => {
     const rawOverpassData: RawOverpassDataResponse = {
+      buildingInterface,
       buildings: { elements: [] },
       indoor: { elements: [] },
-    };
-    const buildingGeoJson: GeoJSON.FeatureCollection = {
-      type: "FeatureCollection",
-      features: [buildingFeature],
     };
     const indoorGeoJson: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
@@ -59,10 +56,7 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
     };
 
     (HttpService.fetchRawOverpassData as jest.Mock).mockResolvedValue(rawOverpassData);
-    (overpassToGeoJson as jest.Mock)
-      .mockResolvedValueOnce(buildingGeoJson)
-      .mockResolvedValueOnce(indoorGeoJson);
-    (BuildingService.handleSearch as jest.Mock).mockResolvedValue(buildingInterface);
+    (overpassToGeoJson as jest.Mock).mockResolvedValueOnce(indoorGeoJson);
 
     await BackendService.fetchBackendData({
       source: BackendSourceEnum.cachedOverpass,
@@ -71,26 +65,21 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
     });
 
     expect(HttpService.fetchRawOverpassData).toHaveBeenCalledWith("apb");
-    expect(overpassToGeoJson).toHaveBeenCalledWith(rawOverpassData.buildings);
     expect(overpassToGeoJson).toHaveBeenCalledWith(rawOverpassData.indoor);
-    expect(BuildingService.handleSearch).toHaveBeenCalledWith(buildingGeoJson, "APB");
+    expect(overpassToGeoJson).toHaveBeenCalledTimes(1);
+    expect(BuildingService.handleSearch).not.toHaveBeenCalled();
     expect(BackendService.getGeoJson()).toBe(indoorGeoJson);
     expect(BackendService.getRawOverpassData()).toBe(rawOverpassData);
   });
 
   it("builds the raw indoor model and graph indexes for the raw pipeline", async () => {
     const rawOverpassData: RawOverpassDataResponse = {
+      buildingInterface,
       buildings: rawBuildingOverpass,
       indoor: rawIndoorOverpass,
     };
-    const buildingGeoJson: GeoJSON.FeatureCollection = {
-      type: "FeatureCollection",
-      features: [buildingFeature],
-    };
 
     (HttpService.fetchRawOverpassData as jest.Mock).mockResolvedValue(rawOverpassData);
-    (overpassToGeoJson as jest.Mock).mockResolvedValueOnce(buildingGeoJson);
-    (BuildingService.handleSearch as jest.Mock).mockResolvedValue(buildingInterface);
 
     await BackendService.fetchBackendData({
       source: BackendSourceEnum.cachedOverpass,
@@ -99,7 +88,8 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
     });
 
     expect(HttpService.fetchRawOverpassData).toHaveBeenCalledWith("apb");
-    expect(overpassToGeoJson).toHaveBeenCalledWith(rawOverpassData.buildings);
+    expect(overpassToGeoJson).not.toHaveBeenCalled();
+    expect(BuildingService.handleSearch).not.toHaveBeenCalled();
     expect(BackendService.getIndoorModel().levels).toEqual([1, 0]);
     expect(BackendService.getRawOverpassGraphs().indoor.getNode("8109446525")?.lon).toBe(0);
     expect(

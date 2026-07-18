@@ -9,6 +9,7 @@ export interface FilteredIndoorDataResponse {
 }
 
 export interface RawOverpassDataResponse {
+  buildingInterface: BuildingInterface;
   buildings: OverpassJson;
   indoor: OverpassJson;
 }

@@ -39,6 +39,7 @@ interface FilteredIndoorDataResponse {
 }
 
 interface RawOverpassDataResponse {
+  buildingInterface: BuildingInterface;
   buildings: OverpassJson;
   indoor: OverpassJson;
 }
@@ -164,6 +165,7 @@ async function loadRawOverpassData(
   }
 
   return {
+    buildingInterface,
     buildings: filterOverpassByElementIds(rawBuildings, [
       getRequiredFeatureId(buildingInterface.feature),
     ]),

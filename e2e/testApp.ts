@@ -68,6 +68,7 @@ const testBuildingResponse = {
 };
 
 const testRawOverpassResponse = {
+  buildingInterface: testBuildingResponse.buildingInterface,
   buildings: {
     version: 0.6,
     generator: "e2e",

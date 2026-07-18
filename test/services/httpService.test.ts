@@ -5,6 +5,7 @@ jest.mock("../../src/services/languageService", () => ({
 }));
 
 import HttpService, { HttpRequestError } from "../../src/services/httpService";
+import { BuildingInterface } from "../../src/models/buildingInterface";
 import { OverpassJson } from "../../src/models/overpassJson";
 
 describe("httpService", () => {
@@ -57,7 +58,29 @@ describe("httpService", () => {
   });
 
   it("fetches raw Overpass data from the raw endpoint", async () => {
-    const responseBody: { buildings: OverpassJson; indoor: OverpassJson } = {
+    const responseBody: {
+      buildingInterface: BuildingInterface;
+      buildings: OverpassJson;
+      indoor: OverpassJson;
+    } = {
+      buildingInterface: {
+        boundingBox: [0, 0, 1, 1],
+        feature: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [0, 0],
+                [1, 0],
+                [1, 1],
+                [0, 0],
+              ],
+            ],
+          },
+        },
+      },
       buildings: { elements: [] },
       indoor: { elements: [] },
     };
