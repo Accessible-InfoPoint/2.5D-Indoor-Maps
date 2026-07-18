@@ -8,27 +8,28 @@ configuration files.
 
 General application, rendering, backend, and UI settings.
 
-| Field                          | Unit / Type              | Description                                                                                                            |
-| ------------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `INDOOR_LEVEL`                 | level number             | Default indoor level shown after loading a building.                                                                   |
-| `FILL_OPACITY`                 | ratio, `0` to `1`        | Default opacity for filled indoor areas.                                                                               |
-| `STAIRCASE_OPACITY`            | ratio, `0` to `1`        | Opacity for rendered staircase surfaces.                                                                               |
-| `STAIRCASE_OUTLINE_OPACITY`    | ratio, `0` to `1`        | Opacity for staircase outlines.                                                                                        |
-| `OPACITY_TRANSLUCENT_LAYER`    | ratio, `0` to `1`        | Opacity used for neighboring translucent levels in 2.5D mode.                                                          |
-| `WALL_WEIGHT`                  | pixels                   | Base line width for walls.                                                                                             |
-| `WALL_WEIGHT_PAVING`           | pixels                   | Base line width for tactile paving.                                                                                    |
-| `LEVEL_HEIGHT`                 | render units             | Vertical distance between levels in 2.5D mode.                                                                         |
-| `STAIRCASE_HANDRAIL_HEIGHT`    | render units             | Height used when rendering staircase handrails.                                                                        |
-| `DOOR_MATCH_TOLERANCE_M`       | meters                   | Distance tolerance for matching door points to room outlines.                                                          |
-| `BACKEND_SOURCE`               | enum string              | Data source. Current values are `localGeojson` and `cachedOverpass`.                                                   |
-| `CURRENT_BUILDING`             | building id string       | Building key from `buildingConstants.json` to load by default.                                                         |
-| `MAP_START_LAT`                | latitude degrees string  | Initial map latitude before backend data recenters the map.                                                            |
-| `MAP_START_LNG`                | longitude degrees string | Initial map longitude before backend data recenters the map.                                                           |
-| `MAP_UI_GAP_PX`                | pixels                   | Reserved screen-space gap for UI-aware map padding. Currently not applied while MapLibre viewport padding is disabled. |
-| `MAP_MIN_BOUNDS_MARGIN_FACTOR` | unitless multiplier      | Minimum amount to expand the building bounding box for pan constraints, relative to the building bbox span.            |
-| `MAP_MAX_LATITUDE_BOUND`       | latitude degrees         | Safety clamp for expanded map bounds. Web Mercator maps should stay below the polar extremes.                          |
-| `VISIBLE_LEVEL_CONTROLS`       | count                    | Number of level buttons visible in the level control window.                                                           |
-| `START_LEVEL_CONTROL_POSITION` | index                    | Initial position of the selected level inside the level control window.                                                |
+| Field                          | Unit / Type              | Description                                                                                                                                                         |
+| ------------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INDOOR_LEVEL`                 | level number             | Default indoor level shown after loading a building.                                                                                                                |
+| `FILL_OPACITY`                 | ratio, `0` to `1`        | Default opacity for filled indoor areas.                                                                                                                            |
+| `STAIRCASE_OPACITY`            | ratio, `0` to `1`        | Opacity for rendered staircase surfaces.                                                                                                                            |
+| `STAIRCASE_OUTLINE_OPACITY`    | ratio, `0` to `1`        | Opacity for staircase outlines.                                                                                                                                     |
+| `OPACITY_TRANSLUCENT_LAYER`    | ratio, `0` to `1`        | Opacity used for neighboring translucent levels in 2.5D mode.                                                                                                       |
+| `WALL_WEIGHT`                  | pixels                   | Base line width for walls.                                                                                                                                          |
+| `WALL_WEIGHT_PAVING`           | pixels                   | Base line width for tactile paving.                                                                                                                                 |
+| `LEVEL_HEIGHT`                 | render units             | Vertical distance between levels in 2.5D mode.                                                                                                                      |
+| `STAIRCASE_HANDRAIL_HEIGHT`    | render units             | Height used when rendering staircase handrails.                                                                                                                     |
+| `DOOR_MATCH_TOLERANCE_M`       | meters                   | Distance tolerance for matching door points to room outlines.                                                                                                       |
+| `BACKEND_SOURCE`               | enum string              | Data source. Current values are `localGeojson` and `cachedOverpass`.                                                                                                |
+| `INDOOR_DATA_PIPELINE`         | enum string              | Indoor rendering pipeline. `geoJsonCompatibility` uses the current GeoJSON-first renderer; `rawIndoorModel` is reserved for the raw Overpass domain-model renderer. |
+| `CURRENT_BUILDING`             | building id string       | Building key from `buildingConstants.json` to load by default.                                                                                                      |
+| `MAP_START_LAT`                | latitude degrees string  | Initial map latitude before backend data recenters the map.                                                                                                         |
+| `MAP_START_LNG`                | longitude degrees string | Initial map longitude before backend data recenters the map.                                                                                                        |
+| `MAP_UI_GAP_PX`                | pixels                   | Reserved screen-space gap for UI-aware map padding. Currently not applied while MapLibre viewport padding is disabled.                                              |
+| `MAP_MIN_BOUNDS_MARGIN_FACTOR` | unitless multiplier      | Minimum amount to expand the building bounding box for pan constraints, relative to the building bbox span.                                                         |
+| `MAP_MAX_LATITUDE_BOUND`       | latitude degrees         | Safety clamp for expanded map bounds. Web Mercator maps should stay below the polar extremes.                                                                       |
+| `VISIBLE_LEVEL_CONTROLS`       | count                    | Number of level buttons visible in the level control window.                                                                                                        |
+| `START_LEVEL_CONTROL_POSITION` | index                    | Initial position of the selected level inside the level control window.                                                                                             |
 
 ## `buildingConstants.json`
 

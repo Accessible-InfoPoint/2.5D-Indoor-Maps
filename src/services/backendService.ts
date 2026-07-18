@@ -6,10 +6,15 @@ import CoordinateHelpers from "../utils/coordinateHelpers";
 import { extractLevels } from "../utils/extractLevels";
 import DoorService from "./doorService";
 import { BackendSourceEnum } from "../models/backendSourceEnum";
+import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 import { isDrawableRoomOrArea } from "../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMatch } from "../utils/requiredHelpers";
-import { BACKEND_SOURCE, CURRENT_BUILDING } from "../../public/strings/settings.json";
+import {
+  BACKEND_SOURCE,
+  CURRENT_BUILDING,
+  INDOOR_DATA_PIPELINE,
+} from "../../public/strings/settings.json";
 
 export type BuildingCenter = [longitude: number, latitude: number];
 
@@ -34,16 +39,19 @@ let buildingInterface: BuildingInterface | undefined;
 
 export interface BackendConfig {
   source: BackendSourceEnum;
+  indoorDataPipeline: IndoorDataPipelineEnum;
   building: keyof typeof BuildingConstantsDefinition;
 }
 
 const fallbackBackendConfig: BackendConfig = {
   source: BackendSourceEnum.localGeojson,
+  indoorDataPipeline: IndoorDataPipelineEnum.geoJsonCompatibility,
   building: "apb",
 };
 
 const defaultBackendConfig: BackendConfig = {
   source: parseBackendSource(BACKEND_SOURCE),
+  indoorDataPipeline: parseIndoorDataPipeline(INDOOR_DATA_PIPELINE),
   building: parseBuildingId(CURRENT_BUILDING),
 };
 
@@ -69,6 +77,17 @@ function parseBackendSource(value: string): BackendSourceEnum {
     `Unknown backend source "${value}", falling back to "${fallbackBackendConfig.source}".`,
   );
   return fallbackBackendConfig.source;
+}
+
+function parseIndoorDataPipeline(value: string): IndoorDataPipelineEnum {
+  if (Object.values(IndoorDataPipelineEnum).includes(value as IndoorDataPipelineEnum)) {
+    return value as IndoorDataPipelineEnum;
+  }
+
+  console.warn(
+    `Unknown indoor data pipeline "${value}", falling back to "${fallbackBackendConfig.indoorDataPipeline}".`,
+  );
+  return fallbackBackendConfig.indoorDataPipeline;
 }
 
 function parseBuildingId(value: string): keyof typeof BuildingConstantsDefinition {
