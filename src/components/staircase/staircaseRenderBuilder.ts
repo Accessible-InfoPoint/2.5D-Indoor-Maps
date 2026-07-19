@@ -66,58 +66,61 @@ export function buildStaircasePathRenderItems(
   altitude: number,
   handrails: StaircaseHandrailOptions = LEGACY_STAIRCASE_HANDRAILS,
 ): StaircaseRenderItem[] {
-  const offsetLine = coordinateHelpers.offsetCoordinateLine(lineString, width / 2);
-  const handrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
-    offsetLine,
-    -COMPLEX_STAIRCASE_THICKNESS,
+  const rightEdgeLine = coordinateHelpers.offsetCoordinateLine(lineString, width / 2);
+  const leftEdgeLine = coordinateHelpers.offsetCoordinateLine(lineString, -width / 2);
+  const renderItems: StaircaseRenderItem[] = buildStaircaseFloorRenderItems(
+    leftEdgeLine,
+    rightEdgeLine,
+    altitudes,
+    altitude,
   );
-  const oppositeOffsetLine = coordinateHelpers.offsetCoordinateLine(lineString, -width / 2);
-  const oppositeHandrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
-    oppositeOffsetLine,
-    COMPLEX_STAIRCASE_THICKNESS,
-  );
-  const middleLeftLine = handrails.middle
-    ? coordinateHelpers.offsetCoordinateLine(lineString, -COMPLEX_STAIRCASE_THICKNESS / 2)
-    : [];
-  const middleRightLine = handrails.middle
-    ? coordinateHelpers.offsetCoordinateLine(lineString, COMPLEX_STAIRCASE_THICKNESS / 2)
-    : [];
 
+  if (handrails.left) {
+    renderItems.push(
+      ...buildHandrailLineRenderItems(
+        coordinateHelpers.offsetCoordinateLine(
+          lineString,
+          -width / 2 + COMPLEX_STAIRCASE_THICKNESS / 2,
+        ),
+        altitudes,
+        altitude,
+      ),
+    );
+  }
+
+  if (handrails.right) {
+    renderItems.push(
+      ...buildHandrailLineRenderItems(
+        coordinateHelpers.offsetCoordinateLine(
+          lineString,
+          width / 2 - COMPLEX_STAIRCASE_THICKNESS / 2,
+        ),
+        altitudes,
+        altitude,
+      ),
+    );
+  }
+
+  if (handrails.middle) {
+    renderItems.push(...buildHandrailLineRenderItems(lineString, altitudes, altitude));
+  }
+
+  return renderItems;
+}
+
+function buildStaircaseFloorRenderItems(
+  leftEdgeLine: GeoJSON.Position[],
+  rightEdgeLine: GeoJSON.Position[],
+  altitudes: number[],
+  altitude: number,
+): StaircaseRenderItem[] {
   const renderItems: StaircaseRenderItem[] = [];
 
-  for (let i = 0; i < offsetLine.length - 1; i++) {
-    const leftStart = getRequiredArrayValue(
-      oppositeOffsetLine,
-      i,
-      "Staircase opposite offset line",
-    );
-    const leftEnd = getRequiredArrayValue(
-      oppositeOffsetLine,
-      i + 1,
-      "Staircase opposite offset line",
-    );
-    const rightStart = getRequiredArrayValue(offsetLine, i, "Staircase offset line");
-    const rightEnd = getRequiredArrayValue(offsetLine, i + 1, "Staircase offset line");
-    const leftHandrailStart = getRequiredArrayValue(
-      oppositeHandrailOffsetLine,
-      i,
-      "Staircase opposite handrail offset line",
-    );
-    const leftHandrailEnd = getRequiredArrayValue(
-      oppositeHandrailOffsetLine,
-      i + 1,
-      "Staircase opposite handrail offset line",
-    );
-    const rightHandrailStart = getRequiredArrayValue(
-      handrailOffsetLine,
-      i,
-      "Staircase handrail offset line",
-    );
-    const rightHandrailEnd = getRequiredArrayValue(
-      handrailOffsetLine,
-      i + 1,
-      "Staircase handrail offset line",
-    );
+  for (let i = 0; i < leftEdgeLine.length - 1; i++) {
+    const leftStart = getRequiredArrayValue(leftEdgeLine, i, "Staircase left edge line");
+    const leftEnd = getRequiredArrayValue(leftEdgeLine, i + 1, "Staircase left edge line");
+    const rightStart = getRequiredArrayValue(rightEdgeLine, i, "Staircase right edge line");
+    const rightEnd = getRequiredArrayValue(rightEdgeLine, i + 1, "Staircase right edge line");
     const startAltitude = getRequiredArrayValue(altitudes, i, "Staircase altitudes");
     const endAltitude = getRequiredArrayValue(altitudes, i + 1, "Staircase altitudes");
 
@@ -134,77 +137,55 @@ export function buildStaircasePathRenderItems(
       altitude,
       materialRole: "main",
     });
-
-    if (handrails.left) {
-      renderItems.push({
-        type: "prism",
-        coordinates: [
-          [...leftStart, startAltitude],
-          [...leftEnd, endAltitude],
-          [...leftHandrailEnd, endAltitude],
-          [...leftHandrailStart, startAltitude],
-          [...leftStart, startAltitude],
-        ],
-        height: STAIRCASE_HANDRAIL_HEIGHT,
-        altitude,
-        materialRole: "main",
-      });
-    }
-
-    if (handrails.right) {
-      renderItems.push({
-        type: "prism",
-        coordinates: [
-          [...rightStart, startAltitude],
-          [...rightEnd, endAltitude],
-          [...rightHandrailEnd, endAltitude],
-          [...rightHandrailStart, startAltitude],
-          [...rightStart, startAltitude],
-        ],
-        height: STAIRCASE_HANDRAIL_HEIGHT,
-        altitude,
-        materialRole: "main",
-      });
-    }
-
-    if (handrails.middle) {
-      renderItems.push({
-        type: "prism",
-        coordinates: buildMiddleHandrailCoordinates(middleLeftLine, middleRightLine, altitudes, i),
-        height: STAIRCASE_HANDRAIL_HEIGHT,
-        altitude,
-        materialRole: "main",
-      });
-    }
   }
 
   return renderItems;
 }
 
-function buildMiddleHandrailCoordinates(
-  middleLeftLine: GeoJSON.Position[],
-  middleRightLine: GeoJSON.Position[],
+export function buildHandrailLineRenderItems(
+  lineString: GeoJSON.Position[],
+  altitudes: number[],
+  altitude: number,
+): StaircaseRenderItem[] {
+  if (lineString.length < 2) {
+    return [];
+  }
+
+  const leftLine = coordinateHelpers.offsetCoordinateLine(
+    lineString,
+    -COMPLEX_STAIRCASE_THICKNESS / 2,
+  );
+  const rightLine = coordinateHelpers.offsetCoordinateLine(
+    lineString,
+    COMPLEX_STAIRCASE_THICKNESS / 2,
+  );
+  const renderItems: StaircaseRenderItem[] = [];
+
+  for (let index = 0; index < lineString.length - 1; index++) {
+    renderItems.push({
+      type: "prism",
+      coordinates: buildHandrailLineSegmentCoordinates(leftLine, rightLine, altitudes, index),
+      height: STAIRCASE_HANDRAIL_HEIGHT,
+      altitude,
+      materialRole: "main",
+    });
+  }
+
+  return renderItems;
+}
+
+function buildHandrailLineSegmentCoordinates(
+  leftLine: GeoJSON.Position[],
+  rightLine: GeoJSON.Position[],
   altitudes: number[],
   index: number,
 ): GeoJSON.Position[] {
-  const leftStart = getRequiredArrayValue(middleLeftLine, index, "Staircase middle handrail line");
-  const leftEnd = getRequiredArrayValue(
-    middleLeftLine,
-    index + 1,
-    "Staircase middle handrail line",
-  );
-  const rightStart = getRequiredArrayValue(
-    middleRightLine,
-    index,
-    "Staircase middle handrail opposite line",
-  );
-  const rightEnd = getRequiredArrayValue(
-    middleRightLine,
-    index + 1,
-    "Staircase middle handrail opposite line",
-  );
-  const startAltitude = getRequiredArrayValue(altitudes, index, "Staircase altitudes");
-  const endAltitude = getRequiredArrayValue(altitudes, index + 1, "Staircase altitudes");
+  const leftStart = getRequiredArrayValue(leftLine, index, "Handrail line");
+  const leftEnd = getRequiredArrayValue(leftLine, index + 1, "Handrail line");
+  const rightStart = getRequiredArrayValue(rightLine, index, "Handrail opposite line");
+  const rightEnd = getRequiredArrayValue(rightLine, index + 1, "Handrail opposite line");
+  const startAltitude = getRequiredArrayValue(altitudes, index, "Handrail altitudes");
+  const endAltitude = getRequiredArrayValue(altitudes, index + 1, "Handrail altitudes");
 
   return [
     [...leftStart, startAltitude],

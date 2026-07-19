@@ -1,4 +1,5 @@
 import { LEVEL_HEIGHT } from "../../../public/strings/settings.json";
+import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
 import { IndoorLanding } from "../../indoor/elements/IndoorLanding";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import {
@@ -12,6 +13,7 @@ import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import { RoomRenderItem, StyledStaircaseRenderItem } from "../indoorLevel/indoorLevelRenderModel";
 import {
+  buildHandrailLineRenderItems,
   buildSimpleStaircaseRenderItems,
   buildStaircasePathRenderItems,
   COMPLEX_STAIRCASE_THICKNESS,
@@ -29,6 +31,7 @@ const NO_HANDRAILS: StaircaseHandrailOptions = {
 
 export interface RawStaircaseRenderOptions {
   verticalConnections: IndoorVerticalConnection[];
+  handrails: IndoorHandrail[];
   level: number;
   selectedFeatureIds: string[];
 }
@@ -53,10 +56,12 @@ export function buildRawStaircase3DRenderItems(
         ? colors.roomColorS
         : colors.stairsColor;
 
-    return buildConnection3DRenderItems(connection, options.level).map((item) => ({
-      item,
-      color,
-    }));
+    return buildConnection3DRenderItems(connection, options.level, options.handrails).map(
+      (item) => ({
+        item,
+        color,
+      }),
+    );
   });
 }
 
@@ -97,6 +102,7 @@ function buildFreeFloatingStaircase2DRenderItems(
 function buildConnection3DRenderItems(
   connection: IndoorVerticalConnection,
   level: number,
+  handrails: IndoorHandrail[],
 ): StaircaseRenderItem[] {
   if (connection.kind == "simple" && connection.footprint !== undefined) {
     return shouldRenderSimpleFootprintOnLevel(connection.footprint, level)
@@ -127,7 +133,7 @@ function buildConnection3DRenderItems(
       }),
     ),
     ...getUniqueLandingInstances(activeComponents).flatMap((landingInstance) =>
-      buildLanding3DRenderItems(landingInstance, level),
+      buildLanding3DRenderItems(landingInstance, level, handrails),
     ),
   ];
 }
@@ -353,18 +359,56 @@ function findLastDefinedLevel(levels: Array<number | undefined>): number | undef
 function buildLanding3DRenderItems(
   landingInstance: IndoorLandingInstance,
   renderLevel: number,
+  handrails: IndoorHandrail[],
 ): StaircaseRenderItem[] {
-  return getLandingOuterRings(landingInstance.source).map((ring): StaircaseRenderItem => ({
-    type: "prism",
-    coordinates: ring.map((position) => [
-      position[0],
-      position[1],
-      getRelativeLevelAltitude(landingInstance.level, renderLevel),
-    ]),
-    height: COMPLEX_STAIRCASE_THICKNESS,
-    altitude: LOCAL_ALTITUDE,
-    materialRole: "main",
-  }));
+  return [
+    ...getLandingOuterRings(landingInstance.source).map((ring): StaircaseRenderItem => ({
+      type: "prism",
+      coordinates: ring.map((position) => [
+        position[0],
+        position[1],
+        getRelativeLevelAltitude(landingInstance.level, renderLevel),
+      ]),
+      height: COMPLEX_STAIRCASE_THICKNESS,
+      altitude: LOCAL_ALTITUDE,
+      materialRole: "main",
+    })),
+    ...buildLandingHandrail3DRenderItems(landingInstance, renderLevel, handrails),
+  ];
+}
+
+function buildLandingHandrail3DRenderItems(
+  landingInstance: IndoorLandingInstance,
+  renderLevel: number,
+  handrails: IndoorHandrail[],
+): StaircaseRenderItem[] {
+  return handrails
+    .filter((handrail) => isHandrailAttachedToLandingInstance(handrail, landingInstance))
+    .flatMap((handrail) => {
+      const geometry = handrail.toLineStringGeometry();
+
+      if (geometry === undefined) {
+        return [];
+      }
+
+      const altitude = getRelativeLevelAltitude(landingInstance.level, renderLevel);
+
+      return buildHandrailLineRenderItems(
+        geometry.coordinates,
+        geometry.coordinates.map(() => altitude),
+        LOCAL_ALTITUDE,
+      );
+    });
+}
+
+export function isHandrailAttachedToLandingInstance(
+  handrail: IndoorHandrail,
+  landingInstance: IndoorLandingInstance,
+): boolean {
+  return (
+    handrail.hasLevel(landingInstance.level) &&
+    handrail.sharesAtLeastTwoNodes(landingInstance.nodeIds)
+  );
 }
 
 function getRelativeLevelAltitude(level: number, renderLevel: number): number {

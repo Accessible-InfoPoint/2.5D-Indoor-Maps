@@ -1,5 +1,8 @@
 import { OverpassElement } from "../../src/models/overpassJson";
-import { contributesToIndoorLevels } from "../../src/indoor/rawIndoorElementFilters";
+import {
+  contributesToIndoorLevels,
+  isRawIndoorHandrailElement,
+} from "../../src/indoor/rawIndoorElementFilters";
 
 describe("contributesToIndoorLevels", () => {
   it.each(["room", "corridor", "area"])("returns true for indoor=%s ways", (indoor) => {
@@ -55,5 +58,30 @@ describe("contributesToIndoorLevels", () => {
     ];
 
     elements.forEach((element) => expect(contributesToIndoorLevels(element)).toBe(false));
+  });
+});
+
+describe("isRawIndoorHandrailElement", () => {
+  it("returns true for barrier=handrail ways", () => {
+    expect(
+      isRawIndoorHandrailElement({
+        type: "way",
+        id: 1,
+        nodes: [],
+        tags: { barrier: "handrail" },
+      }),
+    ).toBe(true);
+  });
+
+  it("ignores non-way handrail elements", () => {
+    expect(
+      isRawIndoorHandrailElement({
+        type: "node",
+        id: 1,
+        lat: 0,
+        lon: 0,
+        tags: { barrier: "handrail" },
+      }),
+    ).toBe(false);
   });
 });

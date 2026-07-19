@@ -1,5 +1,6 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
 import { IndoorColumn } from "../../indoor/elements/IndoorColumn";
+import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
 import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
 import { IndoorPointFeature } from "../../indoor/elements/IndoorPointFeature";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
@@ -13,6 +14,7 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/
 import {
   buildRawStaircase2DRenderItems,
   buildRawStaircase3DRenderItems,
+  isHandrailAttachedToLandingInstance,
 } from "../staircase/rawStaircaseRenderBuilder";
 import {
   AccessibilityMarkerRenderItem,
@@ -38,6 +40,7 @@ export function buildRawIndoorLevelRenderModel(
     ...buildRoomRenderItems(options),
     ...buildRawStaircase2DRenderItems({
       verticalConnections: options.model.verticalConnections,
+      handrails: options.model.handrails,
       level: options.level,
       selectedFeatureIds: options.selectedFeatureIds,
     }),
@@ -54,6 +57,7 @@ export function buildRawIndoorLevelRenderModel(
     staircase: {
       renderItems: buildRawStaircase3DRenderItems({
         verticalConnections: options.model.verticalConnections,
+        handrails: options.model.handrails,
         level: options.level,
         selectedFeatureIds: options.selectedFeatureIds,
       }),
@@ -187,6 +191,9 @@ function buildWallRenderItems(
     ...options.model.walls
       .filter((wall) => wall.hasLevel(options.level))
       .map((wall): StyledFeatureRenderItem | undefined => buildWallRenderItem(wall)),
+    ...options.model.handrails
+      .filter((handrail) => shouldRenderHandrailAsWall(handrail, options))
+      .map((handrail): StyledFeatureRenderItem | undefined => buildHandrailRenderItem(handrail)),
     ...options.model.columns
       .filter((column) => column.hasLevel(options.level))
       .map((column): StyledFeatureRenderItem | undefined => buildColumnRenderItem(column)),
@@ -203,6 +210,19 @@ function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefi
   return {
     feature,
     style: buildWallStyle(wall),
+  };
+}
+
+function buildHandrailRenderItem(handrail: IndoorHandrail): StyledFeatureRenderItem | undefined {
+  const feature = handrail.toGeoJsonFeature();
+
+  if (feature === undefined) {
+    return undefined;
+  }
+
+  return {
+    feature,
+    style: buildHandrailStyle(handrail),
   };
 }
 
@@ -223,8 +243,24 @@ function buildWallStyle(wall: IndoorWall): Record<string, unknown> {
   return FeatureService.getWallStyleFromTags(wall.tags);
 }
 
+function buildHandrailStyle(handrail: IndoorHandrail): Record<string, unknown> {
+  return FeatureService.getHandrailStyleFromTags(handrail.tags);
+}
+
 function buildColumnStyle(column: IndoorColumn): Record<string, unknown> {
   return FeatureService.getColumnStyleFromTags(column.tags);
+}
+
+function shouldRenderHandrailAsWall(
+  handrail: IndoorHandrail,
+  options: RawIndoorLevelRenderBuilderOptions,
+): boolean {
+  return (
+    handrail.hasLevel(options.level) &&
+    !options.model.stairPathNetwork.components
+      .flatMap((component) => component.landingInstances)
+      .some((landingInstance) => isHandrailAttachedToLandingInstance(handrail, landingInstance))
+  );
 }
 
 function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {

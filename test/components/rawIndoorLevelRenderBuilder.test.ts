@@ -35,19 +35,22 @@ describe("buildRawIndoorLevelRenderModel", () => {
     expect(renderModel.walls.map((wall) => wall.feature.geometry.type)).toEqual([
       "LineString",
       "Polygon",
+      "LineString",
       "Polygon",
     ]);
     expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([
       "way/12",
       "way/13",
+      "way/17",
       "node/8",
     ]);
     expect(renderModel.walls.map((wall) => wall.style.polygonFill)).toEqual([
       "#000000",
       "#000000",
       "#000000",
+      "#000000",
     ]);
-    expect(renderModel.walls[2].style.lineWidth).toBe(0);
+    expect(renderModel.walls[3].style.lineWidth).toBe(0);
     expect(renderModel.tactilePaving.map((item) => item.feature.id)).toEqual(["way/14"]);
     expect(renderModel.tactilePaving[0].feature.geometry.type).toBe("LineString");
     expect(renderModel.tactilePaving[0].style.lineDasharray).toEqual([2, 2]);
@@ -159,7 +162,7 @@ const rawOverpassData: RawOverpassDataResponse = {
       {
         type: "way",
         id: 13,
-        nodes: [1, 2, 3, 4, 1],
+        nodes: [1, 3, 4, 1],
         tags: { indoor: "wall", area: "yes", level: "0" },
       },
       {
@@ -179,6 +182,12 @@ const rawOverpassData: RawOverpassDataResponse = {
         id: 16,
         nodes: [1, 4, 3, 1],
         tags: { indoor: "room", amenity: "toilets", level: "0", name: "Toilet" },
+      },
+      {
+        type: "way",
+        id: 17,
+        nodes: [3, 4],
+        tags: { barrier: "handrail", level: "0" },
       },
     ],
   },

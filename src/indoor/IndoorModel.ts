@@ -4,6 +4,7 @@ import { OsmGraph } from "../overpass/OsmGraph";
 import { getRequiredArrayValue } from "../utils/requiredHelpers";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
+import { IndoorHandrail } from "./elements/IndoorHandrail";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
@@ -30,6 +31,7 @@ export interface IndoorModel {
   levels: number[];
   rooms: IndoorRoom[];
   doors: IndoorDoor[];
+  handrails: IndoorHandrail[];
   columns: IndoorColumn[];
   infoPoints: IndoorInfoPoint[];
   pointFeatures: IndoorPointFeature[];
@@ -51,6 +53,7 @@ export function createIndoorModel(
   };
   const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
   const doors = IndoorDoor.collectFromGraph(graphs.indoor);
+  const handrails = IndoorHandrail.collectFromGraph(graphs.indoor);
   const columns = IndoorColumn.collectFromGraph(graphs.indoor);
   const infoPoints = IndoorInfoPoint.collectFromGraph(graphs.indoor);
   const pointFeatures = IndoorPointFeature.collectFromGraph(graphs.indoor);
@@ -64,7 +67,6 @@ export function createIndoorModel(
     rooms,
     stairPathNetwork,
   );
-  console.log(verticalConnections);
 
   return {
     rawOverpassData,
@@ -74,6 +76,7 @@ export function createIndoorModel(
     levels: collectIndoorLevels(rooms),
     rooms,
     doors,
+    handrails,
     columns,
     infoPoints,
     pointFeatures,

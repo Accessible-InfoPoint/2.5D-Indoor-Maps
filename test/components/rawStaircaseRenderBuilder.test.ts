@@ -90,6 +90,22 @@ describe("raw staircase rendering", () => {
     expect(getAverageLongitude(handrailPrisms[0].coordinates)).toBeLessThan(0);
   });
 
+  it("renders explicit landing handrail ways in 3D", () => {
+    const model = createIndoorModel(staircaseWithLandingHandrailData, buildingInterface);
+
+    const renderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([]);
+    expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(3);
+    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
+  });
+
   it("uses node levels for raw staircase path altitudes and interpolates missing node levels", () => {
     const model = createIndoorModel(staircaseWithNodeLevelsData, buildingInterface);
 
@@ -314,6 +330,33 @@ const staircaseWithFootprintHandrailData: RawOverpassDataResponse = {
         id: 100,
         nodes: [4, 1],
         tags: { indoor: "pathway", level: "0-1" },
+      },
+    ],
+  },
+};
+
+const staircaseWithLandingHandrailData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, lat: 0, lon: 0 },
+      { type: "node", id: 2, lat: 0, lon: 1 },
+      { type: "node", id: 3, lat: 1, lon: 1 },
+      { type: "node", id: 4, lat: 1, lon: 0 },
+      { type: "way", id: 100, nodes: [1, 2], tags: { indoor: "pathway", level: "0-0.5" } },
+      { type: "way", id: 101, nodes: [3, 4], tags: { indoor: "pathway", level: "0.5-1" } },
+      {
+        type: "way",
+        id: 200,
+        nodes: [2, 3, 4, 1, 2],
+        tags: { indoor: "area", landing: "yes", level: "0.5" },
+      },
+      {
+        type: "way",
+        id: 300,
+        nodes: [2, 3],
+        tags: { barrier: "handrail", level: "0.5" },
       },
     ],
   },
