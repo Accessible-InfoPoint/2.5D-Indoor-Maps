@@ -1,4 +1,5 @@
 import { DoorOrientationDebugData } from "../../models/doorDataInterface";
+import { AccessibilityMarkerData } from "../../services/featureService";
 
 export interface StyledFeatureRenderItem {
   feature: GeoJSON.Feature;
@@ -20,6 +21,12 @@ export interface InfoPointRenderItem {
 export interface PositionMarkerRenderItem {
   feature: GeoJSON.Feature;
   label: string;
+}
+
+export interface AccessibilityMarkerRenderItem {
+  id: string | number;
+  sourceFeature: GeoJSON.Feature;
+  markerData: AccessibilityMarkerData;
 }
 
 export interface DoorRenderItem {
@@ -47,6 +54,6 @@ export interface IndoorLevelRenderModel {
   doors: DoorRenderItem[];
   walls: StyledFeatureRenderItem[];
   tactilePaving: StyledFeatureRenderItem[];
-  pointMarkerFeatures: GeoJSON.Feature[];
+  accessibilityMarkers: AccessibilityMarkerRenderItem[];
   staircase: StaircaseRenderModel;
 }

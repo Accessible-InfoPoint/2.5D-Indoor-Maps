@@ -4,6 +4,7 @@ import {
   OverpassRelation,
   OverpassWay,
 } from "../models/overpassJson";
+import { hasPotentialAccessibilityMarkerTags } from "./indoorTagFilters";
 
 const INDOOR_LEVEL_CONTRIBUTOR_TAGS = new Set(["room", "corridor", "area"]);
 
@@ -33,6 +34,14 @@ export function isRawIndoorDoorElement(element: OverpassElement): element is Ove
 
 export function isRawIndoorInfoPointElement(element: OverpassElement): element is OverpassNode {
   return element.type == "node" && element.tags?.information == "tactile_map";
+}
+
+export function isRawIndoorPointFeatureElement(element: OverpassElement): element is OverpassNode {
+  return (
+    element.type == "node" &&
+    element.tags !== undefined &&
+    hasPotentialAccessibilityMarkerTags(element.tags)
+  );
 }
 
 export function isRawIndoorWallElement(element: OverpassElement): element is OverpassWay {

@@ -23,7 +23,7 @@ describe("buildRawIndoorLevelRenderModel", () => {
     expect(renderModel.infoPoint?.feature.id).toBe("node/5");
     expect(renderModel.infoPoint?.feature.geometry.type).toBe("Point");
     expect(renderModel.infoPoint?.levels).toEqual([0]);
-    expect(renderModel.rooms.map((room) => room.feature.id)).toEqual(["way/10"]);
+    expect(renderModel.rooms.map((room) => room.feature.id)).toEqual(["way/10", "way/16"]);
     expect(renderModel.rooms[0].label).toBe("Room A");
     expect(renderModel.rooms[0].feature.properties).toEqual({
       indoor: "room",
@@ -40,6 +40,14 @@ describe("buildRawIndoorLevelRenderModel", () => {
     expect(renderModel.tactilePaving.map((item) => item.feature.id)).toEqual(["way/14"]);
     expect(renderModel.tactilePaving[0].feature.geometry.type).toBe("LineString");
     expect(renderModel.tactilePaving[0].style.lineDasharray).toEqual([2, 2]);
+    expect(renderModel.accessibilityMarkers.map((marker) => marker.id)).toEqual([
+      "way/16",
+      "node/7",
+    ]);
+    expect(renderModel.accessibilityMarkers.map((marker) => marker.sourceFeature.id)).toEqual([
+      "way/16",
+      "node/7",
+    ]);
   });
 
   it("marks selected raw rooms using the same ids as GeoJSON compatibility rooms", () => {
@@ -106,6 +114,13 @@ const rawOverpassData: RawOverpassDataResponse = {
         tags: { information: "tactile_map", level: "1" },
       },
       {
+        type: "node",
+        id: 7,
+        lat: 51.07,
+        lon: 13.07,
+        tags: { amenity: "toilets", level: "0" },
+      },
+      {
         type: "way",
         id: 10,
         nodes: [1, 2, 3, 1],
@@ -140,6 +155,12 @@ const rawOverpassData: RawOverpassDataResponse = {
         id: 15,
         nodes: [1, 2, 3],
         tags: { tactile_paving: "yes", level: "1" },
+      },
+      {
+        type: "way",
+        id: 16,
+        nodes: [1, 4, 3, 1],
+        tags: { indoor: "room", amenity: "toilets", level: "0", name: "Toilet" },
       },
     ],
   },

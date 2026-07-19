@@ -4,6 +4,7 @@ import { OsmGraph } from "../overpass/OsmGraph";
 import { getRequiredArrayValue } from "../utils/requiredHelpers";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
+import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorTactilePaving } from "./elements/IndoorTactilePaving";
 import { IndoorWall } from "./elements/IndoorWall";
@@ -22,6 +23,7 @@ export interface IndoorModel {
   rooms: IndoorRoom[];
   doors: IndoorDoor[];
   infoPoints: IndoorInfoPoint[];
+  pointFeatures: IndoorPointFeature[];
   walls: IndoorWall[];
   tactilePaving: IndoorTactilePaving[];
 }
@@ -37,6 +39,7 @@ export function createIndoorModel(
   const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
   const doors = IndoorDoor.collectFromGraph(graphs.indoor);
   const infoPoints = IndoorInfoPoint.collectFromGraph(graphs.indoor);
+  const pointFeatures = IndoorPointFeature.collectFromGraph(graphs.indoor);
   const walls = IndoorWall.collectFromGraph(graphs.indoor);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graphs.indoor);
 
@@ -49,6 +52,7 @@ export function createIndoorModel(
     rooms,
     doors,
     infoPoints,
+    pointFeatures,
     walls,
     tactilePaving,
   };

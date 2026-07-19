@@ -1,5 +1,6 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
 import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
+import { IndoorPointFeature } from "../../indoor/elements/IndoorPointFeature";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
@@ -9,6 +10,7 @@ import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import {
+  AccessibilityMarkerRenderItem,
   DoorRenderItem,
   InfoPointRenderItem,
   IndoorLevelRenderModel,
@@ -27,14 +29,16 @@ interface RawIndoorLevelRenderBuilderOptions {
 export function buildRawIndoorLevelRenderModel(
   options: RawIndoorLevelRenderBuilderOptions,
 ): IndoorLevelRenderModel {
+  const rooms = buildRoomRenderItems(options);
+
   return {
     outlineCoordinates: options.model.outlineCoordinates,
     infoPoint: buildInfoPointRenderItem(options),
-    rooms: buildRoomRenderItems(options),
+    rooms,
     doors: buildDoorRenderItems(options),
     walls: buildWallRenderItems(options),
     tactilePaving: buildTactilePavingRenderItems(options),
-    pointMarkerFeatures: [],
+    accessibilityMarkers: buildAccessibilityMarkerRenderItems(options),
     staircase: {
       doorCoordinates: [],
       lowestPoints: [],
@@ -43,6 +47,66 @@ export function buildRawIndoorLevelRenderModel(
       simpleFeatures: [],
       complexFeatures: [],
     },
+  };
+}
+
+function buildAccessibilityMarkerRenderItems(
+  options: RawIndoorLevelRenderBuilderOptions,
+): AccessibilityMarkerRenderItem[] {
+  return [
+    ...buildRoomAccessibilityMarkerRenderItems(options),
+    ...buildPointFeatureAccessibilityMarkerRenderItems(options),
+  ];
+}
+
+function buildRoomAccessibilityMarkerRenderItems(
+  options: RawIndoorLevelRenderBuilderOptions,
+): AccessibilityMarkerRenderItem[] {
+  return options.model.rooms
+    .filter((room) => room.hasLevel(options.level))
+    .map((room): AccessibilityMarkerRenderItem | undefined =>
+      buildAccessibilityMarkerRenderItem(room, room.tags),
+    )
+    .filter((marker): marker is AccessibilityMarkerRenderItem => marker !== undefined);
+}
+
+function buildPointFeatureAccessibilityMarkerRenderItems(
+  options: RawIndoorLevelRenderBuilderOptions,
+): AccessibilityMarkerRenderItem[] {
+  return options.model.pointFeatures
+    .filter((pointFeature) => pointFeature.hasLevel(options.level))
+    .map((pointFeature): AccessibilityMarkerRenderItem | undefined =>
+      buildAccessibilityMarkerRenderItem(pointFeature, pointFeature.tags),
+    )
+    .filter((marker): marker is AccessibilityMarkerRenderItem => marker !== undefined);
+}
+
+function buildAccessibilityMarkerRenderItem(
+  indoorElement: IndoorRoom | IndoorPointFeature,
+  tags: Record<string, string>,
+): AccessibilityMarkerRenderItem | undefined {
+  const feature = indoorElement.toGeoJsonFeature();
+
+  if (feature === undefined) {
+    return undefined;
+  }
+
+  const coordinates = FeatureService.getMarkerCoordinatesFromGeometry(feature.geometry);
+
+  if (coordinates === undefined) {
+    return undefined;
+  }
+
+  const markerData = FeatureService.getAccessibilityMarkerDataFromTags(tags, coordinates);
+
+  if (markerData === null) {
+    return undefined;
+  }
+
+  return {
+    id: indoorElement.id,
+    sourceFeature: feature,
+    markerData,
   };
 }
 

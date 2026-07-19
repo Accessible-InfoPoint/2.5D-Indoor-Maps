@@ -7,7 +7,21 @@ import { FILL_OPACITY, WALL_WEIGHT, WALL_WEIGHT_PAVING } from "../../public/stri
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
-import { IndoorTags, isRoomTags, isStaircaseTags, isToiletTags } from "../indoor/indoorTagFilters";
+import {
+  IndoorTags,
+  isAccessibleToiletTags,
+  isEmergencyExitTags,
+  isEntranceTags,
+  isGeneralToiletTags,
+  isInfoPointTags,
+  isInformationBoardTags,
+  isRoomTags,
+  isStaircaseTags,
+  isStepsTags,
+  isTactileInformationTags,
+  isToiletTags,
+  isWheelchairAccessibleElevatorTags,
+} from "../indoor/indoorTagFilters";
 import ColorService from "./colorService";
 import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
@@ -65,39 +79,120 @@ function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
 }
 
 function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMarkerData | null {
-  let iconFileName = "";
+  const coordinates = getMarkerCoordinatesFromGeometry(feature.geometry);
 
-  const isFeatureAccessible = featureAccessibilityProperties.some(
-    ({ hasCorrectProperties, iconFilename, userGroups, tags }) => {
-      if (
-        userGroups.includes(UserService.getCurrentProfile()) &&
-        hasCorrectProperties(feature) &&
-        iconFilename !== undefined &&
-        checkForMatchingTags(tags)
-      ) {
-        iconFileName = iconFilename;
-        return true;
-      }
-      return false;
-    },
+  return coordinates == undefined
+    ? null
+    : getAccessibilityMarkerDataFromTags(getRequiredFeatureProperties(feature), coordinates);
+}
+
+export function getAccessibilityMarkerDataFromTags(
+  tags: IndoorTags,
+  coordinates: GeoJSON.Position,
+): AccessibilityMarkerData | null {
+  if (isInfoPointTags(tags)) {
+    return null;
+  }
+
+  const rule = ACCESSIBILITY_MARKER_RULES.find(
+    (candidate) =>
+      candidate.userGroups.includes(UserService.getCurrentProfile()) &&
+      candidate.matches(tags) &&
+      checkForMatchingTags(candidate.tags),
   );
 
-  if (isFeatureAccessible) {
-    return {
-      coordinates:
-        feature.geometry.type == "Polygon"
-          ? polygonCenter(feature.geometry).coordinates
-          : (feature.geometry as GeoJSON.Point).coordinates,
-      symbol: {
-        markerFile: MARKERS_IMG_DIR + iconFileName,
-        markerWidth: 48,
-        markerHeight: 48,
-        markerHorizontalAlignment: "middle",
-        markerVerticalAlignment: "middle",
-      },
-    };
+  if (rule === undefined) {
+    return null;
   }
-  return null;
+
+  return {
+    coordinates,
+    symbol: {
+      markerFile: MARKERS_IMG_DIR + rule.iconFilename,
+      markerWidth: 48,
+      markerHeight: 48,
+      markerHorizontalAlignment: "middle",
+      markerVerticalAlignment: "middle",
+    },
+  };
+}
+
+const ACCESSIBILITY_MARKER_RULES: Array<{
+  matches: (tags: IndoorTags) => boolean;
+  userGroups: UserGroupEnum[];
+  iconFilename: string;
+  tags?: UserFeatureEnum[];
+}> = [
+  {
+    matches: isTactileInformationTags,
+    userGroups: [UserGroupEnum.blindPeople],
+    iconFilename: ICONS.INFO,
+    tags: [UserFeatureEnum.tactileLines],
+  },
+  {
+    matches: isAccessibleToiletTags,
+    userGroups: [UserGroupEnum.wheelchairUsers],
+    iconFilename: ICONS.TOILETS_WHEELCHAIR,
+    tags: [UserFeatureEnum.accessibleToilets],
+  },
+  {
+    matches: isWheelchairAccessibleElevatorTags,
+    userGroups: [UserGroupEnum.wheelchairUsers],
+    iconFilename: ICONS.ELEVATOR,
+    tags: [UserFeatureEnum.elevators],
+  },
+  {
+    matches: isGeneralToiletTags,
+    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.blindPeople],
+    iconFilename: ICONS.TOILETS,
+    tags: [UserFeatureEnum.toilets],
+  },
+  {
+    matches: isEntranceTags,
+    userGroups: [
+      UserGroupEnum.blindPeople,
+      UserGroupEnum.noImpairments,
+      UserGroupEnum.wheelchairUsers,
+    ],
+    iconFilename: ICONS.ENTRANCE,
+    tags: [UserFeatureEnum.entrancesExits],
+  },
+  {
+    matches: isEmergencyExitTags,
+    userGroups: [
+      UserGroupEnum.blindPeople,
+      UserGroupEnum.noImpairments,
+      UserGroupEnum.wheelchairUsers,
+    ],
+    iconFilename: ICONS.EMERGENCY_EXIT,
+    tags: [UserFeatureEnum.emergencyExits],
+  },
+  {
+    matches: isInformationBoardTags,
+    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.wheelchairUsers],
+    iconFilename: ICONS.INFO,
+    tags: [UserFeatureEnum.service, UserFeatureEnum.tactileLines],
+  },
+  {
+    matches: isStepsTags,
+    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.blindPeople],
+    iconFilename: ICONS.STAIRS,
+    tags: [UserFeatureEnum.stairs],
+  },
+];
+
+export function getMarkerCoordinatesFromGeometry(
+  geometry: GeoJSON.Geometry,
+): GeoJSON.Position | undefined {
+  if (geometry.type == "Polygon") {
+    return (polygonCenter(geometry) as GeoJSON.Point).coordinates;
+  }
+
+  if (geometry.type == "Point") {
+    return geometry.coordinates;
+  }
+
+  return undefined;
 }
 
 const CATEGORY_ICON_RULES: Array<{
@@ -323,6 +418,8 @@ export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
 export default {
   getAccessibilityDescription,
   getAccessibilityMarkerData,
+  getAccessibilityMarkerDataFromTags,
+  getMarkerCoordinatesFromGeometry,
   getFeatureStyle,
   getFeatureStyleFromTags,
   getIndoorFillStyleFromTags,

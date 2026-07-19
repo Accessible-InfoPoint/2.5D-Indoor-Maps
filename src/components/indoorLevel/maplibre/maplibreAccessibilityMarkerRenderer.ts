@@ -5,8 +5,6 @@ import type {
   MapLayerMouseEvent,
 } from "maplibre-gl";
 import { ICONS, MARKERS_IMG_DIR } from "../../../../public/strings/constants.json";
-import FeatureService from "../../../services/featureService";
-import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
 import {
   buildMarkerClusters,
   ClusterableMarker,
@@ -16,7 +14,7 @@ import {
   ResolvedMarkerClusterOptions,
   resolveMarkerClusterOptions,
 } from "../../markerCluster/markerClusterModel";
-import { IndoorLevelRenderModel } from "../indoorLevelRenderModel";
+import { AccessibilityMarkerRenderItem, IndoorLevelRenderModel } from "../indoorLevelRenderModel";
 import { IndoorLevelViewEvents } from "../indoorLevelView";
 import { getMarkerImageId } from "./maplibreIndoorLevelTypes";
 import { registerMarkerImage } from "./maplibreImageRegistry";
@@ -86,12 +84,7 @@ export class MapLibreAccessibilityMarkerRenderer {
   render(renderModel: IndoorLevelRenderModel): void {
     this.markerFeaturesById.clear();
     this.clustersById.clear();
-    this.markerItems = [
-      ...renderModel.rooms.map((room) => room.feature),
-      ...renderModel.pointMarkerFeatures,
-    ]
-      .map((feature) => this.buildMarkerItem(feature))
-      .filter((marker): marker is ClusterableMarker => marker != undefined);
+    this.markerItems = renderModel.accessibilityMarkers.map((item) => this.buildMarkerItem(item));
 
     this.registerMarkerImages(this.markerItems);
     this.updateClusters();
@@ -113,23 +106,16 @@ export class MapLibreAccessibilityMarkerRenderer {
     );
   }
 
-  private buildMarkerItem(feature: GeoJSON.Feature): ClusterableMarker | undefined {
-    const markerData = FeatureService.getAccessibilityMarkerData(feature);
+  private buildMarkerItem(item: AccessibilityMarkerRenderItem): ClusterableMarker {
+    const symbol: MarkerSymbol = item.markerData.symbol;
 
-    if (!markerData) {
-      return undefined;
-    }
-
-    const id = getRequiredFeatureId(feature);
-    const symbol: MarkerSymbol = markerData.symbol;
-
-    this.markerFeaturesById.set(id, feature);
+    this.markerFeaturesById.set(item.id, item.sourceFeature);
 
     return {
-      id,
+      id: item.id,
       center: {
-        x: markerData.coordinates[0],
-        y: markerData.coordinates[1],
+        x: item.markerData.coordinates[0],
+        y: item.markerData.coordinates[1],
       },
       projectedCenter: {
         x: 0,

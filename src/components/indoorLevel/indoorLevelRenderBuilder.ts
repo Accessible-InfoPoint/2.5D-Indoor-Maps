@@ -5,6 +5,7 @@ import { extractLevels } from "../../utils/extractLevels";
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import {
+  AccessibilityMarkerRenderItem,
   IndoorLevelRenderModel,
   PositionMarkerRenderItem,
   RoomRenderItem,
@@ -25,8 +26,8 @@ export function buildIndoorLevelRenderModel(
   options: IndoorLevelRenderBuilderOptions,
 ): IndoorLevelRenderModel {
   const rooms: RoomRenderItem[] = [];
+  const accessibilityMarkers: AccessibilityMarkerRenderItem[] = [];
   const tactilePaving: StyledFeatureRenderItem[] = [];
-  const pointMarkerFeatures: GeoJSON.Feature[] = [];
   let infoPoint = undefined;
 
   options.geoJSON.features.forEach((feature) => {
@@ -40,14 +41,16 @@ export function buildIndoorLevelRenderModel(
     }
 
     if (isDrawableRoomOrArea(feature)) {
-      rooms.push(buildRoomRenderItem(feature, options));
+      const room = buildRoomRenderItem(feature, options);
+      rooms.push(room);
+      pushAccessibilityMarker(accessibilityMarkers, feature);
     } else if (properties["tactile_paving"]) {
       tactilePaving.push({
         feature,
         style: buildTactilePavingStyle(feature),
       });
     } else if (feature.geometry.type == "Point") {
-      pointMarkerFeatures.push(feature);
+      pushAccessibilityMarker(accessibilityMarkers, feature);
     }
   });
 
@@ -58,7 +61,7 @@ export function buildIndoorLevelRenderModel(
     doors: [],
     walls: [],
     tactilePaving,
-    pointMarkerFeatures,
+    accessibilityMarkers,
     staircase: {
       doorCoordinates: getDoorCoordinates(options.geoJSON),
       lowestPoints: options.buildingGeoJSON.features.filter(
@@ -84,6 +87,23 @@ export function buildIndoorLevelRenderModel(
       ),
     },
   };
+}
+
+function pushAccessibilityMarker(
+  accessibilityMarkers: AccessibilityMarkerRenderItem[],
+  feature: GeoJSON.Feature,
+): void {
+  const markerData = FeatureService.getAccessibilityMarkerData(feature);
+
+  if (markerData === null) {
+    return;
+  }
+
+  accessibilityMarkers.push({
+    id: getRequiredFeatureId(feature),
+    sourceFeature: feature,
+    markerData,
+  });
 }
 
 function buildRoomRenderItem(
