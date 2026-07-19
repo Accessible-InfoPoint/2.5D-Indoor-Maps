@@ -80,7 +80,9 @@ function groupComponentsBySharedLandingInstances(
       return;
     }
 
-    groups.push(collectConnectedComponents(startIndex, components, indicesByLandingInstanceId, visited));
+    groups.push(
+      collectConnectedComponents(startIndex, components, indicesByLandingInstanceId, visited),
+    );
   });
 
   return groups;

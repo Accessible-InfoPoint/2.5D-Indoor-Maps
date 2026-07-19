@@ -8,7 +8,7 @@ import { StaircaseRenderItem } from "./staircaseRenderModel";
 export type StaircasePath = [coordinates: GeoJSON.Position[], width: number];
 
 const defaultStaircaseWidth = 1;
-const complexStaircaseThickness = 0.05;
+export const COMPLEX_STAIRCASE_THICKNESS = 0.05;
 
 export function buildSimpleStaircaseRenderItems(
   coordinates: GeoJSON.Position[],
@@ -44,100 +44,110 @@ export function buildComplexStaircaseRenderItems(
 ): StaircaseRenderItem[] {
   return lineStrings.flatMap(([lineString, width]) => {
     const altitudes = getLineStringAltitudes(lineString, allNodes);
-    const offsetLine = coordinateHelpers.offsetCoordinateLine(lineString, width / 2);
-    const handrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
-      offsetLine,
-      -complexStaircaseThickness,
-    );
-    const oppositeOffsetLine = coordinateHelpers.offsetCoordinateLine(lineString, -width / 2);
-    const oppositeHandrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
-      oppositeOffsetLine,
-      complexStaircaseThickness,
-    );
 
-    const renderItems: StaircaseRenderItem[] = [];
-
-    for (let i = 0; i < offsetLine.length - 1; i++) {
-      const leftStart = getRequiredArrayValue(offsetLine, i, "Staircase offset line");
-      const leftEnd = getRequiredArrayValue(offsetLine, i + 1, "Staircase offset line");
-      const rightStart = getRequiredArrayValue(
-        oppositeOffsetLine,
-        i,
-        "Staircase opposite offset line",
-      );
-      const rightEnd = getRequiredArrayValue(
-        oppositeOffsetLine,
-        i + 1,
-        "Staircase opposite offset line",
-      );
-      const leftHandrailStart = getRequiredArrayValue(
-        handrailOffsetLine,
-        i,
-        "Staircase handrail offset line",
-      );
-      const leftHandrailEnd = getRequiredArrayValue(
-        handrailOffsetLine,
-        i + 1,
-        "Staircase handrail offset line",
-      );
-      const rightHandrailStart = getRequiredArrayValue(
-        oppositeHandrailOffsetLine,
-        i,
-        "Staircase opposite handrail offset line",
-      );
-      const rightHandrailEnd = getRequiredArrayValue(
-        oppositeHandrailOffsetLine,
-        i + 1,
-        "Staircase opposite handrail offset line",
-      );
-      const startAltitude = getRequiredArrayValue(altitudes, i, "Staircase altitudes");
-      const endAltitude = getRequiredArrayValue(altitudes, i + 1, "Staircase altitudes");
-
-      renderItems.push(
-        {
-          type: "prism",
-          coordinates: [
-            [...leftStart, startAltitude],
-            [...leftEnd, endAltitude],
-            [...rightEnd, endAltitude],
-            [...rightStart, startAltitude],
-            [...leftStart, startAltitude],
-          ],
-          height: complexStaircaseThickness,
-          altitude,
-          materialRole: "main",
-        },
-        {
-          type: "prism",
-          coordinates: [
-            [...leftStart, startAltitude],
-            [...leftEnd, endAltitude],
-            [...leftHandrailEnd, endAltitude],
-            [...leftHandrailStart, startAltitude],
-            [...leftStart, startAltitude],
-          ],
-          height: STAIRCASE_HANDRAIL_HEIGHT,
-          altitude,
-          materialRole: "main",
-        },
-        {
-          type: "prism",
-          coordinates: [
-            [...rightStart, startAltitude],
-            [...rightEnd, endAltitude],
-            [...rightHandrailEnd, endAltitude],
-            [...rightHandrailStart, startAltitude],
-            [...rightStart, startAltitude],
-          ],
-          height: STAIRCASE_HANDRAIL_HEIGHT,
-          altitude,
-          materialRole: "main",
-        },
-      );
-    }
-
-    return renderItems;
+    return buildStaircasePathRenderItems(lineString, width, altitudes, altitude);
   });
+}
+
+export function buildStaircasePathRenderItems(
+  lineString: GeoJSON.Position[],
+  width: number,
+  altitudes: number[],
+  altitude: number,
+): StaircaseRenderItem[] {
+  const offsetLine = coordinateHelpers.offsetCoordinateLine(lineString, width / 2);
+  const handrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
+    offsetLine,
+    -COMPLEX_STAIRCASE_THICKNESS,
+  );
+  const oppositeOffsetLine = coordinateHelpers.offsetCoordinateLine(lineString, -width / 2);
+  const oppositeHandrailOffsetLine = coordinateHelpers.offsetCoordinateLine(
+    oppositeOffsetLine,
+    COMPLEX_STAIRCASE_THICKNESS,
+  );
+
+  const renderItems: StaircaseRenderItem[] = [];
+
+  for (let i = 0; i < offsetLine.length - 1; i++) {
+    const leftStart = getRequiredArrayValue(offsetLine, i, "Staircase offset line");
+    const leftEnd = getRequiredArrayValue(offsetLine, i + 1, "Staircase offset line");
+    const rightStart = getRequiredArrayValue(
+      oppositeOffsetLine,
+      i,
+      "Staircase opposite offset line",
+    );
+    const rightEnd = getRequiredArrayValue(
+      oppositeOffsetLine,
+      i + 1,
+      "Staircase opposite offset line",
+    );
+    const leftHandrailStart = getRequiredArrayValue(
+      handrailOffsetLine,
+      i,
+      "Staircase handrail offset line",
+    );
+    const leftHandrailEnd = getRequiredArrayValue(
+      handrailOffsetLine,
+      i + 1,
+      "Staircase handrail offset line",
+    );
+    const rightHandrailStart = getRequiredArrayValue(
+      oppositeHandrailOffsetLine,
+      i,
+      "Staircase opposite handrail offset line",
+    );
+    const rightHandrailEnd = getRequiredArrayValue(
+      oppositeHandrailOffsetLine,
+      i + 1,
+      "Staircase opposite handrail offset line",
+    );
+    const startAltitude = getRequiredArrayValue(altitudes, i, "Staircase altitudes");
+    const endAltitude = getRequiredArrayValue(altitudes, i + 1, "Staircase altitudes");
+
+    renderItems.push(
+      {
+        type: "prism",
+        coordinates: [
+          [...leftStart, startAltitude],
+          [...leftEnd, endAltitude],
+          [...rightEnd, endAltitude],
+          [...rightStart, startAltitude],
+          [...leftStart, startAltitude],
+        ],
+        height: COMPLEX_STAIRCASE_THICKNESS,
+        altitude,
+        materialRole: "main",
+      },
+      {
+        type: "prism",
+        coordinates: [
+          [...leftStart, startAltitude],
+          [...leftEnd, endAltitude],
+          [...leftHandrailEnd, endAltitude],
+          [...leftHandrailStart, startAltitude],
+          [...leftStart, startAltitude],
+        ],
+        height: STAIRCASE_HANDRAIL_HEIGHT,
+        altitude,
+        materialRole: "main",
+      },
+      {
+        type: "prism",
+        coordinates: [
+          [...rightStart, startAltitude],
+          [...rightEnd, endAltitude],
+          [...rightHandrailEnd, endAltitude],
+          [...rightHandrailStart, startAltitude],
+          [...rightStart, startAltitude],
+        ],
+        height: STAIRCASE_HANDRAIL_HEIGHT,
+        altitude,
+        materialRole: "main",
+      },
+    );
+  }
+
+  return renderItems;
 }
 
 export function filterConnectedPathways(
@@ -264,7 +274,7 @@ function getLineStringAltitudes(
 
         return (
           ((parseFloat(getRequiredFeatureProperties(node)["level"]) - min) / (max - min)) *
-          (LEVEL_HEIGHT - complexStaircaseThickness)
+          (LEVEL_HEIGHT - COMPLEX_STAIRCASE_THICKNESS)
         );
       });
     }
@@ -272,7 +282,7 @@ function getLineStringAltitudes(
 
   return lineString.map(
     (_point, index) =>
-      (index / (lineString.length - 1)) * (LEVEL_HEIGHT - complexStaircaseThickness),
+      (index / (lineString.length - 1)) * (LEVEL_HEIGHT - COMPLEX_STAIRCASE_THICKNESS),
   );
 }
 

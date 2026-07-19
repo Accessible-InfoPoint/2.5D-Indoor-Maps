@@ -203,9 +203,7 @@ function getCompatibleLandingInstances(
   span: VerticalSpan,
   landingInstances: IndoorLandingInstance[],
 ): IndoorLandingInstance[] {
-  return landingInstances.filter((landing) =>
-    isLevelOnVerticalSpanBoundary(landing.level, span),
-  );
+  return landingInstances.filter((landing) => isLevelOnVerticalSpanBoundary(landing.level, span));
 }
 
 function buildElementIndicesByNodeId(elements: StairPathNetworkElement[]): Map<number, number[]> {

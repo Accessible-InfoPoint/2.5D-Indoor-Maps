@@ -415,39 +415,41 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     const colors = ColorService.getCurrentColors();
     const staircase = renderModel.staircase;
     const localAltitude = 0;
-    const items: MapLibreThreeStaircaseRenderItem[] = [
-      ...staircase.simpleFeatures.flatMap((feature) => {
-        const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
-        const color = isSelected ? colors.roomColorS : colors.stairsColor;
+    const items: MapLibreThreeStaircaseRenderItem[] = staircase.renderItems.length
+      ? staircase.renderItems
+      : [
+          ...staircase.simpleFeatures.flatMap((feature) => {
+            const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
+            const color = isSelected ? colors.roomColorS : colors.stairsColor;
 
-        return buildSimpleStaircaseRenderItems(
-          (feature.geometry as GeoJSON.Polygon).coordinates[0],
-          localAltitude,
-        ).map((item) => ({
-          item,
-          color,
-        }));
-      }),
-      ...staircase.complexFeatures.flatMap((feature) => {
-        const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
-        const color = isSelected ? colors.roomColorS : colors.stairsColor;
+            return buildSimpleStaircaseRenderItems(
+              (feature.geometry as GeoJSON.Polygon).coordinates[0],
+              localAltitude,
+            ).map((item) => ({
+              item,
+              color,
+            }));
+          }),
+          ...staircase.complexFeatures.flatMap((feature) => {
+            const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
+            const color = isSelected ? colors.roomColorS : colors.stairsColor;
 
-        return buildComplexStaircaseRenderItems(
-          filterConnectedPathways(
-            feature,
-            staircase.doorCoordinates,
-            staircase.lowestPoints,
-            staircase.pathways,
-            this.level,
-          ),
-          staircase.allNodes,
-          localAltitude,
-        ).map((item) => ({
-          item,
-          color,
-        }));
-      }),
-    ];
+            return buildComplexStaircaseRenderItems(
+              filterConnectedPathways(
+                feature,
+                staircase.doorCoordinates,
+                staircase.lowestPoints,
+                staircase.pathways,
+                this.level,
+              ),
+              staircase.allNodes,
+              localAltitude,
+            ).map((item) => ({
+              item,
+              color,
+            }));
+          }),
+        ];
 
     this.threeStaircases = items;
     this.threeLayer?.setStaircases(items);

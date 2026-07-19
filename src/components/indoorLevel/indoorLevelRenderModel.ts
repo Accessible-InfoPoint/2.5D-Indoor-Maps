@@ -1,5 +1,6 @@
 import { DoorOrientationDebugData } from "../../models/doorDataInterface";
 import { AccessibilityMarkerData } from "../../services/featureService";
+import { StaircaseRenderItem } from "../staircase/staircaseRenderModel";
 
 export interface StyledFeatureRenderItem {
   feature: GeoJSON.Feature;
@@ -39,12 +40,18 @@ export interface DoorRenderItem {
 }
 
 export interface StaircaseRenderModel {
+  renderItems: StyledStaircaseRenderItem[];
   doorCoordinates: GeoJSON.Position[];
   lowestPoints: GeoJSON.Feature[];
   pathways: GeoJSON.Feature[];
   allNodes: GeoJSON.Feature[];
   simpleFeatures: GeoJSON.Feature[];
   complexFeatures: GeoJSON.Feature[];
+}
+
+export interface StyledStaircaseRenderItem {
+  item: StaircaseRenderItem;
+  color: string;
 }
 
 export interface IndoorLevelRenderModel {

@@ -11,6 +11,10 @@ import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import {
+  buildRawStaircase2DRenderItems,
+  buildRawStaircase3DRenderItems,
+} from "../staircase/rawStaircaseRenderBuilder";
+import {
   AccessibilityMarkerRenderItem,
   DoorRenderItem,
   InfoPointRenderItem,
@@ -30,7 +34,14 @@ interface RawIndoorLevelRenderBuilderOptions {
 export function buildRawIndoorLevelRenderModel(
   options: RawIndoorLevelRenderBuilderOptions,
 ): IndoorLevelRenderModel {
-  const rooms = buildRoomRenderItems(options);
+  const rooms = [
+    ...buildRoomRenderItems(options),
+    ...buildRawStaircase2DRenderItems({
+      verticalConnections: options.model.verticalConnections,
+      level: options.level,
+      selectedFeatureIds: options.selectedFeatureIds,
+    }),
+  ];
 
   return {
     outlineCoordinates: options.model.outlineCoordinates,
@@ -41,6 +52,11 @@ export function buildRawIndoorLevelRenderModel(
     tactilePaving: buildTactilePavingRenderItems(options),
     accessibilityMarkers: buildAccessibilityMarkerRenderItems(options),
     staircase: {
+      renderItems: buildRawStaircase3DRenderItems({
+        verticalConnections: options.model.verticalConnections,
+        level: options.level,
+        selectedFeatureIds: options.selectedFeatureIds,
+      }),
       doorCoordinates: [],
       lowestPoints: [],
       pathways: [],

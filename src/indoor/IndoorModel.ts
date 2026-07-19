@@ -64,7 +64,7 @@ export function createIndoorModel(
     rooms,
     stairPathNetwork,
   );
-  console.log(verticalConnections) // TODO: TEMP
+  console.log(verticalConnections);
 
   return {
     rawOverpassData,

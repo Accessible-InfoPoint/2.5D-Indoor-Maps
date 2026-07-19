@@ -63,6 +63,7 @@ export function buildIndoorLevelRenderModel(
     tactilePaving,
     accessibilityMarkers,
     staircase: {
+      renderItems: [],
       doorCoordinates: getDoorCoordinates(options.geoJSON),
       lowestPoints: options.buildingGeoJSON.features.filter(
         (feature) => "point:lowest" in getRequiredFeatureProperties(feature),

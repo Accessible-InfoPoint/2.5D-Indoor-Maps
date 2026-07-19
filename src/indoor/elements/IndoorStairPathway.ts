@@ -27,6 +27,14 @@ export class IndoorStairPathway extends IndoorElement {
     return [...this.sourceElement.nodes];
   }
 
+  get nodeLevels(): Array<number | undefined> {
+    return this.sourceElement.nodes.map((nodeId) => {
+      const node = this.graph.getNode(nodeId);
+
+      return node === undefined ? undefined : extractLevels(node.tags?.level)[0];
+    });
+  }
+
   get widthMeters(): number {
     return parsePositiveMeters(this.tags.width) ?? DEFAULT_STAIR_PATHWAY_WIDTH_METERS;
   }
