@@ -15,11 +15,17 @@ import {
   buildSimpleStaircaseRenderItems,
   buildStaircasePathRenderItems,
   COMPLEX_STAIRCASE_THICKNESS,
+  StaircaseHandrailOptions,
 } from "./staircaseRenderBuilder";
 import { StaircaseRenderItem } from "./staircaseRenderModel";
 
 const STAIR_SURFACE_TAGS = { indoor: "area", stairs: "yes" };
 const LOCAL_ALTITUDE = 0;
+const NO_HANDRAILS: StaircaseHandrailOptions = {
+  left: false,
+  right: false,
+  middle: false,
+};
 
 export interface RawStaircaseRenderOptions {
   verticalConnections: IndoorVerticalConnection[];
@@ -109,11 +115,14 @@ function buildConnection3DRenderItems(
           return [];
         }
 
+        const pathLevels = getInterpolatedPathLevels(geometry.coordinates, instance);
+
         return buildStaircasePathRenderItems(
           geometry.coordinates,
           instance.source.widthMeters,
-          getPathAltitudes(geometry.coordinates, instance, level),
+          pathLevels.map((pathLevel) => getRelativeLevelAltitude(pathLevel, level)),
           LOCAL_ALTITUDE,
+          getPathHandrails(connection, instance, pathLevels),
         );
       }),
     ),
@@ -155,14 +164,82 @@ function getComponentRenderLevel(component: IndoorStairPathNetworkComponent): nu
   return Math.floor(component.span.from);
 }
 
-function getPathAltitudes(
-  coordinates: GeoJSON.Position[],
+function getPathHandrails(
+  connection: IndoorVerticalConnection,
   instance: IndoorStairPathwayInstance,
-  renderLevel: number,
-): number[] {
-  const levels = getInterpolatedPathLevels(coordinates, instance);
+  pathLevels: number[],
+): StaircaseHandrailOptions {
+  const pathwayHandrails = getTaggedHandrails(instance.source.tags);
 
-  return levels.map((level) => getRelativeLevelAltitude(level, renderLevel));
+  if (pathwayHandrails.hasHandrailTags) {
+    return pathwayHandrails.options;
+  }
+
+  if (connection.footprint === undefined) {
+    return NO_HANDRAILS;
+  }
+
+  const footprintHandrails = getTaggedHandrails(connection.footprint.tags);
+
+  if (!footprintHandrails.hasHandrailTags) {
+    return NO_HANDRAILS;
+  }
+
+  return orientFootprintHandrails(footprintHandrails.options, pathLevels);
+}
+
+function getTaggedHandrails(tags: Record<string, string>): {
+  hasHandrailTags: boolean;
+  options: StaircaseHandrailOptions;
+} {
+  const genericHandrail = parseOsmBoolean(tags.handrail);
+
+  return {
+    hasHandrailTags:
+      tags.handrail !== undefined ||
+      tags["handrail:left"] !== undefined ||
+      tags["handrail:right"] !== undefined ||
+      tags["handrail:middle"] !== undefined,
+    options: {
+      left: parseOsmBoolean(tags["handrail:left"]) ?? genericHandrail ?? false,
+      right: parseOsmBoolean(tags["handrail:right"]) ?? genericHandrail ?? false,
+      middle: parseOsmBoolean(tags["handrail:middle"]) ?? false,
+    },
+  };
+}
+
+function parseOsmBoolean(value: string | undefined): boolean | undefined {
+  if (value == "yes" || value == "true" || value == "1") {
+    return true;
+  }
+
+  if (value == "no" || value == "false" || value == "0") {
+    return false;
+  }
+
+  return undefined;
+}
+
+function orientFootprintHandrails(
+  handrails: StaircaseHandrailOptions,
+  pathLevels: number[],
+): StaircaseHandrailOptions {
+  if (!isDescendingPath(pathLevels)) {
+    return handrails;
+  }
+
+  return {
+    left: handrails.right,
+    right: handrails.left,
+    middle: handrails.middle,
+  };
+}
+
+function isDescendingPath(pathLevels: number[]): boolean {
+  const first = pathLevels[0];
+  const last = pathLevels.at(-1);
+
+  return first !== undefined && last !== undefined && first > last;
 }
 
 function getInterpolatedPathLevels(
@@ -180,7 +257,8 @@ function getInterpolatedPathLevels(
     const end = anchors[anchorIndex + 1];
 
     for (let index = start.index; index < end.index; index++) {
-      const ratio = end.index == start.index ? 0 : (index - start.index) / (end.index - start.index);
+      const ratio =
+        end.index == start.index ? 0 : (index - start.index) / (end.index - start.index);
       levels[index] = start.level + (end.level - start.level) * ratio;
     }
   }

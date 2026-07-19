@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { buildRawIndoorLevelRenderModel } from "../../src/components/indoorLevel/rawIndoorLevelRenderBuilder";
-import { LEVEL_HEIGHT } from "../../public/strings/settings.json";
+import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../public/strings/settings.json";
 import { createIndoorModel } from "../../src/indoor/IndoorModel";
 import { BuildingInterface } from "../../src/models/buildingInterface";
 import { UserGroupEnum } from "../../src/models/userGroupEnum";
@@ -54,16 +54,40 @@ describe("raw staircase rendering", () => {
     ]);
     expect(renderModel.rooms.every((room) => room.feature.geometry.type == "Polygon")).toBe(true);
     expect(renderModel.rooms.every((room) => room.isVisibleIn3D == false)).toBe(true);
-    expect(renderModel.staircase.renderItems).toHaveLength(7);
-    expect(renderModel.staircase.renderItems.map((item) => item.item.type)).toEqual([
-      "prism",
-      "prism",
-      "prism",
-      "prism",
-      "prism",
-      "prism",
-      "prism",
-    ]);
+    expect(renderModel.staircase.renderItems).toHaveLength(3);
+    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(0);
+  });
+
+  it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
+    const model = createIndoorModel(staircaseWithPathwayHandrailsData, buildingInterface);
+
+    const renderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
+    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(2);
+  });
+
+  it("orients raw footprint handrails in the upward direction", () => {
+    const model = createIndoorModel(staircaseWithFootprintHandrailData, buildingInterface);
+
+    const renderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    const handrailPrisms = getHandrailPrisms(renderModel.staircase.renderItems);
+
+    expect(handrailPrisms).toHaveLength(1);
+    expect(getAverageLongitude(handrailPrisms[0].coordinates)).toBeLessThan(0);
   });
 
   it("uses node levels for raw staircase path altitudes and interpolates missing node levels", () => {
@@ -133,7 +157,11 @@ describe("raw staircase rendering", () => {
   });
 });
 
-function getStaircaseFloorPrisms(renderItems: ReturnType<typeof buildRawIndoorLevelRenderModel>["staircase"]["renderItems"]) {
+type RawStaircaseRenderItems = ReturnType<
+  typeof buildRawIndoorLevelRenderModel
+>["staircase"]["renderItems"];
+
+function getStaircaseFloorPrisms(renderItems: RawStaircaseRenderItems) {
   return renderItems
     .map(({ item }) => item)
     .filter((item) => item.type == "prism" && item.height == 0.05)
@@ -144,6 +172,23 @@ function getStaircaseFloorPrisms(renderItems: ReturnType<typeof buildRawIndoorLe
 
       return item;
     });
+}
+
+function getHandrailPrisms(renderItems: RawStaircaseRenderItems) {
+  return renderItems
+    .map(({ item }) => item)
+    .filter((item) => item.type == "prism" && item.height == STAIRCASE_HANDRAIL_HEIGHT)
+    .map((item) => {
+      if (item.type != "prism") {
+        throw new Error("Expected staircase handrail item to be a prism.");
+      }
+
+      return item;
+    });
+}
+
+function getAverageLongitude(coordinates: GeoJSON.Position[]): number {
+  return coordinates.reduce((sum, coordinate) => sum + coordinate[0], 0) / coordinates.length;
 }
 
 const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
@@ -221,6 +266,54 @@ const staircaseWithNodeLevelsData: RawOverpassDataResponse = {
         id: 100,
         nodes: [1, 2, 3, 4],
         tags: { indoor: "pathway", level: "1.5-2" },
+      },
+    ],
+  },
+};
+
+const staircaseWithPathwayHandrailsData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, lat: 0, lon: 0 },
+      { type: "node", id: 2, lat: 0.5, lon: 0 },
+      {
+        type: "way",
+        id: 100,
+        nodes: [1, 2],
+        tags: {
+          indoor: "pathway",
+          level: "0-1",
+          handrail: "yes",
+          "handrail:right": "no",
+          "handrail:middle": "yes",
+        },
+      },
+    ],
+  },
+};
+
+const staircaseWithFootprintHandrailData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, lat: 0, lon: -0.25, tags: { level: "0" } },
+      { type: "node", id: 2, lat: 0, lon: 0.25 },
+      { type: "node", id: 3, lat: 1, lon: 0.25 },
+      { type: "node", id: 4, lat: 1, lon: -0.25, tags: { level: "1" } },
+      {
+        type: "way",
+        id: 10,
+        nodes: [1, 2, 3, 4, 1],
+        tags: { indoor: "area", stairs: "yes", level: "0;1", "handrail:left": "yes" },
+      },
+      {
+        type: "way",
+        id: 100,
+        nodes: [4, 1],
+        tags: { indoor: "pathway", level: "0-1" },
       },
     ],
   },
