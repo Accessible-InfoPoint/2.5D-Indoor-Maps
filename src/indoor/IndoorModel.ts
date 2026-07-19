@@ -5,10 +5,17 @@ import { getRequiredArrayValue } from "../utils/requiredHelpers";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
+import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
+import { IndoorStairPathway } from "./elements/IndoorStairPathway";
 import { IndoorTactilePaving } from "./elements/IndoorTactilePaving";
 import { IndoorWall } from "./elements/IndoorWall";
+import {
+  buildIndoorVerticalConnections,
+  IndoorVerticalConnection,
+} from "./verticalConnections/IndoorVerticalConnection";
+import { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
 
 export interface RawOverpassGraphs {
   buildings: OsmGraph;
@@ -28,6 +35,10 @@ export interface IndoorModel {
   pointFeatures: IndoorPointFeature[];
   walls: IndoorWall[];
   tactilePaving: IndoorTactilePaving[];
+  stairPathways: IndoorStairPathway[];
+  stairLandings: IndoorLanding[];
+  stairPathNetwork: IndoorStairPathNetwork;
+  verticalConnections: IndoorVerticalConnection[];
 }
 
 export function createIndoorModel(
@@ -45,6 +56,15 @@ export function createIndoorModel(
   const pointFeatures = IndoorPointFeature.collectFromGraph(graphs.indoor);
   const walls = IndoorWall.collectFromGraph(graphs.indoor);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graphs.indoor);
+  const stairPathways = IndoorStairPathway.collectFromGraph(graphs.indoor);
+  const stairLandings = IndoorLanding.collectFromGraph(graphs.indoor);
+  const stairPathNetwork = new IndoorStairPathNetwork(stairPathways, stairLandings);
+  const verticalConnections = buildIndoorVerticalConnections(
+    graphs.indoor,
+    rooms,
+    stairPathNetwork,
+  );
+  console.log(verticalConnections) // TODO: TEMP
 
   return {
     rawOverpassData,
@@ -59,6 +79,10 @@ export function createIndoorModel(
     pointFeatures,
     walls,
     tactilePaving,
+    stairPathways,
+    stairLandings,
+    stairPathNetwork,
+    verticalConnections,
   };
 }
 

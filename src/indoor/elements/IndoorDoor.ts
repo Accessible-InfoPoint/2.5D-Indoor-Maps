@@ -4,6 +4,7 @@ import { OsmGraph } from "../../overpass/OsmGraph";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { nodeToPosition } from "../../utils/overpassJsonHelpers";
+import { parsePositiveMeters } from "../../utils/tagValueHelpers";
 import { calculateDoorOrientationGeometry } from "../doorOrientation";
 import { isNeutralDoorColorRoomTags } from "../indoorTagFilters";
 import { isRawIndoorDoorElement } from "../rawIndoorElementFilters";
@@ -212,9 +213,7 @@ function findRelationWayContainingNode(
 }
 
 function getDoorWidth(tags: Record<string, string>): number {
-  const width = parseFloat(tags.width ?? "");
-
-  return isNaN(width) ? 1 : width;
+  return parsePositiveMeters(tags.width) ?? 1;
 }
 
 function getDoorColor(connectedRooms: IndoorRoom[], selectedFeatureIds: string[]): string {

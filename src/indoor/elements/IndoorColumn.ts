@@ -2,6 +2,7 @@ import { OverpassElement } from "../../models/overpassJson";
 import { OsmGraph } from "../../overpass/OsmGraph";
 import CoordinateHelpers from "../../utils/coordinateHelpers";
 import { nodeToPosition } from "../../utils/overpassJsonHelpers";
+import { parsePositiveMeters } from "../../utils/tagValueHelpers";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { isRawIndoorColumnElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
@@ -69,14 +70,4 @@ function getColumnDiameterMeters(tags: Record<string, string>): number {
     parsePositiveMeters(tags.width) ??
     DEFAULT_COLUMN_DIAMETER_METERS
   );
-}
-
-function parsePositiveMeters(value: string | undefined): number | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  const parsed = parseFloat(value);
-
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }

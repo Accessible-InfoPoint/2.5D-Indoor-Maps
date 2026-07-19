@@ -52,6 +52,20 @@ export function isRawIndoorWallElement(element: OverpassElement): element is Ove
   return element.type == "way" && element.tags?.indoor == "wall";
 }
 
+export function isRawIndoorStairPathwayElement(element: OverpassElement): element is OverpassWay {
+  return element.type == "way" && element.tags?.indoor == "pathway";
+}
+
+export function isRawIndoorLandingElement(
+  element: OverpassElement,
+): element is OverpassWay | OverpassRelation {
+  return (
+    (element.type == "way" || element.type == "relation") &&
+    element.tags?.indoor == "area" &&
+    element.tags?.landing == "yes"
+  );
+}
+
 export function isRawIndoorTactilePavingElement(element: OverpassElement): element is OverpassWay {
   return (
     element.type == "way" && element.tags?.tactile_paving == "yes" && element.tags?.indoor == "yes"
