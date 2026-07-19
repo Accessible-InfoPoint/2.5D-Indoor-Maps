@@ -1,4 +1,5 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
+import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
@@ -9,6 +10,7 @@ import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import {
   DoorRenderItem,
+  InfoPointRenderItem,
   IndoorLevelRenderModel,
   StyledFeatureRenderItem,
 } from "./indoorLevelRenderModel";
@@ -27,6 +29,7 @@ export function buildRawIndoorLevelRenderModel(
 ): IndoorLevelRenderModel {
   return {
     outlineCoordinates: options.model.outlineCoordinates,
+    infoPoint: buildInfoPointRenderItem(options),
     rooms: buildRoomRenderItems(options),
     doors: buildDoorRenderItems(options),
     walls: buildWallRenderItems(options),
@@ -40,6 +43,29 @@ export function buildRawIndoorLevelRenderModel(
       simpleFeatures: [],
       complexFeatures: [],
     },
+  };
+}
+
+function buildInfoPointRenderItem(
+  options: RawIndoorLevelRenderBuilderOptions,
+): InfoPointRenderItem | undefined {
+  const infoPoint = options.model.infoPoints.find((candidate) => candidate.hasLevel(options.level));
+
+  if (infoPoint === undefined) {
+    return undefined;
+  }
+
+  return buildInfoPointRenderItemFromElement(infoPoint);
+}
+
+function buildInfoPointRenderItemFromElement(
+  infoPoint: IndoorInfoPoint,
+): InfoPointRenderItem | undefined {
+  const feature = infoPoint.toGeoJsonFeature();
+
+  return {
+    feature,
+    levels: infoPoint.levels,
   };
 }
 

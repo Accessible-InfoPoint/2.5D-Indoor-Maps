@@ -20,6 +20,9 @@ describe("buildRawIndoorLevelRenderModel", () => {
     });
 
     expect(renderModel.outlineCoordinates).toBe(buildingFeature.geometry.coordinates[0]);
+    expect(renderModel.infoPoint?.feature.id).toBe("node/5");
+    expect(renderModel.infoPoint?.feature.geometry.type).toBe("Point");
+    expect(renderModel.infoPoint?.levels).toEqual([0]);
     expect(renderModel.rooms.map((room) => room.feature.id)).toEqual(["way/10"]);
     expect(renderModel.rooms[0].label).toBe("Room A");
     expect(renderModel.rooms[0].feature.properties).toEqual({
@@ -88,6 +91,20 @@ const rawOverpassData: RawOverpassDataResponse = {
       { type: "node", id: 2, lat: 51, lon: 13.1, tags: { door: "yes", level: "0" } },
       { type: "node", id: 3, lat: 51.1, lon: 13.1 },
       { type: "node", id: 4, lat: 51.1, lon: 13 },
+      {
+        type: "node",
+        id: 5,
+        lat: 51.05,
+        lon: 13.05,
+        tags: { information: "tactile_map", level: "0" },
+      },
+      {
+        type: "node",
+        id: 6,
+        lat: 51.06,
+        lon: 13.06,
+        tags: { information: "tactile_map", level: "1" },
+      },
       {
         type: "way",
         id: 10,

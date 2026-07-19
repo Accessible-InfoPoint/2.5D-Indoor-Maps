@@ -3,6 +3,7 @@ import { RawOverpassDataResponse } from "../services/httpService";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRequiredArrayValue } from "../utils/requiredHelpers";
 import { IndoorDoor } from "./elements/IndoorDoor";
+import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorTactilePaving } from "./elements/IndoorTactilePaving";
 import { IndoorWall } from "./elements/IndoorWall";
@@ -20,6 +21,7 @@ export interface IndoorModel {
   levels: number[];
   rooms: IndoorRoom[];
   doors: IndoorDoor[];
+  infoPoints: IndoorInfoPoint[];
   walls: IndoorWall[];
   tactilePaving: IndoorTactilePaving[];
 }
@@ -34,6 +36,7 @@ export function createIndoorModel(
   };
   const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
   const doors = IndoorDoor.collectFromGraph(graphs.indoor);
+  const infoPoints = IndoorInfoPoint.collectFromGraph(graphs.indoor);
   const walls = IndoorWall.collectFromGraph(graphs.indoor);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graphs.indoor);
 
@@ -45,6 +48,7 @@ export function createIndoorModel(
     levels: collectIndoorLevels(rooms),
     rooms,
     doors,
+    infoPoints,
     walls,
     tactilePaving,
   };

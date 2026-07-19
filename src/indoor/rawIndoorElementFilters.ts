@@ -31,6 +31,10 @@ export function isRawIndoorDoorElement(element: OverpassElement): element is Ove
   return element.type == "node" && element.tags?.door !== undefined;
 }
 
+export function isRawIndoorInfoPointElement(element: OverpassElement): element is OverpassNode {
+  return element.type == "node" && element.tags?.information == "tactile_map";
+}
+
 export function isRawIndoorWallElement(element: OverpassElement): element is OverpassWay {
   return element.type == "way" && element.tags?.indoor == "wall";
 }
