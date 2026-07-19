@@ -36,7 +36,9 @@ export function isRawIndoorWallElement(element: OverpassElement): element is Ove
 }
 
 export function isRawIndoorTactilePavingElement(element: OverpassElement): element is OverpassWay {
-  return element.type == "way" && element.tags?.tactile_paving == "yes";
+  return (
+    element.type == "way" && element.tags?.tactile_paving == "yes" && element.tags?.indoor == "yes"
+  );
 }
 
 export function contributesToIndoorLevels(element: OverpassElement): boolean {

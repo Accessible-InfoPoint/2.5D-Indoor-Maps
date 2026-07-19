@@ -2,8 +2,8 @@ import { IndoorModel } from "../../indoor/IndoorModel";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
+import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
 import { UserGroupEnum } from "../../models/userGroupEnum";
-import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
@@ -65,16 +65,12 @@ function buildTactilePavingRenderItem(
 
   return {
     feature,
-    style: buildTactilePavingStyle(feature),
+    style: buildTactilePavingStyle(tactilePaving),
   };
 }
 
-function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unknown> {
-  return {
-    ...FeatureService.getFeatureStyle(feature),
-    polygonOpacity: 0,
-    lineDasharray: [2, 2],
-  };
+function buildTactilePavingStyle(tactilePaving: IndoorTactilePaving): Record<string, unknown> {
+  return FeatureService.getTactilePavingStyleFromTags(tactilePaving.tags);
 }
 
 function buildWallRenderItems(
@@ -95,21 +91,12 @@ function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefi
 
   return {
     feature,
-    style: buildWallStyle(feature),
+    style: buildWallStyle(wall),
   };
 }
 
-function buildWallStyle(feature: GeoJSON.Feature): Record<string, unknown> {
-  const featureStyle = FeatureService.getFeatureStyle(feature);
-  const wallColor = ColorService.getCurrentColors().wallColor;
-
-  return {
-    polygonFill: wallColor,
-    polygonOpacity: 1,
-    lineColor: wallColor,
-    lineWidth: featureStyle["lineWidth"],
-    lineOpacity: featureStyle["lineOpacity"] ?? 1,
-  };
+function buildWallStyle(wall: IndoorWall): Record<string, unknown> {
+  return FeatureService.getWallStyleFromTags(wall.tags);
 }
 
 function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
@@ -146,33 +133,19 @@ function buildRoomRenderItem(
     feature,
     isSelected,
     isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
-    label: getRoomLabel(feature),
+    label: getRoomLabel(room),
     style: isSelected
-      ? buildSelectedFeatureStyle(feature, options.userProfile)
-      : FeatureService.getFeatureStyle(feature),
+      ? buildSelectedFeatureStyle(room, options.userProfile)
+      : FeatureService.getFeatureStyleFromTags(room.tags, feature.geometry.type),
     selectedPositionMarker: isSelected ? buildSelectedPositionMarker(feature, options) : undefined,
   };
 }
 
 function buildSelectedFeatureStyle(
-  feature: GeoJSON.Feature,
+  room: IndoorRoom,
   userProfile: UserGroupEnum,
 ): Record<string, unknown> {
-  const properties = getRequiredFeatureProperties(feature);
-  let patternFill: string | null = null;
-
-  if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
-    const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
-    const size = lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
-    patternFill =
-      "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
-  }
-
-  return {
-    ...FeatureService.getFeatureStyle(feature),
-    polygonFill: ColorService.getCurrentColors().roomColorS,
-    polygonPatternFile: userProfile == UserGroupEnum.wheelchairUsers ? patternFill : null,
-  };
+  return FeatureService.getSelectedRoomStyleFromTags(room.tags, userProfile);
 }
 
 function buildSelectedPositionMarker(
@@ -198,13 +171,11 @@ function buildSelectedPositionMarker(
   };
 }
 
-function getRoomLabel(feature: GeoJSON.Feature): string | undefined {
-  const { indoor, stairs, ref, name, handrail, amenity } = getRequiredFeatureProperties(feature);
+function getRoomLabel(room: IndoorRoom): string | undefined {
+  const label = room.tags.name || room.tags.ref;
 
-  const label = name || ref;
-
-  if (label && indoor == "room" && !["toilets"].includes(amenity) && !handrail && !stairs) {
-    return label as string;
+  if (typeof label == "string" && isRoomLabelEligibleTags(room.tags)) {
+    return label;
   }
 
   return undefined;

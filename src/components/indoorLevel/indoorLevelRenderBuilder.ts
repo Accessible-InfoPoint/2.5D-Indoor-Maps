@@ -1,6 +1,6 @@
 import FeatureService from "../../services/featureService";
-import ColorService from "../../services/colorService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
+import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
 import { extractLevels } from "../../utils/extractLevels";
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
@@ -105,31 +105,17 @@ function buildRoomRenderItem(
 }
 
 function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unknown> {
-  return {
-    ...FeatureService.getFeatureStyle(feature),
-    polygonOpacity: 0,
-    lineDasharray: [2, 2],
-  };
+  return FeatureService.getTactilePavingStyleFromTags(getRequiredFeatureProperties(feature));
 }
 
 function buildSelectedFeatureStyle(
   feature: GeoJSON.Feature,
   userProfile: UserGroupEnum,
 ): Record<string, unknown> {
-  const properties = getRequiredFeatureProperties(feature);
-  let patternFill: string | null = null;
-
-  if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
-    const lineWidth = FeatureService.getWallWeight(feature) + ColorService.getLineThickness() / 20;
-    const size = lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
-    patternFill =
-      "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColorS.png";
-  }
-
-  return {
-    polygonFill: ColorService.getCurrentColors().roomColorS,
-    polygonPatternFile: userProfile == UserGroupEnum.wheelchairUsers ? patternFill : null,
-  };
+  return FeatureService.getSelectedRoomStyleFromTags(
+    getRequiredFeatureProperties(feature),
+    userProfile,
+  );
 }
 
 function buildSelectedPositionMarker(
@@ -156,11 +142,10 @@ function buildSelectedPositionMarker(
 }
 
 function getRoomLabel(feature: GeoJSON.Feature): string | undefined {
-  const { indoor, stairs, ref, name, handrail, amenity } = getRequiredFeatureProperties(feature);
+  const properties = getRequiredFeatureProperties(feature);
+  const label = properties.name || properties.ref;
 
-  const label = name || ref;
-
-  if (label && indoor == "room" && !["toilets"].includes(amenity) && !handrail && !stairs) {
+  if (typeof label == "string" && isRoomLabelEligibleTags(properties)) {
     return label;
   }
 

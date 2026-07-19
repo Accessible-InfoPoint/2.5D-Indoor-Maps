@@ -7,6 +7,7 @@ import { FILL_OPACITY, WALL_WEIGHT, WALL_WEIGHT_PAVING } from "../../public/stri
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
+import { IndoorTags, isRoomTags, isStaircaseTags, isToiletTags } from "../indoor/indoorTagFilters";
 import ColorService from "./colorService";
 import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
@@ -23,6 +24,21 @@ export interface AccessibilityMarkerData {
     markerHorizontalAlignment: "middle";
     markerVerticalAlignment: "middle";
   };
+}
+
+export interface IndoorFeatureStyle extends Record<string, unknown> {
+  polygonFill: string;
+  lineWidth: number;
+  lineColor: string;
+  polygonOpacity: number;
+  polygonPatternFile: string | null;
+  lineOpacity?: number;
+  lineDasharray?: number[];
+}
+
+export interface IndoorFillStyle {
+  polygonFill: string;
+  polygonPatternFile: string | null;
 }
 
 function getAccessibilityDescription(feature: GeoJSON.Feature): string {
@@ -128,63 +144,139 @@ export function getCategoryIcon(feature: GeoJSON.Feature): string | undefined {
   return rule ? MARKERS_IMG_DIR + rule.iconFilename : undefined;
 }
 
-function getFeatureStyle(feature: GeoJSON.Feature<any>): any {
-  const properties = getRequiredFeatureProperties(feature);
-  const colors = ColorService.getCurrentColors();
-  let fill = "#fff";
-  let pattern_fill: string | null = null;
-  const lineWidth = getWallWeight(feature) + ColorService.getLineThickness() / 20;
-  const size = lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
+function getFeatureStyle(feature: GeoJSON.Feature<any>): IndoorFeatureStyle {
+  return getFeatureStyleFromTags(getRequiredFeatureProperties(feature), feature.geometry.type);
+}
 
-  if (properties.amenity === "toilets") {
-    fill = colors.toiletColor;
-    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
-      pattern_fill =
-        "/images/pattern_fill/" +
-        ColorService.getCurrentProfile() +
-        "_" +
-        size +
-        "_toiletColor.png";
-    }
-  } else if (
-    properties.stairs ||
-    (properties.highway && (properties.highway == "elevator" || properties.highway == "escalator"))
-  ) {
-    fill = colors.stairsColor;
-    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
-      pattern_fill =
-        "/images/pattern_fill/" +
-        ColorService.getCurrentProfile() +
-        "_" +
-        size +
-        "_stairsColor.png";
-    }
-  } else if (properties.indoor === "room") {
-    fill = colors.roomColor;
-    if ("wheelchair" in properties && properties["wheelchair"] == "yes") {
-      pattern_fill =
-        "/images/pattern_fill/" + ColorService.getCurrentProfile() + "_" + size + "_roomColor.png";
-    }
-  }
+export function getFeatureStyleFromTags(
+  tags: IndoorTags,
+  geometryType?: GeoJSON.Geometry["type"],
+): IndoorFeatureStyle {
+  const colors = ColorService.getCurrentColors();
+  const lineWidth = getLineWidthFromTags(tags, geometryType);
+  const fillStyle = getIndoorFillStyleFromTags(tags, lineWidth);
 
   return {
-    polygonFill: fill,
-    lineWidth: lineWidth,
+    ...fillStyle,
+    lineWidth,
     lineColor: colors.wallColor,
     polygonOpacity: FILL_OPACITY,
-    polygonPatternFile:
-      UserService.getCurrentProfile() == UserGroupEnum.wheelchairUsers ? pattern_fill : null,
   };
 }
 
-function getWallWeight(feature: GeoJSON.Feature<any>): number {
-  const properties = getRequiredFeatureProperties(feature);
+export function getIndoorFillStyleFromTags(
+  tags: IndoorTags,
+  lineWidth = getLineWidthFromTags(tags),
+): IndoorFillStyle {
+  const colors = ColorService.getCurrentColors();
+  const size = getPatternSize(lineWidth);
 
+  if (isToiletTags(tags)) {
+    return {
+      polygonFill: colors.toiletColor,
+      polygonPatternFile: getWheelchairPatternFile(tags, size, "toiletColor"),
+    };
+  }
+
+  if (isStaircaseTags(tags)) {
+    return {
+      polygonFill: colors.stairsColor,
+      polygonPatternFile: getWheelchairPatternFile(tags, size, "stairsColor"),
+    };
+  }
+
+  if (isRoomTags(tags)) {
+    return {
+      polygonFill: colors.roomColor,
+      polygonPatternFile: getWheelchairPatternFile(tags, size, "roomColor"),
+    };
+  }
+
+  return {
+    polygonFill: "#fff",
+    polygonPatternFile: null,
+  };
+}
+
+export function getSelectedRoomStyleFromTags(
+  tags: IndoorTags,
+  userProfile: UserGroupEnum,
+): IndoorFeatureStyle {
+  const lineWidth = getLineWidthFromTags(tags);
+  const size = getPatternSize(lineWidth);
+
+  return {
+    ...getFeatureStyleFromTags(tags),
+    polygonFill: ColorService.getCurrentColors().roomColorS,
+    polygonPatternFile:
+      userProfile == UserGroupEnum.wheelchairUsers
+        ? getWheelchairPatternFile(tags, size, "roomColorS", true)
+        : null,
+  };
+}
+
+export function getWallStyleFromTags(tags: IndoorTags): IndoorFeatureStyle {
+  const wallColor = ColorService.getCurrentColors().wallColor;
+
+  return {
+    polygonFill: wallColor,
+    polygonOpacity: 1,
+    polygonPatternFile: null,
+    lineColor: wallColor,
+    lineWidth: getLineWidthFromTags(tags),
+    lineOpacity: 1,
+  };
+}
+
+export function getTactilePavingStyleFromTags(tags: IndoorTags): IndoorFeatureStyle {
+  return {
+    ...getFeatureStyleFromTags(tags, "LineString"),
+    polygonOpacity: 0,
+    lineDasharray: [2, 2],
+  };
+}
+
+export function getLineWidthFromTags(
+  tags: IndoorTags,
+  geometryType?: GeoJSON.Geometry["type"],
+): number {
+  return getWallWeightFromTags(tags, geometryType) + ColorService.getLineThickness() / 20;
+}
+
+export function getWallWeightFromTags(
+  tags: IndoorTags,
+  geometryType?: GeoJSON.Geometry["type"],
+): number {
   //highlight tactile paving lines
   //decides wall weight based on the user profile and feature
-  return feature.geometry.type === "LineString" && properties.tactile_paving === "yes"
+  return geometryType === "LineString" && tags.tactile_paving === "yes"
     ? WALL_WEIGHT_PAVING
     : WALL_WEIGHT;
+}
+
+function getWallWeight(feature: GeoJSON.Feature<any>): number {
+  return getWallWeightFromTags(getRequiredFeatureProperties(feature), feature.geometry.type);
+}
+
+function getPatternSize(lineWidth: number): "small" | "medium" | "large" {
+  return lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
+}
+
+function getWheelchairPatternFile(
+  tags: IndoorTags,
+  size: "small" | "medium" | "large",
+  colorName: string,
+  ignoreCurrentProfile = false,
+): string | null {
+  if (tags.wheelchair != "yes") {
+    return null;
+  }
+
+  if (!ignoreCurrentProfile && UserService.getCurrentProfile() != UserGroupEnum.wheelchairUsers) {
+    return null;
+  }
+
+  return `/images/pattern_fill/${ColorService.getCurrentProfile()}_${size}_${colorName}.png`;
 }
 
 export function getCurrentFeatures(): Map<string, boolean> {
@@ -213,13 +305,7 @@ export function setCurrentFeatures(checkboxState: Map<string, boolean>): void {
 }
 
 export function isStaircase(feature: GeoJSON.Feature): boolean {
-  const properties = getRequiredFeatureProperties(feature);
-
-  return (
-    ("stairs" in properties && properties["stairs"] == "yes") ||
-    ("highway" in properties &&
-      (properties["highway"] == "elevator" || properties["highway"] == "escalator"))
-  );
+  return isStaircaseTags(getRequiredFeatureProperties(feature));
 }
 
 export function isSimpleStaircase(feature: GeoJSON.Feature): boolean {
@@ -238,6 +324,13 @@ export default {
   getAccessibilityDescription,
   getAccessibilityMarkerData,
   getFeatureStyle,
+  getFeatureStyleFromTags,
+  getIndoorFillStyleFromTags,
+  getSelectedRoomStyleFromTags,
+  getWallStyleFromTags,
+  getTactilePavingStyleFromTags,
+  getLineWidthFromTags,
+  getWallWeightFromTags,
   getWallWeight,
   getCurrentFeatures,
   setCurrentFeatures,

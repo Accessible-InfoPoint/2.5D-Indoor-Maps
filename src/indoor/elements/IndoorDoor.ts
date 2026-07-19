@@ -3,9 +3,9 @@ import { OverpassNode, OverpassRelation, OverpassWay } from "../../models/overpa
 import { OsmGraph } from "../../overpass/OsmGraph";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import { calculateDoorOrientationGeometry } from "../doorOrientation";
+import { isNeutralDoorColorRoomTags } from "../indoorTagFilters";
 import { isRawIndoorDoorElement } from "../rawIndoorElementFilters";
 import { IndoorRoom } from "./IndoorRoom";
 import { IndoorElement } from "./IndoorElement";
@@ -67,17 +67,8 @@ export class IndoorDoor extends IndoorElement {
   ): DoorRenderItem[] {
     const connectedRooms = this.getConnectedRooms(rooms);
     const connectedWalls = this.getConnectedWalls(walls);
-    const connectedRoomFeatures = connectedRooms
-      .map((room) => room.toGeoJsonFeature())
-      .filter(
-        (feature): feature is GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> =>
-          feature !== undefined,
-      );
-    const connectedWallFeatures = connectedWalls
-      .map((wall) => wall.toGeoJsonFeature())
-      .filter((feature): feature is GeoJSON.Feature<GeoJSON.LineString> => feature !== undefined);
 
-    if (connectedRoomFeatures.length == 0 && connectedWallFeatures.length == 0) {
+    if (connectedRooms.length == 0 && connectedWalls.length == 0) {
       return [];
     }
 
@@ -91,8 +82,8 @@ export class IndoorDoor extends IndoorElement {
       {
         coordinates: orientationGeometry.orientation,
         symbol: {
-          lineColor: getDoorColor(connectedRoomFeatures, selectedFeatureIds),
-          lineWidth: getDoorLineWidth(connectedWallFeatures, connectedRoomFeatures),
+          lineColor: getDoorColor(connectedRooms, selectedFeatureIds),
+          lineWidth: getDoorLineWidth(connectedWalls, connectedRooms),
         },
         debug: orientationGeometry.debug,
       },
@@ -226,41 +217,28 @@ function getDoorWidth(tags: Record<string, string>): number {
   return isNaN(width) ? 1 : width;
 }
 
-function getDoorColor(
-  connectedRoomFeatures: GeoJSON.Feature[],
-  selectedFeatureIds: string[],
-): string {
-  if (
-    connectedRoomFeatures.some((feature) =>
-      selectedFeatureIds.includes(getRequiredFeatureId(feature)),
-    )
-  ) {
+function getDoorColor(connectedRooms: IndoorRoom[], selectedFeatureIds: string[]): string {
+  if (connectedRooms.some((room) => selectedFeatureIds.includes(room.id))) {
     return ColorService.getCurrentColors().roomColorS;
   }
 
-  const nonCorridorRoom = connectedRoomFeatures.find((feature) => {
-    const properties = getRequiredFeatureProperties(feature);
+  const nonCorridorRoom = connectedRooms.find((room) => !isNeutralDoorColorRoomTags(room.tags));
 
-    return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
-  });
-
-  if (connectedRoomFeatures.length == 0) {
+  if (connectedRooms.length == 0) {
     return "#ffffff";
   }
 
-  return FeatureService.getFeatureStyle(nonCorridorRoom ?? connectedRoomFeatures[0])["polygonFill"];
+  return FeatureService.getIndoorFillStyleFromTags(nonCorridorRoom?.tags ?? connectedRooms[0].tags)
+    .polygonFill;
 }
 
-function getDoorLineWidth(
-  connectedWallFeatures: GeoJSON.Feature[],
-  connectedRoomFeatures: GeoJSON.Feature[],
-): number {
-  if (connectedWallFeatures.length > 0) {
-    return FeatureService.getFeatureStyle(connectedWallFeatures[0])["lineWidth"];
+function getDoorLineWidth(connectedWalls: IndoorWall[], connectedRooms: IndoorRoom[]): number {
+  if (connectedWalls.length > 0) {
+    return FeatureService.getLineWidthFromTags(connectedWalls[0].tags);
   }
 
-  if (connectedRoomFeatures.length > 0) {
-    return FeatureService.getFeatureStyle(connectedRoomFeatures[0])["lineWidth"];
+  if (connectedRooms.length > 0) {
+    return FeatureService.getLineWidthFromTags(connectedRooms[0].tags);
   }
 
   return 1;

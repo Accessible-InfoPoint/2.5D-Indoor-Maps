@@ -116,7 +116,7 @@ const rawOverpassData: RawOverpassDataResponse = {
         type: "way",
         id: 14,
         nodes: [1, 2, 3],
-        tags: { tactile_paving: "yes", level: "0" },
+        tags: { indoor: "yes", tactile_paving: "yes", level: "0" },
       },
       {
         type: "way",

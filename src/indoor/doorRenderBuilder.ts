@@ -1,6 +1,7 @@
 import { DoorDataInterface } from "../models/doorDataInterface";
 import ColorService from "../services/colorService";
 import FeatureService from "../services/featureService";
+import { isNeutralDoorColorRoomTags } from "./indoorTagFilters";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { DoorRenderItem } from "../components/indoorLevel/indoorLevelRenderModel";
 
@@ -38,11 +39,9 @@ function getLegacyDoorColor(door: DoorDataInterface, selectedFeatureIds: string[
     return ColorService.getCurrentColors().roomColorS;
   }
 
-  const nonCorridorRoom = door.rooms.find((feature) => {
-    const properties = getRequiredFeatureProperties(feature);
-
-    return !(["corridor", "area"].includes(properties.indoor) && properties.stairs !== "yes");
-  });
+  const nonCorridorRoom = door.rooms.find(
+    (feature) => !isNeutralDoorColorRoomTags(getRequiredFeatureProperties(feature)),
+  );
 
   return FeatureService.getFeatureStyle(nonCorridorRoom ?? door.rooms[0])["polygonFill"];
 }
