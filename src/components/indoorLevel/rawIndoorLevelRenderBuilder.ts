@@ -1,5 +1,6 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
+import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import ColorService from "../../services/colorService";
@@ -29,7 +30,7 @@ export function buildRawIndoorLevelRenderModel(
     rooms: buildRoomRenderItems(options),
     doors: buildDoorRenderItems(options),
     walls: buildWallRenderItems(options),
-    tactilePaving: [],
+    tactilePaving: buildTactilePavingRenderItems(options),
     pointMarkerFeatures: [],
     staircase: {
       doorCoordinates: [],
@@ -39,6 +40,40 @@ export function buildRawIndoorLevelRenderModel(
       simpleFeatures: [],
       complexFeatures: [],
     },
+  };
+}
+
+function buildTactilePavingRenderItems(
+  options: RawIndoorLevelRenderBuilderOptions,
+): StyledFeatureRenderItem[] {
+  return options.model.tactilePaving
+    .filter((tactilePaving) => tactilePaving.hasLevel(options.level))
+    .map((tactilePaving): StyledFeatureRenderItem | undefined =>
+      buildTactilePavingRenderItem(tactilePaving),
+    )
+    .filter((item): item is StyledFeatureRenderItem => item !== undefined);
+}
+
+function buildTactilePavingRenderItem(
+  tactilePaving: IndoorTactilePaving,
+): StyledFeatureRenderItem | undefined {
+  const feature = tactilePaving.toGeoJsonFeature();
+
+  if (feature === undefined) {
+    return undefined;
+  }
+
+  return {
+    feature,
+    style: buildTactilePavingStyle(feature),
+  };
+}
+
+function buildTactilePavingStyle(feature: GeoJSON.Feature): Record<string, unknown> {
+  return {
+    ...FeatureService.getFeatureStyle(feature),
+    polygonOpacity: 0,
+    lineDasharray: [2, 2],
   };
 }
 

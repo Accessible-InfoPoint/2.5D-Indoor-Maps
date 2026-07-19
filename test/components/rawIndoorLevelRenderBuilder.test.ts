@@ -34,6 +34,9 @@ describe("buildRawIndoorLevelRenderModel", () => {
       "Polygon",
     ]);
     expect(renderModel.walls.map((wall) => wall.style.polygonFill)).toEqual(["#000000", "#000000"]);
+    expect(renderModel.tactilePaving.map((item) => item.feature.id)).toEqual(["way/14"]);
+    expect(renderModel.tactilePaving[0].feature.geometry.type).toBe("LineString");
+    expect(renderModel.tactilePaving[0].style.lineDasharray).toEqual([2, 2]);
   });
 
   it("marks selected raw rooms using the same ids as GeoJSON compatibility rooms", () => {
@@ -108,6 +111,18 @@ const rawOverpassData: RawOverpassDataResponse = {
         id: 13,
         nodes: [1, 2, 3, 4, 1],
         tags: { indoor: "wall", area: "yes", level: "0" },
+      },
+      {
+        type: "way",
+        id: 14,
+        nodes: [1, 2, 3],
+        tags: { tactile_paving: "yes", level: "0" },
+      },
+      {
+        type: "way",
+        id: 15,
+        nodes: [1, 2, 3],
+        tags: { tactile_paving: "yes", level: "1" },
       },
     ],
   },
