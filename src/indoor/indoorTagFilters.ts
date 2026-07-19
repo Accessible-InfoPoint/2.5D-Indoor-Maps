@@ -74,6 +74,22 @@ export function isInformationBoardTags(tags: IndoorTags): boolean {
   return ["board", "map"].includes(tags.information as string);
 }
 
+export function hasSpeechOutputTags(tags: IndoorTags): boolean {
+  return (
+    tags["speech_output:de"] !== undefined ||
+    tags["speech_output:en"] !== undefined ||
+    tags.speech_output !== undefined
+  );
+}
+
+export function isPositiveWheelchairTags(tags: IndoorTags): boolean {
+  return ["yes", "designated"].includes(tags.wheelchair as string);
+}
+
+export function hasWheelchairDescriptionTags(tags: IndoorTags, language: "de" | "en"): boolean {
+  return tags[`wheelchair:description:${language}`] !== undefined;
+}
+
 export function hasPotentialAccessibilityMarkerTags(tags: IndoorTags): boolean {
   return (
     (!isInfoPointTags(tags) && isTactileInformationTags(tags)) ||
@@ -85,8 +101,4 @@ export function hasPotentialAccessibilityMarkerTags(tags: IndoorTags): boolean {
     isInformationBoardTags(tags) ||
     isStepsTags(tags)
   );
-}
-
-function isPositiveWheelchairTags(tags: IndoorTags): boolean {
-  return ["yes", "designated"].includes(tags.wheelchair as string);
 }

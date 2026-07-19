@@ -7,20 +7,13 @@ import { FILL_OPACITY, WALL_WEIGHT, WALL_WEIGHT_PAVING } from "../../public/stri
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
+import { indoorAccessibilityRules } from "../indoor/indoorAccessibilityRules";
 import {
   IndoorTags,
-  isAccessibleToiletTags,
-  isEmergencyExitTags,
-  isEntranceTags,
-  isGeneralToiletTags,
   isInfoPointTags,
-  isInformationBoardTags,
   isRoomTags,
   isStaircaseTags,
-  isStepsTags,
-  isTactileInformationTags,
   isToiletTags,
-  isWheelchairAccessibleElevatorTags,
 } from "../indoor/indoorTagFilters";
 import ColorService from "./colorService";
 import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
@@ -96,9 +89,11 @@ export function getAccessibilityMarkerDataFromTags(
 
   const rule = ACCESSIBILITY_MARKER_RULES.find(
     (candidate) =>
+      candidate.markerIcon !== undefined &&
+      (candidate.hasMarker?.(tags) ?? true) &&
       candidate.userGroups.includes(UserService.getCurrentProfile()) &&
-      candidate.matches(tags) &&
-      checkForMatchingTags(candidate.tags),
+      candidate.matchesTags(tags) &&
+      checkForMatchingTags(candidate.featureToggles),
   );
 
   if (rule === undefined) {
@@ -108,7 +103,7 @@ export function getAccessibilityMarkerDataFromTags(
   return {
     coordinates,
     symbol: {
-      markerFile: MARKERS_IMG_DIR + rule.iconFilename,
+      markerFile: MARKERS_IMG_DIR + rule.markerIcon,
       markerWidth: 48,
       markerHeight: 48,
       markerHorizontalAlignment: "middle",
@@ -117,69 +112,9 @@ export function getAccessibilityMarkerDataFromTags(
   };
 }
 
-const ACCESSIBILITY_MARKER_RULES: Array<{
-  matches: (tags: IndoorTags) => boolean;
-  userGroups: UserGroupEnum[];
-  iconFilename: string;
-  tags?: UserFeatureEnum[];
-}> = [
-  {
-    matches: isTactileInformationTags,
-    userGroups: [UserGroupEnum.blindPeople],
-    iconFilename: ICONS.INFO,
-    tags: [UserFeatureEnum.tactileLines],
-  },
-  {
-    matches: isAccessibleToiletTags,
-    userGroups: [UserGroupEnum.wheelchairUsers],
-    iconFilename: ICONS.TOILETS_WHEELCHAIR,
-    tags: [UserFeatureEnum.accessibleToilets],
-  },
-  {
-    matches: isWheelchairAccessibleElevatorTags,
-    userGroups: [UserGroupEnum.wheelchairUsers],
-    iconFilename: ICONS.ELEVATOR,
-    tags: [UserFeatureEnum.elevators],
-  },
-  {
-    matches: isGeneralToiletTags,
-    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.blindPeople],
-    iconFilename: ICONS.TOILETS,
-    tags: [UserFeatureEnum.toilets],
-  },
-  {
-    matches: isEntranceTags,
-    userGroups: [
-      UserGroupEnum.blindPeople,
-      UserGroupEnum.noImpairments,
-      UserGroupEnum.wheelchairUsers,
-    ],
-    iconFilename: ICONS.ENTRANCE,
-    tags: [UserFeatureEnum.entrancesExits],
-  },
-  {
-    matches: isEmergencyExitTags,
-    userGroups: [
-      UserGroupEnum.blindPeople,
-      UserGroupEnum.noImpairments,
-      UserGroupEnum.wheelchairUsers,
-    ],
-    iconFilename: ICONS.EMERGENCY_EXIT,
-    tags: [UserFeatureEnum.emergencyExits],
-  },
-  {
-    matches: isInformationBoardTags,
-    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.wheelchairUsers],
-    iconFilename: ICONS.INFO,
-    tags: [UserFeatureEnum.service, UserFeatureEnum.tactileLines],
-  },
-  {
-    matches: isStepsTags,
-    userGroups: [UserGroupEnum.noImpairments, UserGroupEnum.blindPeople],
-    iconFilename: ICONS.STAIRS,
-    tags: [UserFeatureEnum.stairs],
-  },
-];
+const ACCESSIBILITY_MARKER_RULES = indoorAccessibilityRules.filter(
+  (rule) => rule.markerIcon !== undefined,
+);
 
 export function getMarkerCoordinatesFromGeometry(
   geometry: GeoJSON.Geometry,
