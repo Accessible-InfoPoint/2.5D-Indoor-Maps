@@ -237,10 +237,53 @@ function offsetCoordinateLine(line: GeoJSON.Position[], width: number): GeoJSON.
   return returnPoints.map((v) => [v.x / xStretch, y2lat(v.y / yStretch)]);
 }
 
+/**
+ * Approximates a meter-sized circle around a longitude/latitude coordinate as a GeoJSON polygon.
+ *
+ * Longitude/latitude coordinates are angular units, not meter units: one degree of latitude is
+ * roughly constant, while one degree of longitude gets physically narrower by cos(latitude) as you
+ * move away from the equator. `metersPerDegreeLongitude` is that horizontal stretch factor.
+ *
+ * This is the same idea as converting coordinates into a stretched x/y meter space, drawing there,
+ * and dividing by the stretch afterwards. The algebra is just collapsed into one step:
+ * `lon + meterOffsetX / metersPerDegreeLongitude` and
+ * `lat + meterOffsetY / metersPerDegreeLatitude`.
+ */
+function createCoordinateCirclePolygon(
+  center: GeoJSON.Position,
+  radiusMeters: number,
+  segments: number,
+): GeoJSON.Polygon {
+  const [longitude, latitude] = center;
+  const latRadians = deg2rad(latitude);
+  const metersPerDegreeLatitude = 111_320;
+  const metersPerDegreeLongitude = Math.max(
+    Math.abs(metersPerDegreeLatitude * Math.cos(latRadians)),
+    0.000001,
+  );
+  const ring: GeoJSON.Position[] = [];
+
+  for (let index = 0; index < segments; index++) {
+    const angle = (index / segments) * Math.PI * 2;
+    const lonOffset = (Math.cos(angle) * radiusMeters) / metersPerDegreeLongitude;
+    const latOffset = (Math.sin(angle) * radiusMeters) / metersPerDegreeLatitude;
+
+    ring.push([longitude + lonOffset, latitude + latOffset]);
+  }
+
+  ring.push([...ring[0]]);
+
+  return {
+    type: "Polygon",
+    coordinates: [ring],
+  };
+}
+
 export default {
   getDistanceBetweenCoordinatesInM,
   lat2y,
   y2lat,
   simplifyByAngle,
   offsetCoordinateLine,
+  createCoordinateCirclePolygon,
 };

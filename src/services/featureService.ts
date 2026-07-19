@@ -258,6 +258,13 @@ export function getWallStyleFromTags(tags: IndoorTags): IndoorFeatureStyle {
   };
 }
 
+export function getColumnStyleFromTags(tags: IndoorTags): IndoorFeatureStyle {
+  return {
+    ...getWallStyleFromTags(tags),
+    lineWidth: 0,
+  };
+}
+
 export function getTactilePavingStyleFromTags(tags: IndoorTags): IndoorFeatureStyle {
   return {
     ...getFeatureStyleFromTags(tags, "LineString"),
@@ -360,6 +367,7 @@ export default {
   getIndoorFillStyleFromTags,
   getSelectedRoomStyleFromTags,
   getWallStyleFromTags,
+  getColumnStyleFromTags,
   getTactilePavingStyleFromTags,
   getLineWidthFromTags,
   getWallWeightFromTags,

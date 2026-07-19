@@ -107,3 +107,22 @@ describe("offsetCoordinateLine", () => {
     }
   });
 });
+
+describe("createCoordinateCirclePolygon", () => {
+  it("creates a closed polygon with the requested segment count", () => {
+    const polygon = coordHelpers.createCoordinateCirclePolygon([13, 51], 0.5, 24);
+    const ring = polygon.coordinates[0];
+
+    expect(polygon.type).toBe("Polygon");
+    expect(ring).toHaveLength(25);
+    expect(ring[0]).toEqual(ring.at(-1));
+  });
+
+  it("places vertices at roughly the requested radius", () => {
+    const center: GeoJSON.Position = [13, 51];
+    const polygon = coordHelpers.createCoordinateCirclePolygon(center, 0.5, 24);
+    const firstVertex = polygon.coordinates[0][0];
+
+    expect(coordHelpers.getDistanceBetweenCoordinatesInM(center, firstVertex)).toBeCloseTo(0.5, 1);
+  });
+});

@@ -1,4 +1,5 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
+import { IndoorColumn } from "../../indoor/elements/IndoorColumn";
 import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
 import { IndoorPointFeature } from "../../indoor/elements/IndoorPointFeature";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
@@ -166,10 +167,14 @@ function buildTactilePavingStyle(tactilePaving: IndoorTactilePaving): Record<str
 function buildWallRenderItems(
   options: RawIndoorLevelRenderBuilderOptions,
 ): StyledFeatureRenderItem[] {
-  return options.model.walls
-    .filter((wall) => wall.hasLevel(options.level))
-    .map((wall): StyledFeatureRenderItem | undefined => buildWallRenderItem(wall))
-    .filter((item): item is StyledFeatureRenderItem => item !== undefined);
+  return [
+    ...options.model.walls
+      .filter((wall) => wall.hasLevel(options.level))
+      .map((wall): StyledFeatureRenderItem | undefined => buildWallRenderItem(wall)),
+    ...options.model.columns
+      .filter((column) => column.hasLevel(options.level))
+      .map((column): StyledFeatureRenderItem | undefined => buildColumnRenderItem(column)),
+  ].filter((item): item is StyledFeatureRenderItem => item !== undefined);
 }
 
 function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefined {
@@ -185,8 +190,25 @@ function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefi
   };
 }
 
+function buildColumnRenderItem(column: IndoorColumn): StyledFeatureRenderItem | undefined {
+  const feature = column.toGeoJsonFeature();
+
+  if (feature === undefined) {
+    return undefined;
+  }
+
+  return {
+    feature,
+    style: buildColumnStyle(column),
+  };
+}
+
 function buildWallStyle(wall: IndoorWall): Record<string, unknown> {
   return FeatureService.getWallStyleFromTags(wall.tags);
+}
+
+function buildColumnStyle(column: IndoorColumn): Record<string, unknown> {
+  return FeatureService.getColumnStyleFromTags(column.tags);
 }
 
 function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
