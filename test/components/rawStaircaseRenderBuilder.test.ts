@@ -54,6 +54,13 @@ describe("raw staircase rendering", () => {
     ]);
     expect(renderModel.rooms.every((room) => room.feature.geometry.type == "Polygon")).toBe(true);
     expect(renderModel.rooms.every((room) => room.isVisibleIn3D == false)).toBe(true);
+    expect(renderModel.rooms.every((room) => room.style.lineWidth == 0)).toBe(true);
+    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([
+      "staircase-outline/way/100@0-0.5/left",
+      "staircase-outline/way/100@0-0.5/right",
+      "staircase-outline/way/101@0.5-1/left",
+      "staircase-outline/way/101@0.5-1/right",
+    ]);
     expect(renderModel.staircase.renderItems).toHaveLength(3);
     expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(0);
   });
@@ -71,6 +78,10 @@ describe("raw staircase rendering", () => {
 
     expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
     expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(2);
+    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([
+      "staircase-outline/way/100@0-1/left",
+      "staircase-outline/way/100@0-1/right",
+    ]);
   });
 
   it("orients raw footprint handrails in the upward direction", () => {
@@ -86,8 +97,33 @@ describe("raw staircase rendering", () => {
 
     const handrailPrisms = getHandrailPrisms(renderModel.staircase.renderItems);
 
+    expect(renderModel.rooms.find((room) => room.feature.id == "way/10")?.style.lineWidth).not.toBe(
+      0,
+    );
+    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([]);
+    expect(renderModel.doors).toHaveLength(1);
+    expect(renderModel.doors[0].kind).toBe("opening");
+    expect(renderModel.doors[0].debug?.door).toEqual([-0.25, 0]);
+    expect(renderModel.doors[0].debug?.widthM).toBeCloseTo(1);
     expect(handrailPrisms).toHaveLength(1);
     expect(getAverageLongitude(handrailPrisms[0].coordinates)).toBeLessThan(0);
+  });
+
+  it("uses explicit door nodes for open staircase openings with staircase width fallback", () => {
+    const model = createIndoorModel(staircaseWithDoorOpeningData, buildingInterface);
+
+    const renderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    expect(renderModel.doors).toHaveLength(1);
+    expect(renderModel.doors[0].kind).toBe("door");
+    expect(renderModel.doors[0].debug?.door).toEqual([-0.25, 0]);
+    expect(renderModel.doors[0].debug?.widthM).toBeCloseTo(2.5);
   });
 
   it("renders explicit landing handrail ways in 3D", () => {
@@ -101,7 +137,12 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([]);
+    expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([
+      "staircase-outline/way/100@0-0.5/left",
+      "staircase-outline/way/100@0-0.5/right",
+      "staircase-outline/way/101@0.5-1/left",
+      "staircase-outline/way/101@0.5-1/right",
+    ]);
     expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(3);
     expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
   });
@@ -330,6 +371,31 @@ const staircaseWithFootprintHandrailData: RawOverpassDataResponse = {
         id: 100,
         nodes: [4, 1],
         tags: { indoor: "pathway", level: "0-1" },
+      },
+    ],
+  },
+};
+
+const staircaseWithDoorOpeningData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, lat: 0, lon: -0.25, tags: { door: "yes", level: "0" } },
+      { type: "node", id: 2, lat: 0, lon: 0.25 },
+      { type: "node", id: 3, lat: 1, lon: 0.25 },
+      { type: "node", id: 4, lat: 1, lon: -0.25, tags: { level: "1" } },
+      {
+        type: "way",
+        id: 10,
+        nodes: [1, 2, 3, 4, 1],
+        tags: { indoor: "area", stairs: "yes", level: "0;1" },
+      },
+      {
+        type: "way",
+        id: 100,
+        nodes: [4, 1],
+        tags: { indoor: "pathway", level: "0-1", width: "2.5" },
       },
     ],
   },

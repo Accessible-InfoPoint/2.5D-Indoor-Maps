@@ -31,7 +31,7 @@ describe("IndoorDoor", () => {
     const renderItems = door.buildRenderItems(rooms, walls, []);
 
     expect(renderItems).toHaveLength(1);
-    expect(renderItems[0].coordinates).toHaveLength(2);
+    expect(renderItems[0].coordinates).toHaveLength(3);
     expect(renderItems[0].symbol.lineWidth).toBe(1 + 50 / 20);
     expect(renderItems[0].debug?.door).toEqual([1, 0]);
   });

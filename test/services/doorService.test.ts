@@ -138,7 +138,7 @@ describe("doorService", () => {
       const door = doorService.getDoorsByLevel(levelA)[0];
       expect(door.orientation).toBeDefined();
       expect(Array.isArray(door.orientation)).toBe(true);
-      expect(door.orientation?.length).toBe(2);
+      expect(door.orientation?.length).toBe(3);
     });
 
     it("calculates orientation with no width set", () => {
@@ -147,7 +147,7 @@ describe("doorService", () => {
       const door = doorService.getDoorsByLevel(levelA)[0];
       expect(door.orientation).toBeDefined();
       expect(Array.isArray(door.orientation)).toBe(true);
-      expect(door.orientation?.length).toBe(2);
+      expect(door.orientation?.length).toBe(3);
     });
 
     it("calculates orientation for a nearby matching door", () => {
@@ -156,7 +156,7 @@ describe("doorService", () => {
       const door = doorService.getDoorsByLevel(levelA)[0];
       expect(door.orientation).toBeDefined();
       expect(Array.isArray(door.orientation)).toBe(true);
-      expect(door.orientation?.length).toBe(2);
+      expect(door.orientation?.length).toBe(3);
     });
 
     it("does not recalculate orientation if already set", () => {
@@ -208,8 +208,9 @@ describe("doorService", () => {
       type: "Feature" as const,
     });
 
-    const mockOrientation: [GeoJSON.Position, GeoJSON.Position] = [
+    const mockOrientation: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position] = [
       [0, 0],
+      [0.5, 0.5],
       [1, 1],
     ];
 

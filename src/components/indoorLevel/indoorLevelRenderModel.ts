@@ -31,7 +31,8 @@ export interface AccessibilityMarkerRenderItem {
 }
 
 export interface DoorRenderItem {
-  coordinates: [GeoJSON.Position, GeoJSON.Position];
+  kind?: "door" | "opening";
+  coordinates: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
   symbol: {
     lineColor: string;
     lineWidth: number;

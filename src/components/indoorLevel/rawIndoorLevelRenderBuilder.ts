@@ -1,4 +1,8 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
+import {
+  buildOpeningRenderItemsForNode,
+  getRoomsContainingNode,
+} from "../../indoor/elements/IndoorDoor";
 import { IndoorColumn } from "../../indoor/elements/IndoorColumn";
 import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
 import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
@@ -7,13 +11,20 @@ import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
 import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
+import { getRawElementNodeIds } from "../../indoor/rawElementNodeIds";
+import { IndoorStairPathwayInstance } from "../../indoor/verticalConnections/IndoorStairPathNetwork";
+import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
+import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import {
+  buildRawStaircase2DOutlineRenderItems,
   buildRawStaircase2DRenderItems,
   buildRawStaircase3DRenderItems,
+  getInterpolatedPathLevels,
+  hasVerticalConnectionHandrailTags,
   isHandrailAttachedToLandingInstance,
 } from "../staircase/rawStaircaseRenderBuilder";
 import {
@@ -194,6 +205,12 @@ function buildWallRenderItems(
     ...options.model.handrails
       .filter((handrail) => shouldRenderHandrailAsWall(handrail, options))
       .map((handrail): StyledFeatureRenderItem | undefined => buildHandrailRenderItem(handrail)),
+    ...buildRawStaircase2DOutlineRenderItems({
+      verticalConnections: options.model.verticalConnections,
+      handrails: options.model.handrails,
+      level: options.level,
+      selectedFeatureIds: options.selectedFeatureIds,
+    }),
     ...options.model.columns
       .filter((column) => column.hasLevel(options.level))
       .map((column): StyledFeatureRenderItem | undefined => buildColumnRenderItem(column)),
@@ -266,12 +283,157 @@ function shouldRenderHandrailAsWall(
 function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
   const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
   const wallsOnLevel = options.model.walls.filter((wall) => wall.hasLevel(options.level));
+  const staircaseOpenings = collectOpenStaircaseOpeningNodes(options, roomsOnLevel);
+  const staircaseWidthByNodeId = buildStaircaseWidthByNodeId(staircaseOpenings);
+  const explicitDoorNodeIds = new Set(
+    options.model.doors
+      .filter((door) => door.hasLevel(options.level))
+      .map((door) => door.sourceElement.id),
+  );
 
-  return options.model.doors
-    .filter((door) => door.hasLevel(options.level))
-    .flatMap((door) =>
-      door.buildRenderItems(roomsOnLevel, wallsOnLevel, options.selectedFeatureIds),
-    );
+  return [
+    ...options.model.doors
+      .filter((door) => door.hasLevel(options.level))
+      .flatMap((door) =>
+        door.buildRenderItems(
+          roomsOnLevel,
+          wallsOnLevel,
+          options.selectedFeatureIds,
+          staircaseWidthByNodeId.get(door.sourceElement.id),
+        ),
+      ),
+    ...staircaseOpenings
+      .filter((opening) => !explicitDoorNodeIds.has(opening.nodeId))
+      .flatMap((opening) => buildGeneratedOpeningRenderItems(opening, options, roomsOnLevel)),
+  ];
+}
+
+interface OpenStaircaseOpeningNode {
+  nodeId: number;
+  widthMeters: number;
+  footprint: IndoorRoom;
+}
+
+function collectOpenStaircaseOpeningNodes(
+  options: RawIndoorLevelRenderBuilderOptions,
+  roomsOnLevel: IndoorRoom[],
+): OpenStaircaseOpeningNode[] {
+  const openingsByKey = new Map<string, OpenStaircaseOpeningNode>();
+
+  options.model.verticalConnections
+    .filter(
+      (connection): connection is IndoorVerticalConnection & { footprint: IndoorRoom } =>
+        connection.kind == "open" &&
+        connection.footprint !== undefined &&
+        connection.footprint.hasLevel(options.level),
+    )
+    .forEach((connection) => {
+      const footprintNodeIds = new Set(
+        getRawElementNodeIds(options.model.graphs.indoor, connection.footprint.sourceElement),
+      );
+
+      connection.pathComponents.forEach((component) =>
+        component.pathwayInstances.forEach((pathwayInstance) => {
+          collectPathwayOpeningNodes(
+            pathwayInstance,
+            footprintNodeIds,
+            options.level,
+            connection.footprint,
+          ).forEach((opening) => {
+            const key = `${opening.footprint.id}:${opening.nodeId}`;
+            const previous = openingsByKey.get(key);
+
+            openingsByKey.set(key, {
+              ...opening,
+              widthMeters: Math.max(previous?.widthMeters ?? 0, opening.widthMeters),
+            });
+          });
+        }),
+      );
+    });
+
+  return Array.from(openingsByKey.values()).filter((opening) =>
+    getRoomsContainingNode(options.model.graphs.indoor, roomsOnLevel, opening.nodeId).some(
+      (room) => room.id == opening.footprint.id,
+    ),
+  );
+}
+
+function collectPathwayOpeningNodes(
+  pathwayInstance: IndoorStairPathwayInstance,
+  footprintNodeIds: Set<number>,
+  level: number,
+  footprint: IndoorRoom,
+): OpenStaircaseOpeningNode[] {
+  const geometry = pathwayInstance.source.toLineStringGeometry();
+
+  if (geometry === undefined) {
+    return [];
+  }
+
+  const pathLevels = getInterpolatedPathLevels(geometry.coordinates, pathwayInstance);
+
+  return pathwayInstance.nodeIds
+    .map((nodeId, index): OpenStaircaseOpeningNode | undefined =>
+      footprintNodeIds.has(nodeId) && isSameLevel(pathLevels[index], level)
+        ? {
+            nodeId,
+            widthMeters: pathwayInstance.source.widthMeters,
+            footprint,
+          }
+        : undefined,
+    )
+    .filter((opening): opening is OpenStaircaseOpeningNode => opening !== undefined);
+}
+
+function buildStaircaseWidthByNodeId(openings: OpenStaircaseOpeningNode[]): Map<number, number> {
+  const widthByNodeId = new Map<number, number>();
+
+  openings.forEach((opening) =>
+    widthByNodeId.set(
+      opening.nodeId,
+      Math.max(widthByNodeId.get(opening.nodeId) ?? 0, opening.widthMeters),
+    ),
+  );
+
+  return widthByNodeId;
+}
+
+function buildGeneratedOpeningRenderItems(
+  opening: OpenStaircaseOpeningNode,
+  options: RawIndoorLevelRenderBuilderOptions,
+  roomsOnLevel: IndoorRoom[],
+): DoorRenderItem[] {
+  const node = options.model.graphs.indoor.getNode(opening.nodeId);
+
+  if (node === undefined) {
+    return [];
+  }
+
+  const connectedRooms = getRoomsContainingNode(
+    options.model.graphs.indoor,
+    roomsOnLevel,
+    opening.nodeId,
+  );
+
+  return buildOpeningRenderItemsForNode({
+    kind: "opening",
+    graph: options.model.graphs.indoor,
+    nodeId: opening.nodeId,
+    coordinate: nodeToPosition(node),
+    tags: {},
+    connectedRooms: [
+      opening.footprint,
+      ...connectedRooms.filter((room) => room.id != opening.footprint.id),
+    ],
+    connectedWalls: [],
+    selectedFeatureIds: options.selectedFeatureIds,
+    fallbackWidthMeters: opening.widthMeters,
+  });
+}
+
+function isSameLevel(a: number | undefined, b: number): boolean {
+  return a !== undefined && Math.abs(a - b) < 0.000001;
 }
 
 function buildRoomRenderItems(options: RawIndoorLevelRenderBuilderOptions): RoomRenderItem[] {
@@ -298,11 +460,38 @@ function buildRoomRenderItem(
     isSelected,
     isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
     label: getRoomLabel(room),
-    style: isSelected
-      ? buildSelectedFeatureStyle(room, options.userProfile)
-      : FeatureService.getFeatureStyleFromTags(room.tags, feature.geometry.type),
+    style: buildRoomStyle(room, feature.geometry.type, isSelected, options),
     selectedPositionMarker: isSelected ? buildSelectedPositionMarker(feature, options) : undefined,
   };
+}
+
+function buildRoomStyle(
+  room: IndoorRoom,
+  geometryType: GeoJSON.Geometry["type"],
+  isSelected: boolean,
+  options: RawIndoorLevelRenderBuilderOptions,
+): Record<string, unknown> {
+  const style = isSelected
+    ? buildSelectedFeatureStyle(room, options.userProfile)
+    : FeatureService.getFeatureStyleFromTags(room.tags, geometryType);
+
+  return shouldSuppressOpenStaircaseFootprintOutline(room, options)
+    ? {
+        ...style,
+        lineWidth: 0,
+      }
+    : style;
+}
+
+function shouldSuppressOpenStaircaseFootprintOutline(
+  room: IndoorRoom,
+  options: RawIndoorLevelRenderBuilderOptions,
+): boolean {
+  const connection = options.model.verticalConnections.find(
+    (candidate) => candidate.kind == "open" && candidate.footprint?.id == room.id,
+  );
+
+  return connection !== undefined && !hasVerticalConnectionHandrailTags(connection);
 }
 
 function buildSelectedFeatureStyle(

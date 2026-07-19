@@ -2,7 +2,7 @@ import { DoorOrientationDebugData } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 
 export interface DoorOrientationGeometry {
-  orientation: [GeoJSON.Position, GeoJSON.Position];
+  orientation: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
   debug: DoorOrientationDebugData;
 }
 
@@ -23,7 +23,7 @@ export function calculateDoorOrientationGeometry(
   const afterDoorCoord = scaleCoordinateToward(doorCoord, after, width, afterDist);
 
   return {
-    orientation: [prevDoorCoord, afterDoorCoord],
+    orientation: [prevDoorCoord, doorCoord, afterDoorCoord],
     debug: {
       previous,
       door: doorCoord,

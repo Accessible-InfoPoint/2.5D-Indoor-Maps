@@ -13,7 +13,7 @@ export interface DoorDataInterface {
   coord: GeoJSON.Position;
   rooms: GeoJSON.Feature[];
   levels: Set<number>;
-  orientation?: [GeoJSON.Position, GeoJSON.Position];
+  orientation?: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
   orientationDebug?: DoorOrientationDebugData;
   properties: Record<string, any>; // from GeoJSON properties
 }

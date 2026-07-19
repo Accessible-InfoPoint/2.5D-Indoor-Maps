@@ -65,99 +65,26 @@ export class IndoorDoor extends IndoorElement {
     rooms: IndoorRoom[],
     walls: IndoorWall[],
     selectedFeatureIds: string[],
+    fallbackWidthMeters?: number,
   ): DoorRenderItem[] {
     const connectedRooms = this.getConnectedRooms(rooms);
     const connectedWalls = this.getConnectedWalls(walls);
 
-    if (connectedRooms.length == 0 && connectedWalls.length == 0) {
-      return [];
-    }
-
-    const orientationGeometry = this.calculateOrientation(connectedRooms, connectedWalls);
-
-    if (orientationGeometry === undefined) {
-      return [];
-    }
-
-    return [
-      {
-        coordinates: orientationGeometry.orientation,
-        symbol: {
-          lineColor: getDoorColor(connectedRooms, selectedFeatureIds),
-          lineWidth: getDoorLineWidth(connectedWalls, connectedRooms),
-        },
-        debug: orientationGeometry.debug,
-      },
-    ];
-  }
-
-  private calculateOrientation(rooms: IndoorRoom[], walls: IndoorWall[]) {
-    const wayContext = this.findWayContext(rooms, walls);
-
-    if (wayContext === undefined) {
-      console.warn(
-        `[IndoorDoor] Cannot calculate orientation for door ${this.id}: no containing room or wall way was found.`,
-      );
-      return undefined;
-    }
-
-    const previousNode = this.graph.getNode(wayContext.previousNodeId);
-    const afterNode = this.graph.getNode(wayContext.afterNodeId);
-
-    if (previousNode === undefined || afterNode === undefined) {
-      console.warn(
-        `[IndoorDoor] Cannot calculate orientation for door ${this.id}: surrounding room nodes are missing.`,
-      );
-      return undefined;
-    }
-
-    return calculateDoorOrientationGeometry(
-      this.coordinate,
-      nodeToPosition(previousNode),
-      nodeToPosition(afterNode),
-      getDoorWidth(this.tags),
-    );
-  }
-
-  private findWayContext(rooms: IndoorRoom[], walls: IndoorWall[]): DoorWayContext | undefined {
-    for (const wall of walls) {
-      const context = getDoorWayContext(wall.sourceElement, this.sourceElement.id);
-
-      if (context !== undefined) {
-        return context;
-      }
-    }
-
-    for (const room of rooms) {
-      const way = this.findContainingWay(room);
-
-      if (way === undefined) {
-        continue;
-      }
-
-      const context = getDoorWayContext(way, this.sourceElement.id);
-
-      if (context !== undefined) {
-        return context;
-      }
-    }
-
-    return undefined;
+    return buildOpeningRenderItemsForNode({
+      kind: "door",
+      graph: this.graph,
+      nodeId: this.sourceElement.id,
+      coordinate: this.coordinate,
+      tags: this.tags,
+      connectedRooms,
+      connectedWalls,
+      selectedFeatureIds,
+      fallbackWidthMeters,
+    });
   }
 
   private findContainingWay(room: IndoorRoom): OverpassWay | undefined {
-    if (
-      room.sourceElement.type == "way" &&
-      room.sourceElement.nodes.includes(this.sourceElement.id)
-    ) {
-      return room.sourceElement;
-    }
-
-    if (room.sourceElement.type == "relation") {
-      return findRelationWayContainingNode(this.graph, room.sourceElement, this.sourceElement.id);
-    }
-
-    return undefined;
+    return findRoomWayContainingNode(this.graph, room, this.sourceElement.id);
   }
 
   private isPartOfRoom(room: IndoorRoom): boolean {
@@ -181,24 +108,158 @@ interface DoorWayContext {
   afterNodeId: number;
 }
 
+export function buildOpeningRenderItemsForNode(options: {
+  kind: "door" | "opening";
+  graph: OsmGraph;
+  nodeId: number;
+  coordinate: GeoJSON.Position;
+  tags: Record<string, string>;
+  connectedRooms: IndoorRoom[];
+  connectedWalls: IndoorWall[];
+  selectedFeatureIds: string[];
+  fallbackWidthMeters?: number;
+}): DoorRenderItem[] {
+  if (options.connectedRooms.length == 0 && options.connectedWalls.length == 0) {
+    return [];
+  }
+
+  const orientationGeometry = calculateOpeningOrientation(options);
+
+  if (orientationGeometry === undefined) {
+    return [];
+  }
+
+  return [
+    {
+      kind: options.kind,
+      coordinates: orientationGeometry.orientation,
+      symbol: {
+        lineColor: getDoorColor(options.connectedRooms, options.selectedFeatureIds),
+        lineWidth: getDoorLineWidth(options.connectedWalls, options.connectedRooms),
+      },
+      debug: orientationGeometry.debug,
+    },
+  ];
+}
+
+export function getRoomsContainingNode(
+  graph: OsmGraph,
+  rooms: IndoorRoom[],
+  nodeId: number,
+): IndoorRoom[] {
+  return rooms.filter((room) => findRoomWayContainingNode(graph, room, nodeId) !== undefined);
+}
+
+function calculateOpeningOrientation(options: {
+  graph: OsmGraph;
+  nodeId: number;
+  coordinate: GeoJSON.Position;
+  tags: Record<string, string>;
+  connectedRooms: IndoorRoom[];
+  connectedWalls: IndoorWall[];
+  fallbackWidthMeters?: number;
+}) {
+  const wayContext = findWayContext(
+    options.graph,
+    options.nodeId,
+    options.connectedRooms,
+    options.connectedWalls,
+  );
+
+  if (wayContext === undefined) {
+    console.warn(
+      `[IndoorDoor] Cannot calculate orientation for opening at node/${options.nodeId}: no containing room or wall way was found.`,
+    );
+    return undefined;
+  }
+
+  const previousNode = options.graph.getNode(wayContext.previousNodeId);
+  const afterNode = options.graph.getNode(wayContext.afterNodeId);
+
+  if (previousNode === undefined || afterNode === undefined) {
+    console.warn(
+      `[IndoorDoor] Cannot calculate orientation for opening at node/${options.nodeId}: surrounding room nodes are missing.`,
+    );
+    return undefined;
+  }
+
+  return calculateDoorOrientationGeometry(
+    options.coordinate,
+    nodeToPosition(previousNode),
+    nodeToPosition(afterNode),
+    getDoorWidth(options.tags, options.fallbackWidthMeters),
+  );
+}
+
+function findWayContext(
+  graph: OsmGraph,
+  nodeId: number,
+  rooms: IndoorRoom[],
+  walls: IndoorWall[],
+): DoorWayContext | undefined {
+  for (const wall of walls) {
+    const context = getDoorWayContext(wall.sourceElement, nodeId);
+
+    if (context !== undefined) {
+      return context;
+    }
+  }
+
+  for (const room of rooms) {
+    const way = findRoomWayContainingNode(graph, room, nodeId);
+
+    if (way === undefined) {
+      continue;
+    }
+
+    const context = getDoorWayContext(way, nodeId);
+
+    if (context !== undefined) {
+      return context;
+    }
+  }
+
+  return undefined;
+}
+
 function getDoorWayContext(way: OverpassWay, doorNodeId: number): DoorWayContext | undefined {
-  const nodeIndex = way.nodes.findIndex((nodeId) => nodeId == doorNodeId);
+  const isClosedWay = way.nodes.length > 2 && way.nodes[0] == way.nodes.at(-1);
+  const nodeIndices = way.nodes
+    .map((nodeId, index) => ({ nodeId, index }))
+    .filter((entry) => entry.nodeId == doorNodeId)
+    .map((entry) => entry.index);
 
-  if (nodeIndex < 0) {
-    return undefined;
+  for (const nodeIndex of nodeIndices) {
+    const previousNodeId = way.nodes[nodeIndex - 1] ?? (isClosedWay ? way.nodes.at(-2) : undefined);
+    const afterNodeId = way.nodes[nodeIndex + 1] ?? (isClosedWay ? way.nodes[1] : undefined);
+
+    if (previousNodeId === undefined || afterNodeId === undefined) {
+      continue;
+    }
+
+    return {
+      previousNodeId,
+      afterNodeId,
+    };
   }
 
-  const previousNodeId = way.nodes[nodeIndex - 1];
-  const afterNodeId = way.nodes[nodeIndex + 1];
+  return undefined;
+}
 
-  if (previousNodeId === undefined || afterNodeId === undefined) {
-    return undefined;
+function findRoomWayContainingNode(
+  graph: OsmGraph,
+  room: IndoorRoom,
+  nodeId: number,
+): OverpassWay | undefined {
+  if (room.sourceElement.type == "way" && room.sourceElement.nodes.includes(nodeId)) {
+    return room.sourceElement;
   }
 
-  return {
-    previousNodeId,
-    afterNodeId,
-  };
+  if (room.sourceElement.type == "relation") {
+    return findRelationWayContainingNode(graph, room.sourceElement, nodeId);
+  }
+
+  return undefined;
 }
 
 function findRelationWayContainingNode(
@@ -212,8 +273,8 @@ function findRelationWayContainingNode(
     .find((way) => way?.nodes.includes(nodeId));
 }
 
-function getDoorWidth(tags: Record<string, string>): number {
-  return parsePositiveMeters(tags.width) ?? 1;
+function getDoorWidth(tags: Record<string, string>, fallbackWidthMeters?: number): number {
+  return parsePositiveMeters(tags.width) ?? fallbackWidthMeters ?? 1;
 }
 
 function getDoorColor(connectedRooms: IndoorRoom[], selectedFeatureIds: string[]): string {

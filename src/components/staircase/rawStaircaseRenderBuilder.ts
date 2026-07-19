@@ -11,7 +11,11 @@ import { IndoorVerticalConnection } from "../../indoor/verticalConnections/Indoo
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";
-import { RoomRenderItem, StyledStaircaseRenderItem } from "../indoorLevel/indoorLevelRenderModel";
+import {
+  RoomRenderItem,
+  StyledFeatureRenderItem,
+  StyledStaircaseRenderItem,
+} from "../indoorLevel/indoorLevelRenderModel";
 import {
   buildHandrailLineRenderItems,
   buildSimpleStaircaseRenderItems,
@@ -28,6 +32,7 @@ const NO_HANDRAILS: StaircaseHandrailOptions = {
   right: false,
   middle: false,
 };
+const STAIRCASE_OUTLINE_TAGS = { indoor: "wall", generated: "staircase-outline" };
 
 export interface RawStaircaseRenderOptions {
   verticalConnections: IndoorVerticalConnection[];
@@ -42,6 +47,14 @@ export function buildRawStaircase2DRenderItems(
   return options.verticalConnections
     .filter((connection) => connection.kind == "freeFloating")
     .flatMap((connection) => buildFreeFloatingStaircase2DRenderItems(connection, options.level));
+}
+
+export function buildRawStaircase2DOutlineRenderItems(
+  options: RawStaircaseRenderOptions,
+): StyledFeatureRenderItem[] {
+  return options.verticalConnections.flatMap((connection) =>
+    buildConnection2DOutlineRenderItems(connection, options.level),
+  );
 }
 
 export function buildRawStaircase3DRenderItems(
@@ -128,7 +141,7 @@ function buildConnection3DRenderItems(
           instance.source.widthMeters,
           pathLevels.map((pathLevel) => getRelativeLevelAltitude(pathLevel, level)),
           LOCAL_ALTITUDE,
-          getPathHandrails(connection, instance, pathLevels),
+          getPathHandrailDefinition(connection, instance, pathLevels).options,
         );
       }),
     ),
@@ -136,6 +149,48 @@ function buildConnection3DRenderItems(
       buildLanding3DRenderItems(landingInstance, level, handrails),
     ),
   ];
+}
+
+function buildConnection2DOutlineRenderItems(
+  connection: IndoorVerticalConnection,
+  level: number,
+): StyledFeatureRenderItem[] {
+  if (connection.kind != "freeFloating") {
+    return [];
+  }
+
+  return getActivePathComponents(connection, level).flatMap((component) =>
+    component.pathwayInstances.flatMap((instance) => {
+      const geometry = instance.source.toLineStringGeometry();
+
+      if (geometry === undefined) {
+        return [];
+      }
+
+      const pathLevels = getInterpolatedPathLevels(geometry.coordinates, instance);
+      const handrails = getPathHandrailDefinition(connection, instance, pathLevels);
+
+      return buildPathSideOutlineRenderItems({
+        connection,
+        instance,
+        coordinates: geometry.coordinates,
+        width: instance.source.widthMeters,
+        handrails,
+      });
+    }),
+  );
+}
+
+export function hasVerticalConnectionHandrailTags(connection: IndoorVerticalConnection): boolean {
+  return (
+    (connection.footprint !== undefined &&
+      getTaggedHandrails(connection.footprint.tags).hasHandrailTags) ||
+    connection.pathComponents.some((component) =>
+      component.pathwayInstances.some(
+        (pathwayInstance) => getTaggedHandrails(pathwayInstance.source.tags).hasHandrailTags,
+      ),
+    )
+  );
 }
 
 function buildSimpleFootprint3DRenderItems(footprint: IndoorRoom): StaircaseRenderItem[] {
@@ -170,28 +225,40 @@ function getComponentRenderLevel(component: IndoorStairPathNetworkComponent): nu
   return Math.floor(component.span.from);
 }
 
-function getPathHandrails(
+function getPathHandrailDefinition(
   connection: IndoorVerticalConnection,
   instance: IndoorStairPathwayInstance,
   pathLevels: number[],
-): StaircaseHandrailOptions {
+): {
+  hasHandrailTags: boolean;
+  options: StaircaseHandrailOptions;
+} {
   const pathwayHandrails = getTaggedHandrails(instance.source.tags);
 
   if (pathwayHandrails.hasHandrailTags) {
-    return pathwayHandrails.options;
+    return pathwayHandrails;
   }
 
   if (connection.footprint === undefined) {
-    return NO_HANDRAILS;
+    return {
+      hasHandrailTags: false,
+      options: NO_HANDRAILS,
+    };
   }
 
   const footprintHandrails = getTaggedHandrails(connection.footprint.tags);
 
   if (!footprintHandrails.hasHandrailTags) {
-    return NO_HANDRAILS;
+    return {
+      hasHandrailTags: false,
+      options: NO_HANDRAILS,
+    };
   }
 
-  return orientFootprintHandrails(footprintHandrails.options, pathLevels);
+  return {
+    hasHandrailTags: true,
+    options: orientFootprintHandrails(footprintHandrails.options, pathLevels),
+  };
 }
 
 function getTaggedHandrails(tags: Record<string, string>): {
@@ -248,7 +315,60 @@ function isDescendingPath(pathLevels: number[]): boolean {
   return first !== undefined && last !== undefined && first > last;
 }
 
-function getInterpolatedPathLevels(
+function buildPathSideOutlineRenderItems(options: {
+  connection: IndoorVerticalConnection;
+  instance: IndoorStairPathwayInstance;
+  coordinates: GeoJSON.Position[];
+  width: number;
+  handrails: { hasHandrailTags: boolean; options: StaircaseHandrailOptions };
+}): StyledFeatureRenderItem[] {
+  return [
+    buildPathSideOutlineRenderItem(options, "left"),
+    buildPathSideOutlineRenderItem(options, "right"),
+  ].filter((item): item is StyledFeatureRenderItem => item !== undefined);
+}
+
+function buildPathSideOutlineRenderItem(
+  options: {
+    connection: IndoorVerticalConnection;
+    instance: IndoorStairPathwayInstance;
+    coordinates: GeoJSON.Position[];
+    width: number;
+    handrails: { hasHandrailTags: boolean; options: StaircaseHandrailOptions };
+  },
+  side: "left" | "right",
+): StyledFeatureRenderItem | undefined {
+  const sideHasHandrail = options.handrails.options[side];
+  const shouldRenderFallbackOutline = options.connection.kind == "freeFloating" && !sideHasHandrail;
+
+  if (!sideHasHandrail && !shouldRenderFallbackOutline) {
+    return undefined;
+  }
+
+  const offset = side == "left" ? -options.width / 2 : options.width / 2;
+  const coordinates = coordinateHelpers.offsetCoordinateLine(options.coordinates, offset);
+
+  return {
+    feature: {
+      type: "Feature",
+      id: `staircase-outline/${options.instance.id}/${side}`,
+      properties: {
+        ...STAIRCASE_OUTLINE_TAGS,
+        side,
+        handrail: sideHasHandrail ? "yes" : "no",
+      },
+      geometry: {
+        type: "LineString",
+        coordinates,
+      },
+    },
+    style: sideHasHandrail
+      ? FeatureService.getHandrailStyleFromTags({ barrier: "handrail" })
+      : FeatureService.getWallStyleFromTags(STAIRCASE_OUTLINE_TAGS),
+  };
+}
+
+export function getInterpolatedPathLevels(
   coordinates: GeoJSON.Position[],
   instance: IndoorStairPathwayInstance,
 ): number[] {
@@ -454,11 +574,16 @@ function buildLandingSurfaceFeatures(landingInstance: IndoorLandingInstance): Ge
 function buildStairSurfaceRoomRenderItem(
   feature: GeoJSON.Feature<GeoJSON.Polygon>,
 ): RoomRenderItem {
+  const style = FeatureService.getFeatureStyleFromTags(STAIR_SURFACE_TAGS, "Polygon");
+
   return {
     feature,
     isSelected: false,
     isVisibleIn3D: false,
-    style: FeatureService.getFeatureStyleFromTags(STAIR_SURFACE_TAGS, "Polygon"),
+    style: {
+      ...style,
+      lineWidth: 0,
+    },
   };
 }
 
