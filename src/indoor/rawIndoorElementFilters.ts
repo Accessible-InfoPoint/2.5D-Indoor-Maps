@@ -1,8 +1,15 @@
-import { OverpassElement } from "../models/overpassJson";
+import {
+  OverpassElement,
+  OverpassNode,
+  OverpassRelation,
+  OverpassWay,
+} from "../models/overpassJson";
 
 const INDOOR_LEVEL_CONTRIBUTOR_TAGS = new Set(["room", "corridor", "area"]);
 
-export function isRawIndoorRoomElement(element: OverpassElement): boolean {
+export function isRawIndoorRoomElement(
+  element: OverpassElement,
+): element is OverpassWay | OverpassRelation {
   if (element.type != "way" && element.type != "relation") {
     return false;
   }
@@ -14,9 +21,22 @@ export function isRawIndoorRoomElement(element: OverpassElement): boolean {
   }
 
   return (
-    (INDOOR_LEVEL_CONTRIBUTOR_TAGS.has(tags.indoor) && tags.landing === undefined) || // roms, areas and corridors, excluding stair landings, which are also areas
+    // rooms, areas and corridors, excluding stair landings, which are also areas
+    (INDOOR_LEVEL_CONTRIBUTOR_TAGS.has(tags.indoor) && tags.landing === undefined) ||
     (tags.indoor === "yes" && tags.tourism === "artwork") // TODO: might be replaced by different tagging, currently only for apb bubbles artwork
   );
+}
+
+export function isRawIndoorDoorElement(element: OverpassElement): element is OverpassNode {
+  return element.type == "node" && element.tags?.door !== undefined;
+}
+
+export function isRawIndoorWallElement(element: OverpassElement): element is OverpassWay {
+  return element.type == "way" && element.tags?.indoor == "wall";
+}
+
+export function isRawIndoorTactilePavingElement(element: OverpassElement): element is OverpassWay {
+  return element.type == "way" && element.tags?.tactile_paving == "yes";
 }
 
 export function contributesToIndoorLevels(element: OverpassElement): boolean {

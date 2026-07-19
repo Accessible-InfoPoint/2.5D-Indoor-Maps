@@ -1,11 +1,13 @@
-import { OverpassElement, OverpassNode, OverpassWay } from "../../models/overpassJson";
+import { OverpassWay } from "../../models/overpassJson";
 import { OsmGraph } from "../../overpass/OsmGraph";
+import { nodeToPosition } from "../../utils/overpassJsonHelpers";
+import { isRawIndoorTactilePavingElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorTactilePaving extends IndoorElement {
   static collectFromGraph(graph: OsmGraph): IndoorTactilePaving[] {
-    return Array.from(graph.waysById.values())
-      .filter((way) => isRawTactilePavingWay(way))
+    return graph.elements
+      .filter(isRawIndoorTactilePavingElement)
       .map((way) => new IndoorTactilePaving(graph, way));
   }
 
@@ -37,12 +39,4 @@ export class IndoorTactilePaving extends IndoorElement {
       },
     };
   }
-}
-
-function isRawTactilePavingWay(element: OverpassElement): element is OverpassWay {
-  return element.type == "way" && element.tags?.tactile_paving == "yes";
-}
-
-function nodeToPosition(node: OverpassNode): GeoJSON.Position {
-  return [node.lon, node.lat];
 }

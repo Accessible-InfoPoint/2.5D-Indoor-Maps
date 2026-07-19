@@ -5,6 +5,7 @@ import {
   OverpassWay,
 } from "../../models/overpassJson";
 import { OsmGraph } from "../../overpass/OsmGraph";
+import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import { isRawIndoorRoomElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
@@ -220,10 +221,6 @@ export class IndoorRoom extends IndoorElement {
     IndoorRoom.emittedWarnings.add(warningKey);
     console.warn(`[IndoorRoom] ${message}`);
   }
-}
-
-function nodeToPosition(node: OverpassNode): GeoJSON.Position {
-  return [node.lon, node.lat];
 }
 
 interface RingBuildResult {

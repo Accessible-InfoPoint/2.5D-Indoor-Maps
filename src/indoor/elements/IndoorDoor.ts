@@ -4,7 +4,9 @@ import { OsmGraph } from "../../overpass/OsmGraph";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
+import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import { calculateDoorOrientationGeometry } from "../doorOrientation";
+import { isRawIndoorDoorElement } from "../rawIndoorElementFilters";
 import { IndoorRoom } from "./IndoorRoom";
 import { IndoorElement } from "./IndoorElement";
 import { IndoorWall } from "./IndoorWall";
@@ -13,9 +15,7 @@ export class IndoorDoor extends IndoorElement {
   private static readonly emittedWarnings = new Set<string>();
 
   static collectFromGraph(graph: OsmGraph): IndoorDoor[] {
-    return Array.from(graph.nodesById.values())
-      .filter((node) => isRawDoorNode(node))
-      .map((node) => new IndoorDoor(graph, node));
+    return graph.elements.filter(isRawIndoorDoorElement).map((node) => new IndoorDoor(graph, node));
   }
 
   constructor(
@@ -189,10 +189,6 @@ interface DoorWayContext {
   afterNodeId: number;
 }
 
-function isRawDoorNode(node: OverpassNode): boolean {
-  return node.tags?.door !== undefined;
-}
-
 function getDoorWayContext(way: OverpassWay, doorNodeId: number): DoorWayContext | undefined {
   const nodeIndex = way.nodes.findIndex((nodeId) => nodeId == doorNodeId);
 
@@ -268,8 +264,4 @@ function getDoorLineWidth(
   }
 
   return 1;
-}
-
-function nodeToPosition(node: OverpassNode): GeoJSON.Position {
-  return [node.lon, node.lat];
 }

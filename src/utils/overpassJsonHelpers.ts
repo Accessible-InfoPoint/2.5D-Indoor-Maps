@@ -19,6 +19,10 @@ export function getOverpassElementKey(element: OverpassElement): string {
   return `${element.type}/${element.id}`;
 }
 
+export function nodeToPosition(node: OverpassNode): GeoJSON.Position {
+  return [node.lon, node.lat];
+}
+
 export function normalizeOverpassElementKey(
   elementId: number | string,
   defaultType?: OverpassElement["type"],

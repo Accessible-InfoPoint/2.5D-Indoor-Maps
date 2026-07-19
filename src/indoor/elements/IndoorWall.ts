@@ -1,12 +1,12 @@
-import { OverpassElement, OverpassNode, OverpassWay } from "../../models/overpassJson";
+import { OverpassWay } from "../../models/overpassJson";
 import { OsmGraph } from "../../overpass/OsmGraph";
+import { nodeToPosition } from "../../utils/overpassJsonHelpers";
+import { isRawIndoorWallElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorWall extends IndoorElement {
   static collectFromGraph(graph: OsmGraph): IndoorWall[] {
-    return Array.from(graph.waysById.values())
-      .filter((way) => isRawWallWay(way))
-      .map((way) => new IndoorWall(graph, way));
+    return graph.elements.filter(isRawIndoorWallElement).map((way) => new IndoorWall(graph, way));
   }
 
   constructor(
@@ -69,14 +69,6 @@ export class IndoorWall extends IndoorElement {
       },
     };
   }
-}
-
-function isRawWallWay(element: OverpassElement): element is OverpassWay {
-  return element.type == "way" && element.tags?.indoor == "wall";
-}
-
-function nodeToPosition(node: OverpassNode): GeoJSON.Position {
-  return [node.lon, node.lat];
 }
 
 function closeRing(coordinates: GeoJSON.Position[]): GeoJSON.Position[] {
