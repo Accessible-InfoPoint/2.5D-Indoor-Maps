@@ -1,5 +1,9 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
-import { DoorRenderItem, RoomRenderItem, StyledFeatureRenderItem } from "../indoorLevelRenderModel";
+import {
+  OpeningRenderItem,
+  RoomRenderItem,
+  StyledFeatureRenderItem,
+} from "../indoorLevelRenderModel";
 import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
 import { getPatternImageId } from "./maplibreIndoorLevelTypes";
 import { getStyleNumber, getStyleNumberArray, getStyleString } from "./maplibreStyleHelpers";
@@ -92,8 +96,8 @@ export function buildMapLibreWallFeature(item: StyledFeatureRenderItem): GeoJSON
   };
 }
 
-export function buildMapLibreDoorFeature(
-  item: DoorRenderItem,
+export function buildMapLibreOpeningFeature(
+  item: OpeningRenderItem,
 ): GeoJSON.Feature<GeoJSON.LineString> {
   return {
     type: "Feature",
@@ -102,6 +106,7 @@ export function buildMapLibreDoorFeature(
       coordinates: item.coordinates,
     },
     properties: {
+      kind: item.kind ?? "door",
       lineColor: item.symbol.lineColor,
       lineWidth: item.symbol.lineWidth,
       lineOpacity: 1,
@@ -109,8 +114,8 @@ export function buildMapLibreDoorFeature(
   };
 }
 
-export function buildMapLibreDoorDebugFeatures(door: DoorRenderItem): GeoJSON.Feature[] {
-  const debug = door.debug;
+export function buildMapLibreOpeningDebugFeatures(opening: OpeningRenderItem): GeoJSON.Feature[] {
+  const debug = opening.debug;
 
   if (!debug) {
     return [];
@@ -121,7 +126,7 @@ export function buildMapLibreDoorDebugFeatures(door: DoorRenderItem): GeoJSON.Fe
       type: "Feature",
       geometry: {
         type: "LineString",
-        coordinates: [debug.previous, debug.door, debug.after],
+        coordinates: [debug.previous, debug.opening, debug.after],
       },
       properties: {
         debugType: "wall-context",
@@ -134,17 +139,17 @@ export function buildMapLibreDoorDebugFeatures(door: DoorRenderItem): GeoJSON.Fe
         coordinates: [debug.calculatedPrevious, debug.calculatedAfter],
       },
       properties: {
-        debugType: "calculated-door",
+        debugType: "calculated-opening",
       },
     },
-    buildDoorDebugPoint("previous", "P", debug.previous, {
+    buildOpeningDebugPoint("previous", "P", debug.previous, {
       distanceM: debug.previousDistanceM,
       widthM: debug.widthM,
     }),
-    buildDoorDebugPoint("door", "D", debug.door, {
+    buildOpeningDebugPoint("opening", "O", debug.opening, {
       widthM: debug.widthM,
     }),
-    buildDoorDebugPoint("after", "A", debug.after, {
+    buildOpeningDebugPoint("after", "A", debug.after, {
       distanceM: debug.afterDistanceM,
       widthM: debug.widthM,
     }),
@@ -155,7 +160,7 @@ export function getRoomPatternFile(item: RoomRenderItem): string {
   return getStyleString(item.style, "polygonPatternFile", "");
 }
 
-function buildDoorDebugPoint(
+function buildOpeningDebugPoint(
   debugType: string,
   label: string,
   coordinates: GeoJSON.Position,

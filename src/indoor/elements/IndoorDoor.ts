@@ -1,11 +1,11 @@
-import { DoorRenderItem } from "../../components/indoorLevel/indoorLevelRenderModel";
+import { OpeningRenderItem } from "../../components/indoorLevel/indoorLevelRenderModel";
 import { OverpassNode, OverpassRelation, OverpassWay } from "../../models/overpassJson";
 import { OsmGraph } from "../../overpass/OsmGraph";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import { parsePositiveMeters } from "../../utils/tagValueHelpers";
-import { calculateDoorOrientationGeometry } from "../doorOrientation";
+import { calculateOpeningOrientationGeometry } from "../openingOrientation";
 import { isNeutralDoorColorRoomTags } from "../indoorTagFilters";
 import { isRawIndoorDoorElement } from "../rawIndoorElementFilters";
 import { IndoorRoom } from "./IndoorRoom";
@@ -66,7 +66,7 @@ export class IndoorDoor extends IndoorElement {
     walls: IndoorWall[],
     selectedFeatureIds: string[],
     fallbackWidthMeters?: number,
-  ): DoorRenderItem[] {
+  ): OpeningRenderItem[] {
     const connectedRooms = this.getConnectedRooms(rooms);
     const connectedWalls = this.getConnectedWalls(walls);
 
@@ -118,7 +118,7 @@ export function buildOpeningRenderItemsForNode(options: {
   connectedWalls: IndoorWall[];
   selectedFeatureIds: string[];
   fallbackWidthMeters?: number;
-}): DoorRenderItem[] {
+}): OpeningRenderItem[] {
   if (options.connectedRooms.length == 0 && options.connectedWalls.length == 0) {
     return [];
   }
@@ -183,7 +183,7 @@ function calculateOpeningOrientation(options: {
     return undefined;
   }
 
-  return calculateDoorOrientationGeometry(
+  return calculateOpeningOrientationGeometry(
     options.coordinate,
     nodeToPosition(previousNode),
     nodeToPosition(afterNode),

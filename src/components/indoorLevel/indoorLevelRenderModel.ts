@@ -1,4 +1,4 @@
-import { DoorOrientationDebugData } from "../../models/doorDataInterface";
+import { OpeningOrientationDebugData } from "../../models/doorDataInterface";
 import { AccessibilityMarkerData } from "../../services/featureService";
 import { StaircaseRenderItem } from "../staircase/staircaseRenderModel";
 
@@ -30,14 +30,14 @@ export interface AccessibilityMarkerRenderItem {
   markerData: AccessibilityMarkerData;
 }
 
-export interface DoorRenderItem {
+export interface OpeningRenderItem {
   kind?: "door" | "opening";
   coordinates: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
   symbol: {
     lineColor: string;
     lineWidth: number;
   };
-  debug?: DoorOrientationDebugData;
+  debug?: OpeningOrientationDebugData;
 }
 
 export interface StaircaseRenderModel {
@@ -59,7 +59,7 @@ export interface IndoorLevelRenderModel {
   outlineCoordinates: number[][];
   infoPoint?: InfoPointRenderItem;
   rooms: RoomRenderItem[];
-  doors: DoorRenderItem[];
+  openings: OpeningRenderItem[];
   walls: StyledFeatureRenderItem[];
   tactilePaving: StyledFeatureRenderItem[];
   accessibilityMarkers: AccessibilityMarkerRenderItem[];

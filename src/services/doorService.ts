@@ -1,7 +1,7 @@
 import { DoorDataInterface } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { DOOR_MATCH_TOLERANCE_M } from "../../public/strings/settings.json";
-import { calculateDoorOrientationGeometry } from "../indoor/doorOrientation";
+import { calculateOpeningOrientationGeometry } from "../indoor/openingOrientation";
 
 const doorIndex = new Map<string, DoorDataInterface[]>();
 
@@ -80,7 +80,7 @@ function calculateDoorOrientation(
   if (door && door.orientation == undefined) {
     const matchedDoorCoord = door.coord;
     const doorWidth = door.properties.width ?? 1; // in meters
-    const orientationGeometry = calculateDoorOrientationGeometry(
+    const orientationGeometry = calculateOpeningOrientationGeometry(
       matchedDoorCoord,
       previous,
       after,

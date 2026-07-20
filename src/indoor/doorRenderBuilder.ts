@@ -3,21 +3,21 @@ import ColorService from "../services/colorService";
 import FeatureService from "../services/featureService";
 import { isNeutralDoorColorRoomTags } from "./indoorTagFilters";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
-import { DoorRenderItem } from "../components/indoorLevel/indoorLevelRenderModel";
+import { OpeningRenderItem } from "../components/indoorLevel/indoorLevelRenderModel";
 
-export function buildDoorRenderItemsFromLegacyDoors(
+export function buildOpeningRenderItemsFromLegacyDoors(
   doors: DoorDataInterface[],
   selectedFeatureIds: string[],
-): DoorRenderItem[] {
+): OpeningRenderItem[] {
   return doors
     .filter((door) => door.rooms.length > 0)
-    .flatMap((door) => buildLegacyDoorRenderItems(door, selectedFeatureIds));
+    .flatMap((door) => buildLegacyOpeningRenderItems(door, selectedFeatureIds));
 }
 
-function buildLegacyDoorRenderItems(
+function buildLegacyOpeningRenderItems(
   door: DoorDataInterface,
   selectedFeatureIds: string[],
-): DoorRenderItem[] {
+): OpeningRenderItem[] {
   if (!door.orientation) {
     return [];
   }

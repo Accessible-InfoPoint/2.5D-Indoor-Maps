@@ -15,8 +15,8 @@ import {
 import { IndoorLevelView, IndoorLevelViewEvents } from "./indoorLevelView";
 import { MapLibreAccessibilityMarkerRenderer } from "./maplibre/maplibreAccessibilityMarkerRenderer";
 import {
-  buildMapLibreDoorDebugFeatures,
-  buildMapLibreDoorFeature,
+  buildMapLibreOpeningDebugFeatures,
+  buildMapLibreOpeningFeature,
   buildMapLibreRoomFeature,
   buildMapLibreRoomNumberFeature,
   buildMapLibreStyledLineFeature,
@@ -35,8 +35,8 @@ import { registerRoomNumberBackgroundImage } from "./maplibre/maplibreImageRegis
 import { getOpacityExpression, getZoomOpacityExpression } from "./maplibre/maplibreStyleHelpers";
 import {
   createInfoPointLayers,
-  createDoorDebugLayers,
-  createDoorLayers,
+  createOpeningDebugLayers,
+  createOpeningLayers,
   createRoomLayers,
   createRoomNumberLayers,
   createTactilePavingLayers,
@@ -51,7 +51,7 @@ import {
 } from "../staircase/staircaseRenderBuilder";
 import { getInfoPointStyle } from "./infoPointStyle";
 
-const SHOW_DOOR_ORIENTATION_DEBUG = false;
+const SHOW_OPENING_ORIENTATION_DEBUG = false;
 
 type ThreeIndoorLayerModule = typeof import("./maplibre/maplibreThreeIndoorLayer.js");
 
@@ -73,8 +73,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly infoPoint: MapLibreIndoorLevelLayerSet;
   private readonly rooms: MapLibreIndoorLevelLayerSet;
   private readonly walls: MapLibreIndoorLevelLayerSet;
-  private readonly doors: MapLibreIndoorLevelLayerSet;
-  private readonly doorDebug: MapLibreIndoorLevelLayerSet;
+  private readonly openings: MapLibreIndoorLevelLayerSet;
+  private readonly openingDebug: MapLibreIndoorLevelLayerSet;
   private readonly tactilePaving: MapLibreIndoorLevelLayerSet;
   private readonly roomNumbers: MapLibreIndoorLevelLayerSet;
   private readonly accessibilityMarkers: MapLibreIndoorLevelLayerSet;
@@ -105,12 +105,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.infoPoint = this.createLayerSet("info-point", ["circle", "label"]);
     this.rooms = this.createLayerSet("rooms", ["fill", "pattern", "line"]);
     this.walls = this.createLayerSet("walls", ["fill", "line"]);
-    this.doors = this.createLayerSet("doors", ["line"]);
-    this.doorDebug = this.createLayerSet("door-debug", [
+    this.openings = this.createLayerSet("openings", ["line"]);
+    this.openingDebug = this.createLayerSet("opening-debug", [
       "wall-context",
-      "calculated-door",
+      "calculated-opening",
       "previous-point",
-      "door-point",
+      "opening-point",
       "after-point",
       "label",
     ]);
@@ -137,8 +137,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.walls.sourceId, this.emptyFeatureCollection());
-      this.setSourceData(this.doors.sourceId, this.emptyFeatureCollection());
-      this.setSourceData(this.doorDebug.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.openings.sourceId, this.emptyFeatureCollection());
+      this.setSourceData(this.openingDebug.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
       this.threeOutlineCoordinates = [];
@@ -172,8 +172,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.infoPoint,
       this.rooms,
       this.walls,
-      this.doors,
-      ...(SHOW_DOOR_ORIENTATION_DEBUG ? [this.doorDebug] : []),
+      this.openings,
+      ...(SHOW_OPENING_ORIENTATION_DEBUG ? [this.openingDebug] : []),
       this.tactilePaving,
       this.roomNumbers,
       this.accessibilityMarkers,
@@ -187,8 +187,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.infoPoint,
       this.rooms,
       this.walls,
-      this.doors,
-      ...(SHOW_DOOR_ORIENTATION_DEBUG ? [this.doorDebug] : []),
+      this.openings,
+      ...(SHOW_OPENING_ORIENTATION_DEBUG ? [this.openingDebug] : []),
       this.tactilePaving,
       this.roomNumbers,
       this.accessibilityMarkers,
@@ -244,8 +244,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.addGeoJsonSource(this.infoPoint.sourceId);
     this.addGeoJsonSource(this.rooms.sourceId);
     this.addGeoJsonSource(this.walls.sourceId);
-    this.addGeoJsonSource(this.doors.sourceId);
-    this.addGeoJsonSource(this.doorDebug.sourceId);
+    this.addGeoJsonSource(this.openings.sourceId);
+    this.addGeoJsonSource(this.openingDebug.sourceId);
     this.addGeoJsonSource(this.tactilePaving.sourceId);
     this.addGeoJsonSource(this.roomNumbers.sourceId);
     this.addGeoJsonSource(this.accessibilityMarkers.sourceId);
@@ -253,8 +253,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     registerRoomNumberBackgroundImage(this.map);
     this.addRoomLayers();
     this.addWallLayers();
-    this.addDoorLayers();
-    this.addDoorDebugLayers();
+    this.addOpeningLayers();
+    this.addOpeningDebugLayers();
     this.addTactilePavingLayers();
     this.addRoomNumberLayers();
     this.addAccessibilityMarkerLayers();
@@ -277,16 +277,16 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.bindRoomEvents();
   }
 
-  private addDoorLayers(): void {
-    this.addLayers(createDoorLayers(this.getLayerDefinitionOptions()));
+  private addOpeningLayers(): void {
+    this.addLayers(createOpeningLayers(this.getLayerDefinitionOptions()));
   }
 
   private addWallLayers(): void {
     this.addLayers(createWallLayers(this.getLayerDefinitionOptions()));
   }
 
-  private addDoorDebugLayers(): void {
-    this.addLayers(createDoorDebugLayers(this.getLayerDefinitionOptions()));
+  private addOpeningDebugLayers(): void {
+    this.addLayers(createOpeningDebugLayers(this.getLayerDefinitionOptions()));
   }
 
   private addTactilePavingLayers(): void {
@@ -315,7 +315,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.renderInfoPoint(renderModel);
     this.renderRooms(renderModel.rooms);
     this.renderWalls(renderModel.walls);
-    this.renderDoors(renderModel);
+    this.renderOpenings(renderModel);
     this.renderStaircases(renderModel, selectedFeatureIds);
     this.renderTactilePaving(renderModel.tactilePaving);
     this.renderRoomNumbers(renderModel.rooms);
@@ -367,16 +367,16 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
-  private renderDoors(renderModel: IndoorLevelRenderModel): void {
-    this.setSourceData(this.doors.sourceId, {
+  private renderOpenings(renderModel: IndoorLevelRenderModel): void {
+    this.setSourceData(this.openings.sourceId, {
       type: "FeatureCollection",
-      features: renderModel.doors.map((doorRenderData) => buildMapLibreDoorFeature(doorRenderData)),
+      features: renderModel.openings.map((opening) => buildMapLibreOpeningFeature(opening)),
     });
 
-    this.setSourceData(this.doorDebug.sourceId, {
+    this.setSourceData(this.openingDebug.sourceId, {
       type: "FeatureCollection",
-      features: SHOW_DOOR_ORIENTATION_DEBUG
-        ? renderModel.doors.flatMap((door) => buildMapLibreDoorDebugFeatures(door))
+      features: SHOW_OPENING_ORIENTATION_DEBUG
+        ? renderModel.openings.flatMap((opening) => buildMapLibreOpeningDebugFeatures(opening))
         : [],
     });
   }
@@ -514,8 +514,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.infoPoint,
       this.rooms,
       this.walls,
-      this.doors,
-      this.doorDebug,
+      this.openings,
+      this.openingDebug,
       this.tactilePaving,
       this.roomNumbers,
       this.accessibilityMarkers,
@@ -601,51 +601,51 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       getOpacityExpression("lineOpacity", this.opacity),
     );
     this.setPaintProperty(
-      this.getLayerId("doors", "line"),
+      this.getLayerId("openings", "line"),
       "line-opacity",
       getOpacityExpression("lineOpacity", this.opacity),
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "wall-context"),
+      this.getLayerId("opening-debug", "wall-context"),
       "line-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "calculated-door"),
+      this.getLayerId("opening-debug", "calculated-opening"),
       "line-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "previous-point"),
+      this.getLayerId("opening-debug", "previous-point"),
       "circle-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "previous-point"),
+      this.getLayerId("opening-debug", "previous-point"),
       "circle-stroke-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "door-point"),
+      this.getLayerId("opening-debug", "opening-point"),
       "circle-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "door-point"),
+      this.getLayerId("opening-debug", "opening-point"),
       "circle-stroke-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "after-point"),
+      this.getLayerId("opening-debug", "after-point"),
       "circle-opacity",
       this.opacity,
     );
     this.setPaintProperty(
-      this.getLayerId("door-debug", "after-point"),
+      this.getLayerId("opening-debug", "after-point"),
       "circle-stroke-opacity",
       this.opacity,
     );
-    this.setPaintProperty(this.getLayerId("door-debug", "label"), "text-opacity", this.opacity);
+    this.setPaintProperty(this.getLayerId("opening-debug", "label"), "text-opacity", this.opacity);
     this.setPaintProperty(
       this.getLayerId("tactile-paving", "line"),
       "line-opacity",

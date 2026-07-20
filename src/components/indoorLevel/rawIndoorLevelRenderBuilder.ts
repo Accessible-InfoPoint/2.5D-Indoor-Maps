@@ -29,9 +29,9 @@ import {
 } from "../staircase/rawStaircaseRenderBuilder";
 import {
   AccessibilityMarkerRenderItem,
-  DoorRenderItem,
   InfoPointRenderItem,
   IndoorLevelRenderModel,
+  OpeningRenderItem,
   StyledFeatureRenderItem,
 } from "./indoorLevelRenderModel";
 import { PositionMarkerRenderItem, RoomRenderItem } from "./indoorLevelRenderModel";
@@ -61,7 +61,7 @@ export function buildRawIndoorLevelRenderModel(
     outlineCoordinates: options.model.outlineCoordinates,
     infoPoint: buildInfoPointRenderItem(options),
     rooms,
-    doors: buildDoorRenderItems(options),
+    openings: buildOpeningRenderItems(options),
     walls: buildWallRenderItems(options),
     tactilePaving: buildTactilePavingRenderItems(options),
     accessibilityMarkers: buildAccessibilityMarkerRenderItems(options),
@@ -280,7 +280,7 @@ function shouldRenderHandrailAsWall(
   );
 }
 
-function buildDoorRenderItems(options: RawIndoorLevelRenderBuilderOptions): DoorRenderItem[] {
+function buildOpeningRenderItems(options: RawIndoorLevelRenderBuilderOptions): OpeningRenderItem[] {
   const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
   const wallsOnLevel = options.model.walls.filter((wall) => wall.hasLevel(options.level));
   const staircaseOpenings = collectOpenStaircaseOpeningNodes(options, roomsOnLevel);
@@ -403,7 +403,7 @@ function buildGeneratedOpeningRenderItems(
   opening: OpenStaircaseOpeningNode,
   options: RawIndoorLevelRenderBuilderOptions,
   roomsOnLevel: IndoorRoom[],
-): DoorRenderItem[] {
+): OpeningRenderItem[] {
   const node = options.model.graphs.indoor.getNode(opening.nodeId);
 
   if (node === undefined) {

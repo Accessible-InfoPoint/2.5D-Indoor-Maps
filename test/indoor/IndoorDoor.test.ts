@@ -33,7 +33,7 @@ describe("IndoorDoor", () => {
     expect(renderItems).toHaveLength(1);
     expect(renderItems[0].coordinates).toHaveLength(3);
     expect(renderItems[0].symbol.lineWidth).toBe(1 + 50 / 20);
-    expect(renderItems[0].debug?.door).toEqual([1, 0]);
+    expect(renderItems[0].debug?.opening).toEqual([1, 0]);
   });
 
   it("uses the selected room color when a connected room is selected", () => {

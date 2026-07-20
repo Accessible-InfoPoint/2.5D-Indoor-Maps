@@ -58,7 +58,7 @@ export function buildIndoorLevelRenderModel(
     outlineCoordinates: options.outlineCoordinates,
     infoPoint,
     rooms,
-    doors: [],
+    openings: [],
     walls: [],
     tactilePaving,
     accessibilityMarkers,

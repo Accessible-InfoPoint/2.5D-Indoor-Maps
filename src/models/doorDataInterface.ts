@@ -1,6 +1,6 @@
-export interface DoorOrientationDebugData {
+export interface OpeningOrientationDebugData {
   previous: GeoJSON.Position;
-  door: GeoJSON.Position;
+  opening: GeoJSON.Position;
   after: GeoJSON.Position;
   previousDistanceM: number;
   afterDistanceM: number;
@@ -14,6 +14,6 @@ export interface DoorDataInterface {
   rooms: GeoJSON.Feature[];
   levels: Set<number>;
   orientation?: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
-  orientationDebug?: DoorOrientationDebugData;
+  orientationDebug?: OpeningOrientationDebugData;
   properties: Record<string, any>; // from GeoJSON properties
 }

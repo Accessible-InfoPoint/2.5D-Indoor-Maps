@@ -78,12 +78,12 @@ export function createRoomLayers(options: LayerDefinitionOptions): AddLayerObjec
   ];
 }
 
-export function createDoorLayers(options: LayerDefinitionOptions): AddLayerObject[] {
+export function createOpeningLayers(options: LayerDefinitionOptions): AddLayerObject[] {
   return [
     {
-      id: options.layerId("doors", "line"),
+      id: options.layerId("openings", "line"),
       type: "line",
-      source: options.sourceId("doors"),
+      source: options.sourceId("openings"),
       layout: {
         "line-cap": "butt",
         "line-join": "miter",
@@ -122,12 +122,12 @@ export function createWallLayers(options: LayerDefinitionOptions): AddLayerObjec
   ];
 }
 
-export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayerObject[] {
+export function createOpeningDebugLayers(options: LayerDefinitionOptions): AddLayerObject[] {
   return [
     {
-      id: options.layerId("door-debug", "wall-context"),
+      id: options.layerId("opening-debug", "wall-context"),
       type: "line",
-      source: options.sourceId("door-debug"),
+      source: options.sourceId("opening-debug"),
       filter: ["==", ["get", "debugType"], "wall-context"],
       paint: {
         "line-color": "#ef4444",
@@ -137,10 +137,10 @@ export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayer
       },
     },
     {
-      id: options.layerId("door-debug", "calculated-door"),
+      id: options.layerId("opening-debug", "calculated-opening"),
       type: "line",
-      source: options.sourceId("door-debug"),
-      filter: ["==", ["get", "debugType"], "calculated-door"],
+      source: options.sourceId("opening-debug"),
+      filter: ["==", ["get", "debugType"], "calculated-opening"],
       paint: {
         "line-color": "#22c55e",
         "line-width": 4,
@@ -148,9 +148,9 @@ export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayer
       },
     },
     {
-      id: options.layerId("door-debug", "previous-point"),
+      id: options.layerId("opening-debug", "previous-point"),
       type: "circle",
-      source: options.sourceId("door-debug"),
+      source: options.sourceId("opening-debug"),
       filter: ["==", ["get", "debugType"], "previous"],
       paint: {
         "circle-color": "#2563eb",
@@ -162,10 +162,10 @@ export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayer
       },
     },
     {
-      id: options.layerId("door-debug", "door-point"),
+      id: options.layerId("opening-debug", "opening-point"),
       type: "circle",
-      source: options.sourceId("door-debug"),
-      filter: ["==", ["get", "debugType"], "door"],
+      source: options.sourceId("opening-debug"),
+      filter: ["==", ["get", "debugType"], "opening"],
       paint: {
         "circle-color": "#111827",
         "circle-radius": 6,
@@ -176,9 +176,9 @@ export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayer
       },
     },
     {
-      id: options.layerId("door-debug", "after-point"),
+      id: options.layerId("opening-debug", "after-point"),
       type: "circle",
-      source: options.sourceId("door-debug"),
+      source: options.sourceId("opening-debug"),
       filter: ["==", ["get", "debugType"], "after"],
       paint: {
         "circle-color": "#f97316",
@@ -190,9 +190,9 @@ export function createDoorDebugLayers(options: LayerDefinitionOptions): AddLayer
       },
     },
     {
-      id: options.layerId("door-debug", "label"),
+      id: options.layerId("opening-debug", "label"),
       type: "symbol",
-      source: options.sourceId("door-debug"),
+      source: options.sourceId("opening-debug"),
       filter: ["has", "label"],
       layout: {
         "text-field": ["get", "label"],

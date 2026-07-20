@@ -30,8 +30,8 @@ describe("buildRawIndoorLevelRenderModel", () => {
       level: "0",
       name: "Room A",
     });
-    expect(renderModel.doors).toHaveLength(1);
-    expect(renderModel.doors[0].debug?.door).toEqual([13.1, 51]);
+    expect(renderModel.openings).toHaveLength(1);
+    expect(renderModel.openings[0].debug?.opening).toEqual([13.1, 51]);
     expect(renderModel.walls.map((wall) => wall.feature.geometry.type)).toEqual([
       "LineString",
       "Polygon",

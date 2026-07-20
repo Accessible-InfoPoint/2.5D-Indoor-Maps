@@ -1,38 +1,38 @@
-import { DoorOrientationDebugData } from "../models/doorDataInterface";
+import { OpeningOrientationDebugData } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 
-export interface DoorOrientationGeometry {
+export interface OpeningOrientationGeometry {
   orientation: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
-  debug: DoorOrientationDebugData;
+  debug: OpeningOrientationDebugData;
 }
 
-export function calculateDoorOrientationGeometry(
-  doorCoord: GeoJSON.Position,
+export function calculateOpeningOrientationGeometry(
+  openingCoord: GeoJSON.Position,
   previous: GeoJSON.Position,
   after: GeoJSON.Position,
   width = 1,
-): DoorOrientationGeometry | undefined {
-  const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, doorCoord);
-  const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, doorCoord);
+): OpeningOrientationGeometry | undefined {
+  const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, openingCoord);
+  const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, openingCoord);
 
   if (prevDist == 0 || afterDist == 0) {
     return undefined;
   }
 
-  const prevDoorCoord = scaleCoordinateToward(doorCoord, previous, width, prevDist);
-  const afterDoorCoord = scaleCoordinateToward(doorCoord, after, width, afterDist);
+  const previousOpeningCoord = scaleCoordinateToward(openingCoord, previous, width, prevDist);
+  const afterOpeningCoord = scaleCoordinateToward(openingCoord, after, width, afterDist);
 
   return {
-    orientation: [prevDoorCoord, doorCoord, afterDoorCoord],
+    orientation: [previousOpeningCoord, openingCoord, afterOpeningCoord],
     debug: {
       previous,
-      door: doorCoord,
+      opening: openingCoord,
       after,
       previousDistanceM: prevDist,
       afterDistanceM: afterDist,
       widthM: width,
-      calculatedPrevious: prevDoorCoord,
-      calculatedAfter: afterDoorCoord,
+      calculatedPrevious: previousOpeningCoord,
+      calculatedAfter: afterOpeningCoord,
     },
   };
 }

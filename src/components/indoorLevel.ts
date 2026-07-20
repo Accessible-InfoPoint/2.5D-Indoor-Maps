@@ -4,7 +4,7 @@ import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import DoorService from "../services/doorService";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
-import { buildDoorRenderItemsFromLegacyDoors } from "../indoor/doorRenderBuilder";
+import { buildOpeningRenderItemsFromLegacyDoors } from "../indoor/doorRenderBuilder";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
@@ -106,7 +106,7 @@ export class IndoorLevel {
             infoPointLevel: this.state.getInfoPointLevel(),
             userProfile: UserService.getCurrentProfile(),
           }),
-          doors: buildDoorRenderItemsFromLegacyDoors(
+          openings: buildOpeningRenderItemsFromLegacyDoors(
             DoorService.getDoorsByLevel(this.level),
             this.state.getSelectedFeatureIds(),
           ),

@@ -101,10 +101,10 @@ describe("raw staircase rendering", () => {
       0,
     );
     expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([]);
-    expect(renderModel.doors).toHaveLength(1);
-    expect(renderModel.doors[0].kind).toBe("opening");
-    expect(renderModel.doors[0].debug?.door).toEqual([-0.25, 0]);
-    expect(renderModel.doors[0].debug?.widthM).toBeCloseTo(1);
+    expect(renderModel.openings).toHaveLength(1);
+    expect(renderModel.openings[0].kind).toBe("opening");
+    expect(renderModel.openings[0].debug?.opening).toEqual([-0.25, 0]);
+    expect(renderModel.openings[0].debug?.widthM).toBeCloseTo(1);
     expect(handrailPrisms).toHaveLength(1);
     expect(getAverageLongitude(handrailPrisms[0].coordinates)).toBeLessThan(0);
   });
@@ -120,10 +120,10 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    expect(renderModel.doors).toHaveLength(1);
-    expect(renderModel.doors[0].kind).toBe("door");
-    expect(renderModel.doors[0].debug?.door).toEqual([-0.25, 0]);
-    expect(renderModel.doors[0].debug?.widthM).toBeCloseTo(2.5);
+    expect(renderModel.openings).toHaveLength(1);
+    expect(renderModel.openings[0].kind).toBe("door");
+    expect(renderModel.openings[0].debug?.opening).toEqual([-0.25, 0]);
+    expect(renderModel.openings[0].debug?.widthM).toBeCloseTo(2.5);
   });
 
   it("renders explicit landing handrail ways in 3D", () => {
