@@ -31,6 +31,7 @@ import {
   AccessibilityMarkerRenderItem,
   InfoPointRenderItem,
   IndoorLevelRenderModel,
+  IndoorLevelOutlineGeometry,
   OpeningRenderItem,
   StyledFeatureRenderItem,
 } from "./indoorLevelRenderModel";
@@ -58,7 +59,7 @@ export function buildRawIndoorLevelRenderModel(
   ];
 
   return {
-    outlineCoordinates: options.model.outlineCoordinates,
+    outlineGeometry: getOutlineGeometry(options),
     infoPoint: buildInfoPointRenderItem(options),
     rooms,
     openings: buildOpeningRenderItems(options),
@@ -80,6 +81,17 @@ export function buildRawIndoorLevelRenderModel(
       complexFeatures: [],
     },
   };
+}
+
+function getOutlineGeometry(
+  options: RawIndoorLevelRenderBuilderOptions,
+): IndoorLevelOutlineGeometry {
+  return (
+    options.model.levelOutlines.find((outline) => outline.hasLevel(options.level))?.geometry ?? {
+      type: "Polygon",
+      coordinates: [options.model.outlineCoordinates],
+    }
+  );
 }
 
 function buildAccessibilityMarkerRenderItems(

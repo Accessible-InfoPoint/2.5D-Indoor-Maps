@@ -6,13 +6,16 @@ import type {
 } from "maplibre-gl";
 import * as THREE from "three";
 import { LEVEL_HEIGHT } from "../../../../public/strings/settings.json";
-import { InfoPointRenderItem, RoomRenderItem } from "../indoorLevelRenderModel";
+import {
+  IndoorLevelOutlineGeometry,
+  InfoPointRenderItem,
+  RoomRenderItem,
+} from "../indoorLevelRenderModel";
 import {
   createLocalMercatorVector,
   createMercatorOrigin,
   createPolygonSlabGeometry,
   createPolygonSurfaceGeometry,
-  getOpenRing,
 } from "./maplibreThreeGeometry";
 import { getGeometryLabelCenter } from "./maplibreGeometryHelpers";
 import { getStyleNumber, getStyleString } from "./maplibreStyleHelpers";
@@ -72,7 +75,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private scene?: THREE.Scene;
   private renderer?: THREE.WebGLRenderer;
   private origin?: maplibregl.MercatorCoordinate;
-  private outlineCoordinates: GeoJSON.Position[] = [];
+  private outlineGeometry?: IndoorLevelOutlineGeometry;
   private rooms: RoomRenderItem[] = [];
   private staircases: MapLibreThreeStaircaseRenderItem[] = [];
   private infoPoint?: InfoPointRenderItem;
@@ -143,8 +146,8 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
     this.renderer = undefined;
   }
 
-  setOutline(outlineCoordinates: GeoJSON.Position[]): void {
-    this.outlineCoordinates = outlineCoordinates;
+  setOutline(outlineGeometry: IndoorLevelOutlineGeometry | undefined): void {
+    this.outlineGeometry = outlineGeometry;
     this.rebuildOutline();
     this.rebuildRooms();
     this.rebuildMarkers();
@@ -213,7 +216,7 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   }
 
   clear(): void {
-    this.outlineCoordinates = [];
+    this.outlineGeometry = undefined;
     this.rooms = [];
     this.staircases = [];
     this.infoPoint = undefined;
@@ -227,26 +230,30 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   private rebuildOutline(): void {
     this.clearGroup(this.outlineGroup);
 
-    const ring = getOpenRing(this.outlineCoordinates);
+    const polygons = getOutlinePolygons(this.outlineGeometry);
+    const originCoordinates = polygons.flat(2);
 
-    if (!this.scene || ring.length < 3) {
+    if (!this.scene || originCoordinates.length < 3) {
       return;
     }
 
-    this.origin = createMercatorOrigin(ring);
-    this.modelMatrix.makeTranslation(this.origin.x, this.origin.y, this.origin.z);
+    const origin = createMercatorOrigin(originCoordinates);
+    this.origin = origin;
+    this.modelMatrix.makeTranslation(origin.x, origin.y, origin.z);
     this.applyAltitude();
 
-    const geometry = createPolygonSlabGeometry(this.origin, [ring], OUTLINE_THICKNESS_METERS);
-    const outline = new THREE.Mesh(geometry, this.outlineFillMaterial);
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      this.outlineEdgeMaterial,
-    );
+    polygons.forEach((rings) => {
+      const geometry = createPolygonSlabGeometry(origin, rings, OUTLINE_THICKNESS_METERS);
+      const outline = new THREE.Mesh(geometry, this.outlineFillMaterial);
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry),
+        this.outlineEdgeMaterial,
+      );
 
-    outline.renderOrder = OUTLINE_RENDER_ORDER;
-    edges.renderOrder = OUTLINE_RENDER_ORDER;
-    this.outlineGroup.add(outline, edges);
+      outline.renderOrder = OUTLINE_RENDER_ORDER;
+      edges.renderOrder = OUTLINE_RENDER_ORDER;
+      this.outlineGroup.add(outline, edges);
+    });
     this.applyOpacity();
     this.map?.triggerRepaint();
   }
@@ -477,6 +484,16 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
       LEVEL_HEIGHT *
       this.origin.meterInMercatorCoordinateUnits();
   }
+}
+
+function getOutlinePolygons(
+  geometry: IndoorLevelOutlineGeometry | undefined,
+): GeoJSON.Position[][][] {
+  if (geometry === undefined) {
+    return [];
+  }
+
+  return geometry.type == "Polygon" ? [geometry.coordinates] : geometry.coordinates;
 }
 
 function createDisposableMeshMaterial(color: string, baseOpacity: number): THREE.MeshBasicMaterial {

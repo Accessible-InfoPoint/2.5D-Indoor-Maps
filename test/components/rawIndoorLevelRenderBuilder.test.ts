@@ -19,7 +19,7 @@ describe("buildRawIndoorLevelRenderModel", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    expect(renderModel.outlineCoordinates).toBe(buildingFeature.geometry.coordinates[0]);
+    expect(renderModel.outlineGeometry).toEqual(buildingFeature.geometry);
     expect(renderModel.infoPoint?.feature.id).toBe("node/5");
     expect(renderModel.infoPoint?.feature.geometry.type).toBe("Point");
     expect(renderModel.infoPoint?.levels).toEqual([0]);
@@ -77,6 +77,44 @@ describe("buildRawIndoorLevelRenderModel", () => {
 
     expect(renderModel.rooms[0].isSelected).toBe(true);
     expect(renderModel.rooms[0].selectedPositionMarker?.label).toBe("0");
+  });
+
+  it("uses indoor=level outlines for the raw 3D outline on matching levels", () => {
+    const model = createIndoorModel(levelOutlineOverpassData, buildingInterface);
+
+    const level0 = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+    const level1 = buildRawIndoorLevelRenderModel({
+      model,
+      level: 1,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    expect(level0.outlineGeometry).toEqual({
+      type: "Polygon",
+      coordinates: [
+        [
+          [13, 51],
+          [13.05, 51],
+          [13.05, 51.05],
+          [13, 51],
+        ],
+        [
+          [13.01, 51.01],
+          [13.02, 51.01],
+          [13.02, 51.02],
+          [13.01, 51.01],
+        ],
+      ],
+    });
+    expect(level1.outlineGeometry).toEqual(buildingFeature.geometry);
   });
 });
 
@@ -188,6 +226,48 @@ const rawOverpassData: RawOverpassDataResponse = {
         id: 17,
         nodes: [3, 4],
         tags: { barrier: "handrail", level: "0" },
+      },
+    ],
+  },
+};
+
+const levelOutlineOverpassData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: {
+    elements: [],
+  },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, lat: 51, lon: 13 },
+      { type: "node", id: 2, lat: 51, lon: 13.05 },
+      { type: "node", id: 3, lat: 51.05, lon: 13.05 },
+      { type: "node", id: 4, lat: 51.01, lon: 13.01 },
+      { type: "node", id: 5, lat: 51.01, lon: 13.02 },
+      { type: "node", id: 6, lat: 51.02, lon: 13.02 },
+      {
+        type: "way",
+        id: 10,
+        nodes: [1, 2, 3, 1],
+      },
+      {
+        type: "way",
+        id: 12,
+        nodes: [4, 5, 6, 4],
+      },
+      {
+        type: "relation",
+        id: 10,
+        members: [
+          { type: "way", ref: 10, role: "outer" },
+          { type: "way", ref: 12, role: "inner" },
+        ],
+        tags: { indoor: "level", level: "0", "level:ref": "E" },
+      },
+      {
+        type: "way",
+        id: 11,
+        nodes: [1, 2, 3, 1],
+        tags: { indoor: "room", level: "0" },
       },
     ],
   },

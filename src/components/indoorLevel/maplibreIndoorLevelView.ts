@@ -7,6 +7,7 @@ import type {
 import ColorService from "../../services/colorService";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import {
+  IndoorLevelOutlineGeometry,
   InfoPointRenderItem,
   IndoorLevelRenderModel,
   RoomRenderItem,
@@ -90,7 +91,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
   private opacity = 1;
-  private threeOutlineCoordinates: GeoJSON.Position[] = [];
+  private threeOutlineGeometry?: IndoorLevelOutlineGeometry;
   private threeRooms: RoomRenderItem[] = [];
   private threeInfoPoint?: InfoPointRenderItem;
   private threeStaircases: MapLibreThreeStaircaseRenderItem[] = [];
@@ -141,7 +142,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       this.setSourceData(this.openingDebug.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.tactilePaving.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.roomNumbers.sourceId, this.emptyFeatureCollection());
-      this.threeOutlineCoordinates = [];
+      this.threeOutlineGeometry = undefined;
       this.threeRooms = [];
       this.threeInfoPoint = undefined;
       this.threeStaircases = [];
@@ -311,7 +312,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   // ===== Render pipelines ===================================================
 
   private renderLayerData(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
-    this.renderOutline(renderModel.outlineCoordinates);
+    this.renderOutline(renderModel.outlineGeometry);
     this.renderInfoPoint(renderModel);
     this.renderRooms(renderModel.rooms);
     this.renderWalls(renderModel.walls);
@@ -322,9 +323,9 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.renderAccessibilityMarkers(renderModel);
   }
 
-  private renderOutline(outlineCoordinates: number[][]): void {
-    this.threeOutlineCoordinates = outlineCoordinates;
-    this.threeLayer?.setOutline(outlineCoordinates);
+  private renderOutline(outlineGeometry: IndoorLevelOutlineGeometry): void {
+    this.threeOutlineGeometry = outlineGeometry;
+    this.threeLayer?.setOutline(outlineGeometry);
   }
 
   private renderInfoPoint(renderModel: IndoorLevelRenderModel): void {
@@ -561,7 +562,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private applyThreeLayerState(threeLayer: MapLibreThreeIndoorLayer): void {
-    threeLayer.setOutline(this.threeOutlineCoordinates);
+    threeLayer.setOutline(this.threeOutlineGeometry);
     threeLayer.setInfoPoint(this.threeInfoPoint);
     threeLayer.setRooms(this.threeRooms);
     threeLayer.setStaircases(this.threeStaircases);

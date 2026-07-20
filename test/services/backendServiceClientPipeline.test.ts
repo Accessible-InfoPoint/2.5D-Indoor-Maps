@@ -91,6 +91,9 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
     expect(overpassToGeoJson).not.toHaveBeenCalled();
     expect(BuildingService.handleSearch).not.toHaveBeenCalled();
     expect(BackendService.getIndoorModel().levels).toEqual([1, 0]);
+    expect(BackendService.getIndoorModel().levelLabels.get(0)).toBe("E");
+    expect(BackendService.getLevelLabel(0)).toBe("E");
+    expect(BackendService.getLevelLabel(1)).toBe("1");
     expect(BackendService.getRawOverpassGraphs().indoor.getNode("8109446525")?.lon).toBe(0);
     expect(
       BackendService.getRawOverpassGraphs()
@@ -218,6 +221,19 @@ const rawIndoorOverpass: RawOverpassDataResponse["indoor"] = {
         indoor: "room",
         level: "0",
         repeat_on: "1",
+      },
+    },
+    { type: "node", id: 4, lat: 0, lon: 0 },
+    { type: "node", id: 5, lat: 0, lon: 0.5 },
+    { type: "node", id: 6, lat: 0.5, lon: 0.5 },
+    {
+      type: "way",
+      id: 4,
+      nodes: [4, 5, 6, 4],
+      tags: {
+        indoor: "level",
+        level: "0",
+        "level:ref": "E",
       },
     },
   ],

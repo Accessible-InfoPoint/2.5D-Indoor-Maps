@@ -7,6 +7,7 @@ import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorHandrail } from "./elements/IndoorHandrail";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
+import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorStairPathway } from "./elements/IndoorStairPathway";
@@ -29,6 +30,8 @@ export interface IndoorModel {
   buildingInterface: BuildingInterface;
   outlineCoordinates: number[][];
   levels: number[];
+  levelLabels: Map<number, string>;
+  levelOutlines: IndoorLevelOutline[];
   rooms: IndoorRoom[];
   doors: IndoorDoor[];
   handrails: IndoorHandrail[];
@@ -52,6 +55,7 @@ export function createIndoorModel(
     indoor: new OsmGraph(rawOverpassData.indoor),
   };
   const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
+  const levelOutlines = IndoorLevelOutline.collectFromGraph(graphs.indoor);
   const doors = IndoorDoor.collectFromGraph(graphs.indoor);
   const handrails = IndoorHandrail.collectFromGraph(graphs.indoor);
   const columns = IndoorColumn.collectFromGraph(graphs.indoor);
@@ -73,7 +77,9 @@ export function createIndoorModel(
     graphs,
     buildingInterface,
     outlineCoordinates: getBuildingOutlineCoordinates(buildingInterface),
-    levels: collectIndoorLevels(rooms),
+    levels: collectIndoorLevels(rooms, levelOutlines),
+    levelLabels: collectLevelLabels(levelOutlines),
+    levelOutlines,
     rooms,
     doors,
     handrails,
@@ -89,12 +95,33 @@ export function createIndoorModel(
   };
 }
 
-function collectIndoorLevels(rooms: IndoorRoom[]): number[] {
+function collectIndoorLevels(rooms: IndoorRoom[], levelOutlines: IndoorLevelOutline[]): number[] {
   const levels = new Set<number>();
 
   rooms.forEach((room) => room.levels.forEach((level) => levels.add(level)));
+  levelOutlines.forEach((outline) => outline.levels.forEach((level) => levels.add(level)));
 
   return Array.from(levels).sort((a, b) => -a + b);
+}
+
+function collectLevelLabels(levelOutlines: IndoorLevelOutline[]): Map<number, string> {
+  const labels = new Map<number, string>();
+
+  levelOutlines.forEach((outline) => {
+    const label = outline.label;
+
+    if (label === undefined) {
+      return;
+    }
+
+    outline.levels.forEach((level) => {
+      if (!labels.has(level)) {
+        labels.set(level, label);
+      }
+    });
+  });
+
+  return labels;
 }
 
 function getBuildingOutlineCoordinates(buildingInterface: BuildingInterface): number[][] {

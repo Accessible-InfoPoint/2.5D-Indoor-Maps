@@ -55,8 +55,10 @@ export interface StyledStaircaseRenderItem {
   color: string;
 }
 
+export type IndoorLevelOutlineGeometry = GeoJSON.Polygon | GeoJSON.MultiPolygon;
+
 export interface IndoorLevelRenderModel {
-  outlineCoordinates: number[][];
+  outlineGeometry: IndoorLevelOutlineGeometry;
   infoPoint?: InfoPointRenderItem;
   rooms: RoomRenderItem[];
   openings: OpeningRenderItem[];

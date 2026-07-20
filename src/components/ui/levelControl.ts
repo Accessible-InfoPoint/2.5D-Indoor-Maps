@@ -4,6 +4,7 @@ import {
   START_LEVEL_CONTROL_POSITION,
 } from "../../../public/strings/settings.json";
 import LevelService from "../../services/levelService";
+import type { LevelOption } from "../../services/levelService";
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
@@ -12,7 +13,7 @@ let offset = 1;
 const minOffset = 0;
 let maxOffset = 0;
 let numLevels = 0;
-let allLevelNames: string[] = [];
+let allLevelOptions: LevelOption[] = [];
 
 function handleLoad(geoMap: GeoMap): void {
   //reCreate
@@ -22,33 +23,33 @@ function handleLoad(geoMap: GeoMap): void {
 }
 
 function create(geoMap: GeoMap): void {
-  const levelNames = LevelService.getLevelNames();
-  render(levelNames, geoMap);
+  const levelOptions = LevelService.getLevelOptions();
+  render(levelOptions, geoMap);
 }
 
 function remove(): void {
   getRequiredElement("levelControl").innerHTML = "";
 }
 
-function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
+function render(allLevelOptionsParam: LevelOption[], geoMap: GeoMap): void {
   const levelControl = getRequiredElement("levelControl");
-  allLevelNames = allLevelNamesParam;
-  numLevels = allLevelNames.length;
+  allLevelOptions = allLevelOptionsParam;
+  numLevels = allLevelOptions.length;
 
-  allLevelNames.forEach((level: string) => {
-    const changeToLevel = lang.changeLevel + level;
+  allLevelOptions.forEach((levelOption: LevelOption) => {
+    const changeToLevel = lang.changeLevel + levelOption.label;
     const levelLi = document.createElement("li");
     const levelBtn = document.createElement("button");
     levelBtn.className = "square";
-    levelBtn.innerHTML = level;
+    levelBtn.textContent = levelOption.label;
     levelBtn.setAttribute("title", changeToLevel);
     levelBtn.setAttribute("aria-label", changeToLevel);
     levelBtn.setAttribute("tabindex", "0");
 
-    updateLevelButtonState(levelBtn, level == INDOOR_LEVEL.toString()); // TODO: Check for level ref, name might not be simply numerical
+    updateLevelButtonState(levelBtn, levelOption.level == INDOOR_LEVEL);
 
     levelBtn.addEventListener("click", () => {
-      const didChangeLevel = geoMap.handleLevelChange(parseFloat(level));
+      const didChangeLevel = geoMap.handleLevelChange(levelOption.level);
       if (!didChangeLevel) return;
 
       for (const element of levelControl.children) {
@@ -65,7 +66,7 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
 
   setWindow();
 
-  const index = allLevelNames.findIndex((level) => level == INDOOR_LEVEL.toString());
+  const index = allLevelOptions.findIndex((levelOption) => levelOption.level == INDOOR_LEVEL);
   offset = index - START_LEVEL_CONTROL_POSITION; // current should be second to last in visible
   maxOffset = numLevels - VISIBLE_LEVEL_CONTROLS;
   offset = Math.max(minOffset, Math.min(maxOffset, offset));
@@ -156,17 +157,16 @@ function setLevelSelectionDisabled(disabled: boolean): void {
 function focusOnLevel(selectedLevel: number): void {
   const levelControl = getRequiredElement("levelControl");
   const list = levelControl.children;
-  for (const item of list) {
-    if (item.firstChild?.textContent === selectedLevel.toString()) {
-      if (item.children[0] instanceof HTMLButtonElement) {
-        updateLevelButtonState(item.children[0], true);
-      }
-    } else if (item.children[0] instanceof HTMLButtonElement) {
-      updateLevelButtonState(item.children[0], false);
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    const levelButton = item.children[0];
+
+    if (levelButton instanceof HTMLButtonElement) {
+      updateLevelButtonState(levelButton, allLevelOptions[i]?.level == selectedLevel);
     }
   }
 
-  const index = allLevelNames.findIndex((level) => level == selectedLevel.toString());
+  const index = allLevelOptions.findIndex((levelOption) => levelOption.level == selectedLevel);
   if (index < offset) {
     // level is above in height what is currently visible
     // we need to shift offset down

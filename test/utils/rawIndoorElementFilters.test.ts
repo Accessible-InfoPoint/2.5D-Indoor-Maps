@@ -16,6 +16,17 @@ describe("contributesToIndoorLevels", () => {
     ).toBe(true);
   });
 
+  it("returns true for indoor=level outlines", () => {
+    expect(
+      contributesToIndoorLevels({
+        type: "way",
+        id: 1,
+        nodes: [],
+        tags: { indoor: "level", level: "0", "level:ref": "E" },
+      }),
+    ).toBe(true);
+  });
+
   it("returns true for indoor room relations", () => {
     expect(
       contributesToIndoorLevels({

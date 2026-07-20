@@ -7,6 +7,11 @@ import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 
 const geoJSONByLevel = new Map<number, GeoJSON.FeatureCollection>();
 
+export interface LevelOption {
+  level: number;
+  label: string;
+}
+
 function clearData(): void {
   geoJSONByLevel.clear();
 }
@@ -51,7 +56,14 @@ function emptyFeatureCollection(): GeoJSON.FeatureCollection {
 }
 
 function getLevelNames(): string[] {
-  return BackendService.getAllLevels().map((val) => val.toString()); // reverse order
+  return getLevelOptions().map((option) => option.label); // reverse order
+}
+
+function getLevelOptions(): LevelOption[] {
+  return BackendService.getAllLevels().map((level) => ({
+    level,
+    label: BackendService.getLevelLabel(level),
+  }));
 }
 
 function getCurrentLevelDescription(currentLevel: number): string {
@@ -66,6 +78,7 @@ export default {
   getCurrentLevelGeoJSON,
   getLevelGeoJSON,
   getLevelNames,
+  getLevelOptions,
   getCurrentLevelDescription,
   clearData,
 };

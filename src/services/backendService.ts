@@ -495,6 +495,10 @@ function getAllLevels(): number[] {
   return Array.from(allLevels).sort((a, b) => -a + b); // reverse order
 }
 
+function getLevelLabel(level: number): string {
+  return indoorModel?.levelLabels.get(level) ?? level.toString();
+}
+
 function getBackendConfig(): BackendConfig {
   return { ...backendConfig };
 }
@@ -547,6 +551,7 @@ export default {
   getBoundingBox,
   fetchBackendData,
   getAllLevels,
+  getLevelLabel,
   configureBackend,
   getBackendConfig,
   getRawOverpassData,

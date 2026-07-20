@@ -55,7 +55,10 @@ export function buildIndoorLevelRenderModel(
   });
 
   return {
-    outlineCoordinates: options.outlineCoordinates,
+    outlineGeometry: {
+      type: "Polygon",
+      coordinates: [options.outlineCoordinates],
+    },
     infoPoint,
     rooms,
     openings: [],

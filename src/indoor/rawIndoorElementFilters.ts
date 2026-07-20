@@ -8,6 +8,12 @@ import { hasPotentialAccessibilityMarkerTags } from "./indoorTagFilters";
 
 const INDOOR_LEVEL_CONTRIBUTOR_TAGS = new Set(["room", "corridor", "area"]);
 
+export function isRawIndoorLevelElement(
+  element: OverpassElement,
+): element is OverpassWay | OverpassRelation {
+  return (element.type == "way" || element.type == "relation") && element.tags?.indoor == "level";
+}
+
 export function isRawIndoorRoomElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {
@@ -77,5 +83,5 @@ export function isRawIndoorTactilePavingElement(element: OverpassElement): eleme
 }
 
 export function contributesToIndoorLevels(element: OverpassElement): boolean {
-  return isRawIndoorRoomElement(element);
+  return isRawIndoorRoomElement(element) || isRawIndoorLevelElement(element);
 }
