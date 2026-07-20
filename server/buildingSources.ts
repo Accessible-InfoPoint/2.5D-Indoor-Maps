@@ -162,12 +162,13 @@ function buildBuildingsQuery(source: BuildingSourceDefinition): string {
 
 function buildIndoorQuery(source: BuildingSourceDefinition): string {
   const indoorSelector = buildRegionSelector('nwr["indoor"]', source);
+  const levelSelector = buildRegionSelector('nwr["level"]', source);
   const nonSitBuildingSelector = buildRegionSelector('nwr["building"][!"min_level"]', source);
 
   return [
     "[out:json];",
     buildRegionStatement(source),
-    `(${indoorSelector};-${nonSitBuildingSelector};);`,
+    `((${indoorSelector};${levelSelector};);-${nonSitBuildingSelector};);`,
     "(._;>;);",
     "out;",
   ].join("");

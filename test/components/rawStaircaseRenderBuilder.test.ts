@@ -7,6 +7,7 @@ import { createIndoorModel } from "../../src/indoor/IndoorModel";
 import { BuildingInterface } from "../../src/models/buildingInterface";
 import { UserGroupEnum } from "../../src/models/userGroupEnum";
 import { RawOverpassDataResponse } from "../../src/services/httpService";
+import coordinateHelpers from "../../src/utils/coordinateHelpers";
 
 describe("raw staircase rendering", () => {
   it("builds 3D prism and edge cylinder render items for simple staircase footprints", () => {
@@ -63,6 +64,41 @@ describe("raw staircase rendering", () => {
     ]);
     expect(renderModel.staircase.renderItems).toHaveLength(3);
     expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(0);
+  });
+
+  it("samples area:highway=steps widths for free-floating staircases at diagonal corners", () => {
+    const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData, buildingInterface);
+
+    const level0RenderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+    const level1RenderModel = buildRawIndoorLevelRenderModel({
+      model,
+      level: 1,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    const floorPrisms = getStaircaseFloorPrisms(level0RenderModel.staircase.renderItems);
+
+    expect(floorPrisms).toHaveLength(2);
+    expect(level1RenderModel.rooms.map((room) => room.feature.id)).toEqual([
+      "free-floating-stair-path/way/100@0-1",
+    ]);
+    expect(getStaircaseFloorPrisms(level1RenderModel.staircase.renderItems)).toHaveLength(2);
+
+    const renderedCornerWidth = coordinateHelpers.getDistanceBetweenCoordinatesInM(
+      floorPrisms[0].coordinates[1],
+      floorPrisms[0].coordinates[2],
+    );
+
+    expect(renderedCornerWidth).toBeGreaterThan(5);
+    expect(renderedCornerWidth).toBeLessThan(7);
   });
 
   it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
@@ -309,6 +345,37 @@ const freeFloatingStaircaseData: RawOverpassDataResponse = {
   },
 };
 
+const freeFloatingStaircaseWithStepAreaData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, ...metersToOverpassPosition(0, 0) },
+      { type: "node", id: 2, ...metersToOverpassPosition(10, 0) },
+      { type: "node", id: 3, ...metersToOverpassPosition(10, 10) },
+      { type: "node", id: 10, ...metersToOverpassPosition(-1, -2) },
+      { type: "node", id: 11, ...metersToOverpassPosition(10, -2) },
+      { type: "node", id: 12, ...metersToOverpassPosition(12, 0) },
+      { type: "node", id: 13, ...metersToOverpassPosition(12, 11) },
+      { type: "node", id: 14, ...metersToOverpassPosition(8, 11) },
+      { type: "node", id: 15, ...metersToOverpassPosition(8, 2) },
+      { type: "node", id: 16, ...metersToOverpassPosition(-1, 2) },
+      {
+        type: "way",
+        id: 100,
+        nodes: [1, 2, 3],
+        tags: { indoor: "pathway", level: "0-1" },
+      },
+      {
+        type: "way",
+        id: 200,
+        nodes: [10, 11, 12, 13, 14, 15, 16, 10],
+        tags: { "area:highway": "steps", level: "0-1" },
+      },
+    ],
+  },
+};
+
 const staircaseWithNodeLevelsData: RawOverpassDataResponse = {
   buildingInterface,
   buildings: { elements: [] },
@@ -446,3 +513,12 @@ const closedRepeatedStaircaseData: RawOverpassDataResponse = {
     ],
   },
 };
+
+function metersToOverpassPosition(x: number, y: number): { lat: number; lon: number } {
+  const metersPerDegree = 111_320;
+
+  return {
+    lon: x / metersPerDegree,
+    lat: y / metersPerDegree,
+  };
+}

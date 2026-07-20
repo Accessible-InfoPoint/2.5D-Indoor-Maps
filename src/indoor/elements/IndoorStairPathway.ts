@@ -36,7 +36,11 @@ export class IndoorStairPathway extends IndoorElement {
   }
 
   get widthMeters(): number {
-    return parsePositiveMeters(this.tags.width) ?? DEFAULT_STAIR_PATHWAY_WIDTH_METERS;
+    return this.explicitWidthMeters ?? DEFAULT_STAIR_PATHWAY_WIDTH_METERS;
+  }
+
+  get explicitWidthMeters(): number | undefined {
+    return parsePositiveMeters(this.tags.width);
   }
 
   get verticalSpan(): VerticalSpan | undefined {

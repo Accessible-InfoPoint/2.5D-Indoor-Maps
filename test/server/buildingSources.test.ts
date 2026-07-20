@@ -26,8 +26,8 @@ describe("buildingSources", () => {
     expect(resources[0].query).toContain('area["name"="Dresden"]->.searchArea;');
     expect(resources[0].query).toContain('nwr["building"]["min_level"](area.searchArea)');
     expect(resources[1].query).toContain('nwr["indoor"](area.searchArea)');
+    expect(resources[1].query).toContain('nwr["level"](area.searchArea)');
     expect(resources[1].query).toContain('-nwr["building"][!"min_level"](area.searchArea)');
-    expect(resources[1].query).not.toContain('nwr["level"]');
     expect(resources[0].queryHash).toHaveLength(64);
   });
 
@@ -38,10 +38,10 @@ describe("buildingSources", () => {
       'nwr["building"]["min_level"](52.522,13.365,52.528,13.374)',
     );
     expect(resources[1].query).toContain('nwr["indoor"](52.522,13.365,52.528,13.374)');
+    expect(resources[1].query).toContain('nwr["level"](52.522,13.365,52.528,13.374)');
     expect(resources[1].query).toContain(
       '-nwr["building"][!"min_level"](52.522,13.365,52.528,13.374)',
     );
-    expect(resources[1].query).not.toContain('nwr["level"]');
   });
 
   it("fails clearly for buildings without a source entry", () => {

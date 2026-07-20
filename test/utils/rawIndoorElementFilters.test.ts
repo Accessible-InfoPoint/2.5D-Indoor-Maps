@@ -2,6 +2,7 @@ import { OverpassElement } from "../../src/models/overpassJson";
 import {
   contributesToIndoorLevels,
   isRawIndoorHandrailElement,
+  isRawIndoorStepAreaElement,
 } from "../../src/indoor/rawIndoorElementFilters";
 
 describe("contributesToIndoorLevels", () => {
@@ -92,6 +93,29 @@ describe("isRawIndoorHandrailElement", () => {
         lat: 0,
         lon: 0,
         tags: { barrier: "handrail" },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("isRawIndoorStepAreaElement", () => {
+  it.each(["way", "relation"] as const)("returns true for %s area:highway=steps", (type) => {
+    const element =
+      type == "way"
+        ? { type, id: 1, nodes: [] as number[], tags: { "area:highway": "steps" } }
+        : { type, id: 1, members: [] as [], tags: { "area:highway": "steps" } };
+
+    expect(isRawIndoorStepAreaElement(element)).toBe(true);
+  });
+
+  it("ignores node step areas", () => {
+    expect(
+      isRawIndoorStepAreaElement({
+        type: "node",
+        id: 1,
+        lat: 0,
+        lon: 0,
+        tags: { "area:highway": "steps" },
       }),
     ).toBe(false);
   });

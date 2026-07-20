@@ -53,6 +53,7 @@ export function buildRawIndoorLevelRenderModel(
     ...buildRawStaircase2DRenderItems({
       verticalConnections: options.model.verticalConnections,
       handrails: options.model.handrails,
+      stepAreas: options.model.stepAreas,
       level: options.level,
       selectedFeatureIds: options.selectedFeatureIds,
     }),
@@ -70,6 +71,7 @@ export function buildRawIndoorLevelRenderModel(
       renderItems: buildRawStaircase3DRenderItems({
         verticalConnections: options.model.verticalConnections,
         handrails: options.model.handrails,
+        stepAreas: options.model.stepAreas,
         level: options.level,
         selectedFeatureIds: options.selectedFeatureIds,
       }),
@@ -220,6 +222,7 @@ function buildWallRenderItems(
     ...buildRawStaircase2DOutlineRenderItems({
       verticalConnections: options.model.verticalConnections,
       handrails: options.model.handrails,
+      stepAreas: options.model.stepAreas,
       level: options.level,
       selectedFeatureIds: options.selectedFeatureIds,
     }),

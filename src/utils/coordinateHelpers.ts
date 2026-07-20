@@ -149,6 +149,13 @@ function simplifyByAngle(polygon: GeoJSON.Position[], degTol = 1): GeoJSON.Posit
  * @returns Array of Vector2 points representing the offset line.
  */
 export function offsetLine(points: Vector2[], width: number): Vector2[] {
+  return offsetVariableLine(
+    points,
+    points.map(() => width),
+  );
+}
+
+function offsetVariableLine(points: Vector2[], widths: number[]): Vector2[] {
   const vectors: Vector2[] = [];
 
   // Compute normalized direction vectors between each consecutive point
@@ -165,13 +172,19 @@ export function offsetLine(points: Vector2[], width: number): Vector2[] {
     getRequiredArrayValue(vectors, -1, "Offset vectors").clone(),
   ];
 
-  // Determine the side of offset (left/right based on width sign)
-  const rotateDirection = width / Math.abs(width);
-
   const returnPoints: Vector2[] = [];
 
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
+    const width = widths[i] ?? 0;
+
+    if (width == 0) {
+      returnPoints.push(point);
+      continue;
+    }
+
+    // Determine the side of offset (left/right based on width sign)
+    const rotateDirection = width / Math.abs(width);
 
     // Rotate vector by 90 degrees and scale by width for offset
     const prevVector = new Vector2(
@@ -193,12 +206,16 @@ export function offsetLine(points: Vector2[], width: number): Vector2[] {
       .multiplyScalar(prevVector.dot(moveVector) / prevVector.dot(prevVector));
 
     // Normalize and scale offset for smooth transition, then apply to point
+    const projectedLength = projVector.length();
+
     returnPoints.push(
-      moveVector
-        .clone()
-        .normalize()
-        .multiplyScalar((moveVector.length() / projVector.length()) * Math.abs(width))
-        .add(point),
+      projectedLength > 0
+        ? moveVector
+            .clone()
+            .normalize()
+            .multiplyScalar((moveVector.length() / projectedLength) * Math.abs(width))
+            .add(point)
+        : point.add(prevVector),
     );
   }
 
@@ -216,6 +233,16 @@ export function offsetLine(points: Vector2[], width: number): Vector2[] {
  * @returns Offset GeoJSON LineString coordinates.
  */
 function offsetCoordinateLine(line: GeoJSON.Position[], width: number): GeoJSON.Position[] {
+  return offsetCoordinateLineByOffsets(
+    line,
+    line.map(() => width),
+  );
+}
+
+function offsetCoordinateLineByOffsets(
+  line: GeoJSON.Position[],
+  offsetsMeters: number[],
+): GeoJSON.Position[] {
   const p0 = line[0];
 
   // Create mock offset points for scale approximation
@@ -231,7 +258,7 @@ function offsetCoordinateLine(line: GeoJSON.Position[], width: number): GeoJSON.
   const points = line.map((p) => new Vector2(p[0] * xStretch, lat2y(p[1]) * yStretch));
 
   // Compute offset in flat space
-  const returnPoints = offsetLine(points, width);
+  const returnPoints = offsetVariableLine(points, offsetsMeters);
 
   // Convert results back to longitude/latitude
   return returnPoints.map((v) => [v.x / xStretch, y2lat(v.y / yStretch)]);
@@ -285,5 +312,6 @@ export default {
   y2lat,
   simplifyByAngle,
   offsetCoordinateLine,
+  offsetCoordinateLineByOffsets,
   createCoordinateCirclePolygon,
 };

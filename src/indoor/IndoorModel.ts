@@ -10,6 +10,7 @@ import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
+import { IndoorStepArea } from "./elements/IndoorStepArea";
 import { IndoorStairPathway } from "./elements/IndoorStairPathway";
 import { IndoorTactilePaving } from "./elements/IndoorTactilePaving";
 import { IndoorWall } from "./elements/IndoorWall";
@@ -40,6 +41,7 @@ export interface IndoorModel {
   pointFeatures: IndoorPointFeature[];
   walls: IndoorWall[];
   tactilePaving: IndoorTactilePaving[];
+  stepAreas: IndoorStepArea[];
   stairPathways: IndoorStairPathway[];
   stairLandings: IndoorLanding[];
   stairPathNetwork: IndoorStairPathNetwork;
@@ -63,6 +65,7 @@ export function createIndoorModel(
   const pointFeatures = IndoorPointFeature.collectFromGraph(graphs.indoor);
   const walls = IndoorWall.collectFromGraph(graphs.indoor);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graphs.indoor);
+  const stepAreas = IndoorStepArea.collectFromGraph(graphs.indoor);
   const stairPathways = IndoorStairPathway.collectFromGraph(graphs.indoor);
   const stairLandings = IndoorLanding.collectFromGraph(graphs.indoor);
   const stairPathNetwork = new IndoorStairPathNetwork(stairPathways, stairLandings);
@@ -88,6 +91,7 @@ export function createIndoorModel(
     pointFeatures,
     walls,
     tactilePaving,
+    stepAreas,
     stairPathways,
     stairLandings,
     stairPathNetwork,

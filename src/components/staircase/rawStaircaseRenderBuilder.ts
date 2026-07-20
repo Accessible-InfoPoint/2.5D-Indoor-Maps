@@ -2,12 +2,14 @@ import { LEVEL_HEIGHT } from "../../../public/strings/settings.json";
 import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
 import { IndoorLanding } from "../../indoor/elements/IndoorLanding";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
+import { IndoorStepArea } from "../../indoor/elements/IndoorStepArea";
 import {
   IndoorLandingInstance,
   IndoorStairPathNetworkComponent,
   IndoorStairPathwayInstance,
 } from "../../indoor/verticalConnections/IndoorStairPathNetwork";
 import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
+import { VerticalSpan } from "../../indoor/verticalConnections/VerticalSpan";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";
@@ -21,6 +23,7 @@ import {
   buildSimpleStaircaseRenderItems,
   buildStaircasePathRenderItems,
   COMPLEX_STAIRCASE_THICKNESS,
+  StaircasePathWidth,
   StaircaseHandrailOptions,
 } from "./staircaseRenderBuilder";
 import { StaircaseRenderItem } from "./staircaseRenderModel";
@@ -37,6 +40,7 @@ const STAIRCASE_OUTLINE_TAGS = { indoor: "wall", generated: "staircase-outline" 
 export interface RawStaircaseRenderOptions {
   verticalConnections: IndoorVerticalConnection[];
   handrails: IndoorHandrail[];
+  stepAreas: IndoorStepArea[];
   level: number;
   selectedFeatureIds: string[];
 }
@@ -46,14 +50,16 @@ export function buildRawStaircase2DRenderItems(
 ): RoomRenderItem[] {
   return options.verticalConnections
     .filter((connection) => connection.kind == "freeFloating")
-    .flatMap((connection) => buildFreeFloatingStaircase2DRenderItems(connection, options.level));
+    .flatMap((connection) =>
+      buildFreeFloatingStaircase2DRenderItems(connection, options.level, options.stepAreas),
+    );
 }
 
 export function buildRawStaircase2DOutlineRenderItems(
   options: RawStaircaseRenderOptions,
 ): StyledFeatureRenderItem[] {
   return options.verticalConnections.flatMap((connection) =>
-    buildConnection2DOutlineRenderItems(connection, options.level),
+    buildConnection2DOutlineRenderItems(connection, options.level, options.stepAreas),
   );
 }
 
@@ -69,18 +75,22 @@ export function buildRawStaircase3DRenderItems(
         ? colors.roomColorS
         : colors.stairsColor;
 
-    return buildConnection3DRenderItems(connection, options.level, options.handrails).map(
-      (item) => ({
-        item,
-        color,
-      }),
-    );
+    return buildConnection3DRenderItems(
+      connection,
+      options.level,
+      options.handrails,
+      options.stepAreas,
+    ).map((item) => ({
+      item,
+      color,
+    }));
   });
 }
 
 function buildFreeFloatingStaircase2DRenderItems(
   connection: IndoorVerticalConnection,
   level: number,
+  stepAreas: IndoorStepArea[],
 ): RoomRenderItem[] {
   const activeComponents = getActivePathComponents(connection, level);
   const pathItems = activeComponents.flatMap((component) =>
@@ -91,7 +101,8 @@ function buildFreeFloatingStaircase2DRenderItems(
         return [];
       }
 
-      const polygon = buildFlatStairPathPolygon(geometry.coordinates, instance.source.widthMeters);
+      const width = getPathWidth(instance, geometry.coordinates, stepAreas);
+      const polygon = buildFlatStairPathPolygon(geometry.coordinates, width);
 
       return polygon === undefined
         ? []
@@ -116,6 +127,7 @@ function buildConnection3DRenderItems(
   connection: IndoorVerticalConnection,
   level: number,
   handrails: IndoorHandrail[],
+  stepAreas: IndoorStepArea[],
 ): StaircaseRenderItem[] {
   if (connection.kind == "simple" && connection.footprint !== undefined) {
     return shouldRenderSimpleFootprintOnLevel(connection.footprint, level)
@@ -138,7 +150,7 @@ function buildConnection3DRenderItems(
 
         return buildStaircasePathRenderItems(
           geometry.coordinates,
-          instance.source.widthMeters,
+          getPathWidth(instance, geometry.coordinates, stepAreas),
           pathLevels.map((pathLevel) => getRelativeLevelAltitude(pathLevel, level)),
           LOCAL_ALTITUDE,
           getPathHandrailDefinition(connection, instance, pathLevels).options,
@@ -154,6 +166,7 @@ function buildConnection3DRenderItems(
 function buildConnection2DOutlineRenderItems(
   connection: IndoorVerticalConnection,
   level: number,
+  stepAreas: IndoorStepArea[],
 ): StyledFeatureRenderItem[] {
   if (connection.kind != "freeFloating") {
     return [];
@@ -174,7 +187,7 @@ function buildConnection2DOutlineRenderItems(
         connection,
         instance,
         coordinates: geometry.coordinates,
-        width: instance.source.widthMeters,
+        width: getPathWidth(instance, geometry.coordinates, stepAreas),
         handrails,
       });
     }),
@@ -216,13 +229,127 @@ function getActivePathComponents(
   connection: IndoorVerticalConnection,
   level: number,
 ): IndoorStairPathNetworkComponent[] {
-  return connection.pathComponents.filter(
-    (component) => getComponentRenderLevel(component) == level,
+  return connection.pathComponents.filter((component) =>
+    shouldRenderPathComponent(component, level),
   );
 }
 
-function getComponentRenderLevel(component: IndoorStairPathNetworkComponent): number {
-  return Math.floor(component.span.from);
+function shouldRenderPathComponent(
+  component: IndoorStairPathNetworkComponent,
+  level: number,
+): boolean {
+  return (
+    getComponentRenderLevels(component.span).includes(level) &&
+    !hasRepeatedContinuationStartingOnLevel(component, level)
+  );
+}
+
+function getComponentRenderLevels(span: VerticalSpan): number[] {
+  const firstLevel = Math.floor(span.from);
+  const lastLevel = Number.isInteger(span.to) ? span.to : Math.floor(span.to);
+  const levels: number[] = [];
+
+  for (let level = firstLevel; level <= lastLevel; level++) {
+    levels.push(level);
+  }
+
+  return levels;
+}
+
+function hasRepeatedContinuationStartingOnLevel(
+  component: IndoorStairPathNetworkComponent,
+  level: number,
+): boolean {
+  if (component.span.to != level || component.span.from == level) {
+    return false;
+  }
+
+  return component.pathwayInstances.some((instance) => {
+    const authoredSpan = instance.source.verticalSpan;
+
+    if (authoredSpan === undefined) {
+      return false;
+    }
+
+    return instance.source.repeatOffsets.some(
+      (repeatOffset) =>
+        authoredSpan.from + repeatOffset == level &&
+        authoredSpan.to + repeatOffset != component.span.to,
+    );
+  });
+}
+
+function getPathWidth(
+  instance: IndoorStairPathwayInstance,
+  coordinates: GeoJSON.Position[],
+  stepAreas: IndoorStepArea[],
+): StaircasePathWidth {
+  const explicitWidth = instance.source.explicitWidthMeters;
+
+  if (explicitWidth !== undefined) {
+    return explicitWidth;
+  }
+
+  const areaWidths = estimatePathWidthsFromStepAreas(instance, coordinates, stepAreas);
+
+  return areaWidths ?? instance.source.widthMeters;
+}
+
+function estimatePathWidthsFromStepAreas(
+  instance: IndoorStairPathwayInstance,
+  coordinates: GeoJSON.Position[],
+  stepAreas: IndoorStepArea[],
+): number[] | undefined {
+  const compatibleAreas = stepAreas.filter((area) => isCompatibleStepArea(area, instance));
+
+  if (compatibleAreas.length == 0 || coordinates.length < 2) {
+    return undefined;
+  }
+
+  const sampledWidths = coordinates.map((coordinate, index) =>
+    estimatePathWidthAtCoordinate(coordinate, coordinates, index, compatibleAreas),
+  );
+
+  if (sampledWidths.every((width) => width === undefined)) {
+    return undefined;
+  }
+
+  return sampledWidths.map((width) => width ?? instance.source.widthMeters);
+}
+
+function isCompatibleStepArea(
+  stepArea: IndoorStepArea,
+  instance: IndoorStairPathwayInstance,
+): boolean {
+  const levels = stepArea.levels;
+
+  if (levels.length == 0) {
+    return true;
+  }
+
+  return levels.some((level) => level >= instance.span.from && level <= instance.span.to);
+}
+
+function estimatePathWidthAtCoordinate(
+  coordinate: GeoJSON.Position,
+  pathCoordinates: GeoJSON.Position[],
+  index: number,
+  stepAreas: IndoorStepArea[],
+): number | undefined {
+  const origin = pathCoordinates[0];
+  const projection = createLocalProjection(origin);
+  const point = toLocalPoint(coordinate, projection);
+  const ray = getPathWidthRay(pathCoordinates, index, projection);
+
+  if (ray === undefined) {
+    return undefined;
+  }
+
+  return stepAreas
+    .flatMap((area) => getStepAreaPolygons(area))
+    .map((polygon) => estimateWidthInPolygon(point, ray, polygon, projection))
+    .filter((width): width is number => width !== undefined)
+    .sort((a, b) => b - a)[0];
 }
 
 function getPathHandrailDefinition(
@@ -319,7 +446,7 @@ function buildPathSideOutlineRenderItems(options: {
   connection: IndoorVerticalConnection;
   instance: IndoorStairPathwayInstance;
   coordinates: GeoJSON.Position[];
-  width: number;
+  width: StaircasePathWidth;
   handrails: { hasHandrailTags: boolean; options: StaircaseHandrailOptions };
 }): StyledFeatureRenderItem[] {
   return [
@@ -333,7 +460,7 @@ function buildPathSideOutlineRenderItem(
     connection: IndoorVerticalConnection;
     instance: IndoorStairPathwayInstance;
     coordinates: GeoJSON.Position[];
-    width: number;
+    width: StaircasePathWidth;
     handrails: { hasHandrailTags: boolean; options: StaircaseHandrailOptions };
   },
   side: "left" | "right",
@@ -345,8 +472,11 @@ function buildPathSideOutlineRenderItem(
     return undefined;
   }
 
-  const offset = side == "left" ? -options.width / 2 : options.width / 2;
-  const coordinates = coordinateHelpers.offsetCoordinateLine(options.coordinates, offset);
+  const coordinates = offsetPathByWidth(
+    options.coordinates,
+    options.width,
+    side == "left" ? -0.5 : 0.5,
+  );
 
   return {
     feature: {
@@ -535,22 +665,275 @@ function getRelativeLevelAltitude(level: number, renderLevel: number): number {
   return (level - renderLevel) * LEVEL_HEIGHT;
 }
 
+interface LocalProjection {
+  longitudeOrigin: number;
+  latitudeOrigin: number;
+  metersPerDegreeLongitude: number;
+  metersPerDegreeLatitude: number;
+}
+
+interface LocalPoint {
+  x: number;
+  y: number;
+}
+
+interface PathWidthRay {
+  direction: LocalPoint;
+}
+
+function getStepAreaPolygons(stepArea: IndoorStepArea): GeoJSON.Position[][][] {
+  const geometry = stepArea.toAreaGeometry();
+
+  if (geometry === undefined) {
+    return [];
+  }
+
+  return geometry.type == "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+}
+
+function estimateWidthInPolygon(
+  point: LocalPoint,
+  ray: PathWidthRay,
+  polygon: GeoJSON.Position[][],
+  projection: LocalProjection,
+): number | undefined {
+  const localRings = polygon.map((ring) =>
+    ring.map((coordinate) => toLocalPoint(coordinate, projection)),
+  );
+  const [outerRing, ...innerRings] = localRings;
+
+  if (
+    outerRing === undefined ||
+    !pointInRing(point, outerRing) ||
+    innerRings.some((ring) => pointInRing(point, ring))
+  ) {
+    return undefined;
+  }
+
+  const positiveDistance = getNearestRayBoundaryDistance(point, ray.direction, localRings);
+  const negativeDistance = getNearestRayBoundaryDistance(
+    point,
+    scaleLocalPoint(ray.direction, -1),
+    localRings,
+  );
+
+  return positiveDistance === undefined || negativeDistance === undefined
+    ? undefined
+    : positiveDistance + negativeDistance;
+}
+
+function getNearestRayBoundaryDistance(
+  origin: LocalPoint,
+  direction: LocalPoint,
+  rings: LocalPoint[][],
+): number | undefined {
+  return rings
+    .flatMap((ring) => getRingSegments(ring))
+    .map(([start, end]) => getRaySegmentIntersectionDistance(origin, direction, start, end))
+    .filter((distance): distance is number => distance !== undefined)
+    .sort((a, b) => a - b)[0];
+}
+
+function getRingSegments(ring: LocalPoint[]): Array<[LocalPoint, LocalPoint]> {
+  const segments: Array<[LocalPoint, LocalPoint]> = [];
+
+  for (let index = 0; index < ring.length; index++) {
+    const start = ring[index];
+    const end = ring[(index + 1) % ring.length];
+
+    if (start !== undefined && end !== undefined) {
+      segments.push([start, end]);
+    }
+  }
+
+  return segments;
+}
+
+function getRaySegmentIntersectionDistance(
+  rayOrigin: LocalPoint,
+  rayDirection: LocalPoint,
+  segmentStart: LocalPoint,
+  segmentEnd: LocalPoint,
+): number | undefined {
+  const segment = subtractLocalPoints(segmentEnd, segmentStart);
+  const denominator = crossLocalPoints(rayDirection, segment);
+
+  if (Math.abs(denominator) < 0.000001) {
+    return undefined;
+  }
+
+  const difference = subtractLocalPoints(segmentStart, rayOrigin);
+  const rayDistance = crossLocalPoints(difference, segment) / denominator;
+  const segmentRatio = crossLocalPoints(difference, rayDirection) / denominator;
+
+  return rayDistance > 0.000001 && segmentRatio >= -0.000001 && segmentRatio <= 1.000001
+    ? rayDistance
+    : undefined;
+}
+
+function getPathWidthRay(
+  coordinates: GeoJSON.Position[],
+  index: number,
+  projection: LocalProjection,
+): PathWidthRay | undefined {
+  const current = toLocalPoint(coordinates[index], projection);
+  const previous = index > 0 ? toLocalPoint(coordinates[index - 1], projection) : undefined;
+  const next =
+    index < coordinates.length - 1 ? toLocalPoint(coordinates[index + 1], projection) : undefined;
+
+  if (previous === undefined && next === undefined) {
+    return undefined;
+  }
+
+  const previousDirection =
+    previous === undefined
+      ? undefined
+      : normalizeLocalPoint(subtractLocalPoints(current, previous));
+  const nextDirection =
+    next === undefined ? undefined : normalizeLocalPoint(subtractLocalPoints(next, current));
+  const previousNormal =
+    previousDirection === undefined ? undefined : rotateDirectionRight(previousDirection);
+  const nextNormal = nextDirection === undefined ? undefined : rotateDirectionRight(nextDirection);
+  const rawDirection =
+    previousNormal !== undefined && nextNormal !== undefined
+      ? addLocalPoints(previousNormal, nextNormal)
+      : (previousNormal ?? nextNormal);
+
+  if (rawDirection === undefined) {
+    return undefined;
+  }
+
+  const direction =
+    getLocalPointLength(rawDirection) == 0
+      ? (previousNormal ?? nextNormal)
+      : normalizeLocalPoint(rawDirection);
+
+  if (direction === undefined) {
+    return undefined;
+  }
+
+  return {
+    direction,
+  };
+}
+
+function createLocalProjection(origin: GeoJSON.Position): LocalProjection {
+  const latitudeRadians = (origin[1] * Math.PI) / 180;
+  const metersPerDegreeLatitude = 111_320;
+
+  return {
+    longitudeOrigin: origin[0],
+    latitudeOrigin: origin[1],
+    metersPerDegreeLatitude,
+    metersPerDegreeLongitude: Math.max(
+      Math.abs(metersPerDegreeLatitude * Math.cos(latitudeRadians)),
+      0.000001,
+    ),
+  };
+}
+
+function toLocalPoint(coordinate: GeoJSON.Position, projection: LocalProjection): LocalPoint {
+  return {
+    x: (coordinate[0] - projection.longitudeOrigin) * projection.metersPerDegreeLongitude,
+    y: (coordinate[1] - projection.latitudeOrigin) * projection.metersPerDegreeLatitude,
+  };
+}
+
+function pointInRing(point: LocalPoint, ring: LocalPoint[]): boolean {
+  let inside = false;
+
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const current = ring[i];
+    const previous = ring[j];
+    const intersects =
+      current.y > point.y != previous.y > point.y &&
+      point.x <
+        ((previous.x - current.x) * (point.y - current.y)) / (previous.y - current.y) + current.x;
+
+    if (intersects) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+}
+
+function subtractLocalPoints(a: LocalPoint, b: LocalPoint): LocalPoint {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+  };
+}
+
+function addLocalPoints(a: LocalPoint, b: LocalPoint): LocalPoint {
+  return {
+    x: a.x + b.x,
+    y: a.y + b.y,
+  };
+}
+
+function scaleLocalPoint(point: LocalPoint, scale: number): LocalPoint {
+  return {
+    x: point.x * scale,
+    y: point.y * scale,
+  };
+}
+
+function rotateDirectionRight(direction: LocalPoint): LocalPoint {
+  return {
+    x: direction.y,
+    y: -direction.x,
+  };
+}
+
+function normalizeLocalPoint(point: LocalPoint): LocalPoint {
+  const length = getLocalPointLength(point);
+
+  return length == 0
+    ? point
+    : {
+        x: point.x / length,
+        y: point.y / length,
+      };
+}
+
+function getLocalPointLength(point: LocalPoint): number {
+  return Math.hypot(point.x, point.y);
+}
+
+function crossLocalPoints(a: LocalPoint, b: LocalPoint): number {
+  return a.x * b.y - a.y * b.x;
+}
+
 function buildFlatStairPathPolygon(
   coordinates: GeoJSON.Position[],
-  width: number,
+  width: StaircasePathWidth,
 ): GeoJSON.Polygon | undefined {
   if (coordinates.length < 2) {
     return undefined;
   }
 
-  const left = coordinateHelpers.offsetCoordinateLine(coordinates, width / 2);
-  const right = coordinateHelpers.offsetCoordinateLine(coordinates, -width / 2);
+  const left = offsetPathByWidth(coordinates, width, 0.5);
+  const right = offsetPathByWidth(coordinates, width, -0.5);
   const ring = [...left, ...right.reverse(), left[0]];
 
   return {
     type: "Polygon",
     coordinates: [ring],
   };
+}
+
+function offsetPathByWidth(
+  coordinates: GeoJSON.Position[],
+  width: StaircasePathWidth,
+  factor: number,
+): GeoJSON.Position[] {
+  return Array.isArray(width)
+    ? coordinateHelpers.offsetCoordinateLineByOffsets(
+        coordinates,
+        width.map((value) => value * factor),
+      )
+    : coordinateHelpers.offsetCoordinateLine(coordinates, width * factor);
 }
 
 function buildLandingSurfaceFeatures(landingInstance: IndoorLandingInstance): GeoJSON.Feature[] {
