@@ -16,6 +16,7 @@ import {
 } from "../../markerCluster/markerClusterModel";
 import { AccessibilityMarkerRenderItem, IndoorLevelRenderModel } from "../indoorLevelRenderModel";
 import { IndoorLevelViewEvents } from "../indoorLevelView";
+import { IndoorElementRef } from "../../../models/indoorElementRef";
 import { getMarkerImageId } from "./maplibreIndoorLevelTypes";
 import { registerMarkerImage } from "./maplibreImageRegistry";
 import { getMotionDuration } from "../../../utils/motionPreferences";
@@ -25,7 +26,7 @@ interface AccessibilityMarkerCluster extends MarkerCluster {
 }
 
 export class MapLibreAccessibilityMarkerRenderer {
-  private readonly markerFeaturesById = new Map<string | number, GeoJSON.Feature>();
+  private readonly markerElementRefsById = new Map<string | number, IndoorElementRef>();
   private readonly clustersById = new Map<number, AccessibilityMarkerCluster>();
   private readonly clusterOptions: ResolvedMarkerClusterOptions;
   private readonly loadingMarkerImageIds = new Set<string>();
@@ -75,14 +76,14 @@ export class MapLibreAccessibilityMarkerRenderer {
   }
 
   clear(): void {
-    this.markerFeaturesById.clear();
+    this.markerElementRefsById.clear();
     this.clustersById.clear();
     this.markerItems = [];
     this.setSourceData(this.emptyFeatureCollection());
   }
 
   render(renderModel: IndoorLevelRenderModel): void {
-    this.markerFeaturesById.clear();
+    this.markerElementRefsById.clear();
     this.clustersById.clear();
     this.markerItems = renderModel.accessibilityMarkers.map((item) => this.buildMarkerItem(item));
 
@@ -109,7 +110,7 @@ export class MapLibreAccessibilityMarkerRenderer {
   private buildMarkerItem(item: AccessibilityMarkerRenderItem): ClusterableMarker {
     const symbol: MarkerSymbol = item.markerData.symbol;
 
-    this.markerFeaturesById.set(item.id, item.sourceFeature);
+    this.markerElementRefsById.set(item.id, item.elementRef);
 
     return {
       id: item.id,
@@ -213,10 +214,10 @@ export class MapLibreAccessibilityMarkerRenderer {
       return;
     }
 
-    const feature = this.markerFeaturesById.get(cluster.markers[0].id);
+    const elementRef = this.markerElementRefsById.get(cluster.markers[0].id);
 
-    if (feature) {
-      this.events.onFeatureSelected(feature);
+    if (elementRef) {
+      this.events.onIndoorElementSelected(elementRef);
     }
   }
 

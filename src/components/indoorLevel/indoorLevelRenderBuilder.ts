@@ -4,6 +4,7 @@ import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
 import { extractLevels } from "../../utils/extractLevels";
 import { isDrawableRoomOrArea, isVisibleIn3DMode } from "../../utils/drawableElementFilter";
 import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
+import { createIndoorElementRefFromFeature } from "../../models/indoorElementRef";
 import {
   AccessibilityMarkerRenderItem,
   IndoorLevelRenderModel,
@@ -36,6 +37,7 @@ export function buildIndoorLevelRenderModel(
     if (properties["information"] == "tactile_map") {
       infoPoint = {
         feature,
+        elementRef: createIndoorElementRefFromFeature(feature),
         levels: extractLevels(properties.level ?? options.infoPointLevel.toString()),
       };
     }
@@ -105,6 +107,7 @@ function pushAccessibilityMarker(
 
   accessibilityMarkers.push({
     id: getRequiredFeatureId(feature),
+    elementRef: createIndoorElementRefFromFeature(feature),
     sourceFeature: feature,
     markerData,
   });
@@ -118,6 +121,7 @@ function buildRoomRenderItem(
 
   return {
     feature,
+    elementRef: createIndoorElementRefFromFeature(feature),
     isSelected,
     isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
     label: getRoomLabel(feature),

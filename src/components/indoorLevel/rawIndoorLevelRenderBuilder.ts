@@ -14,6 +14,7 @@ import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
 import { getRawElementNodeIds } from "../../indoor/rawElementNodeIds";
 import { IndoorStairPathwayInstance } from "../../indoor/verticalConnections/IndoorStairPathNetwork";
 import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
+import { createIndoorElementRef } from "../../models/indoorElementRef";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import FeatureService from "../../services/featureService";
 import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
@@ -151,6 +152,12 @@ function buildAccessibilityMarkerRenderItem(
 
   return {
     id: indoorElement.id,
+    elementRef: createIndoorElementRef({
+      id: indoorElement.id,
+      tags,
+      levels: indoorElement.levels,
+      geometry: feature.geometry,
+    }),
     sourceFeature: feature,
     markerData,
   };
@@ -175,6 +182,12 @@ function buildInfoPointRenderItemFromElement(
 
   return {
     feature,
+    elementRef: createIndoorElementRef({
+      id: infoPoint.id,
+      tags: infoPoint.tags,
+      levels: infoPoint.levels,
+      geometry: feature.geometry,
+    }),
     levels: infoPoint.levels,
   };
 }
@@ -472,6 +485,12 @@ function buildRoomRenderItem(
 
   return {
     feature,
+    elementRef: createIndoorElementRef({
+      id: room.id,
+      tags: room.tags,
+      levels: room.levels,
+      geometry: feature.geometry,
+    }),
     isSelected,
     isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
     label: getRoomLabel(room),

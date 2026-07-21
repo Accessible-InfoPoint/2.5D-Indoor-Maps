@@ -1,4 +1,5 @@
 import { OpeningOrientationDebugData } from "../../models/doorDataInterface";
+import { IndoorElementRef } from "../../models/indoorElementRef";
 import { AccessibilityMarkerData } from "../../services/featureService";
 import { StaircaseRenderItem } from "../staircase/staircaseRenderModel";
 
@@ -8,6 +9,7 @@ export interface StyledFeatureRenderItem {
 }
 
 export interface RoomRenderItem extends StyledFeatureRenderItem {
+  elementRef: IndoorElementRef;
   isSelected: boolean;
   isVisibleIn3D: boolean;
   label?: string;
@@ -16,6 +18,7 @@ export interface RoomRenderItem extends StyledFeatureRenderItem {
 
 export interface InfoPointRenderItem {
   feature: GeoJSON.Feature;
+  elementRef: IndoorElementRef;
   levels: number[];
 }
 
@@ -26,6 +29,7 @@ export interface PositionMarkerRenderItem {
 
 export interface AccessibilityMarkerRenderItem {
   id: string | number;
+  elementRef: IndoorElementRef;
   sourceFeature: GeoJSON.Feature;
   markerData: AccessibilityMarkerData;
 }

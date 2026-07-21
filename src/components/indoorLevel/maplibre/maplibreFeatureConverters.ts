@@ -1,4 +1,5 @@
 import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
+import { IndoorElementRef } from "../../../models/indoorElementRef";
 import {
   OpeningRenderItem,
   RoomRenderItem,
@@ -12,6 +13,7 @@ export interface MapLibreRoomFeatureConversion {
   feature: GeoJSON.Feature;
   featureId: string;
   patternFile: string;
+  elementRef: IndoorElementRef;
   sourceFeature: GeoJSON.Feature;
 }
 
@@ -40,6 +42,7 @@ export function buildMapLibreRoomFeature(item: RoomRenderItem): MapLibreRoomFeat
     },
     featureId,
     patternFile,
+    elementRef: item.elementRef,
     sourceFeature: item.feature,
   };
 }

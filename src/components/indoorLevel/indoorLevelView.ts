@@ -1,7 +1,8 @@
 import { IndoorLevelRenderModel } from "./indoorLevelRenderModel";
+import { IndoorElementRef } from "../../models/indoorElementRef";
 
 export interface IndoorLevelViewEvents {
-  onFeatureSelected: (feature: GeoJSON.Feature) => void;
+  onIndoorElementSelected: (elementRef: IndoorElementRef) => void;
 }
 
 export interface IndoorLevelView {

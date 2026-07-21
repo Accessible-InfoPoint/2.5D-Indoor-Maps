@@ -1,7 +1,7 @@
 import type { SearchSuggestion } from "../../services/buildingService";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
-import { getCategoryIcon } from "../../services/featureService";
+import { getCategoryIconFromTags } from "../../services/featureService";
 
 const suggestionsList = getRequiredElement<HTMLUListElement>("searchSuggestionsList");
 const searchAnnouncement = getRequiredElement<HTMLDivElement>("searchAnnouncement");
@@ -152,7 +152,7 @@ function update(suggestions: SearchSuggestion[]): void {
     textWrapper.appendChild(levelsSpan);
     option.appendChild(textWrapper);
 
-    const categoryIcon = getCategoryIcon(suggestion.feature);
+    const categoryIcon = getCategoryIconFromTags(suggestion.elementRef.tags);
     if (categoryIcon) {
       const icon = document.createElement("img");
       icon.className = "suggestion-icon";

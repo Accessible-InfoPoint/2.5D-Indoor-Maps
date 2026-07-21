@@ -2,22 +2,28 @@ import { BuildingInterface } from "../models/buildingInterface";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
 import { filterInsideAndLevel, findBuildingBySearchString } from "../utils/buildingGeoJsonFilters";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
-import { getFeatureLevels } from "../utils/featureLevels";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
+import {
+  createIndoorElementRef,
+  createIndoorElementRefFromFeature,
+  IndoorElementRef,
+} from "../models/indoorElementRef";
 
 export interface SearchSuggestion {
   id: string;
   displayName: string;
   levels: number[];
   type: string | undefined;
-  feature: GeoJSON.Feature;
+  elementRef: IndoorElementRef;
+  feature?: GeoJSON.Feature;
 }
 
 export interface SuggestionSortContext {
   currentLevel: number;
+  selectedElementRef?: IndoorElementRef;
+  infoPointElementRef?: IndoorElementRef;
   selectedFeature?: GeoJSON.Feature;
   infoPointFeature?: GeoJSON.Feature;
   wheelchairMode?: boolean;
@@ -53,20 +59,31 @@ function getValidName(p: Record<string, unknown>): string | undefined {
   return name;
 }
 
-function filterForSuggestions(f: GeoJSON.Feature, searchString: string): boolean {
-  const p = getRequiredFeatureProperties(f);
-  if (getFeatureLevels(f).length === 0) return false;
+function filterForSuggestions(elementRef: IndoorElementRef, searchString: string): boolean {
+  const p = elementRef.tags;
+  if (elementRef.levels.length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
   const s = searchString.toLowerCase();
   return !!(
     getValidName(p)?.toLowerCase().includes(s) ||
-    p.ref?.toLowerCase().includes(s) ||
-    p.amenity?.toLowerCase().includes(s)
+    getStringTag(p.ref)?.toLowerCase().includes(s) ||
+    getStringTag(p.amenity)?.toLowerCase().includes(s)
   );
 }
 
-function getFeatureCentroid(feature: GeoJSON.Feature): [number, number] | undefined {
-  const geom = feature.geometry;
+function getStringTag(value: unknown): string | undefined {
+  return typeof value == "string" ? value : undefined;
+}
+
+function getElementRefCentroid(
+  elementRef: IndoorElementRef | undefined,
+): [number, number] | undefined {
+  const geom = elementRef?.geometry;
+
+  if (geom === undefined) {
+    return undefined;
+  }
+
   if (geom.type === "Polygon" && geom.coordinates[0]?.length > 0) {
     const ring = geom.coordinates[0];
     return [
@@ -118,8 +135,8 @@ function matchScore(
   const query = searchString.toLowerCase();
   const fieldValues: Array<[keyof typeof FIELD_PRIORITY, string | undefined]> = [
     ["name", validName],
-    ["ref", p.ref as string | undefined],
-    ["amenity", p.amenity as string | undefined],
+    ["ref", getStringTag(p.ref)],
+    ["amenity", getStringTag(p.amenity)],
   ];
 
   const scores = fieldValues
@@ -138,8 +155,8 @@ function minLevelDistance(levels: number[], currentLevel: number): number {
   return Math.min(...levels.map((l) => Math.abs(l - currentLevel)));
 }
 
-function isWheelchairAccessible(feature: GeoJSON.Feature): boolean {
-  const wheelchair = getRequiredFeatureProperties(feature).wheelchair;
+function isWheelchairAccessible(elementRef: IndoorElementRef): boolean {
+  const wheelchair = getStringTag(elementRef.tags.wheelchair);
   return wheelchair !== undefined && ["yes", "designated"].includes(wheelchair);
 }
 
@@ -157,40 +174,43 @@ function searchSuggestions(
 ): SearchSuggestion[] {
   if (!searchString) return [];
 
-  if (usesRawIndoorModel()) {
-    return searchRawIndoorModelSuggestions(searchString, context);
-  }
+  const suggestions: SearchSuggestion[] = getSearchableElementRefs()
+    .filter(({ elementRef }) => filterForSuggestions(elementRef, searchString))
+    .map(({ elementRef, feature }) => {
+      const p = elementRef.tags;
+      const validName = getValidName(p);
 
-  const geoJSON = getBuildingGeoJSON();
-  const suggestions: SearchSuggestion[] = [];
+      return {
+        id: elementRef.id,
+        displayName: (validName ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
+        levels: elementRef.levels,
+        type: (p.amenity ?? p.indoor) as string | undefined,
+        elementRef,
+        feature,
+      };
+    });
   const scores = new Map<string, number>();
 
-  geoJSON.features
-    .filter((f) => filterForSuggestions(f, searchString))
-    .forEach((f) => {
-      const p = getRequiredFeatureProperties(f);
-      const validName = getValidName(p);
-      const id = getRequiredFeatureId(f);
-
-      suggestions.push({
-        id,
-        displayName: (validName ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
-        levels: getFeatureLevels(f),
-        type: (p.amenity ?? p.indoor) as string | undefined,
-        feature: f,
-      });
-      scores.set(id, matchScore(p, validName, searchString));
-    });
+  suggestions.forEach((suggestion) =>
+    scores.set(
+      suggestion.id,
+      matchScore(
+        suggestion.elementRef.tags,
+        getValidName(suggestion.elementRef.tags),
+        searchString,
+      ),
+    ),
+  );
 
   const centroids = new Map<string, [number, number] | undefined>(
-    suggestions.map((s) => [s.id, getFeatureCentroid(s.feature)]),
+    suggestions.map((s) => [s.id, getElementRefCentroid(s.elementRef)]),
   );
-  const selectedCoords = context.selectedFeature
-    ? getFeatureCentroid(context.selectedFeature)
-    : undefined;
-  const infoCoords = context.infoPointFeature
-    ? getFeatureCentroid(context.infoPointFeature)
-    : undefined;
+  const selectedCoords = getElementRefCentroid(
+    getContextElementRef(context.selectedElementRef, context.selectedFeature),
+  );
+  const infoCoords = getElementRefCentroid(
+    getContextElementRef(context.infoPointElementRef, context.infoPointFeature),
+  );
 
   const squaredDist = (a: [number, number], b: [number, number]): number =>
     (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
@@ -210,7 +230,9 @@ function searchSuggestions(
 
   const byWheelchairAccessibility = (a: SearchSuggestion, b: SearchSuggestion): number => {
     if (!context.wheelchairMode) return 0;
-    return Number(isWheelchairAccessible(b.feature)) - Number(isWheelchairAccessible(a.feature));
+    return (
+      Number(isWheelchairAccessible(b.elementRef)) - Number(isWheelchairAccessible(a.elementRef))
+    );
   };
 
   const byLevelDistance = (a: SearchSuggestion, b: SearchSuggestion): number =>
@@ -253,24 +275,23 @@ function searchSuggestions(
   return sortedSuggestions;
 }
 
-function searchRawIndoorModelSuggestions(
-  searchString: string,
-  context: SuggestionSortContext,
-): SearchSuggestion[] {
-  void searchString;
-  void context;
-
-  return [];
-}
-
 function getSearchSuggestionFeatureById(
   featureId: string | undefined,
 ): GeoJSON.Feature | undefined {
-  if (featureId === undefined || usesRawIndoorModel()) {
+  if (featureId === undefined) {
     return undefined;
   }
 
-  return getBuildingGeoJSON().features.find((feature) => feature.id?.toString() === featureId);
+  return getSearchableElementRefs().find(({ elementRef }) => elementRef.id == featureId)?.feature;
+}
+
+function getSearchElementRefById(featureId: string | undefined): IndoorElementRef | undefined {
+  if (featureId === undefined) {
+    return undefined;
+  }
+
+  return getSearchableElementRefs().find(({ elementRef }) => elementRef.id == featureId)
+    ?.elementRef;
 }
 
 function usesRawIndoorModel(): boolean {
@@ -298,7 +319,7 @@ function logSearchSuggestionRanking(
 
   const rows = suggestions.map((suggestion, index) => {
     const centroid = debugContext.centroids.get(suggestion.id);
-    const wheelchairAccessible = isWheelchairAccessible(suggestion.feature);
+    const wheelchairAccessible = isWheelchairAccessible(suggestion.elementRef);
     return {
       rank: index + 1,
       id: suggestion.id,
@@ -337,6 +358,68 @@ function logSearchSuggestionRanking(
   console.table(rows);
 }
 
+function getContextElementRef(
+  elementRef: IndoorElementRef | undefined,
+  feature: GeoJSON.Feature | undefined,
+): IndoorElementRef | undefined {
+  return (
+    elementRef ?? (feature === undefined ? undefined : createIndoorElementRefFromFeature(feature))
+  );
+}
+
+function getSearchableElementRefs(): Array<{
+  elementRef: IndoorElementRef;
+  feature?: GeoJSON.Feature;
+}> {
+  if (usesRawIndoorModel()) {
+    const model = BackendService.getIndoorModel();
+
+    return [
+      ...model.rooms.map((room) => {
+        const feature = room.toGeoJsonFeature();
+
+        return {
+          elementRef: createIndoorElementRef({
+            id: room.id,
+            tags: room.tags,
+            levels: room.levels,
+            geometry: feature?.geometry,
+          }),
+        };
+      }),
+      ...model.pointFeatures.map((pointFeature) => {
+        const feature = pointFeature.toGeoJsonFeature();
+
+        return {
+          elementRef: createIndoorElementRef({
+            id: pointFeature.id,
+            tags: pointFeature.tags,
+            levels: pointFeature.levels,
+            geometry: feature.geometry,
+          }),
+        };
+      }),
+      ...model.infoPoints.map((infoPoint) => {
+        const feature = infoPoint.toGeoJsonFeature();
+
+        return {
+          elementRef: createIndoorElementRef({
+            id: infoPoint.id,
+            tags: infoPoint.tags,
+            levels: infoPoint.levels,
+            geometry: feature.geometry,
+          }),
+        };
+      }),
+    ];
+  }
+
+  return getBuildingGeoJSON().features.map((feature) => ({
+    elementRef: createIndoorElementRefFromFeature(feature),
+    feature,
+  }));
+}
+
 function getBuildingGeoJSON(): GeoJSON.FeatureCollection<any> {
   return BackendService.getGeoJson();
 }
@@ -351,5 +434,6 @@ export default {
   handleSearch,
   searchSuggestions,
   getSearchSuggestionFeatureById,
+  getSearchElementRefById,
   filterInsideAndLevel,
 };

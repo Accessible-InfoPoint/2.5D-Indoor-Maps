@@ -8,6 +8,7 @@ import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import { indoorAccessibilityRules } from "../indoor/indoorAccessibilityRules";
+import { IndoorElementRef } from "../models/indoorElementRef";
 import {
   IndoorTags,
   isInfoPointTags,
@@ -59,6 +60,35 @@ function getAccessibilityDescription(feature: GeoJSON.Feature): string {
   popUpText += featureDescriptionHelper(feature, featureAccessibilityProperties);
 
   return lang.selectedMapObjectPrefix + popUpText;
+}
+
+function getAccessibilityDescriptionFromElementRef(elementRef: IndoorElementRef): string {
+  return (
+    lang.selectedMapObjectPrefix +
+    getElementRefLabel(elementRef) +
+    getAccessibilityRuleDescriptionFromTags(elementRef.tags)
+  );
+}
+
+function getElementRefLabel(elementRef: IndoorElementRef): string {
+  const ref = elementRef.tags.ref;
+  const name = elementRef.tags.name;
+
+  if (typeof ref == "string" && ref.length > 0) {
+    return typeof name == "string" && name.length > 0 ? `${ref} (${name})` : ref;
+  }
+
+  return typeof name == "string" && name.length > 0 ? name : elementRef.id;
+}
+
+function getAccessibilityRuleDescriptionFromTags(tags: IndoorTags): string {
+  const messages = indoorAccessibilityRules
+    .filter((rule) => rule.userGroups.includes(UserService.getCurrentProfile()))
+    .filter((rule) => rule.matchesTags(tags))
+    .map((rule) => (typeof rule.msgTrue == "string" ? rule.msgTrue : rule.msgTrue(tags)))
+    .filter((message): message is string => typeof message == "string" && message.length > 0);
+
+  return messages.length > 0 ? ` [${messages.join(", ")}]` : "";
 }
 
 function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
@@ -170,7 +200,12 @@ const CATEGORY_ICON_RULES: Array<{
  */
 export function getCategoryIcon(feature: GeoJSON.Feature): string | undefined {
   const properties = getRequiredFeatureProperties(feature);
-  const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(properties));
+  return getCategoryIconFromTags(properties);
+}
+
+export function getCategoryIconFromTags(tags: IndoorTags): string | undefined {
+  const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(tags));
+
   return rule ? MARKERS_IMG_DIR + rule.iconFilename : undefined;
 }
 
@@ -363,6 +398,7 @@ export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
 
 export default {
   getAccessibilityDescription,
+  getAccessibilityDescriptionFromElementRef,
   getAccessibilityMarkerData,
   getAccessibilityMarkerDataFromTags,
   getMarkerCoordinatesFromGeometry,
@@ -383,4 +419,5 @@ export default {
   isSimpleStaircase,
   isComplexStaircase,
   getCategoryIcon,
+  getCategoryIconFromTags,
 };

@@ -6,6 +6,7 @@ import type {
 } from "maplibre-gl";
 import ColorService from "../../services/colorService";
 import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
+import { IndoorElementRef } from "../../models/indoorElementRef";
 import {
   IndoorLevelOutlineGeometry,
   InfoPointRenderItem,
@@ -84,7 +85,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private threeLayerPromise?: Promise<MapLibreThreeIndoorLayer>;
   private readonly accessibilityMarkerRenderer: MapLibreAccessibilityMarkerRenderer;
   private pendingRenderModel?: IndoorLevelRenderModel;
-  private readonly roomFeaturesById = new Map<string, GeoJSON.Feature>();
+  private readonly roomElementRefsById = new Map<string, IndoorElementRef>();
   private readonly loadingPatternImageIds = new Set<string>();
   private readonly pendingLayerOperations: (() => void)[] = [];
   private pendingSelectedFeatureIds: string[] = [];
@@ -133,7 +134,7 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   clear(): void {
     this.whenLayersInitialized(() => {
-      this.roomFeaturesById.clear();
+      this.roomElementRefsById.clear();
       this.accessibilityMarkerRenderer.clear();
       this.setSourceData(this.infoPoint.sourceId, this.emptyFeatureCollection());
       this.setSourceData(this.rooms.sourceId, this.emptyFeatureCollection());
@@ -354,13 +355,13 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderRooms(rooms: RoomRenderItem[]): void {
-    this.roomFeaturesById.clear();
+    this.roomElementRefsById.clear();
     this.threeRooms = rooms;
     this.threeLayer?.setRooms(rooms);
     this.registerRoomPatternImages(rooms);
     const roomFeatures = rooms.map((room) => buildMapLibreRoomFeature(room));
     roomFeatures.forEach((roomFeature) => {
-      this.roomFeaturesById.set(roomFeature.featureId, roomFeature.sourceFeature);
+      this.roomElementRefsById.set(roomFeature.featureId, roomFeature.elementRef);
     });
     this.setSourceData(this.rooms.sourceId, {
       type: "FeatureCollection",
@@ -733,10 +734,10 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
       return;
     }
 
-    const feature = this.roomFeaturesById.get(featureId);
+    const elementRef = this.roomElementRefsById.get(featureId);
 
-    if (feature) {
-      this.events.onFeatureSelected(feature);
+    if (elementRef) {
+      this.events.onIndoorElementSelected(elementRef);
     }
   }
 

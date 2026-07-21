@@ -18,7 +18,7 @@ jest.mock("../../src/services/buildingService", () => ({
       type: "FeatureCollection",
       features: [] as GeoJSON.Feature[],
     })),
-    getSearchSuggestionFeatureById: jest.fn(),
+    getSearchElementRefById: jest.fn(),
     searchSuggestions: jest.fn(),
   },
 }));
@@ -78,12 +78,9 @@ describe("searchForm", () => {
     geoMap = {
       currentLevel: 0,
       selectedFeatures: [],
-      infoPoint: {
-        type: "Feature",
-        properties: {},
-        geometry: { type: "GeometryCollection", geometries: [] },
-      },
-      selectIndoorFeature: jest.fn(),
+      selectedElementRef: undefined,
+      infoPointElementRef: { id: "info", tags: {}, levels: [] },
+      selectIndoorElementRef: jest.fn(),
     } as unknown as GeoMap;
   });
 
@@ -107,14 +104,22 @@ describe("searchForm", () => {
       properties: {},
       geometry: { type: "Polygon", coordinates: [] },
     };
-    const suggestion = { id: "way/1", displayName: "Room A", levels: [0], type: "room", feature };
+    const elementRef = { id: "way/1", tags: {}, levels: [0], geometry: feature.geometry };
+    const suggestion = {
+      id: "way/1",
+      displayName: "Room A",
+      levels: [0],
+      type: "room",
+      elementRef,
+      feature,
+    };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
     SearchForm.render(geoMap);
     input.value = "room";
     pressEnter();
 
-    expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(feature);
+    expect(geoMap.selectIndoorElementRef).toHaveBeenCalledWith(elementRef, { switchLevel: true });
     expect(input.value).toBe("Room A");
   });
 
@@ -136,13 +141,21 @@ describe("searchForm", () => {
       displayName: "Room A",
       levels: [0],
       type: "room",
+      elementRef: { id: "way/1", tags: {}, levels: [0], geometry: staleFeature.geometry },
       feature: staleFeature,
+    };
+    const currentElementRef = {
+      id: "way/2",
+      tags: {},
+      levels: [0],
+      geometry: currentFeature.geometry,
     };
     const currentSuggestion = {
       id: "way/2",
       displayName: "Room B",
       levels: [0],
       type: "room",
+      elementRef: currentElementRef,
       feature: currentFeature,
     };
     (BuildingService.searchSuggestions as jest.Mock)
@@ -156,7 +169,9 @@ describe("searchForm", () => {
 
     expect(SearchSuggestions.update).toHaveBeenCalledWith([staleSuggestion]);
     expect(BuildingService.searchSuggestions).toHaveBeenCalledTimes(2);
-    expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(currentFeature);
+    expect(geoMap.selectIndoorElementRef).toHaveBeenCalledWith(currentElementRef, {
+      switchLevel: true,
+    });
     expect(input.value).toBe("Room B");
   });
 
@@ -169,7 +184,7 @@ describe("searchForm", () => {
 
     expect(errorText.textContent).toBe("Not found!");
     expect(errorMessage.classList.contains("visible")).toBe(true);
-    expect(geoMap.selectIndoorFeature).not.toHaveBeenCalled();
+    expect(geoMap.selectIndoorElementRef).not.toHaveBeenCalled();
   });
 
   it("clears a shown error as soon as the user types again", () => {
@@ -193,14 +208,22 @@ describe("searchForm", () => {
       properties: {},
       geometry: { type: "Polygon", coordinates: [] },
     };
-    const suggestion = { id: "way/2", displayName: "Room B", levels: [0], type: "room", feature };
+    const elementRef = { id: "way/2", tags: {}, levels: [0], geometry: feature.geometry };
+    const suggestion = {
+      id: "way/2",
+      displayName: "Room B",
+      levels: [0],
+      type: "room",
+      elementRef,
+      feature,
+    };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
     SearchForm.render(geoMap);
     input.value = "room b";
     submitButton.click();
 
-    expect(geoMap.selectIndoorFeature).toHaveBeenCalledWith(feature);
+    expect(geoMap.selectIndoorElementRef).toHaveBeenCalledWith(elementRef, { switchLevel: true });
   });
 
   it("clears the input, suggestions, and visible error when the clear search button is clicked", () => {

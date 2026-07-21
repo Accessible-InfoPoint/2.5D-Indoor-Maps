@@ -1,5 +1,6 @@
 jest.mock("../../src/services/backendService", () => ({
   getGeoJson: jest.fn(),
+  getIndoorModel: jest.fn(),
   getBackendConfig: jest.fn(),
 }));
 jest.mock("../../src/services/httpService", () => ({ default: {} }));
@@ -59,26 +60,79 @@ describe("BuildingService.searchSuggestions", () => {
     expect(BuildingService.searchSuggestions("", CTX)).toEqual([]);
   });
 
-  it("returns no suggestions in the raw indoor model pipeline until raw search is implemented", () => {
+  it("returns suggestions from raw indoor model selections", () => {
     (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
       indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
     });
+    (BackendService.getIndoorModel as jest.Mock).mockReturnValue({
+      rooms: [
+        {
+          id: "way/100",
+          tags: { name: "Raw Meeting Room", level: "0", indoor: "room" },
+          levels: [0],
+          toGeoJsonFeature: () => ({
+            id: "way/100",
+            type: "Feature",
+            properties: { name: "Raw Meeting Room", level: "0", indoor: "room" },
+            geometry: { type: "Polygon", coordinates: [] as GeoJSON.Position[][] },
+          }),
+        },
+      ],
+      pointFeatures: [],
+      infoPoints: [],
+    });
 
-    expect(BuildingService.searchSuggestions("meeting", CTX)).toEqual([]);
+    const results = BuildingService.searchSuggestions("meeting", CTX);
+
+    expect(results.map((result) => result.elementRef)).toEqual([
+      expect.objectContaining({
+        id: "way/100",
+        tags: expect.objectContaining({ name: "Raw Meeting Room" }),
+        levels: [0],
+      }),
+    ]);
     expect(BackendService.getGeoJson).not.toHaveBeenCalled();
   });
 
-  it("does not resolve selected search context features from GeoJSON in the raw indoor model pipeline", () => {
+  it("resolves selected search context selections in the raw indoor model pipeline", () => {
     (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
       indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+    });
+    (BackendService.getIndoorModel as jest.Mock).mockReturnValue({
+      rooms: [
+        {
+          id: "way/1",
+          tags: { name: "Raw Room", level: "0", indoor: "room" },
+          levels: [0],
+          toGeoJsonFeature: () => ({
+            id: "way/1",
+            type: "Feature",
+            properties: { name: "Raw Room", level: "0", indoor: "room" },
+            geometry: { type: "Polygon", coordinates: [] as GeoJSON.Position[][] },
+          }),
+        },
+      ],
+      pointFeatures: [],
+      infoPoints: [],
     });
 
     expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBeUndefined();
+    expect(BuildingService.getSearchElementRefById("way/1")).toEqual(
+      expect.objectContaining({ id: "way/1", levels: [0] }),
+    );
     expect(BackendService.getGeoJson).not.toHaveBeenCalled();
   });
 
-  it("resolves selected search context features from GeoJSON in compatibility pipelines", () => {
+  it("resolves selected search context selections from GeoJSON in compatibility pipelines", () => {
     expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBe(mockFeatureWithName);
+    expect(BuildingService.getSearchElementRefById("way/1")).toEqual(
+      expect.objectContaining({
+        id: "way/1",
+        tags: mockFeatureWithName.properties,
+        levels: [1],
+        geometry: mockFeatureWithName.geometry,
+      }),
+    );
   });
 
   it("matches by name using substring (case-insensitive)", () => {

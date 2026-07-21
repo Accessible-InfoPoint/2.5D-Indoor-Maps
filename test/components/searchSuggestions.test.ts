@@ -10,7 +10,7 @@ jest.mock("../../src/services/languageService", () => ({
 }));
 
 jest.mock("../../src/services/featureService", () => ({
-  getCategoryIcon: jest.fn(),
+  getCategoryIconFromTags: jest.fn(),
 }));
 
 import type { SearchSuggestion } from "../../src/services/buildingService";
@@ -21,6 +21,12 @@ function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion
     displayName: "Room A",
     levels: [0],
     type: "room",
+    elementRef: {
+      id: "way/1",
+      tags: {},
+      levels: [0],
+      geometry: { type: "Polygon", coordinates: [] },
+    },
     feature: {
       id: "way/1",
       type: "Feature",
@@ -33,7 +39,7 @@ function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion
 
 describe("SearchSuggestions", () => {
   let SearchSuggestions: typeof import("../../src/components/ui/searchSuggestions").default;
-  let getCategoryIcon: jest.Mock;
+  let getCategoryIconFromTags: jest.Mock;
   let input: HTMLInputElement;
 
   beforeEach(() => {
@@ -46,9 +52,11 @@ describe("SearchSuggestions", () => {
       <div id="searchAnnouncement" aria-live="polite" aria-atomic="true"></div>
     `;
     input = document.getElementById("indoorSearchInput") as HTMLInputElement;
-    getCategoryIcon = (
-      jest.requireMock("../../src/services/featureService") as { getCategoryIcon: jest.Mock }
-    ).getCategoryIcon;
+    getCategoryIconFromTags = (
+      jest.requireMock("../../src/services/featureService") as {
+        getCategoryIconFromTags: jest.Mock;
+      }
+    ).getCategoryIconFromTags;
     SearchSuggestions = jest.requireActual("../../src/components/ui/searchSuggestions")
       .default as typeof SearchSuggestions;
   });
@@ -68,7 +76,7 @@ describe("SearchSuggestions", () => {
   });
 
   it("does not render a category icon when none is configured", () => {
-    getCategoryIcon.mockReturnValue(undefined);
+    getCategoryIconFromTags.mockReturnValue(undefined);
     SearchSuggestions.update([suggestion()]);
     const icon = document.querySelector<HTMLImageElement>(
       "#searchSuggestionsList img.suggestion-icon",
@@ -77,7 +85,7 @@ describe("SearchSuggestions", () => {
   });
 
   it("renders a decorative category icon when one is configured", () => {
-    getCategoryIcon.mockReturnValue("/images/toilets.svg");
+    getCategoryIconFromTags.mockReturnValue("/images/toilets.svg");
     SearchSuggestions.update([suggestion()]);
     const icon = document.querySelector<HTMLImageElement>(
       "#searchSuggestionsList img.suggestion-icon",

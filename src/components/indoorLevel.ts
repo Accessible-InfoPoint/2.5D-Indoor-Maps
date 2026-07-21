@@ -4,6 +4,7 @@ import BackendService from "../services/backendService";
 import UserService from "../services/userService";
 import DoorService from "../services/doorService";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
+import { IndoorElementRef } from "../models/indoorElementRef";
 import { buildOpeningRenderItemsFromLegacyDoors } from "../indoor/doorRenderBuilder";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
@@ -13,7 +14,7 @@ import { buildRawIndoorLevelRenderModel } from "./indoorLevel/rawIndoorLevelRend
 interface IndoorLevelState {
   getSelectedFeatureIds: () => string[];
   getInfoPointLevel: () => number;
-  setInfoPoint: (feature: GeoJSON.Feature, level: number) => void;
+  setInfoPoint: (elementRef: IndoorElementRef, level: number) => void;
 }
 
 export class IndoorLevel {
@@ -82,7 +83,7 @@ export class IndoorLevel {
 
     if (renderModel.infoPoint) {
       this.state.setInfoPoint(
-        renderModel.infoPoint.feature,
+        renderModel.infoPoint.elementRef,
         renderModel.infoPoint.levels.length == 1
           ? renderModel.infoPoint.levels[0]
           : this.state.getInfoPointLevel(),

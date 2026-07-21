@@ -17,15 +17,14 @@ import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import BackendService, { type BuildingCenter } from "../services/backendService";
+import { createIndoorElementRef, IndoorElementRef } from "../models/indoorElementRef";
 import { MapCamera } from "./map/mapCamera";
 import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
-import { getRequiredFeatureId } from "../utils/geoJsonHelpers";
 import { getRequiredArrayValue, getRequiredMapValue } from "../utils/requiredHelpers";
 import { getRequiredElement } from "../utils/domHelpers";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { getMotionDuration } from "../utils/motionPreferences";
-import { getFeatureLevels } from "../utils/featureLevels";
 
 export class GeoMap {
   private readonly mapView: MapView;
@@ -33,6 +32,7 @@ export class GeoMap {
   currentLevel = INDOOR_LEVEL;
   indoorLayers: Map<number, IndoorLevel> = new Map();
   selectedFeatures: string[] = [];
+  selectedElementRef: IndoorElementRef | undefined = undefined;
   flatMode = true;
   standardCenter: BuildingCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
   standardBearing = 0;
@@ -42,7 +42,7 @@ export class GeoMap {
   standardZoom3DMode = 0;
   standardPitch3DMode = 0;
   standardBearing3DMode = 0;
-  infoPoint: GeoJSON.Feature;
+  infoPointElementRef: IndoorElementRef;
   infoPointLevel = INDOOR_LEVEL;
   configMode = false; // set only during configuration of building constants
   private isLevelTransitionRunning = false;
@@ -59,16 +59,11 @@ export class GeoMap {
     this.standardZoom3DMode = buildingConstants["standardZoom3DMode"];
 
     // default infoPoint location is on default level (in case no explicit infoPoint is set)
-    this.infoPoint = {
-      properties: {
-        level: INDOOR_LEVEL,
-      },
-      type: "Feature",
-      geometry: {
-        type: "GeometryCollection",
-        geometries: [],
-      },
-    };
+    this.infoPointElementRef = createIndoorElementRef({
+      id: "default-info-point",
+      tags: { level: INDOOR_LEVEL },
+      levels: [INDOOR_LEVEL],
+    });
 
     this.mapView = new MapLibreMapView({
       configMode: this.configMode,
@@ -118,6 +113,8 @@ export class GeoMap {
     LevelService.clearData();
 
     this.currentLevel = INDOOR_LEVEL;
+    this.selectedElementRef = undefined;
+    this.selectedFeatures = [];
     this.camera.setBearing(this.standardBearing);
 
     this.indoorLayers = new Map(
@@ -125,7 +122,7 @@ export class GeoMap {
         .reverse()
         .map((val) => {
           const view = this.mapView.createIndoorLevelView(val, 0, {
-            onFeatureSelected: (feature) => this.handleFeatureSelection(feature),
+            onIndoorElementSelected: (elementRef) => this.selectIndoorElementRef(elementRef),
           });
 
           return [
@@ -133,8 +130,8 @@ export class GeoMap {
             new IndoorLevel(LevelService.getLevelGeoJSON(val), val, view, {
               getSelectedFeatureIds: () => this.selectedFeatures,
               getInfoPointLevel: () => this.infoPointLevel,
-              setInfoPoint: (feature, level) => {
-                this.infoPoint = feature;
+              setInfoPoint: (elementRef, level) => {
+                this.infoPointElementRef = elementRef;
                 this.infoPointLevel = level;
               },
             }),
@@ -388,34 +385,59 @@ export class GeoMap {
     return this.currentLevel;
   }
 
-  handleFeatureSelection(feature: GeoJSON.Feature): void {
-    console.log(feature);
+  selectIndoorElementRef(
+    elementRef: IndoorElementRef,
+    options: { switchLevel?: boolean } = {},
+  ): void {
+    console.log(elementRef);
 
-    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
-    DescriptionArea.update(accessibilityDescription, "description");
+    const previousElementRef = this.selectedElementRef;
 
-    this.selectedFeatures = [getRequiredFeatureId(feature)];
-    // TODO: might need to optimize this, needs a long time to update all layers at the moment
-    // idea: only update the layers that are needed
-    this.indoorLayers.forEach((layer) => layer.updateLayer());
-  }
+    this.selectedElementRef = elementRef;
+    this.selectedFeatures = [elementRef.id];
+    this.updateLayersAffectedBySelection(previousElementRef, elementRef);
 
-  selectIndoorFeature(feature: GeoJSON.Feature): void {
-    this.selectedFeatures = [getRequiredFeatureId(feature)];
-    this.indoorLayers.forEach((layer) => layer.updateLayer());
-
-    const levels = getFeatureLevels(feature);
-    if (levels && levels.length > 0) {
-      const selectedLevel = [...levels].sort(
-        (a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel),
-      )[0];
-      if (this.handleLevelChange(selectedLevel)) {
-        LevelControl.focusOnLevel(selectedLevel);
-      }
+    if (options.switchLevel === true) {
+      this.switchToNearestElementLevel(elementRef);
     }
 
-    const accessibilityDescription = FeatureService.getAccessibilityDescription(feature);
+    const accessibilityDescription =
+      FeatureService.getAccessibilityDescriptionFromElementRef(elementRef);
     DescriptionArea.update(accessibilityDescription);
+  }
+
+  private updateLayersAffectedBySelection(
+    previousElementRef: IndoorElementRef | undefined,
+    nextElementRef: IndoorElementRef,
+  ): void {
+    const affectedLevels = new Set([
+      ...this.getRenderableElementLevels(previousElementRef),
+      ...this.getRenderableElementLevels(nextElementRef),
+    ]);
+
+    affectedLevels.forEach((level) => this.indoorLayers.get(level)?.updateLayer());
+  }
+
+  private getRenderableElementLevels(elementRef: IndoorElementRef | undefined): number[] {
+    const levels = elementRef?.levels.filter((level) => this.indoorLayers.has(level)) ?? [];
+
+    return levels.length > 0 ? levels : [this.currentLevel];
+  }
+
+  private switchToNearestElementLevel(elementRef: IndoorElementRef): void {
+    const levels = elementRef.levels.filter((level) => this.indoorLayers.has(level));
+
+    if (levels.length === 0) {
+      return;
+    }
+
+    const selectedLevel = [...levels].sort(
+      (a, b) => Math.abs(a - this.currentLevel) - Math.abs(b - this.currentLevel),
+    )[0];
+
+    if (this.handleLevelChange(selectedLevel)) {
+      LevelControl.focusOnLevel(selectedLevel);
+    }
   }
 
   applyStyleFilters = (): void => {

@@ -37,9 +37,9 @@ function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
 
   return {
     currentLevel: geoMap.currentLevel,
-    selectedFeature: BuildingService.getSearchSuggestionFeatureById(selectedId),
-    infoPointFeature:
-      geoMap.infoPoint.geometry.type !== "GeometryCollection" ? geoMap.infoPoint : undefined,
+    selectedElementRef:
+      geoMap.selectedElementRef ?? BuildingService.getSearchElementRefById(selectedId),
+    infoPointElementRef: geoMap.infoPointElementRef,
     wheelchairMode: UserService.getCurrentProfile() === UserGroupEnum.wheelchairUsers,
   };
 }
@@ -70,7 +70,7 @@ function submitSearch(
 function render(geoMap: GeoMap): void {
   const selectSuggestion = (suggestion: SearchSuggestion): void => {
     indoorSearchInput.value = suggestion.displayName;
-    geoMap.selectIndoorFeature(suggestion.feature);
+    geoMap.selectIndoorElementRef(suggestion.elementRef, { switchLevel: true });
   };
 
   SearchSuggestions.render(indoorSearchInput, selectSuggestion);
