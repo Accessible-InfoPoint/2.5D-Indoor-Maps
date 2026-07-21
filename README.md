@@ -88,6 +88,10 @@ Configuration fields in `public/strings/settings.json` and
 definitions in `public/strings/buildingSources.json`, are documented in
 [docs/configuration.md](docs/configuration.md).
 
+The supported indoor OSM elements, expected Simple Indoor Tagging conventions,
+and renderer-specific mapping checklist are documented in
+[docs/indoor-tagging.md](docs/indoor-tagging.md).
+
 Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING`
 when the building exists in both `buildingConstants.json` and
 `buildingSources.json`. For local experiments with new buildings, use
