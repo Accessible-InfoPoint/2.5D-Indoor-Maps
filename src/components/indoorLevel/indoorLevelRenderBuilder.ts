@@ -7,6 +7,7 @@ import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/
 import { createIndoorElementRefFromFeature } from "../../models/indoorElementRef";
 import {
   AccessibilityMarkerRenderItem,
+  IndoorLevelOutlineGeometry,
   IndoorLevelRenderModel,
   PositionMarkerRenderItem,
   RoomRenderItem,
@@ -16,7 +17,7 @@ import {
 interface IndoorLevelRenderBuilderOptions {
   geoJSON: GeoJSON.FeatureCollection;
   buildingGeoJSON: GeoJSON.FeatureCollection;
-  outlineCoordinates: number[][];
+  outlineGeometry: IndoorLevelOutlineGeometry;
   level: number;
   selectedFeatureIds: string[];
   infoPointLevel: number;
@@ -57,10 +58,7 @@ export function buildIndoorLevelRenderModel(
   });
 
   return {
-    outlineGeometry: {
-      type: "Polygon",
-      coordinates: [options.outlineCoordinates],
-    },
+    outlineGeometry: options.outlineGeometry,
     infoPoint,
     rooms,
     openings: [],

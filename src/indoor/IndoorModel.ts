@@ -1,7 +1,6 @@
 import { BuildingInterface } from "../models/buildingInterface";
 import { RawOverpassDataResponse } from "../services/httpService";
 import { OsmGraph } from "../overpass/OsmGraph";
-import { getRequiredArrayValue } from "../utils/requiredHelpers";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorHandrail } from "./elements/IndoorHandrail";
@@ -29,7 +28,6 @@ export interface IndoorModel {
   rawOverpassData: RawOverpassDataResponse;
   graphs: RawOverpassGraphs;
   buildingInterface: BuildingInterface;
-  outlineCoordinates: number[][];
   levels: number[];
   levelLabels: Map<number, string>;
   levelOutlines: IndoorLevelOutline[];
@@ -79,7 +77,6 @@ export function createIndoorModel(
     rawOverpassData,
     graphs,
     buildingInterface,
-    outlineCoordinates: getBuildingOutlineCoordinates(buildingInterface),
     levels: collectIndoorLevels(rooms, levelOutlines),
     levelLabels: collectLevelLabels(levelOutlines),
     levelOutlines,
@@ -126,12 +123,4 @@ function collectLevelLabels(levelOutlines: IndoorLevelOutline[]): Map<number, st
   });
 
   return labels;
-}
-
-function getBuildingOutlineCoordinates(buildingInterface: BuildingInterface): number[][] {
-  return getRequiredArrayValue(
-    (buildingInterface.feature.geometry as GeoJSON.Polygon).coordinates,
-    0,
-    "Building outline coordinates",
-  );
 }

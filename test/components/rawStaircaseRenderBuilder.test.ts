@@ -302,8 +302,10 @@ const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
 };
 
 const buildingInterface: BuildingInterface = {
+  id: "way/1",
+  tags: {},
   boundingBox: [0, 0, 2, 2],
-  feature: buildingFeature,
+  outlineGeometry: buildingFeature.geometry,
 };
 
 const simpleStaircaseData: RawOverpassDataResponse = {

@@ -101,7 +101,6 @@ describe("BackendService client GeoJSON compatibility pipeline", () => {
         .map((way) => way.id),
     ).toEqual([2]);
     expect(BackendService.getAllLevels()).toEqual([1, 0]);
-    expect(BackendService.getOutline()).toEqual(buildingFeature.geometry.coordinates[0]);
     expect(() => BackendService.getGeoJson()).toThrow("Indoor GeoJSON has not been loaded.");
   });
 });
@@ -128,8 +127,10 @@ const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
 };
 
 const buildingInterface: BuildingInterface = {
+  id: "way/1",
+  tags: {},
   boundingBox: [0, 0, 1, 1],
-  feature: buildingFeature,
+  outlineGeometry: buildingFeature.geometry,
 };
 
 const bearingNode1: GeoJSON.Feature<GeoJSON.Point> = {

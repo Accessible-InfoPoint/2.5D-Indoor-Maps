@@ -101,7 +101,7 @@ export class IndoorLevel {
           ...buildIndoorLevelRenderModel({
             geoJSON,
             buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
-            outlineCoordinates: BackendService.getOutline(),
+            outlineGeometry: BackendService.getBuildingInterface().outlineGeometry,
             level: this.level,
             selectedFeatureIds: this.state.getSelectedFeatureIds(),
             infoPointLevel: this.state.getInfoPointLevel(),

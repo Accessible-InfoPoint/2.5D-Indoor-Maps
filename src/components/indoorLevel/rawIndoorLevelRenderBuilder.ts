@@ -90,10 +90,8 @@ function getOutlineGeometry(
   options: RawIndoorLevelRenderBuilderOptions,
 ): IndoorLevelOutlineGeometry {
   return (
-    options.model.levelOutlines.find((outline) => outline.hasLevel(options.level))?.geometry ?? {
-      type: "Polygon",
-      coordinates: [options.model.outlineCoordinates],
-    }
+    options.model.levelOutlines.find((outline) => outline.hasLevel(options.level))?.geometry ??
+    options.model.buildingInterface.outlineGeometry
   );
 }
 

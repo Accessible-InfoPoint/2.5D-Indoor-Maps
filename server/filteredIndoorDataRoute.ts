@@ -6,8 +6,8 @@ import {
   filterByBoundsOrBearingNode,
   findBuildingBySearchString,
 } from "../src/utils/buildingGeoJsonFilters";
+import { findBuildingInOverpassBySearchString } from "../src/utils/buildingOverpassFilters";
 import { filterOverpassByBounds, filterOverpassByElementIds } from "../src/utils/overpassFilters";
-import { getRequiredFeatureId } from "../src/utils/geoJsonHelpers";
 import { apiError } from "./apiError";
 import {
   BuildingSourceRegistry,
@@ -155,8 +155,10 @@ async function loadRawOverpassData(
   const cachedPaths = getCachedPaths(building, options);
   const rawBuildings = await readCachedOverpassJson(cachedPaths.buildingsDataPath);
   const rawIndoor = await readCachedOverpassJson(cachedPaths.indoorDataPath);
-  const buildings = await readCachedGeoJsonCompat(cachedPaths.buildingsDataPath);
-  const buildingInterface = findBuildingBySearchString(buildings, buildingDefinition.SEARCH_STRING);
+  const buildingInterface = findBuildingInOverpassBySearchString(
+    rawBuildings,
+    buildingDefinition.SEARCH_STRING,
+  );
 
   if (!buildingInterface) {
     throw new Error(
@@ -166,9 +168,7 @@ async function loadRawOverpassData(
 
   return {
     buildingInterface,
-    buildings: filterOverpassByElementIds(rawBuildings, [
-      getRequiredFeatureId(buildingInterface.feature),
-    ]),
+    buildings: filterOverpassByElementIds(rawBuildings, [buildingInterface.id]),
     indoor: filterOverpassByBounds(rawIndoor, buildingInterface.boundingBox, {
       bearingNodeIds: getBearingNodeIds(buildingDefinition),
     }),

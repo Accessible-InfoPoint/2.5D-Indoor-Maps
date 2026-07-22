@@ -310,14 +310,15 @@ function hasSharedLevel(doorLevels: Set<number>, roomLevels: number[]): boolean 
 }
 
 function buildBuildingDescription(currentBuildingInterface: BuildingInterface): string {
-  const buildingProperties = getRequiredFeatureProperties(currentBuildingInterface.feature);
+  const buildingProperties = currentBuildingInterface.tags;
+  const name = buildingProperties.name;
+  const locRef = buildingProperties.loc_ref;
 
-  if (buildingProperties.name === undefined) return "";
+  if (typeof name !== "string") return "";
 
-  if (buildingProperties.loc_ref !== undefined)
-    return buildingProperties.name + " (" + buildingProperties.loc_ref + ")";
+  if (typeof locRef === "string") return name + " (" + locRef + ")";
 
-  return buildingProperties.name;
+  return name;
 }
 
 function buildBuildingConstants(
@@ -463,18 +464,6 @@ function getRawBearingCalculationNode(
   return [node.lon, node.lat];
 }
 
-function getOutline(): number[][] {
-  if (indoorModel !== undefined) {
-    return indoorModel.outlineCoordinates;
-  }
-
-  return getRequiredArrayValue(
-    (getLoadedBuildingInterface().feature.geometry as GeoJSON.Polygon).coordinates,
-    0,
-    "Building outline coordinates",
-  );
-}
-
 function getBuildingConstants(): BuildingConstants {
   if (buildingConstants === undefined) {
     throw new Error("Building constants have not been loaded.");
@@ -535,6 +524,10 @@ function getRawOverpassGraphs(): RawOverpassGraphs {
   return getIndoorModel().graphs;
 }
 
+function getBuildingInterface(): BuildingInterface {
+  return getLoadedBuildingInterface();
+}
+
 function getLoadedBuildingInterface(): BuildingInterface {
   if (buildingInterface === undefined) {
     throw new Error("Building interface has not been loaded.");
@@ -544,7 +537,7 @@ function getLoadedBuildingInterface(): BuildingInterface {
 }
 
 export default {
-  getOutline,
+  getBuildingInterface,
   getBuildingConstants,
   getBuildingDescription,
   getGeoJson,

@@ -25,9 +25,15 @@ export function findBuildingBySearchString(
     return undefined;
   }
 
+  return createBuildingInterfaceFromFeature(building);
+}
+
+export function createBuildingInterfaceFromFeature(feature: GeoJSON.Feature): BuildingInterface {
   return {
-    boundingBox: extent(building),
-    feature: building,
+    id: getRequiredFeatureId(feature),
+    tags: { ...getRequiredFeatureProperties(feature) },
+    boundingBox: extent(feature),
+    outlineGeometry: getBuildingOutlineGeometry(feature),
   };
 }
 
@@ -101,6 +107,14 @@ function matchesIndoorSearch(feature: GeoJSON.Feature, normalizedSearchString: s
     properties.indoor?.toLowerCase().startsWith(normalizedSearchString) ||
     properties.amenity?.toLowerCase().startsWith(normalizedSearchString)
   );
+}
+
+function getBuildingOutlineGeometry(feature: GeoJSON.Feature): GeoJSON.Polygon | GeoJSON.MultiPolygon {
+  if (feature.geometry.type !== "Polygon" && feature.geometry.type !== "MultiPolygon") {
+    throw new Error(`Building feature "${getRequiredFeatureId(feature)}" must have polygon geometry.`);
+  }
+
+  return feature.geometry;
 }
 
 function doFilterByBoundsOrBearingNode(

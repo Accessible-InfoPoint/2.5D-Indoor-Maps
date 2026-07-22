@@ -1,7 +1,12 @@
 export interface BuildingInterface {
   /**
-        Array of coordinates in the order [West, South, East, North]
-    */
-  boundingBox: Array<number>;
-  feature: GeoJSON.Feature<any, any>;
+   * Stable OSM element key, e.g. "way/123" or "relation/456".
+   */
+  id: string;
+  tags: Record<string, unknown>;
+  /**
+   * Array of coordinates in the order [West, South, East, North].
+   */
+  boundingBox: number[];
+  outlineGeometry: GeoJSON.Polygon | GeoJSON.MultiPolygon;
 }

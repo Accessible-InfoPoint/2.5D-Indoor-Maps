@@ -56,7 +56,9 @@ describe("server API", () => {
         const body = (await response.json()) as RawOverpassResponse;
 
         expect(response.status).toBe(200);
+        expect(body.buildingInterface.id).toBe("way/10");
         expect(body.buildingInterface.boundingBox).toEqual([0, 0, 10, 10]);
+        expect(body.buildingInterface.outlineGeometry.type).toBe("Polygon");
         expect(body.buildings.elements.map((element) => `${element.type}/${element.id}`)).toEqual([
           "node/1",
           "node/2",
@@ -158,7 +160,9 @@ interface GeoJSONResponse {
 
 interface RawOverpassResponse {
   buildingInterface: {
+    id: string;
     boundingBox: number[];
+    outlineGeometry: GeoJSON.Polygon | GeoJSON.MultiPolygon;
   };
   buildings: {
     elements: Array<{ type: string; id: number }>;

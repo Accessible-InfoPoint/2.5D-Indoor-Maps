@@ -36,8 +36,8 @@ describe("buildingGeoJsonFilters", () => {
         ],
       };
 
-      expect(findBuildingBySearchString(collection, "Library")?.feature.id).toBe("relation/1");
-      expect(findBuildingBySearchString(collection, "APB")?.feature.id).toBe("relation/2");
+      expect(findBuildingBySearchString(collection, "Library")?.id).toBe("relation/1");
+      expect(findBuildingBySearchString(collection, "APB")?.id).toBe("relation/2");
     });
 
     it("ignores matching non-building features", () => {

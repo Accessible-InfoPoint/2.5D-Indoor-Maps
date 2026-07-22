@@ -136,8 +136,10 @@ const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
 };
 
 const buildingInterface: BuildingInterface = {
+  id: "way/1",
+  tags: {},
   boundingBox: [13, 51, 13.1, 51.1],
-  feature: buildingFeature,
+  outlineGeometry: buildingFeature.geometry,
 };
 
 const rawOverpassData: RawOverpassDataResponse = {

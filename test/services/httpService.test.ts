@@ -64,21 +64,19 @@ describe("httpService", () => {
       indoor: OverpassJson;
     } = {
       buildingInterface: {
+        id: "way/1",
+        tags: {},
         boundingBox: [0, 0, 1, 1],
-        feature: {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "Polygon",
-            coordinates: [
-              [
-                [0, 0],
-                [1, 0],
-                [1, 1],
-                [0, 0],
-              ],
+        outlineGeometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 0],
             ],
-          },
+          ],
         },
       },
       buildings: { elements: [] },
