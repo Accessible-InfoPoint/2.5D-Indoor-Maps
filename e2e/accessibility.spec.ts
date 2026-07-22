@@ -66,14 +66,12 @@ test("visual settings modal has no serious accessibility violations", async ({ p
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("feature selection modal has no serious accessibility violations", async ({ page }) => {
+test("element selection modal has no serious accessibility violations", async ({ page }) => {
   await loadTestApp(page);
   await expect(page.locator("#loadingIndicatorWrapper")).toHaveClass(/d-none/);
 
-  await page.getByRole("button", { name: /feature selection|auswahl/i }).click();
-  await expect(
-    page.getByRole("dialog", { name: /select features|anzuzeigende objekte/i }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: /element selection|auswahl/i }).click();
+  await expect(page.getByRole("dialog", { name: /select elements|anzu.*elemente/i })).toBeVisible();
 
   await expectNoSeriousAccessibilityViolations(page);
 });

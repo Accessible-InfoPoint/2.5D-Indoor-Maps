@@ -1,6 +1,7 @@
 import { levelAccessibilityProperties } from "../data/levelAccessibilityProperties";
 import UserService from "./userService";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
+import { IndoorTags } from "../indoor/indoorTagFilters";
 
 const propertiesByLevel = new Map<number, string>();
 
@@ -12,7 +13,21 @@ function getForLevel(
     return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
   }
 
-  propertiesByLevel.set(level, getAccessibilityInformation(featureCollection.features));
+  propertiesByLevel.set(
+    level,
+    getAccessibilityInformationFromTags(
+      featureCollection.features.map((feature) => feature.properties ?? {}),
+    ),
+  );
+  return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
+}
+
+function getForLevelTags(level: number, tagSets: IndoorTags[]): string {
+  if (propertiesByLevel.get(level) !== undefined) {
+    return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
+  }
+
+  propertiesByLevel.set(level, getAccessibilityInformationFromTags(tagSets));
   return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
 }
 
@@ -21,6 +36,12 @@ function reset(): void {
 }
 
 function getAccessibilityInformation(geoJSONFeatures: GeoJSON.Feature<any, any>[]): string {
+  return getAccessibilityInformationFromTags(
+    geoJSONFeatures.map((feature) => feature.properties ?? {}),
+  );
+}
+
+function getAccessibilityInformationFromTags(tagSets: IndoorTags[]): string {
   let returnString = "";
 
   levelAccessibilityProperties.forEach((levelAccessibilityProperty) => {
@@ -28,16 +49,18 @@ function getAccessibilityInformation(geoJSONFeatures: GeoJSON.Feature<any, any>[
       return; // only show properties for currently selected user profile
     }
 
-    const foundAccessibilityFeature = geoJSONFeatures.some((feature: GeoJSON.Feature<any, any>) => {
-      return levelAccessibilityProperty.hasCorrectProperties(feature);
-    });
+    const foundAccessibilityFeature = tagSets.some((tags) =>
+      levelAccessibilityProperty.hasCorrectTags(tags),
+    );
 
-    if (foundAccessibilityFeature) {
-      returnString += levelAccessibilityProperty.msgTrue;
-    } else {
-      returnString += levelAccessibilityProperty.msgFalse;
+    const message = foundAccessibilityFeature
+      ? levelAccessibilityProperty.msgTrue
+      : levelAccessibilityProperty.msgFalse;
+
+    if (message !== null) {
+      returnString += message;
+      returnString += ", ";
     }
-    returnString += ", ";
   });
 
   if (returnString) {
@@ -51,6 +74,8 @@ function getAccessibilityInformation(geoJSONFeatures: GeoJSON.Feature<any, any>[
 
 export default {
   getForLevel,
+  getForLevelTags,
   reset,
   getAccessibilityInformation,
+  getAccessibilityInformationFromTags,
 };

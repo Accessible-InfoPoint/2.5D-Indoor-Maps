@@ -33,7 +33,7 @@ function clearSearchInput(): void {
 }
 
 function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
-  const selectedId = geoMap.selectedFeatures[0];
+  const selectedId = geoMap.selectedElementIds[0];
 
   return {
     currentLevel: geoMap.currentLevel,

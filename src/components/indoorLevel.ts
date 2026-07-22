@@ -12,7 +12,7 @@ import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
 import { buildRawIndoorLevelRenderModel } from "./indoorLevel/rawIndoorLevelRenderBuilder";
 
 interface IndoorLevelState {
-  getSelectedFeatureIds: () => string[];
+  getSelectedElementIds: () => string[];
   getInfoPointLevel: () => number;
   setInfoPoint: (elementRef: IndoorElementRef, level: number) => void;
 }
@@ -90,7 +90,7 @@ export class IndoorLevel {
       );
     }
 
-    this.view.render(renderModel, this.state.getSelectedFeatureIds());
+    this.view.render(renderModel, this.state.getSelectedElementIds());
   }
 
   private buildRenderModel(geoJSON: GeoJSON.FeatureCollection): IndoorLevelRenderModel {
@@ -103,20 +103,20 @@ export class IndoorLevel {
             buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
             outlineGeometry: BackendService.getBuildingInterface().outlineGeometry,
             level: this.level,
-            selectedFeatureIds: this.state.getSelectedFeatureIds(),
+            selectedFeatureIds: this.state.getSelectedElementIds(),
             infoPointLevel: this.state.getInfoPointLevel(),
             userProfile: UserService.getCurrentProfile(),
           }),
           openings: buildOpeningRenderItemsFromLegacyDoors(
             DoorService.getDoorsByLevel(this.level),
-            this.state.getSelectedFeatureIds(),
+            this.state.getSelectedElementIds(),
           ),
         };
       case IndoorDataPipelineEnum.rawIndoorModel:
         return buildRawIndoorLevelRenderModel({
           model: BackendService.getIndoorModel(),
           level: this.level,
-          selectedFeatureIds: this.state.getSelectedFeatureIds(),
+          selectedFeatureIds: this.state.getSelectedElementIds(),
           infoPointLevel: this.state.getInfoPointLevel(),
           userProfile: UserService.getCurrentProfile(),
         });

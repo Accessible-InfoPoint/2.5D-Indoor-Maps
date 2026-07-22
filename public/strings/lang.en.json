@@ -18,9 +18,9 @@
   "profileQuickSwitchHeader": "Profiles quick switch",
   "profiles": "Profiles",
   "settingsHeader": "Settings",
-  "userFeatureModalLabel": "Select Features",
-  "featureSelectionHeader": "Feature selection",
-  "accessibleFeatureSelectionHeader": "Accessible feature selection",
+  "userFeatureModalLabel": "Select Elements",
+  "featureSelectionHeader": "Element selection",
+  "accessibleFeatureSelectionHeader": "Accessible element selection",
   "closeButtonLabel": "Close",
   "saveFeatureSelection": "Save changes",
   "visualSettingsLabel": "Visual Settings",
@@ -76,7 +76,7 @@
   "userProfileWheelchair": "Wheelchair users",
 
   "userProfileVisualSettings": "Visual settings",
-  "userProfileFeatureSelection": "Feature selection",
+  "userProfileFeatureSelection": "Element selection",
 
   "userProfileEntranceExit": "entrances and exits",
   "userProfileToilets": "toilets",

@@ -18,9 +18,9 @@
   "profileQuickSwitchHeader": "Profil Schnellauswahl",
   "profiles": "Profile",
   "settingsHeader": "Einstellungen",
-  "userFeatureModalLabel": "Anzuzeigende Objekte auswählen",
-  "featureSelectionHeader": "Auswahl anzuzeigender Objekte",
-  "accessibleFeatureSelectionHeader": "Auswahl barrierefreier Objekte",
+  "userFeatureModalLabel": "Anzuzeigende Elemente auswählen",
+  "featureSelectionHeader": "Auswahl anzuzeigender Elemente",
+  "accessibleFeatureSelectionHeader": "Auswahl barrierefreier Elemente",
   "closeButtonLabel": "Schließen",
   "saveFeatureSelection": "Änderungen speichern",
   "visualSettingsLabel": "Grafische Einstellungen",
@@ -76,7 +76,7 @@
   "userProfileWheelchair": "Rollstuhlfahrer",
 
   "userProfileVisualSettings": "Grafische Einstellungen",
-  "userProfileFeatureSelection": "Auswahl von anzuzeigenden Objekten",
+  "userProfileFeatureSelection": "Auswahl von anzuzeigenden Elementen",
 
   "userProfileEntranceExit": "Ein- und Ausgänge",
   "userProfileToilets": "Toiletten",

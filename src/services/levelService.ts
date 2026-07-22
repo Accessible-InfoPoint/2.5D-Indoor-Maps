@@ -4,6 +4,8 @@ import { lang } from "./languageService";
 import BackendService from "./backendService";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
 import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
+import { IndoorElement } from "../indoor/elements/IndoorElement";
+import { IndoorTags } from "../indoor/indoorTagFilters";
 
 const geoJSONByLevel = new Map<number, GeoJSON.FeatureCollection>();
 
@@ -67,11 +69,25 @@ function getLevelOptions(): LevelOption[] {
 }
 
 function getCurrentLevelDescription(currentLevel: number): string {
-  const levelAccessibilityInformation = AccessibilityService.getForLevel(
-    currentLevel,
-    getCurrentLevelGeoJSON(currentLevel),
-  );
+  const levelAccessibilityInformation =
+    BackendService.getBackendConfig().indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel
+      ? AccessibilityService.getForLevelTags(currentLevel, getRawLevelTags(currentLevel))
+      : AccessibilityService.getForLevel(currentLevel, getCurrentLevelGeoJSON(currentLevel));
+
   return lang.currentLevel + currentLevel + " " + levelAccessibilityInformation;
+}
+
+function getRawLevelTags(level: number): IndoorTags[] {
+  const model = BackendService.getIndoorModel();
+  const elements: IndoorElement[] = [
+    ...model.rooms,
+    ...model.pointFeatures,
+    ...model.infoPoints,
+    ...model.tactilePaving,
+    ...model.stairPathways,
+  ];
+
+  return elements.filter((element) => element.hasLevel(level)).map((element) => element.tags);
 }
 
 export default {

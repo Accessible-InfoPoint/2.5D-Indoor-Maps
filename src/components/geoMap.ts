@@ -31,7 +31,7 @@ export class GeoMap {
   camera: MapCamera;
   currentLevel = INDOOR_LEVEL;
   indoorLayers: Map<number, IndoorLevel> = new Map();
-  selectedFeatures: string[] = [];
+  selectedElementIds: string[] = [];
   selectedElementRef: IndoorElementRef | undefined = undefined;
   flatMode = true;
   standardCenter: BuildingCenter = [parseFloat(MAP_START_LNG), parseFloat(MAP_START_LAT)];
@@ -114,7 +114,7 @@ export class GeoMap {
 
     this.currentLevel = INDOOR_LEVEL;
     this.selectedElementRef = undefined;
-    this.selectedFeatures = [];
+    this.selectedElementIds = [];
     this.camera.setBearing(this.standardBearing);
 
     this.indoorLayers = new Map(
@@ -128,7 +128,7 @@ export class GeoMap {
           return [
             val,
             new IndoorLevel(LevelService.getLevelGeoJSON(val), val, view, {
-              getSelectedFeatureIds: () => this.selectedFeatures,
+              getSelectedElementIds: () => this.selectedElementIds,
               getInfoPointLevel: () => this.infoPointLevel,
               setInfoPoint: (elementRef, level) => {
                 this.infoPointElementRef = elementRef;
@@ -394,7 +394,7 @@ export class GeoMap {
     const previousElementRef = this.selectedElementRef;
 
     this.selectedElementRef = elementRef;
-    this.selectedFeatures = [elementRef.id];
+    this.selectedElementIds = [elementRef.id];
     this.updateLayersAffectedBySelection(previousElementRef, elementRef);
 
     if (options.switchLevel === true) {

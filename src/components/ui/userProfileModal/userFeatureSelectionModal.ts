@@ -12,11 +12,11 @@ const userFeatureSelectionModal = new Modal(getRequiredElement("userFeatureSelec
   backdrop: "static",
 });
 
-let checkboxState = FeatureService.getCurrentFeatures();
+let checkboxState = FeatureService.getCurrentElements();
 
 function render(onSettingsChanged: SettingsChangeHandler): void {
   //create checkboxes and headings
-  checkboxState = FeatureService.getCurrentFeatures();
+  checkboxState = FeatureService.getCurrentElements();
   const currentProfile = UserService.getCurrentProfile();
   const userAccessibleFeatureList = getRequiredElement("userAccessibleFeatureList");
   const userFeatureList = getRequiredElement("userFeatureList");
@@ -123,7 +123,7 @@ function hide(): void {
 }
 
 function onSave(onSettingsChanged: SettingsChangeHandler): void {
-  FeatureService.setCurrentFeatures(checkboxState);
+  FeatureService.setCurrentElements(checkboxState);
   UserProfileModal.hideAll();
   onSettingsChanged();
 }

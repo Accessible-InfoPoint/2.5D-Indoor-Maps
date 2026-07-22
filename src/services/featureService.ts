@@ -1,5 +1,3 @@
-import { featureDescriptionHelper } from "../utils/featureDescriptionHelper";
-import { featureAccessibilityProperties } from "../data/featureAccessibilityProperties";
 import UserService from "../services/userService";
 import { lang } from "./languageService";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
@@ -18,6 +16,7 @@ import {
 } from "../indoor/indoorTagFilters";
 import ColorService from "./colorService";
 import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
+import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -57,7 +56,7 @@ function getAccessibilityDescription(feature: GeoJSON.Feature): string {
     popUpText += " (" + properties.name + ")";
   }
 
-  popUpText += featureDescriptionHelper(feature, featureAccessibilityProperties);
+  popUpText += getAccessibilityRuleDescriptionFromTags(properties);
 
   return lang.selectedMapObjectPrefix + popUpText;
 }
@@ -82,20 +81,14 @@ function getElementRefLabel(elementRef: IndoorElementRef): string {
 }
 
 function getAccessibilityRuleDescriptionFromTags(tags: IndoorTags): string {
-  const messages = indoorAccessibilityRules
-    .filter((rule) => rule.userGroups.includes(UserService.getCurrentProfile()))
-    .filter((rule) => rule.matchesTags(tags))
-    .map((rule) => (typeof rule.msgTrue == "string" ? rule.msgTrue : rule.msgTrue(tags)))
-    .filter((message): message is string => typeof message == "string" && message.length > 0);
-
-  return messages.length > 0 ? ` [${messages.join(", ")}]` : "";
+  return accessibilityDescriptionFromTags(tags, indoorAccessibilityRules);
 }
 
 function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
   if (tags == undefined) return false;
-  const currentlySelectedFeatures = getCurrentFeatures();
+  const currentlySelectedElements = getCurrentElements();
   const hasMatched = tags.some((t) => {
-    return currentlySelectedFeatures.get(UserFeatureEnum[t]);
+    return currentlySelectedElements.get(UserFeatureEnum[t]);
   });
 
   return hasMatched;
@@ -355,29 +348,34 @@ function getWheelchairPatternFile(
   return `/images/pattern_fill/${ColorService.getCurrentProfile()}_${size}_${colorName}.png`;
 }
 
-export function getCurrentFeatures(): Map<string, boolean> {
+const selectedElementsStorageKey = "currentlySelectedElements";
+const legacySelectedFeaturesStorageKey = "currentlySelectedFeatures";
+
+export function getCurrentElements(): Map<string, boolean> {
   const currentProfile = UserService.getCurrentProfile();
-  const currentlySelectedFeatures: Map<string, boolean> = localStorage.getItem(
-    "currentlySelectedFeatures",
-  )
-    ? new Map(JSON.parse(localStorage.currentlySelectedFeatures))
+  const storedSelection =
+    localStorage.getItem(selectedElementsStorageKey) ??
+    localStorage.getItem(legacySelectedFeaturesStorageKey);
+  const currentlySelectedElements: Map<string, boolean> = storedSelection
+    ? new Map(JSON.parse(storedSelection))
     : (() => {
-        const currentlySelectedFeatures = new Map();
+        const currentlySelectedElements = new Map();
         for (const v of UserFeatureSelection.values()) {
           if (v.userGroups.some((g: any) => g === currentProfile))
-            currentlySelectedFeatures.set(v.id, true);
-          else currentlySelectedFeatures.set(v.id, false);
+            currentlySelectedElements.set(v.id, true);
+          else currentlySelectedElements.set(v.id, false);
 
-          //currentlySelectedFeatures.set(v.id, v.isCheckedDefault);
+          //currentlySelectedElements.set(v.id, v.isCheckedDefault);
         }
-        return currentlySelectedFeatures;
+        return currentlySelectedElements;
       })();
 
-  return currentlySelectedFeatures;
+  return currentlySelectedElements;
 }
 
-export function setCurrentFeatures(checkboxState: Map<string, boolean>): void {
-  localStorage.currentlySelectedFeatures = JSON.stringify([...checkboxState.entries()]);
+export function setCurrentElements(checkboxState: Map<string, boolean>): void {
+  localStorage.setItem(selectedElementsStorageKey, JSON.stringify([...checkboxState.entries()]));
+  localStorage.removeItem(legacySelectedFeaturesStorageKey);
 }
 
 export function isStaircase(feature: GeoJSON.Feature): boolean {
@@ -413,8 +411,8 @@ export default {
   getLineWidthFromTags,
   getWallWeightFromTags,
   getWallWeight,
-  getCurrentFeatures,
-  setCurrentFeatures,
+  getCurrentElements,
+  setCurrentElements,
   isStaircase,
   isSimpleStaircase,
   isComplexStaircase,

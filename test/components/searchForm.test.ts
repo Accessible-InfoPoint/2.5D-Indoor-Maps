@@ -77,7 +77,7 @@ describe("searchForm", () => {
     errorClearButton = document.getElementById("searchErrorClear") as HTMLButtonElement;
     geoMap = {
       currentLevel: 0,
-      selectedFeatures: [],
+      selectedElementIds: [],
       selectedElementRef: undefined,
       infoPointElementRef: { id: "info", tags: {}, levels: [] },
       selectIndoorElementRef: jest.fn(),

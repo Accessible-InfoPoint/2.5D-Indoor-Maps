@@ -9,6 +9,7 @@ jest.mock("../../src/utils/hasCurrentLevel");
 jest.mock("../../src/services/accessibilityService");
 jest.mock("../../src/services/backendService", () => ({
   getGeoJson: jest.fn(),
+  getIndoorModel: jest.fn(),
   getAllLevels: jest.fn(),
   getLevelLabel: jest.fn((level: number) => level.toString()),
   getBackendConfig: jest.fn(() => ({
@@ -124,6 +125,43 @@ describe("levelService", () => {
 
       const result = levelService.getCurrentLevelDescription(1);
       expect(result).toBe("Level 1 is accessible");
+      expect(AccessibilityService.getForLevel).toHaveBeenCalledWith(1, {
+        type: "FeatureCollection",
+        features: mockFeatures,
+      });
+      expect(AccessibilityService.getForLevelTags).not.toHaveBeenCalled();
+    });
+
+    it("uses raw indoor model tags instead of GeoJSON in the raw pipeline", () => {
+      (BackendService.getBackendConfig as jest.Mock).mockReturnValue({
+        indoorDataPipeline: IndoorDataPipelineEnum.rawIndoorModel,
+      });
+      (BackendService.getIndoorModel as jest.Mock).mockReturnValue({
+        rooms: [
+          { tags: { amenity: "toilets", level: "1" }, hasLevel: (level: number) => level == 1 },
+          { tags: { amenity: "cafe", level: "2" }, hasLevel: (level: number) => level == 2 },
+        ],
+        pointFeatures: [
+          {
+            tags: { tactile_paving: "yes", level: "1" },
+            hasLevel: (level: number) => level == 1,
+          },
+        ],
+        infoPoints: [],
+        tactilePaving: [],
+        stairPathways: [],
+      });
+      (AccessibilityService.getForLevelTags as jest.Mock).mockReturnValue("raw accessibility");
+
+      const result = levelService.getCurrentLevelDescription(1);
+
+      expect(result).toBe("Level 1 raw accessibility");
+      expect(AccessibilityService.getForLevelTags).toHaveBeenCalledWith(1, [
+        { amenity: "toilets", level: "1" },
+        { tactile_paving: "yes", level: "1" },
+      ]);
+      expect(AccessibilityService.getForLevel).not.toHaveBeenCalled();
+      expect(BackendService.getGeoJson).not.toHaveBeenCalled();
     });
   });
 
