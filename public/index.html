@@ -12,7 +12,7 @@
   </head>
 
   <body>
-    <div id="loadingIndicatorWrapper" class="d-none" aria-hidden="true" inert>
+    <div id="loadingIndicatorWrapper">
       <div class="spinner-border" role="status" id="loadingIndicator" tabindex="-1">
         <span class="visually-hidden">Loading...</span>
       </div>
@@ -89,6 +89,8 @@
                 type="button"
                 id="indoorSearchClear"
                 name="indoorSearchClear"
+                aria-label="Clear indoor search field"
+                title="Clear indoor search field"
               >
                 <span class="material-icons" aria-hidden="true">close</span>
               </button>
@@ -111,7 +113,13 @@
             aria-live="assertive"
           >
             <span id="searchErrorText"></span>
-            <button type="button" id="searchErrorClear" class="search-error-clear">
+            <button
+              type="button"
+              id="searchErrorClear"
+              class="search-error-clear"
+              aria-label="Dismiss search error"
+              title="Dismiss search error"
+            >
               <span class="material-icons" aria-hidden="true">close</span>
             </button>
           </div>

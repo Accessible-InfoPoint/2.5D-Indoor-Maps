@@ -109,9 +109,13 @@ function matchesIndoorSearch(feature: GeoJSON.Feature, normalizedSearchString: s
   );
 }
 
-function getBuildingOutlineGeometry(feature: GeoJSON.Feature): GeoJSON.Polygon | GeoJSON.MultiPolygon {
+function getBuildingOutlineGeometry(
+  feature: GeoJSON.Feature,
+): GeoJSON.Polygon | GeoJSON.MultiPolygon {
   if (feature.geometry.type !== "Polygon" && feature.geometry.type !== "MultiPolygon") {
-    throw new Error(`Building feature "${getRequiredFeatureId(feature)}" must have polygon geometry.`);
+    throw new Error(
+      `Building feature "${getRequiredFeatureId(feature)}" must have polygon geometry.`,
+    );
   }
 
   return feature.geometry;

@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   BackendService.fetchBackendData()
     .then(() => {
-      LoadingIndicator.end();
       const geoMap = new GeoMap();
       applyStoredUiLayout();
       geoMap.showBuilding();
@@ -51,6 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
       CenterBtn.setup(geoMap);
       setupUi(geoMap);
       translate();
+      LoadingIndicator.end();
     })
     .catch((error: unknown) => {
       const message =

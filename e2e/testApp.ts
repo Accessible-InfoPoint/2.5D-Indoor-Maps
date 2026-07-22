@@ -2,27 +2,24 @@ import { expect, Page } from "@playwright/test";
 
 const testBuildingResponse = {
   buildingInterface: {
+    id: "way/building",
+    tags: {
+      building: "university",
+      name: "Andreas-Pfitzmann-Bau",
+      loc_ref: "APB",
+    },
     boundingBox: [13.7227, 51.0253, 13.723, 51.0256],
-    feature: {
-      id: "way/building",
-      type: "Feature",
-      properties: {
-        building: "university",
-        name: "Andreas-Pfitzmann-Bau",
-        loc_ref: "APB",
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [13.7227, 51.0253],
-            [13.723, 51.0253],
-            [13.723, 51.0256],
-            [13.7227, 51.0256],
-            [13.7227, 51.0253],
-          ],
+    outlineGeometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [13.7227, 51.0253],
+          [13.723, 51.0253],
+          [13.723, 51.0256],
+          [13.7227, 51.0256],
+          [13.7227, 51.0253],
         ],
-      },
+      ],
     },
   },
   geoJson: {
