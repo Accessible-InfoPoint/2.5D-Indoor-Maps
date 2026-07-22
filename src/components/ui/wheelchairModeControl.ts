@@ -67,27 +67,32 @@ function setup(onSettingsChanged: () => void, onLayoutChanged: () => void): void
   requestQuickSettingsLayoutUpdate();
 }
 
+// The level-shift paging icons are handled by LevelControl.setWindow() (see
+// isHorizontalLevelLayout() in levelControl.ts); this only owns the
+// wheelchair button's own icon/pressed-state.
 function replaceIcons(): void {
   const switchWheelchairMode = getRequiredElement("switchWheelchairMode");
   const switchWheelchairModeIcon = getRequiredElement<HTMLImageElement>("switchWheelchairModeIcon");
-  const levelShiftUpLabel = getRequiredElement("levelShiftUpLabel");
-  const levelShiftDownLabel = getRequiredElement("levelShiftDownLabel");
 
   if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
     switchWheelchairMode.setAttribute("aria-pressed", "true");
     switchWheelchairModeIcon.src = "\\images\\screen_all.svg";
-    levelShiftUpLabel.innerHTML = "chevron_left";
-    levelShiftDownLabel.innerHTML = "navigate_next";
   } else {
     switchWheelchairMode.setAttribute("aria-pressed", "false");
     switchWheelchairModeIcon.src = "\\images\\screen_bottom.svg";
-    levelShiftUpLabel.innerHTML = "expand_less";
-    levelShiftDownLabel.innerHTML = "expand_more";
   }
 }
 
 function setIndoorSearchWheelchairLayout(): void {
   const indoorSearchWrapper = getRequiredElement("indoorSearchWrapper");
+  const uiWrapper = getRequiredElement("uiWrapper");
+
+  if (uiWrapper.classList.contains("shortMode") || uiWrapper.classList.contains("mobileMode")) {
+    indoorSearchWrapper.style.removeProperty("left");
+    indoorSearchWrapper.style.removeProperty("right");
+    return;
+  }
+
   const levelControlWrapper = getRequiredElement("levelControlWrapper");
   const quickSettingsWrapper = getRequiredElement("quickSettingsWrapper");
 
@@ -95,6 +100,11 @@ function setIndoorSearchWheelchairLayout(): void {
     levelControlWrapper.offsetLeft + levelControlWrapper.offsetWidth + 15 + 12 + "px";
   indoorSearchWrapper.style.right =
     document.body.clientWidth - quickSettingsWrapper.offsetLeft + 15 + 50 + "px";
+}
+
+function refreshIndoorSearchWheelchairLayout(): void {
+  if (!getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) return;
+  setIndoorSearchWheelchairLayout();
 }
 
 function setupQuickSettingsLayoutObserver(): void {
@@ -159,4 +169,5 @@ function getUiPadding(uiWrapper: HTMLElement): number {
 export default {
   applyStoredLayout,
   setup,
+  refreshIndoorSearchWheelchairLayout,
 };
