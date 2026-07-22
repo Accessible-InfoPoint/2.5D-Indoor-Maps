@@ -13,6 +13,7 @@ jest.mock("geojson-bounds", () => ({ extent: jest.fn() }));
 import BuildingService from "../../src/services/buildingService";
 import BackendService from "../../src/services/backendService";
 import { IndoorDataPipelineEnum } from "../../src/models/indoorDataPipelineEnum";
+import { createIndoorElementRefFromFeature } from "../../src/models/indoorElementRef";
 
 const CTX = { currentLevel: 0 };
 
@@ -116,7 +117,6 @@ describe("BuildingService.searchSuggestions", () => {
       infoPoints: [],
     });
 
-    expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBeUndefined();
     expect(BuildingService.getSearchElementRefById("way/1")).toEqual(
       expect.objectContaining({ id: "way/1", levels: [0] }),
     );
@@ -124,7 +124,6 @@ describe("BuildingService.searchSuggestions", () => {
   });
 
   it("resolves selected search context selections from GeoJSON in compatibility pipelines", () => {
-    expect(BuildingService.getSearchSuggestionFeatureById("way/1")).toBe(mockFeatureWithName);
     expect(BuildingService.getSearchElementRefById("way/1")).toEqual(
       expect.objectContaining({
         id: "way/1",
@@ -401,7 +400,7 @@ describe("BuildingService.searchSuggestions", () => {
       });
       const results = BuildingService.searchSuggestions("room", {
         currentLevel: 0,
-        selectedFeature: selected,
+        selectedElementRef: createIndoorElementRefFromFeature(selected),
       });
       expect(results[0].id).toBe("way/30");
       expect(results[1].id).toBe("way/31");
@@ -465,7 +464,7 @@ describe("BuildingService.searchSuggestions", () => {
       });
       const results = BuildingService.searchSuggestions("room", {
         currentLevel: 0,
-        infoPointFeature: infoPoint,
+        infoPointElementRef: createIndoorElementRefFromFeature(infoPoint),
       });
       expect(results[0].id).toBe("way/60");
       expect(results[1].id).toBe("way/61");
@@ -518,7 +517,7 @@ describe("BuildingService.searchSuggestions", () => {
       });
       const results = BuildingService.searchSuggestions("room", {
         currentLevel: 0,
-        infoPointFeature: infoPoint,
+        infoPointElementRef: createIndoorElementRefFromFeature(infoPoint),
       });
       expect(results[0].id).toBe("way/62");
       expect(results[1].id).toBe("way/63");
@@ -626,7 +625,7 @@ describe("BuildingService.searchSuggestions", () => {
       });
       const results = BuildingService.searchSuggestions("toilet", {
         currentLevel: 0,
-        selectedFeature: selected,
+        selectedElementRef: createIndoorElementRefFromFeature(selected),
         wheelchairMode: true,
       });
       expect(results[0].id).toBe("way/40");
@@ -691,7 +690,7 @@ describe("BuildingService.searchSuggestions", () => {
       });
       const results = BuildingService.searchSuggestions("toilet", {
         currentLevel: 0,
-        selectedFeature: selected,
+        selectedElementRef: createIndoorElementRefFromFeature(selected),
       });
       expect(results[0].id).toBe("way/41");
       expect(results[1].id).toBe("way/40");
@@ -769,8 +768,8 @@ describe("BuildingService.searchSuggestions", () => {
     try {
       BuildingService.searchSuggestions("room", {
         currentLevel: 0,
-        selectedFeature: selected,
-        infoPointFeature: selected,
+        selectedElementRef: createIndoorElementRefFromFeature(selected),
+        infoPointElementRef: createIndoorElementRefFromFeature(selected),
         wheelchairMode: true,
       });
 

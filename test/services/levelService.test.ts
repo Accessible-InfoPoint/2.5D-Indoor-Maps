@@ -91,20 +91,13 @@ describe("levelService", () => {
     });
   });
 
-  describe("getLevelNames", () => {
-    it("returns levels as strings", () => {
-      (BackendService.getAllLevels as jest.Mock).mockReturnValue([3, 2, 1]);
-      const result = levelService.getLevelNames();
-      expect(result).toEqual(["3", "2", "1"]);
-    });
-
+  describe("getLevelOptions", () => {
     it("uses level labels when available", () => {
       (BackendService.getAllLevels as jest.Mock).mockReturnValue([1, 0]);
       (BackendService.getLevelLabel as jest.Mock).mockImplementation((level: number) =>
         level == 0 ? "E" : level.toString(),
       );
 
-      expect(levelService.getLevelNames()).toEqual(["1", "E"]);
       expect(levelService.getLevelOptions()).toEqual([
         { level: 1, label: "1" },
         { level: 0, label: "E" },

@@ -44,17 +44,6 @@ export function findFeatureById(
   return featureCollection.features.find((feature) => getRequiredFeatureId(feature) === featureId);
 }
 
-export function filterFeaturesByIndoorSearch(
-  featureCollection: GeoJSON.FeatureCollection,
-  searchString: string,
-): GeoJSON.Feature[] {
-  const normalizedSearchString = searchString.toLowerCase();
-
-  return featureCollection.features.filter((feature) =>
-    matchesIndoorSearch(feature, normalizedSearchString),
-  );
-}
-
 export interface FilterByBoundsOptions {
   bearingNodeIds?: Array<number | string>;
 }
@@ -77,13 +66,6 @@ export function filterByBoundsOrBearingNode(
   };
 }
 
-export function filterByBounds(
-  geoJSON: GeoJsonObject,
-  buildingBBox: Array<number>,
-): GeoJSON.FeatureCollection {
-  return filterByBoundsOrBearingNode(geoJSON, buildingBBox);
-}
-
 export function filterInsideAndLevel(
   featureCollection: GeoJSON.FeatureCollection,
 ): GeoJSON.FeatureCollection {
@@ -97,16 +79,6 @@ export function filterInsideAndLevel(
     type: "FeatureCollection",
     features: filteredFeatures,
   };
-}
-
-function matchesIndoorSearch(feature: GeoJSON.Feature, normalizedSearchString: string): boolean {
-  const properties = getRequiredFeatureProperties(feature);
-
-  return (
-    properties.ref?.toLowerCase().startsWith(normalizedSearchString) ||
-    properties.indoor?.toLowerCase().startsWith(normalizedSearchString) ||
-    properties.amenity?.toLowerCase().startsWith(normalizedSearchString)
-  );
 }
 
 function getBuildingOutlineGeometry(

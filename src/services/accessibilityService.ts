@@ -35,12 +35,6 @@ function reset(): void {
   propertiesByLevel.clear();
 }
 
-function getAccessibilityInformation(geoJSONFeatures: GeoJSON.Feature<any, any>[]): string {
-  return getAccessibilityInformationFromTags(
-    geoJSONFeatures.map((feature) => feature.properties ?? {}),
-  );
-}
-
 function getAccessibilityInformationFromTags(tagSets: IndoorTags[]): string {
   let returnString = "";
 
@@ -76,6 +70,5 @@ export default {
   getForLevel,
   getForLevelTags,
   reset,
-  getAccessibilityInformation,
   getAccessibilityInformationFromTags,
 };

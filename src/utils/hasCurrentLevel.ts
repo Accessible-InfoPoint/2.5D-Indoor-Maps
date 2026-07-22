@@ -1,12 +1,5 @@
 import { extractLevels } from "./extractLevels";
 
-export function hasCurrentLevel(
-  feature: GeoJSON.Feature<any>,
-  currentLevel: number | string,
-): boolean {
-  return hasLevel(feature, currentLevel);
-}
-
 export function hasLevel(feature: GeoJSON.Feature, level: number | string): boolean {
   const targetLevel = typeof level == "number" ? level : parseFloat(level);
 

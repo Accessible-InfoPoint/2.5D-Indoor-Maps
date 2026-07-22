@@ -48,19 +48,6 @@ export interface IndoorFillStyle {
   polygonPatternFile: string | null;
 }
 
-function getAccessibilityDescription(feature: GeoJSON.Feature): string {
-  const properties = getRequiredFeatureProperties(feature);
-  let popUpText = properties.ref ?? "(no name)";
-
-  if (properties.name !== undefined && properties.name.length !== 0) {
-    popUpText += " (" + properties.name + ")";
-  }
-
-  popUpText += getAccessibilityRuleDescriptionFromTags(properties);
-
-  return lang.selectedMapObjectPrefix + popUpText;
-}
-
 function getAccessibilityDescriptionFromElementRef(elementRef: IndoorElementRef): string {
   return (
     lang.selectedMapObjectPrefix +
@@ -184,17 +171,6 @@ const CATEGORY_ICON_RULES: Array<{
     iconFilename: ICONS.INFO,
   },
 ];
-
-/**
- * Profile-agnostic category icon for a feature, for use in contexts (like
- * search results) where the icon must stay consistent regardless of the
- * user's currently-selected accessibility profile or toggled map filters.
- * Returns undefined when no specific category icon applies.
- */
-export function getCategoryIcon(feature: GeoJSON.Feature): string | undefined {
-  const properties = getRequiredFeatureProperties(feature);
-  return getCategoryIconFromTags(properties);
-}
 
 export function getCategoryIconFromTags(tags: IndoorTags): string | undefined {
   const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(tags));
@@ -323,10 +299,6 @@ export function getWallWeightFromTags(
     : WALL_WEIGHT;
 }
 
-function getWallWeight(feature: GeoJSON.Feature<any>): number {
-  return getWallWeightFromTags(getRequiredFeatureProperties(feature), feature.geometry.type);
-}
-
 function getPatternSize(lineWidth: number): "small" | "medium" | "large" {
   return lineWidth <= 2 ? "small" : lineWidth <= 4 ? "medium" : "large";
 }
@@ -395,7 +367,6 @@ export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
 }
 
 export default {
-  getAccessibilityDescription,
   getAccessibilityDescriptionFromElementRef,
   getAccessibilityMarkerData,
   getAccessibilityMarkerDataFromTags,
@@ -410,12 +381,10 @@ export default {
   getTactilePavingStyleFromTags,
   getLineWidthFromTags,
   getWallWeightFromTags,
-  getWallWeight,
   getCurrentElements,
   setCurrentElements,
   isStaircase,
   isSimpleStaircase,
   isComplexStaircase,
-  getCategoryIcon,
   getCategoryIconFromTags,
 };

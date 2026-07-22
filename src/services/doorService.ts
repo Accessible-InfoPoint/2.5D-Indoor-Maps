@@ -55,10 +55,6 @@ function addDoor(coord: GeoJSON.Position, levels: Set<number>, geojsonProps: Rec
   }
 }
 
-function checkIfDoorExists(doorCoord: GeoJSON.Position): boolean {
-  return findDoorByCoordinate(doorCoord) !== null;
-}
-
 function addRoomToDoor(
   doorCoord: GeoJSON.Position,
   roomFeature: GeoJSON.Feature,
@@ -126,7 +122,6 @@ function hasSameLevelSet(a: Set<number>, b: Set<number>): boolean {
 export default {
   clearDoorIndex,
   addDoor,
-  checkIfDoorExists,
   addRoomToDoor,
   calculateDoorOrientation,
   getDoorsByLevel,

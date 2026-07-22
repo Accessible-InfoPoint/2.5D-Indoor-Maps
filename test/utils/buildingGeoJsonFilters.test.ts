@@ -1,7 +1,5 @@
 import {
-  filterByBounds,
   filterByBoundsOrBearingNode,
-  filterFeaturesByIndoorSearch,
   filterInsideAndLevel,
   findBuildingBySearchString,
   findFeatureById,
@@ -72,31 +70,7 @@ describe("buildingGeoJsonFilters", () => {
     });
   });
 
-  describe("filterFeaturesByIndoorSearch", () => {
-    it("matches room refs, indoor types, and amenities case-insensitively by prefix", () => {
-      const collection: GeoJSON.FeatureCollection = {
-        type: "FeatureCollection",
-        features: [
-          pointFeature("room", [0, 0], { ref: "A101" }),
-          pointFeature("corridor", [0, 0], { indoor: "Corridor" }),
-          pointFeature("toilet", [0, 0], { amenity: "toilets" }),
-          pointFeature("miss", [0, 0], { ref: "B101" }),
-        ],
-      };
-
-      expect(filterFeaturesByIndoorSearch(collection, "a").map((feature) => feature.id)).toEqual([
-        "room",
-      ]);
-      expect(filterFeaturesByIndoorSearch(collection, "cor").map((feature) => feature.id)).toEqual([
-        "corridor",
-      ]);
-      expect(filterFeaturesByIndoorSearch(collection, "TOI").map((feature) => feature.id)).toEqual([
-        "toilet",
-      ]);
-    });
-  });
-
-  describe("filterByBounds", () => {
+  describe("filterByBoundsOrBearingNode", () => {
     it("keeps leveled point, line, and polygon features that intersect the bounding box", () => {
       const collection: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
@@ -125,7 +99,7 @@ describe("buildingGeoJsonFilters", () => {
         ],
       };
 
-      const result = filterByBounds(collection, [0, 0, 1, 1]);
+      const result = filterByBoundsOrBearingNode(collection, [0, 0, 1, 1]);
 
       expect(result.features.map((feature) => feature.id)).toEqual([
         "inside-point",

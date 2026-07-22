@@ -19,7 +19,6 @@ jest.mock("../../src/services/colorService", () => ({
 
 const sampleCoord: GeoJSON.Position = [10.0, 50.0];
 const nearSampleCoord: GeoJSON.Position = [10.000001, 50.0];
-const farSampleCoord: GeoJSON.Position = [10.00001, 50.0];
 const otherCoord: GeoJSON.Position = [10.1, 50.1];
 const levelA = 0;
 const levelB = 1;
@@ -32,7 +31,9 @@ describe("doorService", () => {
   describe("addDoor", () => {
     it("adds a new door to the index", () => {
       doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
-      expect(doorService.checkIfDoorExists(sampleCoord)).toBe(true);
+      expect(doorService.findDoorByCoordinate(sampleCoord)).toEqual(
+        expect.objectContaining({ coord: sampleCoord }),
+      );
     });
 
     it("stores same-coordinate doors on different levels separately", () => {
@@ -45,30 +46,6 @@ describe("doorService", () => {
       expect(levelBDoors).toHaveLength(1);
       expect(levelADoors[0].properties.width).toBe(2);
       expect(levelBDoors[0].properties.width).toBe(5);
-    });
-  });
-
-  describe("checkIfDoorExists", () => {
-    beforeEach(() => doorService.clearDoorIndex());
-
-    it("returns true for an existing door", () => {
-      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
-      expect(doorService.checkIfDoorExists(sampleCoord)).toBe(true);
-    });
-
-    it("returns true for a nearby door coordinate within tolerance", () => {
-      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
-      expect(doorService.checkIfDoorExists(nearSampleCoord)).toBe(true);
-    });
-
-    it("returns false for a nearby door coordinate outside tolerance", () => {
-      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
-      expect(doorService.checkIfDoorExists(farSampleCoord)).toBe(false);
-    });
-
-    it("returns false for a non-existing door", () => {
-      doorService.addDoor(sampleCoord, new Set([levelA]), mockProps);
-      expect(doorService.checkIfDoorExists(otherCoord)).toBe(false);
     });
   });
 

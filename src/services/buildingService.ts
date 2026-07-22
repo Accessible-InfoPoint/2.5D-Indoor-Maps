@@ -24,8 +24,6 @@ export interface SuggestionSortContext {
   currentLevel: number;
   selectedElementRef?: IndoorElementRef;
   infoPointElementRef?: IndoorElementRef;
-  selectedFeature?: GeoJSON.Feature;
-  infoPointFeature?: GeoJSON.Feature;
   wheelchairMode?: boolean;
 }
 
@@ -205,12 +203,8 @@ function searchSuggestions(
   const centroids = new Map<string, [number, number] | undefined>(
     suggestions.map((s) => [s.id, getElementRefCentroid(s.elementRef)]),
   );
-  const selectedCoords = getElementRefCentroid(
-    getContextElementRef(context.selectedElementRef, context.selectedFeature),
-  );
-  const infoCoords = getElementRefCentroid(
-    getContextElementRef(context.infoPointElementRef, context.infoPointFeature),
-  );
+  const selectedCoords = getElementRefCentroid(context.selectedElementRef);
+  const infoCoords = getElementRefCentroid(context.infoPointElementRef);
 
   const squaredDist = (a: [number, number], b: [number, number]): number =>
     (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
@@ -273,16 +267,6 @@ function searchSuggestions(
   });
 
   return sortedSuggestions;
-}
-
-function getSearchSuggestionFeatureById(
-  featureId: string | undefined,
-): GeoJSON.Feature | undefined {
-  if (featureId === undefined) {
-    return undefined;
-  }
-
-  return getSearchableElementRefs().find(({ elementRef }) => elementRef.id == featureId)?.feature;
 }
 
 function getSearchElementRefById(featureId: string | undefined): IndoorElementRef | undefined {
@@ -358,15 +342,6 @@ function logSearchSuggestionRanking(
   console.table(rows);
 }
 
-function getContextElementRef(
-  elementRef: IndoorElementRef | undefined,
-  feature: GeoJSON.Feature | undefined,
-): IndoorElementRef | undefined {
-  return (
-    elementRef ?? (feature === undefined ? undefined : createIndoorElementRefFromFeature(feature))
-  );
-}
-
 function getSearchableElementRefs(): Array<{
   elementRef: IndoorElementRef;
   feature?: GeoJSON.Feature;
@@ -433,7 +408,6 @@ export default {
   getBuildingDescription,
   handleSearch,
   searchSuggestions,
-  getSearchSuggestionFeatureById,
   getSearchElementRefById,
   filterInsideAndLevel,
 };

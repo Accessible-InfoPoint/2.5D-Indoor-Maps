@@ -57,10 +57,6 @@ function emptyFeatureCollection(): GeoJSON.FeatureCollection {
   };
 }
 
-function getLevelNames(): string[] {
-  return getLevelOptions().map((option) => option.label); // reverse order
-}
-
 function getLevelOptions(): LevelOption[] {
   return BackendService.getAllLevels().map((level) => ({
     level,
@@ -93,7 +89,6 @@ function getRawLevelTags(level: number): IndoorTags[] {
 export default {
   getCurrentLevelGeoJSON,
   getLevelGeoJSON,
-  getLevelNames,
   getLevelOptions,
   getCurrentLevelDescription,
   clearData,

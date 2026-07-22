@@ -1,4 +1,4 @@
-import { hasLevel, hasCurrentLevel } from "../../src/utils/hasCurrentLevel";
+import { hasLevel } from "../../src/utils/hasCurrentLevel";
 
 const createFeature = (props: Record<string, any>): GeoJSON.Feature => ({
   type: "Feature",
@@ -45,17 +45,5 @@ describe("hasLevel", () => {
   it("does not match when level is not found", () => {
     const feature = createFeature({ level: "3" });
     expect(hasLevel(feature, 1)).toBe(false);
-  });
-});
-
-describe("hasCurrentLevel", () => {
-  it("returns true if feature has current level", () => {
-    const feature = createFeature({ level: ["1", "2", "3"] });
-    expect(hasCurrentLevel(feature, "2")).toBe(true);
-  });
-
-  it("returns false if feature does not have current level", () => {
-    const feature = createFeature({ level: ["5"] });
-    expect(hasCurrentLevel(feature, "2")).toBe(false);
   });
 });
