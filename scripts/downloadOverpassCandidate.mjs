@@ -1,6 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import osm2geojson from "osm2geojson-ultra";
 
 const OVERPASS_API_URL = "https://z.overpass-api.de/api/interpreter?data=";
 const DEFAULT_RATE_LIMIT_DELAY_MS = 10_000;
@@ -38,8 +37,8 @@ if (args.listBuildings) {
   process.exit(0);
 }
 
-const buildings = await downloadAndConvert(buildBuildingsQuery(source, args.tags), "buildings");
-const indoor = await downloadAndConvert(buildIndoorQuery(source), "indoor");
+const buildings = await downloadOverpassJson(buildBuildingsQuery(source, args.tags), "buildings");
+const indoor = await downloadOverpassJson(buildIndoorQuery(source), "indoor");
 const buildingConstants = args.constantsId ? await readBuildingConstants() : undefined;
 const report = buildReport(args, buildings, indoor, buildingConstants);
 const snippet = {
@@ -75,7 +74,7 @@ function isValidArgs(options) {
   return Boolean(options.id) && Object.keys(options.tags).length > 0;
 }
 
-async function downloadAndConvert(query, label) {
+async function downloadOverpassJson(query, label) {
   for (let attempt = 0; ; attempt++) {
     const response = await fetch(OVERPASS_API_URL + encodeURIComponent(query), {
       headers: {
@@ -98,8 +97,7 @@ async function downloadAndConvert(query, label) {
       throw new Error(`${label} query failed: ${response.status} ${response.statusText}`);
     }
 
-    const overpassJson = await response.json();
-    return osm2geojson(overpassJson);
+    return response.json();
   }
 }
 
@@ -131,29 +129,27 @@ async function listSitBuildings(source, options) {
   await writeFile(join(outputDir, "sit-buildings.overpass-turbo-url.txt"), `${turboUrl}\n`);
   console.log(`Overpass Turbo: ${turboUrl}`);
 
-  const buildings = await downloadAndConvert(query, "SIT building list");
-  const features = buildings.features.filter(isSitBuilding).map(toFeatureSummary);
+  const buildings = await downloadOverpassJson(query, "SIT building list");
+  const elements = buildings.elements.filter(isSitBuildingElement).map(toElementSummary);
 
-  await writeJson("sit-buildings.features.json", features);
+  await writeJson("sit-buildings.elements.json", elements);
 
-  console.log(`Found ${features.length} SIT-conform building(s).`);
+  console.log(`Found ${elements.length} SIT-conform building(s).`);
   console.log(`Candidate files written to ${outputDir}`);
 }
 
-function isSitBuilding(feature) {
-  const properties = feature.properties ?? {};
+function isSitBuildingElement(element) {
+  const tags = element.tags ?? {};
 
   return (
-    properties.building !== undefined &&
-    properties.min_level !== undefined &&
-    properties.max_level !== undefined
+    tags.building !== undefined && tags.min_level !== undefined && tags.max_level !== undefined
   );
 }
 
-function toFeatureSummary(feature) {
+function toElementSummary(element) {
   return {
-    id: feature.id,
-    properties: feature.properties ?? {},
+    id: getElementKey(element),
+    tags: element.tags ?? {},
   };
 }
 
@@ -163,13 +159,12 @@ function buildOverpassTurboUrl(query) {
 
 function buildReport(options, buildings, indoor, buildingConstants) {
   const failures = [];
-  const matchingBuildings = buildings.features.filter((feature) => {
-    const properties = feature.properties ?? {};
+  const buildingIndex = buildRawOverpassIndex(buildings);
+  const indoorIndex = buildRawOverpassIndex(indoor);
+  const matchingBuildings = buildings.elements.filter((element) => {
+    const tags = element.tags ?? {};
 
-    return (
-      isSitBuilding(feature) &&
-      Object.entries(options.tags).every(([key, value]) => properties[key] === value)
-    );
+    return isSitBuildingElement(element) && tagsMatch(tags, options.tags);
   });
 
   if (matchingBuildings.length !== 1) {
@@ -177,28 +172,28 @@ function buildReport(options, buildings, indoor, buildingConstants) {
   }
 
   const buildingBounds =
-    matchingBuildings.length === 1 && isPolygonal(matchingBuildings[0])
-      ? getBoundingBox(matchingBuildings[0])
+    matchingBuildings.length === 1
+      ? getRawBuildingBoundingBox(matchingBuildings[0], buildingIndex)
       : undefined;
 
   if (matchingBuildings.length === 1 && buildingBounds === undefined) {
     failures.push("Matched building must have Polygon or MultiPolygon geometry.");
   }
 
-  const indoorFeatureCount =
+  const indoorElementCount =
     buildingBounds === undefined
       ? 0
-      : indoor.features.filter((feature) => {
-          const properties = feature.properties ?? {};
+      : indoor.elements.filter((element) => {
+          const tags = element.tags ?? {};
 
           return (
-            (properties.indoor !== undefined || properties.level !== undefined) &&
-            featureIntersectsBounds(feature, buildingBounds)
+            (tags.indoor !== undefined || tags.level !== undefined) &&
+            rawElementTouchesBounds(element, buildingBounds, indoorIndex)
           );
         }).length;
 
-  if (indoorFeatureCount === 0) {
-    failures.push("No indoor or level features were found inside the matched building.");
+  if (indoorElementCount === 0) {
+    failures.push("No indoor or level elements were found inside the matched building.");
   }
 
   if (options.constantsId && buildingConstants) {
@@ -207,8 +202,18 @@ function buildReport(options, buildings, indoor, buildingConstants) {
     if (!constants) {
       failures.push(`buildingConstants.json has no entry for ${options.constantsId}.`);
     } else {
-      validateBearingNode(indoor, constants.BEARING_CALC_NODE1, "BEARING_CALC_NODE1", failures);
-      validateBearingNode(indoor, constants.BEARING_CALC_NODE2, "BEARING_CALC_NODE2", failures);
+      validateBearingNode(
+        indoorIndex,
+        constants.BEARING_CALC_NODE1,
+        "BEARING_CALC_NODE1",
+        failures,
+      );
+      validateBearingNode(
+        indoorIndex,
+        constants.BEARING_CALC_NODE2,
+        "BEARING_CALC_NODE2",
+        failures,
+      );
     }
   }
 
@@ -217,7 +222,7 @@ function buildReport(options, buildings, indoor, buildingConstants) {
     id: options.id,
     failures,
     matchedBuildings: matchingBuildings.length,
-    indoorFeaturesInsideBuilding: indoorFeatureCount,
+    indoorElementsInsideBuilding: indoorElementCount,
     constantsId: options.constantsId,
   };
 }
@@ -228,8 +233,8 @@ async function readBuildingConstants() {
   );
 }
 
-function validateBearingNode(indoor, nodeId, fieldName, failures) {
-  if (!indoor.features.some((feature) => feature.id?.toString() === `node/${nodeId}`)) {
+function validateBearingNode(indoorIndex, nodeId, fieldName, failures) {
+  if (!indoorIndex.elementsByKey.has(`node/${nodeId}`)) {
     failures.push(`${fieldName} node/${nodeId} was not found in candidate indoor data.`);
   }
 }
@@ -254,12 +259,13 @@ function buildBuildingsQuery(source, tags, options = {}) {
 
 function buildIndoorQuery(source) {
   const indoorSelector = buildRegionSelector('nwr["indoor"]', source);
+  const levelSelector = buildRegionSelector('nwr["level"]', source);
   const nonSitBuildingSelector = buildRegionSelector('nwr["building"][!"min_level"]', source);
 
   return [
     "[out:json];",
     buildRegionStatement(source),
-    `(${indoorSelector};-${nonSitBuildingSelector};);`,
+    `((${indoorSelector};${levelSelector};);-${nonSitBuildingSelector};);`,
     "(._;>;);",
     "out;",
   ].join("");
@@ -415,12 +421,125 @@ function stripSurroundingQuotes(value) {
   return trimmed;
 }
 
-function isPolygonal(feature) {
-  return ["Polygon", "MultiPolygon"].includes(feature.geometry?.type);
+function tagsMatch(tags, expectedTags) {
+  return Object.entries(expectedTags).every(([key, value]) => tags[key] === value);
 }
 
-function getBoundingBox(feature) {
-  const positions = flattenPositions(feature.geometry.coordinates);
+function buildRawOverpassIndex(overpassJson) {
+  const elementsByKey = new Map();
+  const nodesById = new Map();
+
+  overpassJson.elements.forEach((element) => {
+    elementsByKey.set(getElementKey(element), element);
+
+    if (element.type === "node") {
+      nodesById.set(element.id, element);
+    }
+  });
+
+  return {
+    elementsByKey,
+    nodesById,
+  };
+}
+
+function getElementKey(element) {
+  return `${element.type}/${element.id}`;
+}
+
+function getRawBuildingBoundingBox(element, index) {
+  if (element.type === "node") {
+    return undefined;
+  }
+
+  const positions =
+    element.type === "way"
+      ? getClosedWayPositions(element, index)
+      : getRelationOuterPositions(element, index);
+
+  return positions.length === 0 ? undefined : getBoundingBoxFromPositions(positions);
+}
+
+function getClosedWayPositions(way, index) {
+  if (!Array.isArray(way.nodes) || way.nodes.length < 4 || way.nodes[0] !== way.nodes.at(-1)) {
+    return [];
+  }
+
+  return getWayPositions(way, index);
+}
+
+function getRelationOuterPositions(relation, index) {
+  if (!Array.isArray(relation.members)) {
+    return [];
+  }
+
+  const hasOuterMembers = relation.members.some(
+    (member) => member.type === "way" && member.role === "outer",
+  );
+
+  return relation.members
+    .filter(
+      (member) =>
+        member.type === "way" &&
+        (hasOuterMembers ? member.role === "outer" : member.role !== "inner"),
+    )
+    .flatMap((member) => {
+      const way = index.elementsByKey.get(`way/${member.ref}`);
+
+      return way?.type === "way" ? getWayPositions(way, index) : [];
+    });
+}
+
+function rawElementTouchesBounds(element, bounds, index, visitedKeys = new Set()) {
+  const key = getElementKey(element);
+
+  if (visitedKeys.has(key)) {
+    return false;
+  }
+
+  visitedKeys.add(key);
+
+  switch (element.type) {
+    case "node":
+      return nodeTouchesBounds(element, bounds);
+    case "way":
+      return getWayPositions(element, index).some(([lng, lat]) =>
+        positionTouchesBounds(lng, lat, bounds),
+      );
+    case "relation":
+      return relationTouchesBounds(element, bounds, index, visitedKeys);
+    default:
+      return false;
+  }
+}
+
+function relationTouchesBounds(relation, bounds, index, visitedKeys) {
+  if (!Array.isArray(relation.members)) {
+    return false;
+  }
+
+  return relation.members.some((member) => {
+    const memberElement = index.elementsByKey.get(`${member.type}/${member.ref}`);
+
+    return (
+      memberElement !== undefined &&
+      rawElementTouchesBounds(memberElement, bounds, index, visitedKeys)
+    );
+  });
+}
+
+function getWayPositions(way, index) {
+  if (!Array.isArray(way.nodes)) {
+    return [];
+  }
+
+  return way.nodes
+    .map((nodeId) => index.nodesById.get(nodeId))
+    .filter((node) => node !== undefined)
+    .map((node) => [node.lon, node.lat]);
+}
+
+function getBoundingBoxFromPositions(positions) {
   const longitudes = positions.map((position) => position[0]);
   const latitudes = positions.map((position) => position[1]);
 
@@ -432,24 +551,14 @@ function getBoundingBox(feature) {
   ];
 }
 
-function flattenPositions(coordinates) {
-  if (!Array.isArray(coordinates)) {
-    return [];
-  }
-
-  if (typeof coordinates[0] === "number") {
-    return [coordinates];
-  }
-
-  return coordinates.flatMap(flattenPositions);
+function nodeTouchesBounds(node, bounds) {
+  return positionTouchesBounds(node.lon, node.lat, bounds);
 }
 
-function featureIntersectsBounds(feature, bounds) {
-  return flattenPositions(feature.geometry?.coordinates).some(([lng, lat]) => {
-    const [west, south, east, north] = bounds;
+function positionTouchesBounds(lng, lat, bounds) {
+  const [west, south, east, north] = bounds;
 
-    return lng >= west && lng <= east && lat >= south && lat <= north;
-  });
+  return lng >= west && lng <= east && lat >= south && lat <= north;
 }
 
 function escapeOverpassValue(value) {

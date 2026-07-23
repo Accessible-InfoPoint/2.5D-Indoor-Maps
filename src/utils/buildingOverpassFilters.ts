@@ -11,7 +11,18 @@ export function findBuildingInOverpassBySearchString(
   const graph = new OsmGraph(overpassJson);
   const building = graph.elements.find((element) => matchesBuildingSearch(element, searchString));
 
-  if (building === undefined || building.type === "node") {
+  if (building === undefined) {
+    return undefined;
+  }
+
+  return getBuildingInterfaceFromOverpassElement(graph, building);
+}
+
+export function getBuildingInterfaceFromOverpassElement(
+  graph: OsmGraph,
+  building: OverpassElement,
+): BuildingInterface | undefined {
+  if (building.type === "node") {
     return undefined;
   }
 

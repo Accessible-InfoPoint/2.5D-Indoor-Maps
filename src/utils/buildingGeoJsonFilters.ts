@@ -37,13 +37,6 @@ export function createBuildingInterfaceFromFeature(feature: GeoJSON.Feature): Bu
   };
 }
 
-export function findFeatureById(
-  featureCollection: GeoJSON.FeatureCollection,
-  featureId: string,
-): GeoJSON.Feature | undefined {
-  return featureCollection.features.find((feature) => getRequiredFeatureId(feature) === featureId);
-}
-
 export interface FilterByBoundsOptions {
   bearingNodeIds?: Array<number | string>;
 }

@@ -147,7 +147,7 @@ or with a bounding box:
 npm run overpass:list-buildings -- --bbox 13.70,51.02,13.73,51.04
 ```
 
-This writes `sit-buildings.features.json` with only `id` and `properties`,
+This writes `sit-buildings.elements.json` with only raw element ids and tags,
 `sit-buildings.overpassql` for manual copy/paste, and
 `sit-buildings.overpass-turbo-url.txt` with a link that opens the query in
 Overpass Turbo. Add `--tag key=value` if you want to narrow the list.

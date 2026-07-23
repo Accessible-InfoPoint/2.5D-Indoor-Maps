@@ -122,10 +122,10 @@ export function getSourceDefinition(
 }
 
 export function matchesBuildingTags(
-  properties: GeoJSON.GeoJsonProperties,
+  properties: Record<string, unknown> | null | undefined,
   buildingTags: Record<string, string>,
 ): boolean {
-  if (properties === null) {
+  if (properties === null || properties === undefined) {
     return false;
   }
 

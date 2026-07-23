@@ -1,8 +1,10 @@
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
-import { filterByBoundsOrBearingNode, findFeatureById } from "../src/utils/buildingGeoJsonFilters";
-import { getRequiredFeatureProperties } from "../src/utils/geoJsonHelpers";
+import { OverpassElement } from "../src/models/overpassJson";
+import { OsmGraph } from "../src/overpass/OsmGraph";
+import { getBuildingInterfaceFromOverpassElement } from "../src/utils/buildingOverpassFilters";
+import { filterOverpassByBounds } from "../src/utils/overpassFilters";
 import { getBuildingSourceDefinition, matchesBuildingTags } from "./buildingSources";
-import { readCachedGeoJsonCompat } from "./readCachedOverpassData";
+import { readCachedOverpassJson } from "./readCachedOverpassData";
 
 interface CachedOverpassPaths {
   buildingsDataPath: string;
@@ -17,18 +19,13 @@ export async function validateCachedOverpassDataForBuilding(
 ): Promise<void> {
   const buildingConstants = getBuildingConstants(building);
   const buildingSource = getBuildingSourceDefinition(building);
-  const buildings = await readCachedGeoJsonCompat(paths.buildingsDataPath);
-  const indoor = await readCachedGeoJsonCompat(paths.indoorDataPath);
-  const matchingBuildings = buildings.features.filter((feature) => {
-    const properties = feature.properties;
-
-    return (
-      properties !== null &&
-      properties.building !== undefined &&
-      properties.min_level !== undefined &&
-      matchesBuildingTags(properties, buildingSource.buildingTags)
-    );
-  });
+  const buildings = await readCachedOverpassJson(paths.buildingsDataPath);
+  const indoor = await readCachedOverpassJson(paths.indoorDataPath);
+  const buildingGraph = new OsmGraph(buildings);
+  const indoorGraph = new OsmGraph(indoor);
+  const matchingBuildings = buildingGraph.elements.filter((element) =>
+    isMatchingSitBuilding(element, buildingSource.buildingTags),
+  );
 
   if (matchingBuildings.length !== 1) {
     throw new Error(
@@ -36,26 +33,54 @@ export async function validateCachedOverpassDataForBuilding(
     );
   }
 
-  const buildingFeature = matchingBuildings[0];
-  if (!["Polygon", "MultiPolygon"].includes(buildingFeature.geometry.type)) {
+  const buildingInterface = getBuildingInterfaceFromOverpassElement(
+    buildingGraph,
+    matchingBuildings[0],
+  );
+  if (buildingInterface === undefined) {
     throw new Error(`SIT building "${building}" must have Polygon or MultiPolygon geometry.`);
   }
 
-  const buildingBounds = getBoundingBox(buildingFeature);
-  const indoorFeatures = filterByBoundsOrBearingNode(indoor, buildingBounds, {
+  const indoorElements = filterOverpassByBounds(indoor, buildingInterface.boundingBox, {
     bearingNodeIds: [buildingConstants.BEARING_CALC_NODE1, buildingConstants.BEARING_CALC_NODE2],
-  }).features.filter((feature) => {
-    const properties = getRequiredFeatureProperties(feature);
+  }).elements.filter(isValidationIndoorElement);
 
-    return properties.indoor !== undefined || properties.level !== undefined;
-  });
-
-  if (indoorFeatures.length === 0) {
-    throw new Error(`No indoor or level features were found inside SIT building "${building}".`);
+  if (indoorElements.length === 0) {
+    throw new Error(`No indoor or level elements were found inside SIT building "${building}".`);
   }
 
-  validateBearingNode(indoor, buildingConstants.BEARING_CALC_NODE1, "BEARING_CALC_NODE1", building);
-  validateBearingNode(indoor, buildingConstants.BEARING_CALC_NODE2, "BEARING_CALC_NODE2", building);
+  validateBearingNode(
+    indoorGraph,
+    buildingConstants.BEARING_CALC_NODE1,
+    "BEARING_CALC_NODE1",
+    building,
+  );
+  validateBearingNode(
+    indoorGraph,
+    buildingConstants.BEARING_CALC_NODE2,
+    "BEARING_CALC_NODE2",
+    building,
+  );
+}
+
+function isMatchingSitBuilding(
+  element: OverpassElement,
+  buildingTags: Record<string, string>,
+): boolean {
+  const tags = element.tags;
+
+  return (
+    tags !== undefined &&
+    tags.building !== undefined &&
+    tags.min_level !== undefined &&
+    matchesBuildingTags(tags, buildingTags)
+  );
+}
+
+function isValidationIndoorElement(element: OverpassElement): boolean {
+  const tags = element.tags;
+
+  return tags !== undefined && (tags.indoor !== undefined || tags.level !== undefined);
 }
 
 function getBuildingConstants(building: string): (typeof BuildingConstantsDefinition)[BuildingId] {
@@ -67,40 +92,12 @@ function getBuildingConstants(building: string): (typeof BuildingConstantsDefini
 }
 
 function validateBearingNode(
-  indoor: GeoJSON.FeatureCollection,
+  indoorGraph: OsmGraph,
   nodeId: string,
   fieldName: string,
   building: string,
 ): void {
-  if (findFeatureById(indoor, `node/${nodeId}`) === undefined) {
+  if (indoorGraph.getNode(nodeId) === undefined) {
     throw new Error(`${fieldName} node/${nodeId} was not found for SIT building "${building}".`);
   }
-}
-
-function getBoundingBox(feature: GeoJSON.Feature): number[] {
-  const coordinates = (feature.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon).coordinates;
-  const positions = flattenPositions(coordinates);
-  const longitudes = positions.map((position) => position[0]);
-  const latitudes = positions.map((position) => position[1]);
-
-  return [
-    Math.min(...longitudes),
-    Math.min(...latitudes),
-    Math.max(...longitudes),
-    Math.max(...latitudes),
-  ];
-}
-
-function flattenPositions(
-  coordinates: GeoJSON.Position[][][] | GeoJSON.Position[][],
-): GeoJSON.Position[] {
-  if (isPosition(coordinates[0][0])) {
-    return coordinates.flat() as GeoJSON.Position[];
-  }
-
-  return (coordinates as GeoJSON.Position[][][]).flat(2);
-}
-
-function isPosition(value: GeoJSON.Position | GeoJSON.Position[]): value is GeoJSON.Position {
-  return typeof value[0] === "number";
 }

@@ -2,7 +2,6 @@ import {
   filterByBoundsOrBearingNode,
   filterInsideAndLevel,
   findBuildingBySearchString,
-  findFeatureById,
 } from "../../src/utils/buildingGeoJsonFilters";
 
 describe("buildingGeoJsonFilters", () => {
@@ -56,17 +55,6 @@ describe("buildingGeoJsonFilters", () => {
       };
 
       expect(findBuildingBySearchString(collection, "Library")).toBeUndefined();
-    });
-  });
-
-  describe("findFeatureById", () => {
-    it("finds features by normalized GeoJSON id", () => {
-      const collection: GeoJSON.FeatureCollection = {
-        type: "FeatureCollection",
-        features: [pointFeature(1, [0, 0], { level: "0" })],
-      };
-
-      expect(findFeatureById(collection, "1")?.id).toBe(1);
     });
   });
 
