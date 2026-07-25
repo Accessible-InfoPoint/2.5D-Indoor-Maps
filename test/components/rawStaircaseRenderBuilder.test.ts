@@ -522,4 +522,3 @@ function metersToOverpassPosition(x: number, y: number): { lat: number; lon: num
     lat: y / metersPerDegree,
   };
 }
-
