@@ -22,7 +22,7 @@ describe("IndoorDoor", () => {
     expect(door.getConnectedRooms(rooms).map((room) => room.id)).toEqual(["way/10", "way/11"]);
   });
 
-  it("builds standalone render data without using DoorService", () => {
+  it("builds standalone render data from raw graph relationships", () => {
     const graph = new OsmGraph(doorFixture);
     const door = IndoorDoor.collectFromGraph(graph)[0];
     const rooms = IndoorRoom.collectFromGraph(graph);

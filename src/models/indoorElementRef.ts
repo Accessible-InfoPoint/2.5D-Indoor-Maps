@@ -1,13 +1,12 @@
 import { extractLevels, LevelValue } from "../utils/extractLevels";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 
 /**
  * Lightweight reference to an indoor element that can participate in UI flows
  * such as search, highlighting, map interactions, and accessibility descriptions.
  *
  * This intentionally is not the full domain element. It carries only the stable
- * identity and shared metadata that callers need before knowing whether the
- * source was raw OSM, a domain model object, or a compatibility GeoJSON feature.
+ * identity and shared metadata that callers need before knowing whether they
+ * were handed the original raw OSM element or a richer domain model object.
  */
 export interface IndoorElementRef {
   id: string;
@@ -28,17 +27,6 @@ export function createIndoorElementRef(options: {
     levels: options.levels ?? getLevelsFromTags(options.tags ?? {}),
     geometry: options.geometry,
   };
-}
-
-export function createIndoorElementRefFromFeature(feature: GeoJSON.Feature): IndoorElementRef {
-  const tags = getRequiredFeatureProperties(feature);
-
-  return createIndoorElementRef({
-    id: getRequiredFeatureId(feature),
-    tags,
-    levels: getLevelsFromTags(tags),
-    geometry: feature.geometry,
-  });
 }
 
 export function getLevelsFromTags(tags: Record<string, unknown>): number[] {

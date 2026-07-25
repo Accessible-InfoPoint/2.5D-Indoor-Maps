@@ -4,8 +4,6 @@ import type {
   Map as MapLibreMap,
   MapLayerMouseEvent,
 } from "maplibre-gl";
-import ColorService from "../../services/colorService";
-import { getRequiredFeatureId } from "../../utils/geoJsonHelpers";
 import { IndoorElementRef } from "../../models/indoorElementRef";
 import {
   IndoorLevelOutlineGeometry,
@@ -46,11 +44,6 @@ import {
 } from "./maplibre/maplibreLayerDefinitions";
 import type { MapLibreThreeIndoorLayer } from "./maplibre/maplibreThreeIndoorLayer";
 import type { MapLibreThreeStaircaseRenderItem } from "./maplibre/maplibreThreeStaircases";
-import {
-  buildComplexStaircaseRenderItems,
-  buildSimpleStaircaseRenderItems,
-  filterConnectedPathways,
-} from "../staircase/staircaseRenderBuilder";
 import { getInfoPointStyle } from "./infoPointStyle";
 
 const SHOW_OPENING_ORIENTATION_DEBUG = false;
@@ -88,7 +81,6 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   private readonly roomElementRefsById = new Map<string, IndoorElementRef>();
   private readonly loadingPatternImageIds = new Set<string>();
   private readonly pendingLayerOperations: (() => void)[] = [];
-  private pendingSelectedFeatureIds: string[] = [];
   private visibleLayerIds = new Set<string>();
   private layersInitialized = false;
   private opacity = 1;
@@ -151,13 +143,12 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     });
   }
 
-  render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
+  render(renderModel: IndoorLevelRenderModel): void {
     this.pendingRenderModel = renderModel;
-    this.pendingSelectedFeatureIds = selectedFeatureIds;
 
     this.whenLayersInitialized(() => {
       if (this.pendingRenderModel) {
-        this.renderLayerData(this.pendingRenderModel, this.pendingSelectedFeatureIds);
+        this.renderLayerData(this.pendingRenderModel);
       }
     });
   }
@@ -312,13 +303,13 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
 
   // ===== Render pipelines ===================================================
 
-  private renderLayerData(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void {
+  private renderLayerData(renderModel: IndoorLevelRenderModel): void {
     this.renderOutline(renderModel.outlineGeometry);
     this.renderInfoPoint(renderModel);
     this.renderRooms(renderModel.rooms);
     this.renderWalls(renderModel.walls);
     this.renderOpenings(renderModel);
-    this.renderStaircases(renderModel, selectedFeatureIds);
+    this.renderStaircases(renderModel);
     this.renderTactilePaving(renderModel.tactilePaving);
     this.renderRoomNumbers(renderModel.rooms);
     this.renderAccessibilityMarkers(renderModel);
@@ -410,51 +401,9 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.accessibilityMarkerRenderer.render(renderModel);
   }
 
-  private renderStaircases(
-    renderModel: IndoorLevelRenderModel,
-    selectedFeatureIds: string[],
-  ): void {
-    const colors = ColorService.getCurrentColors();
-    const staircase = renderModel.staircase;
-    const localAltitude = 0;
-    const items: MapLibreThreeStaircaseRenderItem[] = staircase.renderItems.length
-      ? staircase.renderItems
-      : [
-          ...staircase.simpleFeatures.flatMap((feature) => {
-            const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
-            const color = isSelected ? colors.roomColorS : colors.stairsColor;
-
-            return buildSimpleStaircaseRenderItems(
-              (feature.geometry as GeoJSON.Polygon).coordinates[0],
-              localAltitude,
-            ).map((item) => ({
-              item,
-              color,
-            }));
-          }),
-          ...staircase.complexFeatures.flatMap((feature) => {
-            const isSelected = selectedFeatureIds.includes(getRequiredFeatureId(feature));
-            const color = isSelected ? colors.roomColorS : colors.stairsColor;
-
-            return buildComplexStaircaseRenderItems(
-              filterConnectedPathways(
-                feature,
-                staircase.doorCoordinates,
-                staircase.lowestPoints,
-                staircase.pathways,
-                this.level,
-              ),
-              staircase.allNodes,
-              localAltitude,
-            ).map((item) => ({
-              item,
-              color,
-            }));
-          }),
-        ];
-
-    this.threeStaircases = items;
-    this.threeLayer?.setStaircases(items);
+  private renderStaircases(renderModel: IndoorLevelRenderModel): void {
+    this.threeStaircases = renderModel.staircase.renderItems;
+    this.threeLayer?.setStaircases(renderModel.staircase.renderItems);
   }
 
   // ===== MapLibre sources and layers ========================================

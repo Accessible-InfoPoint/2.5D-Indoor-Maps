@@ -7,7 +7,7 @@ export interface IndoorLevelViewEvents {
 
 export interface IndoorLevelView {
   clear(): void;
-  render(renderModel: IndoorLevelRenderModel, selectedFeatureIds: string[]): void;
+  render(renderModel: IndoorLevelRenderModel): void;
   hideAll(): void;
   showAll(): void;
   show2DView(): void;

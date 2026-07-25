@@ -5,23 +5,6 @@ import { IndoorTags } from "../indoor/indoorTagFilters";
 
 const propertiesByLevel = new Map<number, string>();
 
-function getForLevel(
-  level: number,
-  featureCollection: GeoJSON.FeatureCollection<any, any>,
-): string {
-  if (propertiesByLevel.get(level) !== undefined) {
-    return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
-  }
-
-  propertiesByLevel.set(
-    level,
-    getAccessibilityInformationFromTags(
-      featureCollection.features.map((feature) => feature.properties ?? {}),
-    ),
-  );
-  return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
-}
-
 function getForLevelTags(level: number, tagSets: IndoorTags[]): string {
   if (propertiesByLevel.get(level) !== undefined) {
     return getRequiredMapValue(propertiesByLevel, level, "Accessibility properties by level");
@@ -67,7 +50,6 @@ function getAccessibilityInformationFromTags(tagSets: IndoorTags[]): string {
 }
 
 export default {
-  getForLevel,
   getForLevelTags,
   reset,
   getAccessibilityInformationFromTags,

@@ -8,7 +8,6 @@ import { UserGroupEnum } from "../../src/models/userGroupEnum";
 describe("userService", () => {
   const profileKey = "userProfile";
   const selectedElementsKey = "currentlySelectedElements";
-  const legacySelectedFeaturesKey = "currentlySelectedFeatures";
 
   beforeEach(() => {
     localStorage.clear();
@@ -31,13 +30,11 @@ describe("userService", () => {
   describe("setProfile", () => {
     it("stores profile and removes selected elements", () => {
       localStorage.setItem(selectedElementsKey, "[]");
-      localStorage.setItem(legacySelectedFeaturesKey, "[]");
 
       userService.setProfile(UserGroupEnum.wheelchairUsers);
 
       expect(localStorage.getItem(profileKey)).toBe(UserGroupEnum.wheelchairUsers.toString());
       expect(localStorage.getItem(selectedElementsKey)).toBeNull();
-      expect(localStorage.getItem(legacySelectedFeaturesKey)).toBeNull();
     });
   });
 });

@@ -27,12 +27,6 @@ function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion
       levels: [0],
       geometry: { type: "Polygon", coordinates: [] },
     },
-    feature: {
-      id: "way/1",
-      type: "Feature",
-      geometry: { type: "Polygon", coordinates: [] },
-      properties: {},
-    },
     ...overrides,
   };
 }

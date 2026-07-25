@@ -1,8 +1,7 @@
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../public/strings/settings.json";
 import {
-  buildComplexStaircaseRenderItems,
   buildSimpleStaircaseRenderItems,
-  filterConnectedPathways,
+  buildStaircasePathRenderItems,
 } from "../../src/components/staircase/staircaseRenderBuilder";
 
 describe("staircaseRenderBuilder", () => {
@@ -38,17 +37,13 @@ describe("staircaseRenderBuilder", () => {
     );
   });
 
-  it("builds floor and handrail prism items for complex staircases", () => {
+  it("builds floor and handrail prism items for stair paths", () => {
     const lineString: GeoJSON.Position[] = [
       [13.0, 51.0],
       [13.0, 51.0001],
     ];
-    const allNodes: GeoJSON.Feature[] = [
-      createPointFeature(lineString[0], "0"),
-      createPointFeature(lineString[1], "1"),
-    ];
 
-    const items = buildComplexStaircaseRenderItems([[lineString, 1]], allNodes, 6);
+    const items = buildStaircasePathRenderItems(lineString, 1, [0, LEVEL_HEIGHT - 0.05], 6);
 
     expect(items).toHaveLength(3);
     expect(items.map((item) => item.type)).toEqual(["prism", "prism", "prism"]);
@@ -70,120 +65,19 @@ describe("staircaseRenderBuilder", () => {
     expect(floor.coordinates[1][2]).toBeCloseTo(LEVEL_HEIGHT - 0.05);
   });
 
-  it("filters connected staircase pathways and preserves pathway width", () => {
-    const staircase = createPolygonFeature([
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-      [0, 0],
-    ]);
-    const path = createLineStringFeature(
-      [
-        [0, 0],
-        [0.5, 0.5],
-      ],
-      {
-        level: [0, 1],
-        width: "1.5",
-      },
-    );
-    const lowestPoint = createPointFeature([0.5, 0.5], "0");
+  it("respects explicit handrail options", () => {
+    const lineString: GeoJSON.Position[] = [
+      [13.0, 51.0],
+      [13.0, 51.0001],
+    ];
 
-    const paths = filterConnectedPathways(staircase, [[0, 0]], [lowestPoint], [path], 0);
+    const items = buildStaircasePathRenderItems(lineString, 1, [0, 1], 0, {
+      left: false,
+      right: false,
+      middle: true,
+    });
 
-    expect(paths).toEqual([
-      [
-        [
-          [0, 0],
-          [0.5, 0.5],
-        ],
-        1.5,
-      ],
-    ]);
-  });
-
-  it("skips unsupported staircase feature geometries instead of throwing", () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
-
-    const paths = filterConnectedPathways(createPointFeature([0, 0], "0"), [], [], [], 0);
-
-    expect(paths).toEqual([]);
-    expect(consoleError).toHaveBeenCalledWith(
-      'Skipping staircase pathway with unsupported geometry type "Point".',
-      expect.objectContaining({
-        geometry: expect.objectContaining({ type: "Point" }),
-      }),
-    );
-
-    consoleError.mockRestore();
-  });
-
-  it("skips unsupported connected pathway geometries instead of throwing", () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
-    const staircase = createPolygonFeature([
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-      [0, 0],
-    ]);
-
-    const paths = filterConnectedPathways(
-      staircase,
-      [[0, 0]],
-      [],
-      [createPointFeature([0, 0], "0")],
-      0,
-    );
-
-    expect(paths).toEqual([]);
-    expect(consoleError).toHaveBeenCalledWith(
-      'Skipping staircase pathway with unsupported geometry type "Point".',
-      expect.objectContaining({
-        geometry: expect.objectContaining({ type: "Point" }),
-      }),
-    );
-
-    consoleError.mockRestore();
+    expect(items).toHaveLength(2);
+    expect(items.map((item) => item.height)).toEqual([0.05, STAIRCASE_HANDRAIL_HEIGHT]);
   });
 });
-
-function createPointFeature(coordinates: GeoJSON.Position, level: string): GeoJSON.Feature {
-  return {
-    type: "Feature",
-    geometry: {
-      type: "Point",
-      coordinates,
-    },
-    properties: {
-      level,
-    },
-  };
-}
-
-function createLineStringFeature(
-  coordinates: GeoJSON.Position[],
-  properties: GeoJSON.GeoJsonProperties,
-): GeoJSON.Feature {
-  return {
-    type: "Feature",
-    id: "way/1",
-    geometry: {
-      type: "LineString",
-      coordinates,
-    },
-    properties,
-  };
-}
-
-function createPolygonFeature(coordinates: GeoJSON.Position[]): GeoJSON.Feature {
-  return {
-    type: "Feature",
-    geometry: {
-      type: "Polygon",
-      coordinates: [coordinates],
-    },
-    properties: {},
-  };
-}

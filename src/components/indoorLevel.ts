@@ -1,12 +1,6 @@
-import LevelService from "../services/levelService";
-import BuildingService from "../services/buildingService";
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
-import DoorService from "../services/doorService";
-import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
 import { IndoorElementRef } from "../models/indoorElementRef";
-import { buildOpeningRenderItemsFromLegacyDoors } from "../indoor/doorRenderBuilder";
-import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
 import { buildRawIndoorLevelRenderModel } from "./indoorLevel/rawIndoorLevelRenderBuilder";
@@ -21,14 +15,13 @@ export class IndoorLevel {
   level: number;
 
   constructor(
-    geoJSON: GeoJSON.FeatureCollection,
     level: number,
     private readonly view: IndoorLevelView,
     private readonly state: IndoorLevelState,
   ) {
     this.level = level;
 
-    this.render(geoJSON);
+    this.render();
   }
 
   clear(): void {
@@ -39,7 +32,7 @@ export class IndoorLevel {
    * Redraws all layers
    */
   updateLayer(): void {
-    this.render(LevelService.getLevelGeoJSON(this.level));
+    this.render();
   }
 
   /**
@@ -78,8 +71,8 @@ export class IndoorLevel {
     this.view.show3DView();
   }
 
-  private render(geoJSON: GeoJSON.FeatureCollection): void {
-    const renderModel = this.buildRenderModel(geoJSON);
+  private render(): void {
+    const renderModel = this.buildRenderModel();
 
     if (renderModel.infoPoint) {
       this.state.setInfoPoint(
@@ -90,37 +83,17 @@ export class IndoorLevel {
       );
     }
 
-    this.view.render(renderModel, this.state.getSelectedElementIds());
+    this.view.render(renderModel);
   }
 
-  private buildRenderModel(geoJSON: GeoJSON.FeatureCollection): IndoorLevelRenderModel {
-    switch (BackendService.getBackendConfig().indoorDataPipeline) {
-      case IndoorDataPipelineEnum.geoJsonCompatibility:
-      case IndoorDataPipelineEnum.clientGeoJsonCompatibility:
-        return {
-          ...buildIndoorLevelRenderModel({
-            geoJSON,
-            buildingGeoJSON: BuildingService.getBuildingGeoJSON(),
-            outlineGeometry: BackendService.getBuildingInterface().outlineGeometry,
-            level: this.level,
-            selectedFeatureIds: this.state.getSelectedElementIds(),
-            infoPointLevel: this.state.getInfoPointLevel(),
-            userProfile: UserService.getCurrentProfile(),
-          }),
-          openings: buildOpeningRenderItemsFromLegacyDoors(
-            DoorService.getDoorsByLevel(this.level),
-            this.state.getSelectedElementIds(),
-          ),
-        };
-      case IndoorDataPipelineEnum.rawIndoorModel:
-        return buildRawIndoorLevelRenderModel({
-          model: BackendService.getIndoorModel(),
-          level: this.level,
-          selectedFeatureIds: this.state.getSelectedElementIds(),
-          infoPointLevel: this.state.getInfoPointLevel(),
-          userProfile: UserService.getCurrentProfile(),
-        });
-    }
+  private buildRenderModel(): IndoorLevelRenderModel {
+    return buildRawIndoorLevelRenderModel({
+      model: BackendService.getIndoorModel(),
+      level: this.level,
+      selectedFeatureIds: this.state.getSelectedElementIds(),
+      infoPointLevel: this.state.getInfoPointLevel(),
+      userProfile: UserService.getCurrentProfile(),
+    });
   }
 
   /**

@@ -1,15 +1,12 @@
 import compression from "compression";
 import express, { Application } from "express";
-import {
-  FilteredIndoorDataRouteOptions,
-  registerFilteredIndoorDataRoute,
-} from "./filteredIndoorDataRoute";
+import { OverpassDataRouteOptions, registerOverpassDataRoute } from "./overpassDataRoute";
 import { registerHealthRoute } from "./healthRoute";
 import { resolveProjectPath } from "./paths";
 import { registerRequestLogger, RequestLogger } from "./requestLogger";
 
 export interface CreateAppOptions {
-  filteredIndoorData?: FilteredIndoorDataRouteOptions;
+  overpassData?: OverpassDataRouteOptions;
   requestLogger?: RequestLogger;
   staticRoot?: string;
 }
@@ -21,7 +18,7 @@ export function createApp(options: CreateAppOptions = {}): Application {
   registerRequestLogger(app, options.requestLogger);
   app.use(express.json());
   registerHealthRoute(app);
-  registerFilteredIndoorDataRoute(app, options.filteredIndoorData);
+  registerOverpassDataRoute(app, options.overpassData);
   app.use(express.static(options.staticRoot ?? resolveProjectPath("public")));
 
   return app;

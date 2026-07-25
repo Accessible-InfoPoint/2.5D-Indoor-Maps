@@ -32,13 +32,13 @@ describe("httpService", () => {
       responseText: JSON.stringify(responseBody),
     });
 
-    await expect(HttpService.fetchFilteredIndoorData("apb")).rejects.toMatchObject<
+    await expect(HttpService.fetchRawOverpassData("apb")).rejects.toMatchObject<
       Partial<HttpRequestError>
     >({
       name: "HttpRequestError",
       message:
         "An error occurred while fetching building data: Cached indoor data could not be loaded.",
-      url: "/api/buildings/apb/indoor",
+      url: "/api/buildings/apb/overpass",
       status: 500,
       statusText: "Internal Server Error",
       responseBody,
@@ -52,7 +52,7 @@ describe("httpService", () => {
       responseText: "<html>Service Unavailable</html>",
     });
 
-    await expect(HttpService.fetchFilteredIndoorData("apb")).rejects.toThrow(
+    await expect(HttpService.fetchRawOverpassData("apb")).rejects.toThrow(
       "An error occurred while fetching building data: Service Unavailable",
     );
   });

@@ -1,12 +1,6 @@
-import { LOCAL_GEOJSON_DATA_URL } from "../../public/strings/constants.json";
 import { BuildingInterface } from "../models/buildingInterface";
 import { OverpassJson } from "../models/overpassJson";
 import { lang } from "./languageService";
-
-export interface FilteredIndoorDataResponse {
-  buildingInterface: BuildingInterface;
-  geoJson: GeoJSON.FeatureCollection;
-}
 
 export interface RawOverpassDataResponse {
   buildingInterface: BuildingInterface;
@@ -40,7 +34,7 @@ export class HttpRequestError extends Error {
   }
 }
 
-function getLocalData<T = GeoJSON.FeatureCollection<any, any>>(overpassQuery: string): Promise<T> {
+function getLocalData<T = unknown>(overpassQuery: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
@@ -96,20 +90,10 @@ function getErrorMessage(xhr: XMLHttpRequest, responseBody: unknown): string {
   return xhr.statusText || `HTTP ${xhr.status}`;
 }
 
-function fetchLocalGeojson(geojson_building: string): Promise<GeoJSON.FeatureCollection<any, any>> {
-  return getLocalData(LOCAL_GEOJSON_DATA_URL + geojson_building + ".geojson");
-}
-
-function fetchFilteredIndoorData(building: string): Promise<FilteredIndoorDataResponse> {
-  return getLocalData(`/api/buildings/${encodeURIComponent(building)}/indoor`);
-}
-
 function fetchRawOverpassData(building: string): Promise<RawOverpassDataResponse> {
   return getLocalData(`/api/buildings/${encodeURIComponent(building)}/overpass`);
 }
 
 export default {
-  fetchLocalGeojson,
-  fetchFilteredIndoorData,
   fetchRawOverpassData,
 };

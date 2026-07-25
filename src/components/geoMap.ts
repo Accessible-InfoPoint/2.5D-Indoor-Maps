@@ -127,7 +127,7 @@ export class GeoMap {
 
           return [
             val,
-            new IndoorLevel(LevelService.getLevelGeoJSON(val), val, view, {
+            new IndoorLevel(val, view, {
               getSelectedElementIds: () => this.selectedElementIds,
               getInfoPointLevel: () => this.infoPointLevel,
               setInfoPoint: (elementRef, level) => {

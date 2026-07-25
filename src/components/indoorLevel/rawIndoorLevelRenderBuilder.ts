@@ -17,8 +17,6 @@ import { IndoorVerticalConnection } from "../../indoor/verticalConnections/Indoo
 import { createIndoorElementRef } from "../../models/indoorElementRef";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import FeatureService from "../../services/featureService";
-import { isVisibleIn3DMode } from "../../utils/drawableElementFilter";
-import { getRequiredFeatureId, getRequiredFeatureProperties } from "../../utils/geoJsonHelpers";
 import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import {
   buildRawStaircase2DOutlineRenderItems,
@@ -76,12 +74,6 @@ export function buildRawIndoorLevelRenderModel(
         level: options.level,
         selectedFeatureIds: options.selectedFeatureIds,
       }),
-      doorCoordinates: [],
-      lowestPoints: [],
-      pathways: [],
-      allNodes: [],
-      simpleFeatures: [],
-      complexFeatures: [],
     },
   };
 }
@@ -479,7 +471,7 @@ function buildRoomRenderItem(
     return undefined;
   }
 
-  const isSelected = options.selectedFeatureIds.includes(getRequiredFeatureId(feature));
+  const isSelected = options.selectedFeatureIds.includes(room.id);
 
   return {
     feature,
@@ -490,10 +482,12 @@ function buildRoomRenderItem(
       geometry: feature.geometry,
     }),
     isSelected,
-    isVisibleIn3D: isVisibleIn3DMode(feature, options.selectedFeatureIds),
+    isVisibleIn3D: isVisibleIn3DMode(room, options.selectedFeatureIds),
     label: getRoomLabel(room),
     style: buildRoomStyle(room, feature.geometry.type, isSelected, options),
-    selectedPositionMarker: isSelected ? buildSelectedPositionMarker(feature, options) : undefined,
+    selectedPositionMarker: isSelected
+      ? buildSelectedPositionMarker(feature, room, options)
+      : undefined,
   };
 }
 
@@ -535,17 +529,16 @@ function buildSelectedFeatureStyle(
 
 function buildSelectedPositionMarker(
   feature: GeoJSON.Feature,
+  room: IndoorRoom,
   options: RawIndoorLevelRenderBuilderOptions,
 ): PositionMarkerRenderItem | undefined {
-  const properties = getRequiredFeatureProperties(feature);
   const diff = options.level - options.infoPointLevel;
   const label = diff > 0 ? "+" + diff.toString() : diff.toString();
 
   if (
-    Array.isArray(properties["level"]) &&
-    Math.min(
-      ...(properties["level"] as number[]).map((level) => Math.abs(level - options.infoPointLevel)),
-    ) != Math.abs(diff)
+    room.levels.length > 0 &&
+    Math.min(...room.levels.map((level) => Math.abs(level - options.infoPointLevel))) !=
+      Math.abs(diff)
   ) {
     return undefined;
   }
@@ -554,6 +547,16 @@ function buildSelectedPositionMarker(
     feature,
     label,
   };
+}
+
+function isVisibleIn3DMode(room: IndoorRoom, selectedFeatureIds: string[] = []): boolean {
+  return (
+    room.tags.indoor == "corridor" ||
+    room.tags.indoor == "area" ||
+    room.tags.highway == "elevator" ||
+    room.tags.stairs == "yes" ||
+    selectedFeatureIds.includes(room.id)
+  );
 }
 
 function getRoomLabel(room: IndoorRoom): string | undefined {

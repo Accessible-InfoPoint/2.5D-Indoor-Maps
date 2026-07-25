@@ -55,9 +55,9 @@ const settingsSchema = {
     LEVEL_HEIGHT: { type: "number", exclusiveMinimum: 0 },
     STAIRCASE_HANDRAIL_HEIGHT: { type: "number", minimum: 0 },
     DOOR_MATCH_TOLERANCE_M: { type: "number", exclusiveMinimum: 0 },
-    BACKEND_SOURCE: { enum: ["cachedOverpass", "localGeojson"] },
+    BACKEND_SOURCE: { enum: ["cachedOverpass"] },
     INDOOR_DATA_PIPELINE: {
-      enum: ["geoJsonCompatibility", "clientGeoJsonCompatibility", "rawIndoorModel"],
+      enum: ["rawIndoorModel"],
     },
     CURRENT_BUILDING: { type: "string", minLength: 1 },
     MAP_START_LAT: numericString,

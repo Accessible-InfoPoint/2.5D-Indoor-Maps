@@ -14,10 +14,6 @@ jest.mock("../../src/services/languageService", () => ({
 jest.mock("../../src/services/buildingService", () => ({
   __esModule: true,
   default: {
-    getBuildingGeoJSON: jest.fn(() => ({
-      type: "FeatureCollection",
-      features: [] as GeoJSON.Feature[],
-    })),
     getSearchElementRefById: jest.fn(),
     searchSuggestions: jest.fn(),
   },
@@ -111,7 +107,6 @@ describe("searchForm", () => {
       levels: [0],
       type: "room",
       elementRef,
-      feature,
     };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
@@ -142,7 +137,6 @@ describe("searchForm", () => {
       levels: [0],
       type: "room",
       elementRef: { id: "way/1", tags: {}, levels: [0], geometry: staleFeature.geometry },
-      feature: staleFeature,
     };
     const currentElementRef = {
       id: "way/2",
@@ -156,7 +150,6 @@ describe("searchForm", () => {
       levels: [0],
       type: "room",
       elementRef: currentElementRef,
-      feature: currentFeature,
     };
     (BuildingService.searchSuggestions as jest.Mock)
       .mockReturnValueOnce([staleSuggestion])
@@ -215,7 +208,6 @@ describe("searchForm", () => {
       levels: [0],
       type: "room",
       elementRef,
-      feature,
     };
     (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 

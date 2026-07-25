@@ -64,7 +64,7 @@ describe("buildRawIndoorLevelRenderModel", () => {
     ]);
   });
 
-  it("marks selected raw rooms using the same ids as GeoJSON compatibility rooms", () => {
+  it("marks selected raw rooms using stable raw element ids", () => {
     const model = createIndoorModel(rawOverpassData, buildingInterface);
 
     const renderModel = buildRawIndoorLevelRenderModel({

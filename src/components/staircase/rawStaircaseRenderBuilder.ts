@@ -10,7 +10,7 @@ import {
 } from "../../indoor/verticalConnections/IndoorStairPathNetwork";
 import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
 import { VerticalSpan } from "../../indoor/verticalConnections/VerticalSpan";
-import { createIndoorElementRefFromFeature } from "../../models/indoorElementRef";
+import { createIndoorElementRef } from "../../models/indoorElementRef";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";
@@ -962,7 +962,11 @@ function buildStairSurfaceRoomRenderItem(
 
   return {
     feature,
-    elementRef: createIndoorElementRefFromFeature(feature),
+    elementRef: createIndoorElementRef({
+      id: String(feature.id),
+      tags: feature.properties ?? STAIR_SURFACE_TAGS,
+      geometry: feature.geometry,
+    }),
     isSelected: false,
     isVisibleIn3D: false,
     style: {

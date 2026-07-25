@@ -15,7 +15,6 @@ import {
   isToiletTags,
 } from "../indoor/indoorTagFilters";
 import ColorService from "./colorService";
-import { getRequiredFeatureProperties } from "../utils/geoJsonHelpers";
 import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -79,14 +78,6 @@ function checkForMatchingTags(tags: UserFeatureEnum[] | undefined): boolean {
   });
 
   return hasMatched;
-}
-
-function getAccessibilityMarkerData(feature: GeoJSON.Feature): AccessibilityMarkerData | null {
-  const coordinates = getMarkerCoordinatesFromGeometry(feature.geometry);
-
-  return coordinates == undefined
-    ? null
-    : getAccessibilityMarkerDataFromTags(getRequiredFeatureProperties(feature), coordinates);
 }
 
 export function getAccessibilityMarkerDataFromTags(
@@ -176,10 +167,6 @@ export function getCategoryIconFromTags(tags: IndoorTags): string | undefined {
   const rule = CATEGORY_ICON_RULES.find(({ matches }) => matches(tags));
 
   return rule ? MARKERS_IMG_DIR + rule.iconFilename : undefined;
-}
-
-function getFeatureStyle(feature: GeoJSON.Feature<any>): IndoorFeatureStyle {
-  return getFeatureStyleFromTags(getRequiredFeatureProperties(feature), feature.geometry.type);
 }
 
 export function getFeatureStyleFromTags(
@@ -321,13 +308,10 @@ function getWheelchairPatternFile(
 }
 
 const selectedElementsStorageKey = "currentlySelectedElements";
-const legacySelectedFeaturesStorageKey = "currentlySelectedFeatures";
 
 export function getCurrentElements(): Map<string, boolean> {
   const currentProfile = UserService.getCurrentProfile();
-  const storedSelection =
-    localStorage.getItem(selectedElementsStorageKey) ??
-    localStorage.getItem(legacySelectedFeaturesStorageKey);
+  const storedSelection = localStorage.getItem(selectedElementsStorageKey);
   const currentlySelectedElements: Map<string, boolean> = storedSelection
     ? new Map(JSON.parse(storedSelection))
     : (() => {
@@ -347,31 +331,12 @@ export function getCurrentElements(): Map<string, boolean> {
 
 export function setCurrentElements(checkboxState: Map<string, boolean>): void {
   localStorage.setItem(selectedElementsStorageKey, JSON.stringify([...checkboxState.entries()]));
-  localStorage.removeItem(legacySelectedFeaturesStorageKey);
-}
-
-export function isStaircase(feature: GeoJSON.Feature): boolean {
-  return isStaircaseTags(getRequiredFeatureProperties(feature));
-}
-
-export function isSimpleStaircase(feature: GeoJSON.Feature): boolean {
-  const properties = getRequiredFeatureProperties(feature);
-
-  return isStaircase(feature) && "indoor" in properties && properties["indoor"] == "room";
-}
-
-export function isComplexStaircase(feature: GeoJSON.Feature): boolean {
-  const properties = getRequiredFeatureProperties(feature);
-
-  return isStaircase(feature) && "indoor" in properties && properties["indoor"] != "room";
 }
 
 export default {
   getAccessibilityDescriptionFromElementRef,
-  getAccessibilityMarkerData,
   getAccessibilityMarkerDataFromTags,
   getMarkerCoordinatesFromGeometry,
-  getFeatureStyle,
   getFeatureStyleFromTags,
   getIndoorFillStyleFromTags,
   getSelectedRoomStyleFromTags,
@@ -383,8 +348,5 @@ export default {
   getWallWeightFromTags,
   getCurrentElements,
   setCurrentElements,
-  isStaircase,
-  isSimpleStaircase,
-  isComplexStaircase,
   getCategoryIconFromTags,
 };

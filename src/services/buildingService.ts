@@ -1,15 +1,7 @@
-import { BuildingInterface } from "../models/buildingInterface";
-import { lang } from "./languageService";
 import BackendService from "./backendService";
-import { filterInsideAndLevel, findBuildingBySearchString } from "../utils/buildingGeoJsonFilters";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
-import { IndoorDataPipelineEnum } from "../models/indoorDataPipelineEnum";
-import {
-  createIndoorElementRef,
-  createIndoorElementRefFromFeature,
-  IndoorElementRef,
-} from "../models/indoorElementRef";
+import { createIndoorElementRef, IndoorElementRef } from "../models/indoorElementRef";
 
 export interface SearchSuggestion {
   id: string;
@@ -17,7 +9,6 @@ export interface SearchSuggestion {
   levels: number[];
   type: string | undefined;
   elementRef: IndoorElementRef;
-  feature?: GeoJSON.Feature;
 }
 
 export interface SuggestionSortContext {
@@ -25,26 +16,6 @@ export interface SuggestionSortContext {
   selectedElementRef?: IndoorElementRef;
   infoPointElementRef?: IndoorElementRef;
   wheelchairMode?: boolean;
-}
-
-/**
- * Finding a building by search string:
- * 1) Iterate through all building Features if there is a Feature with the given name. If so, return the building Feature.
- * 2) Otherwise, call Nominatim service to do a more advanced search. Since Nominatim does not return a GeoJSON Feature,
- *    we have to again iterate through all building Features to find the id returned by Nominatim.
- */
-
-function handleSearch(
-  featureCollection: GeoJSON.FeatureCollection,
-  searchString: string,
-): Promise<BuildingInterface> {
-  const returnBuilding = findBuildingBySearchString(featureCollection, searchString);
-
-  if (returnBuilding) {
-    return Promise.resolve(returnBuilding);
-  }
-
-  return Promise.reject(new Error(`${lang.buildingNotFound}: ${searchString}`));
 }
 
 const OSM_NAME_ARTIFACTS = new Set([]);
@@ -174,7 +145,7 @@ function searchSuggestions(
 
   const suggestions: SearchSuggestion[] = getSearchableElementRefs()
     .filter(({ elementRef }) => filterForSuggestions(elementRef, searchString))
-    .map(({ elementRef, feature }) => {
+    .map(({ elementRef }) => {
       const p = elementRef.tags;
       const validName = getValidName(p);
 
@@ -184,7 +155,6 @@ function searchSuggestions(
         levels: elementRef.levels,
         type: (p.amenity ?? p.indoor) as string | undefined,
         elementRef,
-        feature,
       };
     });
   const scores = new Map<string, number>();
@@ -278,12 +248,6 @@ function getSearchElementRefById(featureId: string | undefined): IndoorElementRe
     ?.elementRef;
 }
 
-function usesRawIndoorModel(): boolean {
-  return (
-    BackendService.getBackendConfig().indoorDataPipeline === IndoorDataPipelineEnum.rawIndoorModel
-  );
-}
-
 function logSearchSuggestionRanking(
   searchString: string,
   suggestions: SearchSuggestion[],
@@ -342,61 +306,47 @@ function logSearchSuggestionRanking(
   console.table(rows);
 }
 
-function getSearchableElementRefs(): Array<{
-  elementRef: IndoorElementRef;
-  feature?: GeoJSON.Feature;
-}> {
-  if (usesRawIndoorModel()) {
-    const model = BackendService.getIndoorModel();
+function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
+  const model = BackendService.getIndoorModel();
 
-    return [
-      ...model.rooms.map((room) => {
-        const feature = room.toGeoJsonFeature();
+  return [
+    ...model.rooms.map((room) => {
+      const feature = room.toGeoJsonFeature();
 
-        return {
-          elementRef: createIndoorElementRef({
-            id: room.id,
-            tags: room.tags,
-            levels: room.levels,
-            geometry: feature?.geometry,
-          }),
-        };
-      }),
-      ...model.pointFeatures.map((pointFeature) => {
-        const feature = pointFeature.toGeoJsonFeature();
+      return {
+        elementRef: createIndoorElementRef({
+          id: room.id,
+          tags: room.tags,
+          levels: room.levels,
+          geometry: feature?.geometry,
+        }),
+      };
+    }),
+    ...model.pointFeatures.map((pointFeature) => {
+      const feature = pointFeature.toGeoJsonFeature();
 
-        return {
-          elementRef: createIndoorElementRef({
-            id: pointFeature.id,
-            tags: pointFeature.tags,
-            levels: pointFeature.levels,
-            geometry: feature.geometry,
-          }),
-        };
-      }),
-      ...model.infoPoints.map((infoPoint) => {
-        const feature = infoPoint.toGeoJsonFeature();
+      return {
+        elementRef: createIndoorElementRef({
+          id: pointFeature.id,
+          tags: pointFeature.tags,
+          levels: pointFeature.levels,
+          geometry: feature.geometry,
+        }),
+      };
+    }),
+    ...model.infoPoints.map((infoPoint) => {
+      const feature = infoPoint.toGeoJsonFeature();
 
-        return {
-          elementRef: createIndoorElementRef({
-            id: infoPoint.id,
-            tags: infoPoint.tags,
-            levels: infoPoint.levels,
-            geometry: feature.geometry,
-          }),
-        };
-      }),
-    ];
-  }
-
-  return getBuildingGeoJSON().features.map((feature) => ({
-    elementRef: createIndoorElementRefFromFeature(feature),
-    feature,
-  }));
-}
-
-function getBuildingGeoJSON(): GeoJSON.FeatureCollection<any> {
-  return BackendService.getGeoJson();
+      return {
+        elementRef: createIndoorElementRef({
+          id: infoPoint.id,
+          tags: infoPoint.tags,
+          levels: infoPoint.levels,
+          geometry: feature.geometry,
+        }),
+      };
+    }),
+  ];
 }
 
 function getBuildingDescription(): string {
@@ -404,10 +354,7 @@ function getBuildingDescription(): string {
 }
 
 export default {
-  getBuildingGeoJSON,
   getBuildingDescription,
-  handleSearch,
   searchSuggestions,
   getSearchElementRefById,
-  filterInsideAndLevel,
 };

@@ -1,5 +1,15 @@
-import { OpeningOrientationDebugData } from "../models/doorDataInterface";
 import CoordinateHelpers from "../utils/coordinateHelpers";
+
+export interface OpeningOrientationDebugData {
+  previous: GeoJSON.Position;
+  opening: GeoJSON.Position;
+  after: GeoJSON.Position;
+  previousDistanceM: number;
+  afterDistanceM: number;
+  widthM: number;
+  calculatedPrevious: GeoJSON.Position;
+  calculatedAfter: GeoJSON.Position;
+}
 
 export interface OpeningOrientationGeometry {
   orientation: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
