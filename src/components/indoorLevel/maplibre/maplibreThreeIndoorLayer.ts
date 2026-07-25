@@ -272,11 +272,18 @@ export class MapLibreThreeIndoorLayer implements CustomLayerInterface {
   }
 
   private addRoom(room: RoomRenderItem): void {
-    if (!this.origin || room.feature.geometry.type != "Polygon") {
+    if (!this.origin) {
       return;
     }
 
-    const rings = room.feature.geometry.coordinates;
+    getRoomPolygons(room).forEach((rings) => this.addRoomPolygon(room, rings));
+  }
+
+  private addRoomPolygon(room: RoomRenderItem, rings: GeoJSON.Position[][]): void {
+    if (!this.origin) {
+      return;
+    }
+
     const geometry = createPolygonSurfaceGeometry(this.origin, rings, ROOM_BASE_ELEVATION_METERS);
     const material = createDisposableMeshMaterial(
       getStyleString(room.style, "polygonFill", "#ffffff"),
@@ -494,6 +501,16 @@ function getOutlinePolygons(
   }
 
   return geometry.type == "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+}
+
+function getRoomPolygons(room: RoomRenderItem): GeoJSON.Position[][][] {
+  const geometry = room.feature.geometry;
+
+  if (geometry.type == "Polygon") {
+    return [geometry.coordinates];
+  }
+
+  return geometry.type == "MultiPolygon" ? geometry.coordinates : [];
 }
 
 function createDisposableMeshMaterial(color: string, baseOpacity: number): THREE.MeshBasicMaterial {

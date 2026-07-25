@@ -12,7 +12,7 @@ import { IndoorElement } from "./IndoorElement";
  * - special rooms (toilets, staircases)
  * - this does not handle 3D visualizations of staircases and 2D stairs (which are different from staircases: LINK) # TODO
  *
- * Styling of elements is done in rawIndoorLevelRenderBuilder.ts
+ * Styling of elements is done in indoorLevelRenderBuilder.ts
  */
 export class IndoorRoom extends IndoorElement {
   private static readonly emittedWarnings = new Set<string>();

@@ -3,7 +3,7 @@ import UserService from "../services/userService";
 import { IndoorElementRef } from "../models/indoorElementRef";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
-import { buildRawIndoorLevelRenderModel } from "./indoorLevel/rawIndoorLevelRenderBuilder";
+import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";
 
 interface IndoorLevelState {
   getSelectedElementIds: () => string[];
@@ -87,7 +87,7 @@ export class IndoorLevel {
   }
 
   private buildRenderModel(): IndoorLevelRenderModel {
-    return buildRawIndoorLevelRenderModel({
+    return buildIndoorLevelRenderModel({
       model: BackendService.getIndoorModel(),
       level: this.level,
       selectedFeatureIds: this.state.getSelectedElementIds(),

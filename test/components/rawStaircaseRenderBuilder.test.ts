@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { buildRawIndoorLevelRenderModel } from "../../src/components/indoorLevel/rawIndoorLevelRenderBuilder";
+import { buildIndoorLevelRenderModel } from "../../src/components/indoorLevel/indoorLevelRenderBuilder";
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../public/strings/settings.json";
 import { createIndoorModel } from "../../src/indoor/IndoorModel";
 import { BuildingInterface } from "../../src/models/buildingInterface";
@@ -13,14 +13,14 @@ describe("raw staircase rendering", () => {
   it("builds 3D prism and edge cylinder render items for simple staircase footprints", () => {
     const model = createIndoorModel(simpleStaircaseData, buildingInterface);
 
-    const level0 = buildRawIndoorLevelRenderModel({
+    const level0 = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
       userProfile: UserGroupEnum.noImpairments,
     });
-    const level1 = buildRawIndoorLevelRenderModel({
+    const level1 = buildIndoorLevelRenderModel({
       model,
       level: 1,
       selectedFeatureIds: [],
@@ -28,19 +28,19 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    expect(level0.staircase.renderItems.map((item) => item.item.type)).toEqual([
+    expect(level0.staircase.map((item) => item.item.type)).toEqual([
       "prism",
       "cylinder",
       "cylinder",
       "cylinder",
     ]);
-    expect(level1.staircase.renderItems).toEqual([]);
+    expect(level1.staircase).toEqual([]);
   });
 
   it("builds flat 2D surfaces and 3D span items for free-floating staircases", () => {
     const model = createIndoorModel(freeFloatingStaircaseData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -62,21 +62,21 @@ describe("raw staircase rendering", () => {
       "staircase-outline/way/101@0.5-1/left",
       "staircase-outline/way/101@0.5-1/right",
     ]);
-    expect(renderModel.staircase.renderItems).toHaveLength(3);
-    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(0);
+    expect(renderModel.staircase).toHaveLength(3);
+    expect(getHandrailPrisms(renderModel.staircase)).toHaveLength(0);
   });
 
   it("samples area:highway=steps widths for free-floating staircases at diagonal corners", () => {
     const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData, buildingInterface);
 
-    const level0RenderModel = buildRawIndoorLevelRenderModel({
+    const level0RenderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
       userProfile: UserGroupEnum.noImpairments,
     });
-    const level1RenderModel = buildRawIndoorLevelRenderModel({
+    const level1RenderModel = buildIndoorLevelRenderModel({
       model,
       level: 1,
       selectedFeatureIds: [],
@@ -84,13 +84,13 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    const floorPrisms = getStaircaseFloorPrisms(level0RenderModel.staircase.renderItems);
+    const floorPrisms = getStaircaseFloorPrisms(level0RenderModel.staircase);
 
     expect(floorPrisms).toHaveLength(2);
     expect(level1RenderModel.rooms.map((room) => room.feature.id)).toEqual([
       "free-floating-stair-path/way/100@0-1",
     ]);
-    expect(getStaircaseFloorPrisms(level1RenderModel.staircase.renderItems)).toHaveLength(2);
+    expect(getStaircaseFloorPrisms(level1RenderModel.staircase)).toHaveLength(2);
 
     const renderedCornerWidth = coordinateHelpers.getDistanceBetweenCoordinatesInM(
       floorPrisms[0].coordinates[1],
@@ -104,7 +104,7 @@ describe("raw staircase rendering", () => {
   it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
     const model = createIndoorModel(staircaseWithPathwayHandrailsData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -112,8 +112,8 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
-    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(2);
+    expect(getStaircaseFloorPrisms(renderModel.staircase)).toHaveLength(1);
+    expect(getHandrailPrisms(renderModel.staircase)).toHaveLength(2);
     expect(renderModel.walls.map((wall) => wall.feature.id)).toEqual([
       "staircase-outline/way/100@0-1/left",
       "staircase-outline/way/100@0-1/right",
@@ -123,7 +123,7 @@ describe("raw staircase rendering", () => {
   it("orients raw footprint handrails in the upward direction", () => {
     const model = createIndoorModel(staircaseWithFootprintHandrailData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -131,7 +131,7 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    const handrailPrisms = getHandrailPrisms(renderModel.staircase.renderItems);
+    const handrailPrisms = getHandrailPrisms(renderModel.staircase);
 
     expect(renderModel.rooms.find((room) => room.feature.id == "way/10")?.style.lineWidth).not.toBe(
       0,
@@ -148,7 +148,7 @@ describe("raw staircase rendering", () => {
   it("uses explicit door nodes for open staircase openings with staircase width fallback", () => {
     const model = createIndoorModel(staircaseWithDoorOpeningData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -165,7 +165,7 @@ describe("raw staircase rendering", () => {
   it("renders explicit landing handrail ways in 3D", () => {
     const model = createIndoorModel(staircaseWithLandingHandrailData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -179,14 +179,14 @@ describe("raw staircase rendering", () => {
       "staircase-outline/way/101@0.5-1/left",
       "staircase-outline/way/101@0.5-1/right",
     ]);
-    expect(getStaircaseFloorPrisms(renderModel.staircase.renderItems)).toHaveLength(3);
-    expect(getHandrailPrisms(renderModel.staircase.renderItems)).toHaveLength(1);
+    expect(getStaircaseFloorPrisms(renderModel.staircase)).toHaveLength(3);
+    expect(getHandrailPrisms(renderModel.staircase)).toHaveLength(1);
   });
 
   it("uses node levels for raw staircase path altitudes and interpolates missing node levels", () => {
     const model = createIndoorModel(staircaseWithNodeLevelsData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 1,
       selectedFeatureIds: [],
@@ -194,7 +194,7 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    const floorPrisms = renderModel.staircase.renderItems
+    const floorPrisms = renderModel.staircase
       .map(({ item }) => item)
       .filter((item) => item.type == "prism" && item.height == 0.05);
 
@@ -217,14 +217,14 @@ describe("raw staircase rendering", () => {
   it("treats repeated closed staircase path endpoints as the top of the vertical span", () => {
     const model = createIndoorModel(closedRepeatedStaircaseData, buildingInterface);
 
-    const level1 = buildRawIndoorLevelRenderModel({
+    const level1 = buildIndoorLevelRenderModel({
       model,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,
       userProfile: UserGroupEnum.noImpairments,
     });
-    const level2 = buildRawIndoorLevelRenderModel({
+    const level2 = buildIndoorLevelRenderModel({
       model,
       level: 2,
       selectedFeatureIds: [],
@@ -232,8 +232,8 @@ describe("raw staircase rendering", () => {
       userProfile: UserGroupEnum.noImpairments,
     });
 
-    const level1FloorPrisms = getStaircaseFloorPrisms(level1.staircase.renderItems);
-    const level2FloorPrisms = getStaircaseFloorPrisms(level2.staircase.renderItems);
+    const level1FloorPrisms = getStaircaseFloorPrisms(level1.staircase);
+    const level2FloorPrisms = getStaircaseFloorPrisms(level2.staircase);
 
     expect(level1FloorPrisms).toHaveLength(4);
     expect(level2FloorPrisms).toHaveLength(4);
@@ -250,9 +250,7 @@ describe("raw staircase rendering", () => {
   });
 });
 
-type RawStaircaseRenderItems = ReturnType<
-  typeof buildRawIndoorLevelRenderModel
->["staircase"]["renderItems"];
+type RawStaircaseRenderItems = ReturnType<typeof buildIndoorLevelRenderModel>["staircase"];
 
 function getStaircaseFloorPrisms(renderItems: RawStaircaseRenderItems) {
   return renderItems
@@ -524,3 +522,4 @@ function metersToOverpassPosition(x: number, y: number): { lat: number; lon: num
     lat: y / metersPerDegree,
   };
 }
+

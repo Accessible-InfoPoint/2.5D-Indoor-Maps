@@ -36,7 +36,7 @@ import {
 } from "./indoorLevelRenderModel";
 import { PositionMarkerRenderItem, RoomRenderItem } from "./indoorLevelRenderModel";
 
-interface RawIndoorLevelRenderBuilderOptions {
+interface IndoorLevelRenderBuilderOptions {
   model: IndoorModel;
   level: number;
   selectedFeatureIds: string[];
@@ -44,8 +44,8 @@ interface RawIndoorLevelRenderBuilderOptions {
   userProfile: UserGroupEnum;
 }
 
-export function buildRawIndoorLevelRenderModel(
-  options: RawIndoorLevelRenderBuilderOptions,
+export function buildIndoorLevelRenderModel(
+  options: IndoorLevelRenderBuilderOptions,
 ): IndoorLevelRenderModel {
   const rooms = [
     ...buildRoomRenderItems(options),
@@ -66,21 +66,17 @@ export function buildRawIndoorLevelRenderModel(
     walls: buildWallRenderItems(options),
     tactilePaving: buildTactilePavingRenderItems(options),
     accessibilityMarkers: buildAccessibilityMarkerRenderItems(options),
-    staircase: {
-      renderItems: buildRawStaircase3DRenderItems({
-        verticalConnections: options.model.verticalConnections,
-        handrails: options.model.handrails,
-        stepAreas: options.model.stepAreas,
-        level: options.level,
-        selectedFeatureIds: options.selectedFeatureIds,
-      }),
-    },
+    staircase: buildRawStaircase3DRenderItems({
+      verticalConnections: options.model.verticalConnections,
+      handrails: options.model.handrails,
+      stepAreas: options.model.stepAreas,
+      level: options.level,
+      selectedFeatureIds: options.selectedFeatureIds,
+    }),
   };
 }
 
-function getOutlineGeometry(
-  options: RawIndoorLevelRenderBuilderOptions,
-): IndoorLevelOutlineGeometry {
+function getOutlineGeometry(options: IndoorLevelRenderBuilderOptions): IndoorLevelOutlineGeometry {
   return (
     options.model.levelOutlines.find((outline) => outline.hasLevel(options.level))?.geometry ??
     options.model.buildingInterface.outlineGeometry
@@ -88,7 +84,7 @@ function getOutlineGeometry(
 }
 
 function buildAccessibilityMarkerRenderItems(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): AccessibilityMarkerRenderItem[] {
   return [
     ...buildRoomAccessibilityMarkerRenderItems(options),
@@ -97,7 +93,7 @@ function buildAccessibilityMarkerRenderItems(
 }
 
 function buildRoomAccessibilityMarkerRenderItems(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): AccessibilityMarkerRenderItem[] {
   return options.model.rooms
     .filter((room) => room.hasLevel(options.level))
@@ -108,7 +104,7 @@ function buildRoomAccessibilityMarkerRenderItems(
 }
 
 function buildPointFeatureAccessibilityMarkerRenderItems(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): AccessibilityMarkerRenderItem[] {
   return options.model.pointFeatures
     .filter((pointFeature) => pointFeature.hasLevel(options.level))
@@ -154,7 +150,7 @@ function buildAccessibilityMarkerRenderItem(
 }
 
 function buildInfoPointRenderItem(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): InfoPointRenderItem | undefined {
   const infoPoint = options.model.infoPoints.find((candidate) => candidate.hasLevel(options.level));
 
@@ -183,7 +179,7 @@ function buildInfoPointRenderItemFromElement(
 }
 
 function buildTactilePavingRenderItems(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): StyledFeatureRenderItem[] {
   return options.model.tactilePaving
     .filter((tactilePaving) => tactilePaving.hasLevel(options.level))
@@ -212,9 +208,7 @@ function buildTactilePavingStyle(tactilePaving: IndoorTactilePaving): Record<str
   return FeatureService.getTactilePavingStyleFromTags(tactilePaving.tags);
 }
 
-function buildWallRenderItems(
-  options: RawIndoorLevelRenderBuilderOptions,
-): StyledFeatureRenderItem[] {
+function buildWallRenderItems(options: IndoorLevelRenderBuilderOptions): StyledFeatureRenderItem[] {
   return [
     ...options.model.walls
       .filter((wall) => wall.hasLevel(options.level))
@@ -288,7 +282,7 @@ function buildColumnStyle(column: IndoorColumn): Record<string, unknown> {
 
 function shouldRenderHandrailAsWall(
   handrail: IndoorHandrail,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): boolean {
   return (
     handrail.hasLevel(options.level) &&
@@ -298,7 +292,7 @@ function shouldRenderHandrailAsWall(
   );
 }
 
-function buildOpeningRenderItems(options: RawIndoorLevelRenderBuilderOptions): OpeningRenderItem[] {
+function buildOpeningRenderItems(options: IndoorLevelRenderBuilderOptions): OpeningRenderItem[] {
   const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
   const wallsOnLevel = options.model.walls.filter((wall) => wall.hasLevel(options.level));
   const staircaseOpenings = collectOpenStaircaseOpeningNodes(options, roomsOnLevel);
@@ -333,7 +327,7 @@ interface OpenStaircaseOpeningNode {
 }
 
 function collectOpenStaircaseOpeningNodes(
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
   roomsOnLevel: IndoorRoom[],
 ): OpenStaircaseOpeningNode[] {
   const openingsByKey = new Map<string, OpenStaircaseOpeningNode>();
@@ -419,7 +413,7 @@ function buildStaircaseWidthByNodeId(openings: OpenStaircaseOpeningNode[]): Map<
 
 function buildGeneratedOpeningRenderItems(
   opening: OpenStaircaseOpeningNode,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
   roomsOnLevel: IndoorRoom[],
 ): OpeningRenderItem[] {
   const node = options.model.graphs.indoor.getNode(opening.nodeId);
@@ -454,7 +448,7 @@ function isSameLevel(a: number | undefined, b: number): boolean {
   return a !== undefined && Math.abs(a - b) < 0.000001;
 }
 
-function buildRoomRenderItems(options: RawIndoorLevelRenderBuilderOptions): RoomRenderItem[] {
+function buildRoomRenderItems(options: IndoorLevelRenderBuilderOptions): RoomRenderItem[] {
   return options.model.rooms
     .filter((room) => room.hasLevel(options.level))
     .map((room) => buildRoomRenderItem(room, options))
@@ -463,7 +457,7 @@ function buildRoomRenderItems(options: RawIndoorLevelRenderBuilderOptions): Room
 
 function buildRoomRenderItem(
   room: IndoorRoom,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): RoomRenderItem | undefined {
   const feature = room.toGeoJsonFeature();
 
@@ -495,7 +489,7 @@ function buildRoomStyle(
   room: IndoorRoom,
   geometryType: GeoJSON.Geometry["type"],
   isSelected: boolean,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): Record<string, unknown> {
   const style = isSelected
     ? buildSelectedFeatureStyle(room, options.userProfile)
@@ -511,7 +505,7 @@ function buildRoomStyle(
 
 function shouldSuppressOpenStaircaseFootprintOutline(
   room: IndoorRoom,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): boolean {
   const connection = options.model.verticalConnections.find(
     (candidate) => candidate.kind == "open" && candidate.footprint?.id == room.id,
@@ -530,7 +524,7 @@ function buildSelectedFeatureStyle(
 function buildSelectedPositionMarker(
   feature: GeoJSON.Feature,
   room: IndoorRoom,
-  options: RawIndoorLevelRenderBuilderOptions,
+  options: IndoorLevelRenderBuilderOptions,
 ): PositionMarkerRenderItem | undefined {
   const diff = options.level - options.infoPointLevel;
   const label = diff > 0 ? "+" + diff.toString() : diff.toString();

@@ -16,6 +16,7 @@ import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import {
   RoomRenderItem,
+  StaircaseRenderItem,
   StyledFeatureRenderItem,
   StyledStaircaseRenderItem,
 } from "../indoorLevel/indoorLevelRenderModel";
@@ -27,7 +28,6 @@ import {
   StaircasePathWidth,
   StaircaseHandrailOptions,
 } from "./staircaseRenderBuilder";
-import { StaircaseRenderItem } from "./staircaseRenderModel";
 
 const STAIR_SURFACE_TAGS = { indoor: "area", stairs: "yes" };
 const LOCAL_ALTITUDE = 0;
@@ -44,6 +44,12 @@ export interface RawStaircaseRenderOptions {
   stepAreas: IndoorStepArea[];
   level: number;
   selectedFeatureIds: string[];
+}
+
+interface StairSurfaceRenderInput {
+  id: string;
+  tags: Record<string, string>;
+  geometry: GeoJSON.Polygon;
 }
 
 export function buildRawStaircase2DRenderItems(
@@ -109,16 +115,15 @@ function buildFreeFloatingStaircase2DRenderItems(
         ? []
         : [
             buildStairSurfaceRoomRenderItem({
-              type: "Feature",
               id: `free-floating-stair-path/${instance.id}`,
-              properties: { ...STAIR_SURFACE_TAGS },
+              tags: { ...STAIR_SURFACE_TAGS },
               geometry: polygon,
             }),
           ];
     }),
   );
   const landingItems = getUniqueLandingInstances(activeComponents).flatMap((landingInstance) =>
-    buildLandingSurfaceFeatures(landingInstance).map(buildStairSurfaceRoomRenderItem),
+    buildLandingSurfaceRenderInputs(landingInstance).map(buildStairSurfaceRoomRenderItem),
   );
 
   return [...pathItems, ...landingItems];
@@ -937,17 +942,18 @@ function offsetPathByWidth(
     : coordinateHelpers.offsetCoordinateLine(coordinates, width * factor);
 }
 
-function buildLandingSurfaceFeatures(landingInstance: IndoorLandingInstance): GeoJSON.Feature[] {
+function buildLandingSurfaceRenderInputs(
+  landingInstance: IndoorLandingInstance,
+): StairSurfaceRenderInput[] {
   const geometry = landingInstance.source.toAreaGeometry();
 
   if (geometry === undefined) {
     return [];
   }
 
-  return getOuterRings(geometry).map((ring, index): GeoJSON.Feature<GeoJSON.Polygon> => ({
-    type: "Feature",
+  return getOuterRings(geometry).map((ring, index): StairSurfaceRenderInput => ({
     id: `free-floating-stair-landing/${landingInstance.id}/${index}`,
-    properties: { ...STAIR_SURFACE_TAGS },
+    tags: { ...STAIR_SURFACE_TAGS },
     geometry: {
       type: "Polygon",
       coordinates: [ring],
@@ -955,17 +961,21 @@ function buildLandingSurfaceFeatures(landingInstance: IndoorLandingInstance): Ge
   }));
 }
 
-function buildStairSurfaceRoomRenderItem(
-  feature: GeoJSON.Feature<GeoJSON.Polygon>,
-): RoomRenderItem {
+function buildStairSurfaceRoomRenderItem(input: StairSurfaceRenderInput): RoomRenderItem {
   const style = FeatureService.getFeatureStyleFromTags(STAIR_SURFACE_TAGS, "Polygon");
+  const feature: GeoJSON.Feature<GeoJSON.Polygon> = {
+    type: "Feature",
+    id: input.id,
+    properties: { ...input.tags },
+    geometry: input.geometry,
+  };
 
   return {
     feature,
     elementRef: createIndoorElementRef({
-      id: String(feature.id),
-      tags: feature.properties ?? STAIR_SURFACE_TAGS,
-      geometry: feature.geometry,
+      id: input.id,
+      tags: input.tags,
+      geometry: input.geometry,
     }),
     isSelected: false,
     isVisibleIn3D: false,

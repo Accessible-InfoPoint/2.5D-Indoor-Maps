@@ -5,13 +5,13 @@ import { createIndoorModel } from "../../src/indoor/IndoorModel";
 import { BuildingInterface } from "../../src/models/buildingInterface";
 import { UserGroupEnum } from "../../src/models/userGroupEnum";
 import { RawOverpassDataResponse } from "../../src/services/httpService";
-import { buildRawIndoorLevelRenderModel } from "../../src/components/indoorLevel/rawIndoorLevelRenderBuilder";
+import { buildIndoorLevelRenderModel } from "../../src/components/indoorLevel/indoorLevelRenderBuilder";
 
-describe("buildRawIndoorLevelRenderModel", () => {
+describe("buildIndoorLevelRenderModel", () => {
   it("renders raw way-backed rooms for the requested level", () => {
     const model = createIndoorModel(rawOverpassData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
@@ -67,7 +67,7 @@ describe("buildRawIndoorLevelRenderModel", () => {
   it("marks selected raw rooms using stable raw element ids", () => {
     const model = createIndoorModel(rawOverpassData, buildingInterface);
 
-    const renderModel = buildRawIndoorLevelRenderModel({
+    const renderModel = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: ["way/10"],
@@ -82,14 +82,14 @@ describe("buildRawIndoorLevelRenderModel", () => {
   it("uses indoor=level outlines for the raw 3D outline on matching levels", () => {
     const model = createIndoorModel(levelOutlineOverpassData, buildingInterface);
 
-    const level0 = buildRawIndoorLevelRenderModel({
+    const level0 = buildIndoorLevelRenderModel({
       model,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
       userProfile: UserGroupEnum.noImpairments,
     });
-    const level1 = buildRawIndoorLevelRenderModel({
+    const level1 = buildIndoorLevelRenderModel({
       model,
       level: 1,
       selectedFeatureIds: [],
@@ -274,3 +274,4 @@ const levelOutlineOverpassData: RawOverpassDataResponse = {
     ],
   },
 };
+

@@ -1,7 +1,7 @@
 import { LEVEL_HEIGHT, STAIRCASE_HANDRAIL_HEIGHT } from "../../../public/strings/settings.json";
 import coordinateHelpers from "../../utils/coordinateHelpers";
 import { getRequiredArrayValue } from "../../utils/requiredHelpers";
-import { StaircaseRenderItem } from "./staircaseRenderModel";
+import { StaircaseRenderItem } from "../indoorLevel/indoorLevelRenderModel";
 
 export type StaircasePathWidth = number | number[];
 export type StaircasePath = [coordinates: GeoJSON.Position[], width: StaircasePathWidth];

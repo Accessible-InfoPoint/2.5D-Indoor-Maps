@@ -402,8 +402,8 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
   }
 
   private renderStaircases(renderModel: IndoorLevelRenderModel): void {
-    this.threeStaircases = renderModel.staircase.renderItems;
-    this.threeLayer?.setStaircases(renderModel.staircase.renderItems);
+    this.threeStaircases = renderModel.staircase;
+    this.threeLayer?.setStaircases(renderModel.staircase);
   }
 
   // ===== MapLibre sources and layers ========================================

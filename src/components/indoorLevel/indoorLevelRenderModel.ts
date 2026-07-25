@@ -1,7 +1,6 @@
 import { IndoorElementRef } from "../../models/indoorElementRef";
 import { AccessibilityMarkerData } from "../../services/featureService";
 import { OpeningOrientationDebugData } from "../../indoor/openingOrientation";
-import { StaircaseRenderItem } from "../staircase/staircaseRenderModel";
 
 export interface StyledFeatureRenderItem {
   feature: GeoJSON.Feature;
@@ -44,14 +43,32 @@ export interface OpeningRenderItem {
   debug?: OpeningOrientationDebugData;
 }
 
-export interface StaircaseRenderModel {
-  renderItems: StyledStaircaseRenderItem[];
-}
-
 export interface StyledStaircaseRenderItem {
   item: StaircaseRenderItem;
   color: string;
 }
+
+export type StaircaseMaterialRole = "main" | "outline";
+
+export interface StaircasePrismRenderItem {
+  type: "prism";
+  coordinates: GeoJSON.Position[];
+  height: number;
+  altitude: number;
+  materialRole: StaircaseMaterialRole;
+}
+
+export interface StaircaseCylinderRenderItem {
+  type: "cylinder";
+  coordinate: GeoJSON.Position;
+  height: number;
+  altitude: number;
+  radius: number;
+  radialSegments: number;
+  materialRole: StaircaseMaterialRole;
+}
+
+export type StaircaseRenderItem = StaircasePrismRenderItem | StaircaseCylinderRenderItem;
 
 export type IndoorLevelOutlineGeometry = GeoJSON.Polygon | GeoJSON.MultiPolygon;
 
@@ -63,5 +80,5 @@ export interface IndoorLevelRenderModel {
   walls: StyledFeatureRenderItem[];
   tactilePaving: StyledFeatureRenderItem[];
   accessibilityMarkers: AccessibilityMarkerRenderItem[];
-  staircase: StaircaseRenderModel;
+  staircase: StyledStaircaseRenderItem[];
 }

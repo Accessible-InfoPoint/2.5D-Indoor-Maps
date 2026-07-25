@@ -1,4 +1,3 @@
-import { getRequiredFeatureId } from "../../../utils/geoJsonHelpers";
 import { IndoorElementRef } from "../../../models/indoorElementRef";
 import {
   OpeningRenderItem,
@@ -18,7 +17,7 @@ export interface MapLibreRoomFeatureConversion {
 }
 
 export function buildMapLibreRoomFeature(item: RoomRenderItem): MapLibreRoomFeatureConversion {
-  const featureId = getRequiredFeatureId(item.feature);
+  const featureId = item.elementRef.id;
   const patternFile = getRoomPatternFile(item);
 
   return {

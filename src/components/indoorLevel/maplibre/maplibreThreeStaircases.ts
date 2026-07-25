@@ -4,7 +4,7 @@ import {
   STAIRCASE_OPACITY,
   STAIRCASE_OUTLINE_OPACITY,
 } from "../../../../public/strings/settings.json";
-import { StaircaseRenderItem } from "../../staircase/staircaseRenderModel";
+import { StaircaseRenderItem } from "../indoorLevelRenderModel";
 import { createSlopedPrismGeometry, createVerticalCylinderGeometry } from "./maplibreThreeGeometry";
 
 export interface MapLibreThreeStaircaseRenderItem {
