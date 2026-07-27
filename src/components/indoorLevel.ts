@@ -89,6 +89,7 @@ export class IndoorLevel {
   private buildRenderModel(): IndoorLevelRenderModel {
     return buildIndoorLevelRenderModel({
       model: BackendService.getIndoorModel(),
+      buildingOutlineGeometry: BackendService.getBuildingInterface().outlineGeometry,
       level: this.level,
       selectedFeatureIds: this.state.getSelectedElementIds(),
       infoPointLevel: this.state.getInfoPointLevel(),

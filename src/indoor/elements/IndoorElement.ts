@@ -23,6 +23,4 @@ export abstract class IndoorElement {
   hasLevel(level: number): boolean {
     return this.levels.includes(level);
   }
-
-  abstract toGeoJsonFeature(): GeoJSON.Feature | undefined;
 }

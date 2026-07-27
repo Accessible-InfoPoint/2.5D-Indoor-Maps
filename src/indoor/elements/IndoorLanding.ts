@@ -38,6 +38,10 @@ export class IndoorLanding extends IndoorElement {
     return extractLevels(this.tags.repeat_on_offset);
   }
 
+  get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
+    return this.toAreaGeometry();
+  }
+
   toAreaGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     switch (this.sourceElement.type) {
       case "way":

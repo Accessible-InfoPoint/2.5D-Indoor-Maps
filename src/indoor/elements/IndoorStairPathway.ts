@@ -63,6 +63,10 @@ export class IndoorStairPathway extends IndoorElement {
     );
   }
 
+  get geometry(): GeoJSON.LineString | undefined {
+    return this.toLineStringGeometry();
+  }
+
   toLineStringGeometry(): GeoJSON.LineString | undefined {
     if (this.graph.getMissingWayNodeIds(this.sourceElement).length > 0) {
       return undefined;

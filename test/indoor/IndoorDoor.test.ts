@@ -22,53 +22,54 @@ describe("IndoorDoor", () => {
     expect(door.getConnectedRooms(rooms).map((room) => room.id)).toEqual(["way/10", "way/11"]);
   });
 
-  it("builds standalone render data from raw graph relationships", () => {
+  it("builds semantic opening data from raw graph relationships", () => {
     const graph = new OsmGraph(doorFixture);
     const door = IndoorDoor.collectFromGraph(graph)[0];
     const rooms = IndoorRoom.collectFromGraph(graph);
     const walls = IndoorWall.collectFromGraph(graph);
 
-    const renderItems = door.buildRenderItems(rooms, walls, []);
+    const opening = door.toOpening(rooms, walls);
 
-    expect(renderItems).toHaveLength(1);
-    expect(renderItems[0].coordinates).toHaveLength(3);
-    expect(renderItems[0].symbol.lineWidth).toBe(1 + 50 / 20);
-    expect(renderItems[0].debug?.opening).toEqual([1, 0]);
+    expect(opening?.kind).toBe("door");
+    expect(opening?.orientationGeometry.orientation).toHaveLength(3);
+    expect(opening?.widthMeters).toBe(2);
+    expect(opening?.orientationGeometry.debug.opening).toEqual([1, 0]);
   });
 
-  it("uses the selected room color when a connected room is selected", () => {
+  it("records connected rooms, connected walls and source elements", () => {
     const graph = new OsmGraph(doorFixture);
     const door = IndoorDoor.collectFromGraph(graph)[0];
     const rooms = IndoorRoom.collectFromGraph(graph);
     const walls = IndoorWall.collectFromGraph(graph);
 
-    const renderItems = door.buildRenderItems(rooms, walls, ["way/10"]);
+    const opening = door.toOpening(rooms, walls);
 
-    expect(renderItems[0].symbol.lineColor).toBe("#662b09");
+    expect(opening?.connectedRooms.map((room) => room.id)).toEqual(["way/10", "way/11"]);
+    expect(opening?.connectedWalls.map((wall) => wall.id)).toEqual(["way/12"]);
+    expect(opening?.sources.map((source) => source.role)).toEqual(["door", "wall"]);
   });
 
-  it("uses connected walls for line width before falling back to rooms", () => {
+  it("uses connected walls as the orientation context before falling back to rooms", () => {
     const graph = new OsmGraph(doorFixture);
     const door = IndoorDoor.collectFromGraph(graph)[0];
     const rooms = IndoorRoom.collectFromGraph(graph);
     const walls = IndoorWall.collectFromGraph(graph);
 
-    const renderItems = door.buildRenderItems(rooms, walls, []);
+    const opening = door.toOpening(rooms, walls);
 
-    expect(renderItems[0].symbol.lineWidth).toBe(1 + 50 / 20);
-    expect(renderItems[0].debug?.previous).toEqual([1, -1]);
-    expect(renderItems[0].debug?.after).toEqual([1, 1]);
+    expect(opening?.orientationGeometry.debug.previous).toEqual([1, -1]);
+    expect(opening?.orientationGeometry.debug.after).toEqual([1, 1]);
   });
 
-  it("can render a wall-backed door without connected rooms using white fallback color", () => {
+  it("can build a wall-backed opening without connected rooms", () => {
     const graph = new OsmGraph(wallOnlyDoorFixture);
     const door = IndoorDoor.collectFromGraph(graph)[0];
 
-    const renderItems = door.buildRenderItems([], IndoorWall.collectFromGraph(graph), []);
+    const opening = door.toOpening([], IndoorWall.collectFromGraph(graph));
 
-    expect(renderItems).toHaveLength(1);
-    expect(renderItems[0].symbol.lineColor).toBe("#ffffff");
-    expect(renderItems[0].symbol.lineWidth).toBe(1 + 50 / 20);
+    expect(opening?.connectedRooms).toEqual([]);
+    expect(opening?.connectedWalls.map((wall) => wall.id)).toEqual(["way/1"]);
+    expect(opening?.widthMeters).toBe(1);
   });
 
   it("warns and ignores area walls when connecting doors", () => {
@@ -78,7 +79,7 @@ describe("IndoorDoor", () => {
     const walls = IndoorWall.collectFromGraph(graph);
 
     expect(door.getConnectedWalls(walls)).toEqual([]);
-    expect(door.buildRenderItems([], walls, [])).toEqual([]);
+    expect(door.toOpening([], walls)).toBeUndefined();
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warnSpy).toHaveBeenCalledWith(

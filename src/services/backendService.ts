@@ -124,7 +124,7 @@ async function fetchBackendData(config: Partial<BackendConfig> = {}): Promise<vo
 
   rawOverpassData = loadedData.rawOverpassData;
   indoorModel = loadedData.indoorModel;
-  buildingInterface = indoorModel.buildingInterface;
+  buildingInterface = rawOverpassData.buildingInterface;
   buildingDescription = buildBuildingDescription(buildingInterface);
   indoorModel.levels.forEach((level) => allLevels.add(level));
   buildingConstants = buildRawBuildingConstants(indoorModel, buildingDefinition);
@@ -148,7 +148,7 @@ async function loadRawOverpassData(): Promise<LoadedBackendData> {
   return {
     kind: "rawOverpass",
     rawOverpassData: loadedRawOverpassData,
-    indoorModel: createIndoorModel(loadedRawOverpassData, loadedRawOverpassData.buildingInterface),
+    indoorModel: createIndoorModel(loadedRawOverpassData),
   };
 }
 

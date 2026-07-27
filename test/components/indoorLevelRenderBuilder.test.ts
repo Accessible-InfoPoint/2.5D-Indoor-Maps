@@ -9,10 +9,11 @@ import { buildIndoorLevelRenderModel } from "../../src/components/indoorLevel/in
 
 describe("buildIndoorLevelRenderModel", () => {
   it("renders raw way-backed rooms for the requested level", () => {
-    const model = createIndoorModel(rawOverpassData, buildingInterface);
+    const model = createIndoorModel(rawOverpassData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -65,10 +66,11 @@ describe("buildIndoorLevelRenderModel", () => {
   });
 
   it("marks selected raw rooms using stable raw element ids", () => {
-    const model = createIndoorModel(rawOverpassData, buildingInterface);
+    const model = createIndoorModel(rawOverpassData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: ["way/10"],
       infoPointLevel: 0,
@@ -80,10 +82,11 @@ describe("buildIndoorLevelRenderModel", () => {
   });
 
   it("uses indoor=level outlines for the raw 3D outline on matching levels", () => {
-    const model = createIndoorModel(levelOutlineOverpassData, buildingInterface);
+    const model = createIndoorModel(levelOutlineOverpassData);
 
     const level0 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -91,6 +94,7 @@ describe("buildIndoorLevelRenderModel", () => {
     });
     const level1 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,

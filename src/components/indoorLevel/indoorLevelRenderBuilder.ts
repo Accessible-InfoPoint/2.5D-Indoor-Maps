@@ -1,8 +1,5 @@
 import { IndoorModel } from "../../indoor/IndoorModel";
-import {
-  buildOpeningRenderItemsForNode,
-  getRoomsContainingNode,
-} from "../../indoor/elements/IndoorDoor";
+import { IndoorOpening } from "../../indoor/elements/IndoorOpening";
 import { IndoorColumn } from "../../indoor/elements/IndoorColumn";
 import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
 import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
@@ -10,19 +7,15 @@ import { IndoorPointFeature } from "../../indoor/elements/IndoorPointFeature";
 import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
 import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
 import { IndoorWall } from "../../indoor/elements/IndoorWall";
-import { isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
-import { getRawElementNodeIds } from "../../indoor/rawElementNodeIds";
-import { IndoorStairPathwayInstance } from "../../indoor/verticalConnections/IndoorStairPathNetwork";
-import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
+import { isNeutralDoorColorRoomTags, isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
 import { createIndoorElementRef } from "../../models/indoorElementRef";
 import { UserGroupEnum } from "../../models/userGroupEnum";
+import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
-import { nodeToPosition } from "../../utils/overpassJsonHelpers";
 import {
   buildRawStaircase2DOutlineRenderItems,
   buildRawStaircase2DRenderItems,
   buildRawStaircase3DRenderItems,
-  getInterpolatedPathLevels,
   hasVerticalConnectionHandrailTags,
   isHandrailAttachedToLandingInstance,
 } from "../staircase/rawStaircaseRenderBuilder";
@@ -38,6 +31,7 @@ import { PositionMarkerRenderItem, RoomRenderItem } from "./indoorLevelRenderMod
 
 interface IndoorLevelRenderBuilderOptions {
   model: IndoorModel;
+  buildingOutlineGeometry: IndoorLevelOutlineGeometry;
   level: number;
   selectedFeatureIds: string[];
   infoPointLevel: number;
@@ -79,7 +73,7 @@ export function buildIndoorLevelRenderModel(
 function getOutlineGeometry(options: IndoorLevelRenderBuilderOptions): IndoorLevelOutlineGeometry {
   return (
     options.model.levelOutlines.find((outline) => outline.hasLevel(options.level))?.geometry ??
-    options.model.buildingInterface.outlineGeometry
+    options.buildingOutlineGeometry
   );
 }
 
@@ -118,7 +112,7 @@ function buildAccessibilityMarkerRenderItem(
   indoorElement: IndoorRoom | IndoorPointFeature,
   tags: Record<string, string>,
 ): AccessibilityMarkerRenderItem | undefined {
-  const feature = indoorElement.toGeoJsonFeature();
+  const feature = buildElementFeature(indoorElement, indoorElement.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -164,7 +158,7 @@ function buildInfoPointRenderItem(
 function buildInfoPointRenderItemFromElement(
   infoPoint: IndoorInfoPoint,
 ): InfoPointRenderItem | undefined {
-  const feature = infoPoint.toGeoJsonFeature();
+  const feature = buildElementFeature(infoPoint, infoPoint.geometry);
 
   return {
     feature,
@@ -192,7 +186,7 @@ function buildTactilePavingRenderItems(
 function buildTactilePavingRenderItem(
   tactilePaving: IndoorTactilePaving,
 ): StyledFeatureRenderItem | undefined {
-  const feature = tactilePaving.toGeoJsonFeature();
+  const feature = buildElementFeature(tactilePaving, tactilePaving.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -230,7 +224,7 @@ function buildWallRenderItems(options: IndoorLevelRenderBuilderOptions): StyledF
 }
 
 function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefined {
-  const feature = wall.toGeoJsonFeature();
+  const feature = buildElementFeature(wall, wall.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -243,7 +237,7 @@ function buildWallRenderItem(wall: IndoorWall): StyledFeatureRenderItem | undefi
 }
 
 function buildHandrailRenderItem(handrail: IndoorHandrail): StyledFeatureRenderItem | undefined {
-  const feature = handrail.toGeoJsonFeature();
+  const feature = buildElementFeature(handrail, handrail.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -256,7 +250,7 @@ function buildHandrailRenderItem(handrail: IndoorHandrail): StyledFeatureRenderI
 }
 
 function buildColumnRenderItem(column: IndoorColumn): StyledFeatureRenderItem | undefined {
-  const feature = column.toGeoJsonFeature();
+  const feature = buildElementFeature(column, column.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -293,159 +287,56 @@ function shouldRenderHandrailAsWall(
 }
 
 function buildOpeningRenderItems(options: IndoorLevelRenderBuilderOptions): OpeningRenderItem[] {
-  const roomsOnLevel = options.model.rooms.filter((room) => room.hasLevel(options.level));
-  const wallsOnLevel = options.model.walls.filter((wall) => wall.hasLevel(options.level));
-  const staircaseOpenings = collectOpenStaircaseOpeningNodes(options, roomsOnLevel);
-  const staircaseWidthByNodeId = buildStaircaseWidthByNodeId(staircaseOpenings);
-  const explicitDoorNodeIds = new Set(
-    options.model.doors
-      .filter((door) => door.hasLevel(options.level))
-      .map((door) => door.sourceElement.id),
-  );
+  return options.model.openings
+    .filter((opening) => opening.levels.includes(options.level))
+    .flatMap((opening) => openingToRenderItems(opening, options));
+}
+
+function openingToRenderItems(
+  opening: IndoorOpening,
+  options: IndoorLevelRenderBuilderOptions,
+): OpeningRenderItem[] {
+  const connectedRooms = opening.connectedRooms.filter((room) => room.hasLevel(options.level));
+  const connectedWalls = opening.connectedWalls.filter((wall) => wall.hasLevel(options.level));
 
   return [
-    ...options.model.doors
-      .filter((door) => door.hasLevel(options.level))
-      .flatMap((door) =>
-        door.buildRenderItems(
-          roomsOnLevel,
-          wallsOnLevel,
-          options.selectedFeatureIds,
-          staircaseWidthByNodeId.get(door.sourceElement.id),
-        ),
-      ),
-    ...staircaseOpenings
-      .filter((opening) => !explicitDoorNodeIds.has(opening.nodeId))
-      .flatMap((opening) => buildGeneratedOpeningRenderItems(opening, options, roomsOnLevel)),
+    {
+      kind: opening.kind,
+      coordinates: opening.orientationGeometry.orientation,
+      symbol: {
+        lineColor: getOpeningLineColor(connectedRooms, options.selectedFeatureIds),
+        lineWidth: getOpeningLineWidth(connectedWalls, connectedRooms),
+      },
+      debug: opening.orientationGeometry.debug,
+    },
   ];
 }
 
-interface OpenStaircaseOpeningNode {
-  nodeId: number;
-  widthMeters: number;
-  footprint: IndoorRoom;
-}
-
-function collectOpenStaircaseOpeningNodes(
-  options: IndoorLevelRenderBuilderOptions,
-  roomsOnLevel: IndoorRoom[],
-): OpenStaircaseOpeningNode[] {
-  const openingsByKey = new Map<string, OpenStaircaseOpeningNode>();
-
-  options.model.verticalConnections
-    .filter(
-      (connection): connection is IndoorVerticalConnection & { footprint: IndoorRoom } =>
-        connection.kind == "open" &&
-        connection.footprint !== undefined &&
-        connection.footprint.hasLevel(options.level),
-    )
-    .forEach((connection) => {
-      const footprintNodeIds = new Set(
-        getRawElementNodeIds(options.model.graphs.indoor, connection.footprint.sourceElement),
-      );
-
-      connection.pathComponents.forEach((component) =>
-        component.pathwayInstances.forEach((pathwayInstance) => {
-          collectPathwayOpeningNodes(
-            pathwayInstance,
-            footprintNodeIds,
-            options.level,
-            connection.footprint,
-          ).forEach((opening) => {
-            const key = `${opening.footprint.id}:${opening.nodeId}`;
-            const previous = openingsByKey.get(key);
-
-            openingsByKey.set(key, {
-              ...opening,
-              widthMeters: Math.max(previous?.widthMeters ?? 0, opening.widthMeters),
-            });
-          });
-        }),
-      );
-    });
-
-  return Array.from(openingsByKey.values()).filter((opening) =>
-    getRoomsContainingNode(options.model.graphs.indoor, roomsOnLevel, opening.nodeId).some(
-      (room) => room.id == opening.footprint.id,
-    ),
-  );
-}
-
-function collectPathwayOpeningNodes(
-  pathwayInstance: IndoorStairPathwayInstance,
-  footprintNodeIds: Set<number>,
-  level: number,
-  footprint: IndoorRoom,
-): OpenStaircaseOpeningNode[] {
-  const geometry = pathwayInstance.source.toLineStringGeometry();
-
-  if (geometry === undefined) {
-    return [];
+function getOpeningLineColor(connectedRooms: IndoorRoom[], selectedFeatureIds: string[]): string {
+  if (connectedRooms.some((room) => selectedFeatureIds.includes(room.id))) {
+    return ColorService.getCurrentColors().roomColorS;
   }
 
-  const pathLevels = getInterpolatedPathLevels(geometry.coordinates, pathwayInstance);
+  const nonCorridorRoom = connectedRooms.find((room) => !isNeutralDoorColorRoomTags(room.tags));
 
-  return pathwayInstance.nodeIds
-    .map((nodeId, index): OpenStaircaseOpeningNode | undefined =>
-      footprintNodeIds.has(nodeId) && isSameLevel(pathLevels[index], level)
-        ? {
-            nodeId,
-            widthMeters: pathwayInstance.source.widthMeters,
-            footprint,
-          }
-        : undefined,
-    )
-    .filter((opening): opening is OpenStaircaseOpeningNode => opening !== undefined);
-}
-
-function buildStaircaseWidthByNodeId(openings: OpenStaircaseOpeningNode[]): Map<number, number> {
-  const widthByNodeId = new Map<number, number>();
-
-  openings.forEach((opening) =>
-    widthByNodeId.set(
-      opening.nodeId,
-      Math.max(widthByNodeId.get(opening.nodeId) ?? 0, opening.widthMeters),
-    ),
-  );
-
-  return widthByNodeId;
-}
-
-function buildGeneratedOpeningRenderItems(
-  opening: OpenStaircaseOpeningNode,
-  options: IndoorLevelRenderBuilderOptions,
-  roomsOnLevel: IndoorRoom[],
-): OpeningRenderItem[] {
-  const node = options.model.graphs.indoor.getNode(opening.nodeId);
-
-  if (node === undefined) {
-    return [];
+  if (connectedRooms.length == 0) {
+    return "#ffffff";
   }
 
-  const connectedRooms = getRoomsContainingNode(
-    options.model.graphs.indoor,
-    roomsOnLevel,
-    opening.nodeId,
-  );
-
-  return buildOpeningRenderItemsForNode({
-    kind: "opening",
-    graph: options.model.graphs.indoor,
-    nodeId: opening.nodeId,
-    coordinate: nodeToPosition(node),
-    tags: {},
-    connectedRooms: [
-      opening.footprint,
-      ...connectedRooms.filter((room) => room.id != opening.footprint.id),
-    ],
-    connectedWalls: [],
-    selectedFeatureIds: options.selectedFeatureIds,
-    fallbackWidthMeters: opening.widthMeters,
-  });
+  return FeatureService.getIndoorFillStyleFromTags(nonCorridorRoom?.tags ?? connectedRooms[0].tags)
+    .polygonFill;
 }
 
-function isSameLevel(a: number | undefined, b: number): boolean {
-  return a !== undefined && Math.abs(a - b) < 0.000001;
+function getOpeningLineWidth(connectedWalls: IndoorWall[], connectedRooms: IndoorRoom[]): number {
+  if (connectedWalls.length > 0) {
+    return FeatureService.getLineWidthFromTags(connectedWalls[0].tags);
+  }
+
+  if (connectedRooms.length > 0) {
+    return FeatureService.getLineWidthFromTags(connectedRooms[0].tags);
+  }
+
+  return 1;
 }
 
 function buildRoomRenderItems(options: IndoorLevelRenderBuilderOptions): RoomRenderItem[] {
@@ -459,7 +350,7 @@ function buildRoomRenderItem(
   room: IndoorRoom,
   options: IndoorLevelRenderBuilderOptions,
 ): RoomRenderItem | undefined {
-  const feature = room.toGeoJsonFeature();
+  const feature = buildElementFeature(room, room.geometry);
 
   if (feature === undefined) {
     return undefined;
@@ -561,4 +452,20 @@ function getRoomLabel(room: IndoorRoom): string | undefined {
   }
 
   return undefined;
+}
+
+function buildElementFeature<TGeometry extends GeoJSON.Geometry>(
+  element: { id: string; tags: Record<string, string> },
+  geometry: TGeometry | undefined,
+): GeoJSON.Feature<TGeometry> | undefined {
+  if (geometry === undefined) {
+    return undefined;
+  }
+
+  return {
+    type: "Feature",
+    id: element.id,
+    properties: { ...element.tags },
+    geometry,
+  };
 }

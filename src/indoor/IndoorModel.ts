@@ -1,5 +1,4 @@
-import { BuildingInterface } from "../models/buildingInterface";
-import { RawOverpassDataResponse } from "../services/httpService";
+import { OverpassJson } from "../models/overpassJson";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
@@ -7,6 +6,7 @@ import { IndoorHandrail } from "./elements/IndoorHandrail";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
+import { IndoorOpening } from "./elements/IndoorOpening";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorStepArea } from "./elements/IndoorStepArea";
@@ -18,21 +18,27 @@ import {
   IndoorVerticalConnection,
 } from "./verticalConnections/IndoorVerticalConnection";
 import { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
+import { buildIndoorOpenings } from "./IndoorOpeningBuilder";
 
 export interface RawOverpassGraphs {
   buildings: OsmGraph;
   indoor: OsmGraph;
 }
 
+export interface RawIndoorModelData {
+  buildings: OverpassJson;
+  indoor: OverpassJson;
+}
+
 export interface IndoorModel {
-  rawOverpassData: RawOverpassDataResponse;
+  rawOverpassData: RawIndoorModelData;
   graphs: RawOverpassGraphs;
-  buildingInterface: BuildingInterface;
   levels: number[];
   levelLabels: Map<number, string>;
   levelOutlines: IndoorLevelOutline[];
   rooms: IndoorRoom[];
   doors: IndoorDoor[];
+  openings: IndoorOpening[];
   handrails: IndoorHandrail[];
   columns: IndoorColumn[];
   infoPoints: IndoorInfoPoint[];
@@ -46,10 +52,7 @@ export interface IndoorModel {
   verticalConnections: IndoorVerticalConnection[];
 }
 
-export function createIndoorModel(
-  rawOverpassData: RawOverpassDataResponse,
-  buildingInterface: BuildingInterface,
-): IndoorModel {
+export function createIndoorModel(rawOverpassData: RawIndoorModelData): IndoorModel {
   const graphs = {
     buildings: new OsmGraph(rawOverpassData.buildings),
     indoor: new OsmGraph(rawOverpassData.indoor),
@@ -72,16 +75,23 @@ export function createIndoorModel(
     rooms,
     stairPathNetwork,
   );
+  const openings = buildIndoorOpenings({
+    graph: graphs.indoor,
+    rooms,
+    walls,
+    doors,
+    verticalConnections,
+  });
 
   return {
     rawOverpassData,
     graphs,
-    buildingInterface,
     levels: collectIndoorLevels(rooms, levelOutlines),
     levelLabels: collectLevelLabels(levelOutlines),
     levelOutlines,
     rooms,
     doors,
+    openings,
     handrails,
     columns,
     infoPoints,

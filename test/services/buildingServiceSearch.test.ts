@@ -323,7 +323,7 @@ interface SearchableElementStub {
   id: string;
   tags: Record<string, string>;
   levels: number[];
-  toGeoJsonFeature: () => GeoJSON.Feature;
+  geometry: GeoJSON.Geometry;
 }
 
 function setSearchableElements(elements: SearchableElementStub[]): void {
@@ -362,12 +362,7 @@ function element(
     id,
     tags,
     levels,
-    toGeoJsonFeature: () => ({
-      type: "Feature",
-      id,
-      properties: tags,
-      geometry,
-    }),
+    geometry,
   };
 }
 

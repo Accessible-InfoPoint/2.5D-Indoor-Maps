@@ -18,15 +18,23 @@ export class IndoorPointFeature extends IndoorElement {
     super(graph, sourceElement);
   }
 
+  get coordinate(): GeoJSON.Position {
+    return nodeToPosition(this.sourceElement);
+  }
+
+  get geometry(): GeoJSON.Point {
+    return {
+      type: "Point",
+      coordinates: this.coordinate,
+    };
+  }
+
   toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.Point> {
     return {
       type: "Feature",
       id: this.id,
       properties: { ...this.tags },
-      geometry: {
-        type: "Point",
-        coordinates: nodeToPosition(this.sourceElement),
-      },
+      geometry: this.geometry,
     };
   }
 }

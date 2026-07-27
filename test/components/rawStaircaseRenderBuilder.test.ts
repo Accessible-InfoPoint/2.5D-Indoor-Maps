@@ -11,10 +11,11 @@ import coordinateHelpers from "../../src/utils/coordinateHelpers";
 
 describe("raw staircase rendering", () => {
   it("builds 3D prism and edge cylinder render items for simple staircase footprints", () => {
-    const model = createIndoorModel(simpleStaircaseData, buildingInterface);
+    const model = createIndoorModel(simpleStaircaseData);
 
     const level0 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -22,6 +23,7 @@ describe("raw staircase rendering", () => {
     });
     const level1 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -38,10 +40,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("builds flat 2D surfaces and 3D span items for free-floating staircases", () => {
-    const model = createIndoorModel(freeFloatingStaircaseData, buildingInterface);
+    const model = createIndoorModel(freeFloatingStaircaseData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -67,10 +70,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("samples area:highway=steps widths for free-floating staircases at diagonal corners", () => {
-    const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData, buildingInterface);
+    const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData);
 
     const level0RenderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -78,6 +82,7 @@ describe("raw staircase rendering", () => {
     });
     const level1RenderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -102,10 +107,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
-    const model = createIndoorModel(staircaseWithPathwayHandrailsData, buildingInterface);
+    const model = createIndoorModel(staircaseWithPathwayHandrailsData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -121,10 +127,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("orients raw footprint handrails in the upward direction", () => {
-    const model = createIndoorModel(staircaseWithFootprintHandrailData, buildingInterface);
+    const model = createIndoorModel(staircaseWithFootprintHandrailData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -146,10 +153,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("uses explicit door nodes for open staircase openings with staircase width fallback", () => {
-    const model = createIndoorModel(staircaseWithDoorOpeningData, buildingInterface);
+    const model = createIndoorModel(staircaseWithDoorOpeningData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -163,10 +171,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("renders explicit landing handrail ways in 3D", () => {
-    const model = createIndoorModel(staircaseWithLandingHandrailData, buildingInterface);
+    const model = createIndoorModel(staircaseWithLandingHandrailData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 0,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -184,10 +193,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("uses node levels for raw staircase path altitudes and interpolates missing node levels", () => {
-    const model = createIndoorModel(staircaseWithNodeLevelsData, buildingInterface);
+    const model = createIndoorModel(staircaseWithNodeLevelsData);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -215,10 +225,11 @@ describe("raw staircase rendering", () => {
   });
 
   it("treats repeated closed staircase path endpoints as the top of the vertical span", () => {
-    const model = createIndoorModel(closedRepeatedStaircaseData, buildingInterface);
+    const model = createIndoorModel(closedRepeatedStaircaseData);
 
     const level1 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 1,
       selectedFeatureIds: [],
       infoPointLevel: 0,
@@ -226,6 +237,7 @@ describe("raw staircase rendering", () => {
     });
     const level2 = buildIndoorLevelRenderModel({
       model,
+      buildingOutlineGeometry: buildingFeature.geometry,
       level: 2,
       selectedFeatureIds: [],
       infoPointLevel: 0,

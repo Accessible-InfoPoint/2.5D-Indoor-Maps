@@ -23,8 +23,12 @@ export class IndoorColumn extends IndoorElement {
     super(graph, sourceElement);
   }
 
+  get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
+    return this.toGeoJsonGeometry();
+  }
+
   toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> | undefined {
-    const geometry = this.toGeoJsonGeometry();
+    const geometry = this.geometry;
 
     if (geometry === undefined) {
       return undefined;

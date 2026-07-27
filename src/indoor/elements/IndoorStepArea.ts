@@ -25,6 +25,10 @@ export class IndoorStepArea extends IndoorElement {
     return getRawElementNodeIds(this.graph, this.sourceElement);
   }
 
+  get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
+    return this.toAreaGeometry();
+  }
+
   toAreaGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     switch (this.sourceElement.type) {
       case "way":

@@ -1,13 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import { createIndoorModel } from "../../src/indoor/IndoorModel";
-import { BuildingInterface } from "../../src/models/buildingInterface";
-import { RawOverpassDataResponse } from "../../src/services/httpService";
+import { createIndoorModel, RawIndoorModelData } from "../../src/indoor/IndoorModel";
 
 describe("IndoorVerticalConnection", () => {
   it("classifies simple, open, and free-floating raw vertical connections", () => {
-    const model = createIndoorModel(rawOverpassData, buildingInterface);
+    const model = createIndoorModel(rawOverpassData);
 
     expect(model.verticalConnections.map((connection) => connection.kind)).toEqual([
       "simple",
@@ -26,10 +24,34 @@ describe("IndoorVerticalConnection", () => {
         ),
       ),
     ).toEqual([["way/100"], ["way/101"], ["way/102"]]);
+    expect(
+      model.openings.map((opening) => ({
+        kind: opening.kind,
+        nodeId: opening.nodeId,
+        levels: opening.levels,
+        connectedRooms: opening.connectedRooms.map((room) => room.id),
+        sources: opening.sources.map((source) => source.role),
+      })),
+    ).toEqual([
+      {
+        kind: "opening",
+        nodeId: 5,
+        levels: [0],
+        connectedRooms: ["way/20"],
+        sources: ["pathway-node", "pathway", "footprint"],
+      },
+      {
+        kind: "opening",
+        nodeId: 6,
+        levels: [1],
+        connectedRooms: ["way/20"],
+        sources: ["pathway-node", "pathway", "footprint"],
+      },
+    ]);
   });
 
   it("groups repeated free-floating stair spans by shared landing instances", () => {
-    const model = createIndoorModel(repeatedFreeFloatingOverpassData, buildingInterface);
+    const model = createIndoorModel(repeatedFreeFloatingOverpassData);
 
     expect(model.verticalConnections.map((connection) => connection.kind)).toEqual([
       "freeFloating",
@@ -56,32 +78,7 @@ describe("IndoorVerticalConnection", () => {
   });
 });
 
-const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
-  type: "Feature",
-  id: "way/1",
-  properties: { building: "university" },
-  geometry: {
-    type: "Polygon",
-    coordinates: [
-      [
-        [0, 0],
-        [1, 0],
-        [1, 1],
-        [0, 0],
-      ],
-    ],
-  },
-};
-
-const buildingInterface: BuildingInterface = {
-  id: "way/1",
-  tags: {},
-  boundingBox: [0, 0, 1, 1],
-  outlineGeometry: buildingFeature.geometry,
-};
-
-const rawOverpassData: RawOverpassDataResponse = {
-  buildingInterface,
+const rawOverpassData: RawIndoorModelData = {
   buildings: {
     elements: [],
   },
@@ -114,8 +111,7 @@ const rawOverpassData: RawOverpassDataResponse = {
   },
 };
 
-const repeatedFreeFloatingOverpassData: RawOverpassDataResponse = {
-  buildingInterface,
+const repeatedFreeFloatingOverpassData: RawIndoorModelData = {
   buildings: {
     elements: [],
   },

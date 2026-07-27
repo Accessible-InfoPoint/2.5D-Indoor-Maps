@@ -24,7 +24,7 @@ export class IndoorWall extends IndoorElement {
     return this.tags.area == "yes";
   }
 
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon> | undefined {
+  get geometry(): GeoJSON.LineString | GeoJSON.Polygon | undefined {
     if (this.graph.getMissingWayNodeIds(this.sourceElement).length > 0) {
       return undefined;
     }
@@ -32,7 +32,7 @@ export class IndoorWall extends IndoorElement {
     const coordinates = this.graph.getWayNodes(this.sourceElement).map(nodeToPosition);
 
     if (this.isAreaWall) {
-      return this.toPolygonFeature(coordinates);
+      return this.toPolygonGeometry(coordinates);
     }
 
     if (coordinates.length < 2) {
@@ -40,19 +40,27 @@ export class IndoorWall extends IndoorElement {
     }
 
     return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry: {
-        type: "LineString",
-        coordinates,
-      },
+      type: "LineString",
+      coordinates,
     };
   }
 
-  private toPolygonFeature(
-    coordinates: GeoJSON.Position[],
-  ): GeoJSON.Feature<GeoJSON.Polygon> | undefined {
+  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon> | undefined {
+    const geometry = this.geometry;
+
+    if (geometry === undefined) {
+      return undefined;
+    }
+
+    return {
+      type: "Feature",
+      id: this.id,
+      properties: { ...this.tags },
+      geometry,
+    };
+  }
+
+  private toPolygonGeometry(coordinates: GeoJSON.Position[]): GeoJSON.Polygon | undefined {
     if (coordinates.length < 3) {
       return undefined;
     }
@@ -60,13 +68,8 @@ export class IndoorWall extends IndoorElement {
     const ring = closeRing(coordinates);
 
     return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry: {
-        type: "Polygon",
-        coordinates: [ring],
-      },
+      type: "Polygon",
+      coordinates: [ring],
     };
   }
 }

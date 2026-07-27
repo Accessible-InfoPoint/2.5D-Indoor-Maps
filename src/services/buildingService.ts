@@ -311,38 +311,32 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
 
   return [
     ...model.rooms.map((room) => {
-      const feature = room.toGeoJsonFeature();
-
       return {
         elementRef: createIndoorElementRef({
           id: room.id,
           tags: room.tags,
           levels: room.levels,
-          geometry: feature?.geometry,
+          geometry: room.geometry,
         }),
       };
     }),
     ...model.pointFeatures.map((pointFeature) => {
-      const feature = pointFeature.toGeoJsonFeature();
-
       return {
         elementRef: createIndoorElementRef({
           id: pointFeature.id,
           tags: pointFeature.tags,
           levels: pointFeature.levels,
-          geometry: feature.geometry,
+          geometry: pointFeature.geometry,
         }),
       };
     }),
     ...model.infoPoints.map((infoPoint) => {
-      const feature = infoPoint.toGeoJsonFeature();
-
       return {
         elementRef: createIndoorElementRef({
           id: infoPoint.id,
           tags: infoPoint.tags,
           levels: infoPoint.levels,
-          geometry: feature.geometry,
+          geometry: infoPoint.geometry,
         }),
       };
     }),
