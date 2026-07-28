@@ -1,8 +1,10 @@
-import { IndoorLanding } from "../../src/indoor/elements/IndoorLanding";
-import { IndoorStairPathway } from "../../src/indoor/elements/IndoorStairPathway";
-import { IndoorStairPathNetwork } from "../../src/indoor/verticalConnections/IndoorStairPathNetwork";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import {
+  IndoorLanding,
+  IndoorStairPathNetwork,
+  IndoorStairPathway,
+  OsmGraph,
+  OverpassJson,
+} from "../../src/indoor";
 
 describe("IndoorStairPathNetwork", () => {
   it("groups pathways connected end to end by raw node ids", () => {

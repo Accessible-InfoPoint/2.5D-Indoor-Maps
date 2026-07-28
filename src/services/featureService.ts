@@ -5,7 +5,7 @@ import { FILL_OPACITY, WALL_WEIGHT, WALL_WEIGHT_PAVING } from "../../public/stri
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
-import { indoorAccessibilityRules } from "../indoor/indoorAccessibilityRules";
+import { indoorAccessibilityRules } from "../data/indoorAccessibilityRules";
 import { IndoorElementRef } from "../models/indoorElementRef";
 import {
   IndoorTags,
@@ -13,7 +13,7 @@ import {
   isRoomTags,
   isStaircaseTags,
   isToiletTags,
-} from "../indoor/indoorTagFilters";
+} from "../indoor";
 import ColorService from "./colorService";
 import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";
 

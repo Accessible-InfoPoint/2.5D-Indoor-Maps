@@ -1,13 +1,16 @@
-import { IndoorModel } from "../../indoor/IndoorModel";
-import { IndoorOpening } from "../../indoor/elements/IndoorOpening";
-import { IndoorColumn } from "../../indoor/elements/IndoorColumn";
-import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
-import { IndoorInfoPoint } from "../../indoor/elements/IndoorInfoPoint";
-import { IndoorPointFeature } from "../../indoor/elements/IndoorPointFeature";
-import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
-import { IndoorTactilePaving } from "../../indoor/elements/IndoorTactilePaving";
-import { IndoorWall } from "../../indoor/elements/IndoorWall";
-import { isNeutralDoorColorRoomTags, isRoomLabelEligibleTags } from "../../indoor/indoorTagFilters";
+import {
+  IndoorColumn,
+  IndoorHandrail,
+  IndoorInfoPoint,
+  IndoorModel,
+  IndoorOpening,
+  IndoorPointFeature,
+  IndoorRoom,
+  IndoorTactilePaving,
+  IndoorWall,
+  isNeutralDoorColorRoomTags,
+  isRoomLabelEligibleTags,
+} from "../../indoor";
 import { createIndoorElementRef } from "../../models/indoorElementRef";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import ColorService from "../../services/colorService";

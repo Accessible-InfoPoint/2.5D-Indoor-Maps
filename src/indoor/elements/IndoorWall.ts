@@ -25,7 +25,13 @@ export class IndoorWall extends IndoorElement {
   }
 
   get geometry(): GeoJSON.LineString | GeoJSON.Polygon | undefined {
-    if (this.graph.getMissingWayNodeIds(this.sourceElement).length > 0) {
+    const missingNodeIds = this.graph.getMissingWayNodeIds(this.sourceElement);
+
+    if (missingNodeIds.length > 0) {
+      this.warnGeometryIssue(
+        "missing-nodes",
+        `Cannot build wall geometry for ${this.id}: missing node(s) ${missingNodeIds.join(", ")}.`,
+      );
       return undefined;
     }
 
@@ -36,6 +42,10 @@ export class IndoorWall extends IndoorElement {
     }
 
     if (coordinates.length < 2) {
+      this.warnGeometryIssue(
+        "short-linestring",
+        `Cannot build wall line geometry for ${this.id}: at least two coordinates are required.`,
+      );
       return undefined;
     }
 
@@ -45,23 +55,12 @@ export class IndoorWall extends IndoorElement {
     };
   }
 
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon> | undefined {
-    const geometry = this.geometry;
-
-    if (geometry === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry,
-    };
-  }
-
   private toPolygonGeometry(coordinates: GeoJSON.Position[]): GeoJSON.Polygon | undefined {
     if (coordinates.length < 3) {
+      this.warnGeometryIssue(
+        "short-polygon",
+        `Cannot build area wall geometry for ${this.id}: at least three coordinates are required.`,
+      );
       return undefined;
     }
 

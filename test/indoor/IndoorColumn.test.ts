@@ -1,6 +1,4 @@
-import { IndoorColumn } from "../../src/indoor/elements/IndoorColumn";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorColumn, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorColumn", () => {
   it("collects node, way, and relation columns", () => {
@@ -16,13 +14,12 @@ describe("IndoorColumn", () => {
   it("approximates a node column as a closed polygon", () => {
     const graph = new OsmGraph(columnFixture);
     const column = new IndoorColumn(graph, graph.getNode(1)!);
-    const feature = column.toGeoJsonFeature();
 
-    expect(feature?.id).toBe("node/1");
-    expect(feature?.properties).toEqual({ indoor: "column", level: "0", diameter: "1" });
-    expect(feature?.geometry.type).toBe("Polygon");
+    expect(column.id).toBe("node/1");
+    expect(column.tags).toEqual({ indoor: "column", level: "0", diameter: "1" });
+    expect(column.geometry?.type).toBe("Polygon");
 
-    const ring = (feature?.geometry as GeoJSON.Polygon).coordinates[0];
+    const ring = (column.geometry as GeoJSON.Polygon).coordinates[0];
 
     expect(ring).toHaveLength(25);
     expect(ring[0]).toEqual(ring.at(-1));
@@ -35,7 +32,7 @@ describe("IndoorColumn", () => {
     const wayColumn = new IndoorColumn(graph, graph.getWay(10)!);
     const relationColumn = new IndoorColumn(graph, graph.getRelation(20)!);
 
-    expect(wayColumn.toGeoJsonFeature()?.geometry).toEqual({
+    expect(wayColumn.geometry).toEqual({
       type: "Polygon",
       coordinates: [
         [
@@ -46,7 +43,7 @@ describe("IndoorColumn", () => {
         ],
       ],
     });
-    expect(relationColumn.toGeoJsonFeature()?.geometry.type).toBe("Polygon");
+    expect(relationColumn.geometry?.type).toBe("Polygon");
   });
 });
 

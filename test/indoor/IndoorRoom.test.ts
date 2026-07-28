@@ -1,6 +1,4 @@
-import { IndoorRoom } from "../../src/indoor/elements/IndoorRoom";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorRoom, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorRoom", () => {
   it("collects raw room, corridor, and area elements as rooms", () => {
@@ -14,29 +12,26 @@ describe("IndoorRoom", () => {
     ]);
   });
 
-  it("creates a polygon feature from a room way", () => {
+  it("creates polygon geometry from a room way", () => {
     const graph = new OsmGraph(roomFixture);
     const room = new IndoorRoom(graph, graph.getWay(10)!);
 
-    expect(room.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "way/10",
-      properties: {
-        indoor: "room",
-        level: "0",
-        name: "Room A",
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [13, 51],
-            [13.1, 51],
-            [13.1, 51.1],
-            [13, 51],
-          ],
+    expect(room.id).toBe("way/10");
+    expect(room.tags).toEqual({
+      indoor: "room",
+      level: "0",
+      name: "Room A",
+    });
+    expect(room.geometry).toEqual({
+      type: "Polygon",
+      coordinates: [
+        [
+          [13, 51],
+          [13.1, 51],
+          [13.1, 51.1],
+          [13, 51],
         ],
-      },
+      ],
     });
   });
 
@@ -44,7 +39,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(roomFixture);
     const room = new IndoorRoom(graph, graph.getWay(11)!);
 
-    expect(room.toGeoJsonFeature()?.geometry.coordinates[0]).toEqual([
+    expect(room.geometry?.coordinates[0]).toEqual([
       [13, 51],
       [13.1, 51],
       [13.1, 51.1],
@@ -62,11 +57,11 @@ describe("IndoorRoom", () => {
     expect(room.hasLevel(0)).toBe(false);
   });
 
-  it("creates a polygon feature from a one-outer relation", () => {
+  it("creates polygon geometry from a one-outer relation", () => {
     const graph = new OsmGraph(roomFixture);
     const room = new IndoorRoom(graph, graph.getRelation(100)!);
 
-    expect(room.toGeoJsonFeature()?.geometry).toEqual({
+    expect(room.geometry).toEqual({
       type: "Polygon",
       coordinates: [
         [
@@ -83,7 +78,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(relationFixture);
     const room = new IndoorRoom(graph, graph.getRelation(200)!);
 
-    expect(room.toGeoJsonFeature()?.geometry).toEqual({
+    expect(room.geometry).toEqual({
       type: "Polygon",
       coordinates: [
         [
@@ -115,7 +110,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(relationFixture);
     const room = new IndoorRoom(graph, graph.getRelation(201)!);
 
-    expect(room.toGeoJsonFeature()?.geometry).toEqual({
+    expect(room.geometry).toEqual({
       type: "Polygon",
       coordinates: [
         [
@@ -133,7 +128,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(relationFixture);
     const room = new IndoorRoom(graph, graph.getRelation(202)!);
 
-    expect(room.toGeoJsonFeature()?.geometry).toEqual({
+    expect(room.geometry).toEqual({
       type: "MultiPolygon",
       coordinates: [
         [
@@ -162,8 +157,8 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(unsupportedFixture);
     const room = new IndoorRoom(graph, graph.getWay(300)!);
 
-    expect(room.toGeoJsonFeature()).toBeUndefined();
-    expect(room.toGeoJsonFeature()).toBeUndefined();
+    expect(room.geometry).toBeUndefined();
+    expect(room.geometry).toBeUndefined();
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(warnSpy).toHaveBeenCalledWith(
@@ -178,7 +173,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(unsupportedFixture);
     const room = new IndoorRoom(graph, graph.getRelation(301)!);
 
-    expect(room.toGeoJsonFeature()).toBeUndefined();
+    expect(room.geometry).toBeUndefined();
 
     expect(warnSpy.mock.calls.map(([message]) => message)).toEqual([
       "[IndoorRoom] Ignoring 1 way member(s) in room relation relation/301: only outer and inner roles are supported.",
@@ -194,7 +189,7 @@ describe("IndoorRoom", () => {
     const graph = new OsmGraph(unsupportedFixture);
     const room = new IndoorRoom(graph, graph.getRelation(302)!);
 
-    expect(room.toGeoJsonFeature()?.geometry.type).toBe("Polygon");
+    expect(room.geometry?.type).toBe("Polygon");
 
     expect(warnSpy).toHaveBeenCalledWith(
       "[IndoorRoom] Ignoring inner ring in room relation relation/302: it is not contained by any outer ring.",

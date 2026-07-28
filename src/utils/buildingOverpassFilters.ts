@@ -1,4 +1,4 @@
-import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoor/indoorAreaGeometry";
+import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoor";
 import { BuildingInterface } from "../models/buildingInterface";
 import { OverpassElement, OverpassJson } from "../models/overpassJson";
 import { OsmGraph } from "../overpass/OsmGraph";

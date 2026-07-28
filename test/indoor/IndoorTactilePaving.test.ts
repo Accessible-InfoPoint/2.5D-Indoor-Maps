@@ -1,6 +1,4 @@
-import { IndoorTactilePaving } from "../../src/indoor/elements/IndoorTactilePaving";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorTactilePaving, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorTactilePaving", () => {
   it("collects tactile paving ways from the graph", () => {
@@ -11,22 +9,19 @@ describe("IndoorTactilePaving", () => {
     ]);
   });
 
-  it("creates a line feature from a tactile paving way", () => {
+  it("creates line geometry from a tactile paving way", () => {
     const graph = new OsmGraph(tactilePavingFixture);
     const tactilePaving = IndoorTactilePaving.collectFromGraph(graph)[0];
 
-    expect(tactilePaving.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "way/10",
-      properties: { indoor: "yes", tactile_paving: "yes", level: "0" },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [13, 51],
-          [13.1, 51],
-          [13.1, 51.1],
-        ],
-      },
+    expect(tactilePaving.id).toBe("way/10");
+    expect(tactilePaving.tags).toEqual({ indoor: "yes", tactile_paving: "yes", level: "0" });
+    expect(tactilePaving.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13, 51],
+        [13.1, 51],
+        [13.1, 51.1],
+      ],
     });
   });
 });

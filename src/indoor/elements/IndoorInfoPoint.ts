@@ -28,13 +28,4 @@ export class IndoorInfoPoint extends IndoorElement {
       coordinates: this.coordinate,
     };
   }
-
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.Point> {
-    return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry: this.geometry,
-    };
-  }
 }

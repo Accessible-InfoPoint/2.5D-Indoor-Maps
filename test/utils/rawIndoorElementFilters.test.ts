@@ -1,9 +1,9 @@
-import { OverpassElement } from "../../src/models/overpassJson";
+import { OverpassElement } from "../../src/indoor";
 import {
   contributesToIndoorLevels,
   isRawIndoorHandrailElement,
   isRawIndoorStepAreaElement,
-} from "../../src/indoor/rawIndoorElementFilters";
+} from "../../src/indoor";
 
 describe("contributesToIndoorLevels", () => {
   it.each(["room", "corridor", "area"])("returns true for indoor=%s ways", (indoor) => {

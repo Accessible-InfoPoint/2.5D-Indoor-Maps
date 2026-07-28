@@ -1,6 +1,4 @@
-import { IndoorStepArea } from "../../src/indoor/elements/IndoorStepArea";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorStepArea, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorStepArea", () => {
   it("collects area:highway=steps ways from the raw graph", () => {
@@ -13,7 +11,7 @@ describe("IndoorStepArea", () => {
     expect(stepAreas[0].nodeIds).toEqual([1, 2, 3, 1]);
   });
 
-  it("returns area geometry for width sampling without producing GeoJSON features", () => {
+  it("returns area geometry for width sampling", () => {
     const graph = new OsmGraph(stepAreaFixture);
     const stepArea = IndoorStepArea.collectFromGraph(graph)[0];
 
@@ -28,7 +26,6 @@ describe("IndoorStepArea", () => {
         ],
       ],
     });
-    expect(stepArea.toGeoJsonFeature()).toBeUndefined();
   });
 });
 

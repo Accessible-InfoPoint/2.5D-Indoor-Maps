@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { createIndoorModel } from "../../src/indoor/IndoorModel";
+import { createIndoorModel } from "../../src/indoor";
 import { BuildingInterface } from "../../src/models/buildingInterface";
 import { UserGroupEnum } from "../../src/models/userGroupEnum";
 import { RawOverpassDataResponse } from "../../src/services/httpService";

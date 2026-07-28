@@ -51,10 +51,6 @@ export class IndoorLanding extends IndoorElement {
     }
   }
 
-  toGeoJsonFeature(): undefined {
-    return undefined;
-  }
-
   private getAreaGeometryOptions() {
     return {
       graph: this.graph,

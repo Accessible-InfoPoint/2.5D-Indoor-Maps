@@ -1,6 +1,4 @@
-import { IndoorHandrail } from "../../src/indoor/elements/IndoorHandrail";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorHandrail, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorHandrail", () => {
   it("collects raw barrier=handrail ways from the graph", () => {
@@ -11,21 +9,18 @@ describe("IndoorHandrail", () => {
     ]);
   });
 
-  it("creates a line feature from a handrail way", () => {
+  it("creates line geometry from a handrail way", () => {
     const graph = new OsmGraph(handrailFixture);
     const handrail = IndoorHandrail.collectFromGraph(graph)[0];
 
-    expect(handrail.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "way/10",
-      properties: { barrier: "handrail", level: "0" },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [13, 51],
-          [13.1, 51],
-        ],
-      },
+    expect(handrail.id).toBe("way/10");
+    expect(handrail.tags).toEqual({ barrier: "handrail", level: "0" });
+    expect(handrail.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13, 51],
+        [13.1, 51],
+      ],
     });
   });
 

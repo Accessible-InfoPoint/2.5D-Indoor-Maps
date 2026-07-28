@@ -1,6 +1,6 @@
 import { IndoorElementRef } from "../../models/indoorElementRef";
 import { AccessibilityMarkerData } from "../../services/featureService";
-import { OpeningOrientationDebugData } from "../../indoor/openingOrientation";
+import { OpeningOrientationDebugData } from "../../indoor";
 
 export interface StyledFeatureRenderItem {
   feature: GeoJSON.Feature;

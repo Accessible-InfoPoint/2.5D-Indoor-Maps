@@ -1,11 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { IndoorDoor } from "../../src/indoor/elements/IndoorDoor";
-import { IndoorRoom } from "../../src/indoor/elements/IndoorRoom";
-import { IndoorWall } from "../../src/indoor/elements/IndoorWall";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorDoor, IndoorRoom, IndoorWall, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorDoor", () => {
   it("collects door nodes from the raw graph", () => {
@@ -81,9 +77,14 @@ describe("IndoorDoor", () => {
     expect(door.getConnectedWalls(walls)).toEqual([]);
     expect(door.toOpening([], walls)).toBeUndefined();
 
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy).toHaveBeenCalledWith(
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenNthCalledWith(
+      1,
       "[IndoorDoor] Cannot connect door node/20 to area wall way/20: area walls are renderable areas, not pass-through wall lines.",
+    );
+    expect(warnSpy).toHaveBeenNthCalledWith(
+      2,
+      "[IndoorOpening] Cannot build door node/20 at node/20: no connected room or wall was found.",
     );
 
     warnSpy.mockRestore();

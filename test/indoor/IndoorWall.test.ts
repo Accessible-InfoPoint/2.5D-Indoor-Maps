@@ -1,6 +1,4 @@
-import { IndoorWall } from "../../src/indoor/elements/IndoorWall";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorWall, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorWall", () => {
   it("collects raw wall ways from the graph", () => {
@@ -9,44 +7,38 @@ describe("IndoorWall", () => {
     expect(IndoorWall.collectFromGraph(graph).map((wall) => wall.id)).toEqual(["way/10", "way/12"]);
   });
 
-  it("creates a line feature from a wall way", () => {
+  it("creates line geometry from a wall way", () => {
     const graph = new OsmGraph(wallFixture);
     const wall = IndoorWall.collectFromGraph(graph)[0];
 
-    expect(wall.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "way/10",
-      properties: { indoor: "wall", level: "0" },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [13, 51],
-          [13.1, 51],
-        ],
-      },
+    expect(wall.id).toBe("way/10");
+    expect(wall.tags).toEqual({ indoor: "wall", level: "0" });
+    expect(wall.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13, 51],
+        [13.1, 51],
+      ],
     });
   });
 
-  it("creates a polygon feature from an area wall way", () => {
+  it("creates polygon geometry from an area wall way", () => {
     const graph = new OsmGraph(wallFixture);
     const areaWall = IndoorWall.collectFromGraph(graph)[1];
 
     expect(areaWall.isAreaWall).toBe(true);
-    expect(areaWall.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "way/12",
-      properties: { indoor: "wall", area: "yes", level: "0" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [13, 51],
-            [13.1, 51],
-            [13.1, 51.1],
-            [13, 51],
-          ],
+    expect(areaWall.id).toBe("way/12");
+    expect(areaWall.tags).toEqual({ indoor: "wall", area: "yes", level: "0" });
+    expect(areaWall.geometry).toEqual({
+      type: "Polygon",
+      coordinates: [
+        [
+          [13, 51],
+          [13.1, 51],
+          [13.1, 51.1],
+          [13, 51],
         ],
-      },
+      ],
     });
   });
 });

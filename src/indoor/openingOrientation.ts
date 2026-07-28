@@ -26,6 +26,9 @@ export function calculateOpeningOrientationGeometry(
   const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, openingCoord);
 
   if (prevDist == 0 || afterDist == 0) {
+    console.warn(
+      "[OpeningOrientation] Cannot calculate opening orientation: the opening coordinate is identical to a neighboring coordinate.",
+    );
     return undefined;
   }
 

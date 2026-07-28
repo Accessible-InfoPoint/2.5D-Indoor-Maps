@@ -1,8 +1,7 @@
 import AccessibilityService from "./accessibilityService";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
-import { IndoorElement } from "../indoor/elements/IndoorElement";
-import { IndoorTags } from "../indoor/indoorTagFilters";
+import { IndoorElement, IndoorTags } from "../indoor";
 
 export interface LevelOption {
   level: number;

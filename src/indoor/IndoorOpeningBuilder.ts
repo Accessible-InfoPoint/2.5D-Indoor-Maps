@@ -121,6 +121,9 @@ function collectPathwayOpeningNodes(
   const geometry = pathwayInstance.source.geometry;
 
   if (geometry === undefined) {
+    console.warn(
+      `[IndoorOpeningBuilder] Cannot infer openings for stair pathway ${pathwayInstance.source.id}: pathway geometry is unavailable.`,
+    );
     return [];
   }
 
@@ -153,6 +156,9 @@ function buildInferredStaircaseOpening(
   const node = options.graph.getNode(opening.nodeId);
 
   if (node === undefined) {
+    console.warn(
+      `[IndoorOpeningBuilder] Cannot build inferred staircase opening for ${opening.footprint.id} at node/${opening.nodeId}: node is missing from the OSM graph.`,
+    );
     return undefined;
   }
 

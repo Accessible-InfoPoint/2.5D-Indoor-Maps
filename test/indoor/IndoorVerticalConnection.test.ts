@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { createIndoorModel, RawIndoorModelData } from "../../src/indoor/IndoorModel";
+import { createIndoorModel, RawIndoorModelData } from "../../src/indoor";
 
 describe("IndoorVerticalConnection", () => {
   it("classifies simple, open, and free-floating raw vertical connections", () => {

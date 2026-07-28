@@ -36,18 +36,6 @@ export class IndoorDoor extends IndoorElement {
     };
   }
 
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.Point> {
-    return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry: {
-        type: "Point",
-        coordinates: this.coordinate,
-      },
-    };
-  }
-
   getConnectedRooms(rooms: IndoorRoom[]): IndoorRoom[] {
     return getRoomsContainingNode(this.graph, rooms, this.sourceElement.id);
   }

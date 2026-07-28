@@ -1,6 +1,4 @@
-import { IndoorInfoPoint } from "../../src/indoor/elements/IndoorInfoPoint";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorInfoPoint, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorInfoPoint", () => {
   it("collects tactile map information nodes from the graph", () => {
@@ -11,18 +9,15 @@ describe("IndoorInfoPoint", () => {
     ]);
   });
 
-  it("creates a point feature from an information node", () => {
+  it("creates point geometry from an information node", () => {
     const graph = new OsmGraph(infoPointFixture);
     const infoPoint = IndoorInfoPoint.collectFromGraph(graph)[0];
 
-    expect(infoPoint.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "node/10",
-      properties: { information: "tactile_map", level: "0" },
-      geometry: {
-        type: "Point",
-        coordinates: [13, 51],
-      },
+    expect(infoPoint.id).toBe("node/10");
+    expect(infoPoint.tags).toEqual({ information: "tactile_map", level: "0" });
+    expect(infoPoint.geometry).toEqual({
+      type: "Point",
+      coordinates: [13, 51],
     });
   });
 });

@@ -1,6 +1,4 @@
-import { IndoorLevelOutline } from "../../src/indoor/elements/IndoorLevelOutline";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorLevelOutline, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorLevelOutline", () => {
   it("collects indoor=level ways and exposes level:ref labels", () => {

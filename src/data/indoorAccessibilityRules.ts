@@ -16,7 +16,7 @@ import {
   isStepsTags,
   isTactileInformationTags,
   isWheelchairAccessibleElevatorTags,
-} from "./indoorTagFilters";
+} from "../indoor";
 
 export type IndoorAccessibilityRuleMessage =
   string | ((tags: IndoorTags) => string | null | undefined);

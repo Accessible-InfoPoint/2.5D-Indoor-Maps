@@ -1,7 +1,7 @@
 import { levelAccessibilityProperties } from "../data/levelAccessibilityProperties";
 import UserService from "./userService";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
-import { IndoorTags } from "../indoor/indoorTagFilters";
+import { IndoorTags } from "../indoor";
 
 const propertiesByLevel = new Map<number, string>();
 

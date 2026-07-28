@@ -1,8 +1,8 @@
 import {
   IndoorAccessibilityRule,
   indoorAccessibilityRules,
-} from "../indoor/indoorAccessibilityRules";
-import { IndoorTags } from "../indoor/indoorTagFilters";
+} from "../data/indoorAccessibilityRules";
+import { IndoorTags } from "../indoor";
 import UserService from "../services/userService";
 
 export function accessibilityDescriptionFromTags(

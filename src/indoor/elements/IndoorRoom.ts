@@ -32,31 +32,20 @@ export class IndoorRoom extends IndoorElement {
   }
 
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
-    return this.toGeoJsonGeometry();
+    return this.toGeometry();
   }
 
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> | undefined {
-    const geometry = this.geometry;
-
-    if (geometry === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry,
-    };
-  }
-
-  private toGeoJsonGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
+  private toGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     switch (this.sourceElement.type) {
       case "way":
         return getWayPolygonGeometry(this.sourceElement, this.getAreaGeometryOptions());
       case "relation":
         return getRelationAreaGeometry(this.sourceElement, this.getAreaGeometryOptions());
       case "node":
+        this.warnGeometryIssue(
+          "node-geometry",
+          `Cannot build room geometry for ${this.id}: rooms must be mapped as ways or relations, not nodes.`,
+        );
         return undefined;
     }
   }

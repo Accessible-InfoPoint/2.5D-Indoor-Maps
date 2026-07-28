@@ -1,5 +1,5 @@
 import { BuildingInterface } from "../models/buildingInterface";
-import { createIndoorModel, IndoorModel, RawOverpassGraphs } from "../indoor/IndoorModel";
+import { createIndoorModel, IndoorModel, RawOverpassGraphs } from "../indoor";
 import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";

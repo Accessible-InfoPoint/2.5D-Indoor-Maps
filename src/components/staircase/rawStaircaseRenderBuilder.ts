@@ -1,16 +1,16 @@
 import { LEVEL_HEIGHT } from "../../../public/strings/settings.json";
-import { IndoorHandrail } from "../../indoor/elements/IndoorHandrail";
-import { IndoorLanding } from "../../indoor/elements/IndoorLanding";
-import { IndoorRoom } from "../../indoor/elements/IndoorRoom";
-import { IndoorStepArea } from "../../indoor/elements/IndoorStepArea";
 import {
+  getInterpolatedPathLevels,
+  IndoorHandrail,
+  IndoorLanding,
   IndoorLandingInstance,
+  IndoorRoom,
   IndoorStairPathNetworkComponent,
   IndoorStairPathwayInstance,
-} from "../../indoor/verticalConnections/IndoorStairPathNetwork";
-import { IndoorVerticalConnection } from "../../indoor/verticalConnections/IndoorVerticalConnection";
-import { VerticalSpan } from "../../indoor/verticalConnections/VerticalSpan";
-import { getInterpolatedPathLevels } from "../../indoor/verticalConnections/pathLevelInterpolation";
+  IndoorStepArea,
+  IndoorVerticalConnection,
+  VerticalSpan,
+} from "../../indoor";
 import { createIndoorElementRef } from "../../models/indoorElementRef";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";

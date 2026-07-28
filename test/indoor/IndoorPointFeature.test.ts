@@ -1,6 +1,4 @@
-import { IndoorPointFeature } from "../../src/indoor/elements/IndoorPointFeature";
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { IndoorPointFeature, OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("IndoorPointFeature", () => {
   it("collects marker-relevant point features from the graph", () => {
@@ -11,18 +9,15 @@ describe("IndoorPointFeature", () => {
     ).toEqual(["node/10"]);
   });
 
-  it("creates a point feature from a point node", () => {
+  it("creates point geometry from a point node", () => {
     const graph = new OsmGraph(pointFeatureFixture);
     const pointFeature = IndoorPointFeature.collectFromGraph(graph)[0];
 
-    expect(pointFeature.toGeoJsonFeature()).toEqual({
-      type: "Feature",
-      id: "node/10",
-      properties: { amenity: "toilets", level: "0" },
-      geometry: {
-        type: "Point",
-        coordinates: [13, 51],
-      },
+    expect(pointFeature.id).toBe("node/10");
+    expect(pointFeature.tags).toEqual({ amenity: "toilets", level: "0" });
+    expect(pointFeature.geometry).toEqual({
+      type: "Point",
+      coordinates: [13, 51],
     });
   });
 });

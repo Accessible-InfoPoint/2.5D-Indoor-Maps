@@ -51,6 +51,9 @@ export function buildIndoorOpeningForNode(options: {
   fallbackWidthMeters?: number;
 }): IndoorOpening | undefined {
   if (options.connectedRooms.length == 0 && options.connectedWalls.length == 0) {
+    console.warn(
+      `[IndoorOpening] Cannot build ${options.kind} ${options.id} at node/${options.nodeId}: no connected room or wall was found.`,
+    );
     return undefined;
   }
 

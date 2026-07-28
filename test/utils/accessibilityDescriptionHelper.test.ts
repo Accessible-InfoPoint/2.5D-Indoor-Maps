@@ -4,7 +4,7 @@
 import { accessibilityDescriptionFromTags } from "../../src/utils/accessibilityDescriptionHelper";
 import UserService from "../../src/services/userService";
 import { UserGroupEnum } from "../../src/models/userGroupEnum";
-import { IndoorAccessibilityRule } from "../../src/indoor/indoorAccessibilityRules";
+import { IndoorAccessibilityRule } from "../../src/data/indoorAccessibilityRules";
 
 jest.mock("../../src/services/userService");
 

@@ -3,6 +3,8 @@ import { OsmGraph } from "../../overpass/OsmGraph";
 import { extractLevels } from "../../utils/extractLevels";
 
 export abstract class IndoorElement {
+  private static readonly emittedGeometryWarnings = new Set<string>();
+
   readonly id: string;
   readonly tags: Record<string, string>;
 
@@ -22,5 +24,16 @@ export abstract class IndoorElement {
 
   hasLevel(level: number): boolean {
     return this.levels.includes(level);
+  }
+
+  protected warnGeometryIssue(code: string, message: string): void {
+    const warningKey = `${this.constructor.name}:${this.id}:${code}`;
+
+    if (IndoorElement.emittedGeometryWarnings.has(warningKey)) {
+      return;
+    }
+
+    IndoorElement.emittedGeometryWarnings.add(warningKey);
+    console.warn(`[${this.constructor.name}] ${message}`);
   }
 }

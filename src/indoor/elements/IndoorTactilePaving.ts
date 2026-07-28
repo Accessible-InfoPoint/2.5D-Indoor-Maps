@@ -19,34 +19,29 @@ export class IndoorTactilePaving extends IndoorElement {
   }
 
   get geometry(): GeoJSON.LineString | undefined {
-    if (this.graph.getMissingWayNodeIds(this.sourceElement).length > 0) {
+    const missingNodeIds = this.graph.getMissingWayNodeIds(this.sourceElement);
+
+    if (missingNodeIds.length > 0) {
+      this.warnGeometryIssue(
+        "missing-nodes",
+        `Cannot build tactile paving geometry for ${this.id}: missing node(s) ${missingNodeIds.join(", ")}.`,
+      );
       return undefined;
     }
 
     const coordinates = this.graph.getWayNodes(this.sourceElement).map(nodeToPosition);
 
     if (coordinates.length < 2) {
+      this.warnGeometryIssue(
+        "short-linestring",
+        `Cannot build tactile paving geometry for ${this.id}: at least two coordinates are required.`,
+      );
       return undefined;
     }
 
     return {
       type: "LineString",
       coordinates,
-    };
-  }
-
-  toGeoJsonFeature(): GeoJSON.Feature<GeoJSON.LineString> | undefined {
-    const geometry = this.geometry;
-
-    if (geometry === undefined) {
-      return undefined;
-    }
-
-    return {
-      type: "Feature",
-      id: this.id,
-      properties: { ...this.tags },
-      geometry,
     };
   }
 }
