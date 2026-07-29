@@ -1,5 +1,5 @@
-import { OverpassRelation, OverpassWay } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
+import { OverpassRelation, OverpassWay } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { getRawElementNodeIds } from "../rawElementNodeIds";
 import { isRawIndoorStepAreaElement } from "../rawIndoorElementFilters";

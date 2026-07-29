@@ -1,5 +1,5 @@
-import { OverpassJson } from "../models/overpassJson";
-import { OsmGraph } from "../overpass/OsmGraph";
+import { OverpassJson } from "./models/overpassJson";
+import { OsmGraph } from "./overpass/OsmGraph";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorHandrail } from "./elements/IndoorHandrail";

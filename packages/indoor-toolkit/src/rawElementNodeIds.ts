@@ -1,5 +1,5 @@
-import { OverpassElement, OverpassRelation, OverpassWay } from "../models/overpassJson";
-import { OsmGraph } from "../overpass/OsmGraph";
+import { OverpassElement, OverpassRelation, OverpassWay } from "./models/overpassJson";
+import { OsmGraph } from "./overpass/OsmGraph";
 
 export function getRawElementNodeIds(graph: OsmGraph, element: OverpassElement): number[] {
   switch (element.type) {

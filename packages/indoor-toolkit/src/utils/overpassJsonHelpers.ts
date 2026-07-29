@@ -4,7 +4,7 @@ import {
   OverpassNode,
   OverpassRelation,
   OverpassWay,
-} from "../indoor";
+} from "../models/overpassJson";
 
 export function isOverpassJson(value: unknown): value is OverpassJson {
   return (

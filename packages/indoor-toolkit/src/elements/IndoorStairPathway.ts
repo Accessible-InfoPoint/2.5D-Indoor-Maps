@@ -1,8 +1,8 @@
-import { OverpassWay } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
-import { extractLevels } from "../../utils/extractLevels";
-import { nodeToPosition } from "../../utils/overpassJsonHelpers";
-import { parsePositiveMeters } from "../../utils/tagValueHelpers";
+import { OverpassWay } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
+import { extractLevels } from "../utils/extractLevels";
+import { nodeToPosition } from "../utils/overpassJsonHelpers";
+import { parsePositiveMeters } from "../utils/tagValueHelpers";
 import { isRawIndoorStairPathwayElement } from "../rawIndoorElementFilters";
 import { parseVerticalSpan, VerticalSpan } from "../verticalConnections/VerticalSpan";
 import { IndoorElement } from "./IndoorElement";

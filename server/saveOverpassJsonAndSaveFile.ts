@@ -1,6 +1,6 @@
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
-import { isOverpassJson } from "../src/utils/overpassJsonHelpers";
+import { isOverpassJson } from "../src/indoor";
 import { OverpassCacheWriteError, previewResponse } from "./overpassErrors";
 import { resolveProjectPath } from "./paths";
 

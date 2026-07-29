@@ -1,5 +1,4 @@
-import { OverpassJson } from "../../src/models/overpassJson";
-import { OsmGraph } from "../../src/overpass/OsmGraph";
+import { OsmGraph, OverpassJson } from "../../src/indoor";
 
 describe("OsmGraph", () => {
   it("indexes nodes, ways, relations, and generic element keys", () => {

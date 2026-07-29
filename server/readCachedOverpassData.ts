@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
-import { OverpassJson } from "../src/models/overpassJson";
-import { isOverpassJson } from "../src/utils/overpassJsonHelpers";
+import { isOverpassJson, OverpassJson } from "../src/indoor";
 import { resolveProjectPath } from "./paths";
 
 export async function readCachedOverpassJson(cachePath: string): Promise<OverpassJson> {

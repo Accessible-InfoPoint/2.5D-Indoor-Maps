@@ -1,8 +1,12 @@
-import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoor";
+import {
+  getOverpassElementKey,
+  getRelationAreaGeometry,
+  getWayPolygonGeometry,
+  OsmGraph,
+  OverpassElement,
+  OverpassJson,
+} from "../indoor";
 import { BuildingInterface } from "../models/buildingInterface";
-import { OverpassElement, OverpassJson } from "../models/overpassJson";
-import { OsmGraph } from "../overpass/OsmGraph";
-import { getOverpassElementKey } from "./overpassJsonHelpers";
 
 export function findBuildingInOverpassBySearchString(
   overpassJson: OverpassJson,

@@ -1,8 +1,8 @@
-import { OverpassElement } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
-import CoordinateHelpers from "../../utils/coordinateHelpers";
-import { nodeToPosition } from "../../utils/overpassJsonHelpers";
-import { parsePositiveMeters } from "../../utils/tagValueHelpers";
+import { OverpassElement } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
+import CoordinateHelpers from "../utils/coordinateHelpers";
+import { nodeToPosition } from "../utils/overpassJsonHelpers";
+import { parsePositiveMeters } from "../utils/tagValueHelpers";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { isRawIndoorColumnElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";

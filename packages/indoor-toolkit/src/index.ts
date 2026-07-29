@@ -1,4 +1,4 @@
-export { OsmGraph } from "../overpass/OsmGraph";
+export { OsmGraph } from "./overpass/OsmGraph";
 
 export type {
   OverpassElement,
@@ -7,18 +7,18 @@ export type {
   OverpassRelation,
   OverpassRelationMember,
   OverpassWay,
-} from "../models/overpassJson";
+} from "./models/overpassJson";
 
-export { default as CoordinateHelpers } from "../utils/coordinateHelpers";
-export { extractLevels } from "../utils/extractLevels";
-export type { LevelValue } from "../utils/extractLevels";
+export { default as CoordinateHelpers } from "./utils/coordinateHelpers";
+export { extractLevels } from "./utils/extractLevels";
+export type { LevelValue } from "./utils/extractLevels";
 export {
   getOverpassElementKey,
   isOverpassJson,
   nodeToPosition,
   normalizeOverpassElementKey,
-} from "../utils/overpassJsonHelpers";
-export { parsePositiveMeters } from "../utils/tagValueHelpers";
+} from "./utils/overpassJsonHelpers";
+export { parsePositiveMeters } from "./utils/tagValueHelpers";
 
 export { createIndoorModel } from "./IndoorModel";
 export type { IndoorModel, RawIndoorModelData, RawOverpassGraphs } from "./IndoorModel";
@@ -52,10 +52,7 @@ export * from "./rawIndoorElementFilters";
 export { getRawElementNodeIds, getRawElementNodeIdSet } from "./rawElementNodeIds";
 
 export { calculateOpeningOrientationGeometry } from "./openingOrientation";
-export type {
-  OpeningOrientationDebugData,
-  OpeningOrientationGeometry,
-} from "./openingOrientation";
+export type { OpeningOrientationDebugData, OpeningOrientationGeometry } from "./openingOrientation";
 export { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
 export type {
   IndoorLandingInstance,

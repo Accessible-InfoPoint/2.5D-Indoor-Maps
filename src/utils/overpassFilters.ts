@@ -1,4 +1,4 @@
-import { OverpassElement, OverpassJson, OverpassNode } from "../models/overpassJson";
+import { OverpassElement, OverpassJson, OverpassNode } from "../indoor";
 import { getOverpassElementKey, normalizeOverpassElementKey } from "./overpassJsonHelpers";
 
 export interface FilterOverpassByBoundsOptions {

@@ -2,6 +2,7 @@
 /js/dist/
 .idea
 /dist/
+/packages/*/dist/
 /public/dist/
 /public/overpass/**/*.xml
 /public/overpass/**/*.json

@@ -1,4 +1,4 @@
-import { OsmGraph } from "../../overpass/OsmGraph";
+import { OsmGraph } from "../overpass/OsmGraph";
 import { isStaircaseTags } from "../indoorTagFilters";
 import { getRawElementNodeIds } from "../rawElementNodeIds";
 import { IndoorRoom } from "../elements/IndoorRoom";

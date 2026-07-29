@@ -22,6 +22,7 @@ export default defineConfig([
       "src/**/*.ts",
       "test/**/*.ts",
       "server/**/*.ts",
+      "packages/**/*.ts",
       "e2e/**/*.ts",
       "index.ts",
       "playwright.config.ts",

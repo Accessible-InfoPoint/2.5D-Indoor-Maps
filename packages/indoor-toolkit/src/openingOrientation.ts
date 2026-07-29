@@ -1,4 +1,4 @@
-import CoordinateHelpers from "../utils/coordinateHelpers";
+import CoordinateHelpers from "./utils/coordinateHelpers";
 
 export interface OpeningOrientationDebugData {
   previous: GeoJSON.Position;

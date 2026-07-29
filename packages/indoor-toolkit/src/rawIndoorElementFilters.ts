@@ -3,7 +3,7 @@ import {
   OverpassNode,
   OverpassRelation,
   OverpassWay,
-} from "../models/overpassJson";
+} from "./models/overpassJson";
 import { hasPotentialAccessibilityMarkerTags } from "./indoorTagFilters";
 
 const INDOOR_LEVEL_CONTRIBUTOR_TAGS = new Set(["room", "corridor", "area"]);

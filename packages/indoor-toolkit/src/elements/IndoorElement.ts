@@ -1,6 +1,6 @@
-import { OverpassElement } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
-import { extractLevels } from "../../utils/extractLevels";
+import { OverpassElement } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
+import { extractLevels } from "../utils/extractLevels";
 
 export abstract class IndoorElement {
   private static readonly emittedGeometryWarnings = new Set<string>();

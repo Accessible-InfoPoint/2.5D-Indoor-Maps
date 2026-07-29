@@ -1,7 +1,7 @@
-import { OverpassElement, OverpassRelation, OverpassWay } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
-import { nodeToPosition } from "../../utils/overpassJsonHelpers";
-import { parsePositiveMeters } from "../../utils/tagValueHelpers";
+import { OverpassElement, OverpassRelation, OverpassWay } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
+import { nodeToPosition } from "../utils/overpassJsonHelpers";
+import { parsePositiveMeters } from "../utils/tagValueHelpers";
 import {
   calculateOpeningOrientationGeometry,
   OpeningOrientationGeometry,

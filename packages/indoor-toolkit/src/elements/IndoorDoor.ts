@@ -1,5 +1,5 @@
-import { OverpassNode } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
+import { OverpassNode } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
 import { isRawIndoorDoorElement } from "../rawIndoorElementFilters";
 import { IndoorRoom } from "./IndoorRoom";
 import { IndoorElement } from "./IndoorElement";

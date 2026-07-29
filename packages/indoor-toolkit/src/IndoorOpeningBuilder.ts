@@ -1,5 +1,5 @@
-import { OsmGraph } from "../overpass/OsmGraph";
-import { nodeToPosition } from "../utils/overpassJsonHelpers";
+import { OsmGraph } from "./overpass/OsmGraph";
+import { nodeToPosition } from "./utils/overpassJsonHelpers";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import {
   buildIndoorOpeningForNode,

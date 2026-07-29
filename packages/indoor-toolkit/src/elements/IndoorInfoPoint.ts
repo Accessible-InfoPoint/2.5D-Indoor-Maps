@@ -1,6 +1,6 @@
-import { OverpassNode } from "../../models/overpassJson";
-import { OsmGraph } from "../../overpass/OsmGraph";
-import { nodeToPosition } from "../../utils/overpassJsonHelpers";
+import { OverpassNode } from "../models/overpassJson";
+import { OsmGraph } from "../overpass/OsmGraph";
+import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { isRawIndoorInfoPointElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 

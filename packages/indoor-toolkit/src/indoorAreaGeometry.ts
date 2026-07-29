@@ -1,6 +1,6 @@
-import { OverpassNode, OverpassRelation, OverpassWay } from "../models/overpassJson";
-import { OsmGraph } from "../overpass/OsmGraph";
-import { nodeToPosition } from "../utils/overpassJsonHelpers";
+import { OverpassNode, OverpassRelation, OverpassWay } from "./models/overpassJson";
+import { OsmGraph } from "./overpass/OsmGraph";
+import { nodeToPosition } from "./utils/overpassJsonHelpers";
 
 export interface IndoorAreaGeometryOptions {
   graph: OsmGraph;

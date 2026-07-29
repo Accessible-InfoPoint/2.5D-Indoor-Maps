@@ -1,7 +1,7 @@
 import { Application, Request, Response } from "express";
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
 import { BuildingInterface } from "../src/models/buildingInterface";
-import { OverpassJson } from "../src/models/overpassJson";
+import { OverpassJson } from "../src/indoor";
 import { findBuildingInOverpassBySearchString } from "../src/utils/buildingOverpassFilters";
 import { filterOverpassByBounds, filterOverpassByElementIds } from "../src/utils/overpassFilters";
 import { apiError } from "./apiError";
