@@ -3,7 +3,10 @@ import { createIndoorElementRef } from "./models/indoorElementRef";
 import { OverpassElement, OverpassRelation, OverpassWay } from "./models/overpassJson";
 import { OsmGraph } from "./overpass/OsmGraph";
 import { getRawElementNodeIdSet } from "./rawElementNodeIds";
-import { isRawIndoorStairPathwayElement } from "./rawIndoorElementFilters";
+import {
+  isRawIndoorAreaGeometryElement,
+  isRawIndoorStairPathwayElement,
+} from "./rawIndoorElementFilters";
 
 const NON_STAIR_SPACE_TAGS = new Set(["room", "corridor", "area"]);
 
@@ -55,7 +58,7 @@ export function isIndoorLandingElement(
 
 function hasExplicitLandingTags(element: OverpassElement): boolean {
   return (
-    (element.type == "way" || element.type == "relation") &&
+    isRawIndoorAreaGeometryElement(element) &&
     element.tags?.indoor == "area" &&
     element.tags.landing == "yes"
   );
@@ -63,7 +66,7 @@ function hasExplicitLandingTags(element: OverpassElement): boolean {
 
 function isInferredLandingCandidate(element: OverpassElement): element is LandingAreaElement {
   return (
-    (element.type == "way" || element.type == "relation") &&
+    isRawIndoorAreaGeometryElement(element) &&
     element.tags?.indoor == "area" &&
     element.tags.stairs !== "yes" &&
     element.tags.highway !== "elevator" &&

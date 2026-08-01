@@ -29,7 +29,7 @@ If a level has an `indoor=level` outline with `level:ref=*`, the selector displa
 
 ### Geometry
 
-Area-like elements can render from polygons or multipolygons. The application should iterate all polygons in a multipolygon where a renderer expects polygon-only geometry.
+Area-like elements can render from polygons or `type=multipolygon` relations. The application should iterate all polygons in a multipolygon where a renderer expects polygon-only geometry.
 
 If parser geometry is missing, the element is skipped for the render item that needs that geometry. The data issue should appear in `model.diagnostics`.
 

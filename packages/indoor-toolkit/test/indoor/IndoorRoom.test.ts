@@ -190,6 +190,20 @@ describe("IndoorRoom", () => {
       "Ignoring inner ring in room relation relation/302: it is not contained by any outer ring.",
     ]);
   });
+
+  it("rejects non-multipolygon relation geometry", () => {
+    const diagnostics = new IndoorDiagnostics();
+    const graph = new OsmGraph(unsupportedFixture);
+    const room = new IndoorRoom(graph, graph.getRelation(303)!, diagnostics);
+
+    expect(room.geometry).toBeUndefined();
+    expect(diagnostics.diagnostics).toMatchObject([
+      {
+        severity: "warning",
+        code: "IndoorRoom.unsupported-relation-type",
+      },
+    ]);
+  });
 });
 
 const roomFixture: OverpassJson = {
@@ -340,6 +354,12 @@ const unsupportedFixture: OverpassJson = {
         { type: "way", ref: 303, role: "inner" },
       ],
       tags: { type: "multipolygon", indoor: "room", level: "0" },
+    },
+    {
+      type: "relation",
+      id: 303,
+      members: [{ type: "way", ref: 302, role: "outer" }],
+      tags: { type: "multilevel_feature", indoor: "room", level: "0" },
     },
   ],
 };

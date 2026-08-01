@@ -8,11 +8,23 @@ import { hasPotentialAccessibilityMarkerTags } from "./indoorTagFilters";
 
 const INDOOR_LEVEL_CONTRIBUTOR_TAGS = new Set(["room", "corridor", "area"]);
 
+/** Return whether a raw element is a relation with `type=multipolygon`. */
+export function isRawMultipolygonRelation(element: OverpassElement): element is OverpassRelation {
+  return element.type == "relation" && element.tags?.type == "multipolygon";
+}
+
+/** Return whether a raw element can provide supported area geometry. */
+export function isRawIndoorAreaGeometryElement(
+  element: OverpassElement,
+): element is OverpassWay | OverpassRelation {
+  return element.type == "way" || isRawMultipolygonRelation(element);
+}
+
 /** Return whether a raw element is an explicit `indoor=level` outline. */
 export function isRawIndoorLevelElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {
-  return (element.type == "way" || element.type == "relation") && element.tags?.indoor == "level";
+  return isRawIndoorAreaGeometryElement(element) && element.tags?.indoor == "level";
 }
 
 /**
@@ -25,7 +37,7 @@ export function isRawIndoorLevelElement(
 export function isRawIndoorRoomElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {
-  if (element.type != "way" && element.type != "relation") {
+  if (!isRawIndoorAreaGeometryElement(element)) {
     return false;
   }
 
@@ -49,7 +61,10 @@ export function isRawIndoorDoorElement(element: OverpassElement): element is Ove
 
 /** Return whether a raw element is tagged as an indoor column. */
 export function isRawIndoorColumnElement(element: OverpassElement): element is OverpassElement {
-  return element.tags?.indoor == "column";
+  return (
+    (element.type == "node" || isRawIndoorAreaGeometryElement(element)) &&
+    element.tags?.indoor == "column"
+  );
 }
 
 /** Return whether a raw node is collected as an `IndoorPointFeature`. */
@@ -81,7 +96,7 @@ export function isRawIndoorLandingElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {
   return (
-    (element.type == "way" || element.type == "relation") &&
+    isRawIndoorAreaGeometryElement(element) &&
     element.tags?.indoor == "area" &&
     element.tags?.landing == "yes"
   );
@@ -91,10 +106,7 @@ export function isRawIndoorLandingElement(
 export function isRawIndoorStepAreaElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {
-  return (
-    (element.type == "way" || element.type == "relation") &&
-    element.tags?.["area:highway"] == "steps"
-  );
+  return isRawIndoorAreaGeometryElement(element) && element.tags?.["area:highway"] == "steps";
 }
 
 /** Return whether a raw way is tactile paving supported by the parser. */

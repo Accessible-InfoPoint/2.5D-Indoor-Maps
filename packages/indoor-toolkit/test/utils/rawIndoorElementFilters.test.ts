@@ -1,10 +1,57 @@
 import { OverpassElement } from "../../src";
 import {
   contributesToIndoorLevels,
+  isRawIndoorAreaGeometryElement,
   isRawIndoorHandrailElement,
+  isRawIndoorLandingElement,
+  isRawIndoorLevelElement,
+  isRawIndoorRoomElement,
   isRawIndoorPointFeatureElement,
   isRawIndoorStepAreaElement,
+  isRawMultipolygonRelation,
 } from "../../src";
+
+describe("multipolygon relation filtering", () => {
+  it("only accepts type=multipolygon relations as supported area geometry", () => {
+    expect(
+      isRawMultipolygonRelation({
+        type: "relation",
+        id: 1,
+        members: [],
+        tags: { type: "multipolygon" },
+      }),
+    ).toBe(true);
+    expect(
+      isRawIndoorAreaGeometryElement({
+        type: "relation",
+        id: 2,
+        members: [],
+        tags: { type: "multilevel_feature" },
+      }),
+    ).toBe(false);
+  });
+
+  it("ignores non-multipolygon relations for area-like element filters", () => {
+    const relation = {
+      type: "relation" as const,
+      id: 1,
+      members: [] as [],
+      tags: { type: "multilevel_feature", indoor: "room", "area:highway": "steps" },
+    };
+
+    expect(isRawIndoorRoomElement(relation)).toBe(false);
+    expect(
+      isRawIndoorLevelElement({ ...relation, tags: { ...relation.tags, indoor: "level" } }),
+    ).toBe(false);
+    expect(
+      isRawIndoorLandingElement({
+        ...relation,
+        tags: { ...relation.tags, indoor: "area", landing: "yes" },
+      }),
+    ).toBe(false);
+    expect(isRawIndoorStepAreaElement(relation)).toBe(false);
+  });
+});
 
 describe("contributesToIndoorLevels", () => {
   it.each(["room", "corridor", "area"])("returns true for indoor=%s ways", (indoor) => {
@@ -29,13 +76,13 @@ describe("contributesToIndoorLevels", () => {
     ).toBe(true);
   });
 
-  it("returns true for indoor room relations", () => {
+  it("returns true for indoor room multipolygon relations", () => {
     expect(
       contributesToIndoorLevels({
         type: "relation",
         id: 1,
         members: [],
-        tags: { indoor: "room" },
+        tags: { type: "multipolygon", indoor: "room" },
       }),
     ).toBe(true);
   });
@@ -118,7 +165,12 @@ describe("isRawIndoorStepAreaElement", () => {
     const element =
       type == "way"
         ? { type, id: 1, nodes: [] as number[], tags: { "area:highway": "steps" } }
-        : { type, id: 1, members: [] as [], tags: { "area:highway": "steps" } };
+        : {
+            type,
+            id: 1,
+            members: [] as [],
+            tags: { type: "multipolygon", "area:highway": "steps" },
+          };
 
     expect(isRawIndoorStepAreaElement(element)).toBe(true);
   });

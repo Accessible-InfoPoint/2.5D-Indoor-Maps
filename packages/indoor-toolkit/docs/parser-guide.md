@@ -88,7 +88,7 @@ Area-like parser elements may be closed ways or multipolygon-style relations:
 
 For ways, the parser closes the polygon ring if the first node is not repeated as the last node. At least three nodes are required.
 
-For relations, only way members with `outer` and `inner` roles are used. The parser supports multiple outer rings, multiple holes, and outer or inner rings assembled from multiple ways that connect end to end.
+For relations, only `type=multipolygon` relations are supported as area geometry. Other relation types are ignored by element collection and rejected by the relation geometry helper. Within multipolygon relations, only way members with `outer` and `inner` roles are used. The parser supports multiple outer rings, multiple holes, and outer or inner rings assembled from multiple ways that connect end to end.
 
 Geometry is exposed as GeoJSON geometry objects because `GeoJSON.Position` and geometry types are useful interchange formats. The model itself is not GeoJSON and does not erase OSM semantics.
 
@@ -228,7 +228,8 @@ Each section below uses the same structure:
 Collected from:
 
 ```text
-way|relation
+way
+relation + type=multipolygon
 indoor=level
 ```
 
@@ -264,7 +265,8 @@ Diagnostics and common mistakes:
 Collected from:
 
 ```text
-way|relation
+way
+relation + type=multipolygon
 indoor=room|corridor|area
 ```
 
@@ -377,7 +379,9 @@ Diagnostics and common mistakes:
 Collected from:
 
 ```text
-node|way|relation
+node
+way
+relation + type=multipolygon
 indoor=column
 ```
 
@@ -666,7 +670,8 @@ Diagnostics and common mistakes:
 Collected from:
 
 ```text
-way|relation
+way
+relation + type=multipolygon
 indoor=area
 ```
 
@@ -709,7 +714,8 @@ Diagnostics and common mistakes:
 Collected from:
 
 ```text
-way|relation
+way
+relation + type=multipolygon
 area:highway=steps
 ```
 
@@ -746,6 +752,7 @@ For best parser results:
 - Use semicolons for lists and decimal points for fractional levels.
 - Avoid comma syntax in level lists.
 - Use closed ways or valid multipolygon relations for area-like elements.
+- Tag area relations with `type=multipolygon`; other relation types are not parsed as indoor elements yet.
 - Share nodes to express real topology: doors on room or wall boundaries, stair pathways sharing nodes with footprints and landings.
 - Use `indoor=room`, `indoor=corridor`, and `indoor=area` deliberately; the parser collects them together but preserves the tags.
 - Model stair pathways as one way per vertical span.

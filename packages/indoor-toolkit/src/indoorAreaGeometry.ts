@@ -49,15 +49,26 @@ export function getWayPolygonGeometry(
 }
 
 /**
- * Build polygon or multipolygon geometry for an area-like relation.
+ * Build polygon or multipolygon geometry for a `type=multipolygon` area relation.
  *
  * Supports `outer` and `inner` way members, multiple outer rings, multiple
- * holes, and rings assembled from connected way chains.
+ * holes, and rings assembled from connected way chains. Other relation types
+ * are intentionally unsupported.
  */
 export function getRelationAreaGeometry(
   relation: OverpassRelation,
   options: IndoorAreaGeometryOptions,
 ): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
+  if (relation.tags?.type != "multipolygon") {
+    warnOnce(
+      "unsupported-relation-type",
+      `Cannot render ${options.elementKind} relation ${options.elementId}: ` +
+        "only type=multipolygon relations are supported.",
+      options,
+    );
+    return undefined;
+  }
+
   const outerRings = getRelationRingsByRole(relation, "outer", options);
 
   if (outerRings.length == 0) {
