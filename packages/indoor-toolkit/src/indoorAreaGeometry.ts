@@ -1,4 +1,11 @@
-import { OverpassNode, OverpassRelation, OverpassWay } from "./models/overpassJson";
+import {
+  OverpassElement,
+  OverpassNode,
+  OverpassRelation,
+  OverpassWay,
+} from "./models/overpassJson";
+import { IndoorDiagnostics } from "./diagnostics";
+import { IndoorElementRef } from "./models/indoorElementRef";
 import { OsmGraph } from "./overpass/OsmGraph";
 import { nodeToPosition } from "./utils/overpassJsonHelpers";
 
@@ -8,6 +15,9 @@ export interface IndoorAreaGeometryOptions {
   elementKind: string;
   warningPrefix: string;
   emittedWarnings: Set<string>;
+  diagnostics?: IndoorDiagnostics;
+  elementRef?: IndoorElementRef;
+  sourceElement?: OverpassElement;
 }
 
 export function getWayPolygonGeometry(
@@ -312,5 +322,15 @@ function warnOnce(code: string, message: string, options: IndoorAreaGeometryOpti
   }
 
   options.emittedWarnings.add(warningKey);
-  console.warn(`[${options.warningPrefix}] ${message}`);
+  if (options.diagnostics === undefined) {
+    console.warn(`[${options.warningPrefix}] ${message}`);
+    return;
+  }
+
+  options.diagnostics.warn({
+    code: `${options.warningPrefix}.${code}`,
+    message,
+    elementRef: options.elementRef,
+    sourceElement: options.sourceElement,
+  });
 }

@@ -1,4 +1,4 @@
-import { IndoorLevelOutline, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorLevelOutline, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorLevelOutline", () => {
   it("collects indoor=level ways and exposes level:ref labels", () => {

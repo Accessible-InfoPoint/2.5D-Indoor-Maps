@@ -1,4 +1,6 @@
 import CoordinateHelpers from "./utils/coordinateHelpers";
+import { IndoorDiagnostics } from "./diagnostics";
+import { IndoorElementRef } from "./models/indoorElementRef";
 
 export interface OpeningOrientationDebugData {
   previous: GeoJSON.Position;
@@ -21,14 +23,25 @@ export function calculateOpeningOrientationGeometry(
   previous: GeoJSON.Position,
   after: GeoJSON.Position,
   width = 1,
+  diagnostics?: IndoorDiagnostics,
+  elementRef?: IndoorElementRef,
 ): OpeningOrientationGeometry | undefined {
   const prevDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(previous, openingCoord);
   const afterDist = CoordinateHelpers.getDistanceBetweenCoordinatesInM(after, openingCoord);
 
   if (prevDist == 0 || afterDist == 0) {
-    console.warn(
-      "[OpeningOrientation] Cannot calculate opening orientation: the opening coordinate is identical to a neighboring coordinate.",
-    );
+    const message =
+      "Cannot calculate opening orientation: the opening coordinate is identical to a neighboring coordinate.";
+
+    if (diagnostics === undefined) {
+      console.warn(`[OpeningOrientation] ${message}`);
+    } else {
+      diagnostics.warn({
+        code: "OpeningOrientation.identical-neighbor-coordinate",
+        message,
+        elementRef,
+      });
+    }
     return undefined;
   }
 

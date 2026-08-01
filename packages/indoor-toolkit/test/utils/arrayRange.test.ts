@@ -1,4 +1,4 @@
-import { arrayRange } from "../../src/utils/arrayRange";
+import { arrayRange } from "../../src";
 
 describe("arrayRange", () => {
   it("returns a range from 1 to 5 with step 1", () => {

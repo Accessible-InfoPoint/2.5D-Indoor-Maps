@@ -1,4 +1,4 @@
-import { IndoorRoom, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorDiagnostics, IndoorRoom, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorRoom", () => {
   it("collects raw room, corridor, and area elements as rooms", () => {
@@ -152,50 +152,43 @@ describe("IndoorRoom", () => {
     });
   });
 
-  it("warns once when a room way cannot be rendered because nodes are missing", () => {
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+  it("records one diagnostic when a room way cannot be rendered because nodes are missing", () => {
+    const diagnostics = new IndoorDiagnostics();
     const graph = new OsmGraph(unsupportedFixture);
-    const room = new IndoorRoom(graph, graph.getWay(300)!);
+    const room = new IndoorRoom(graph, graph.getWay(300)!, diagnostics);
 
     expect(room.geometry).toBeUndefined();
     expect(room.geometry).toBeUndefined();
 
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[IndoorRoom] Cannot render room way/300: missing node(s) 999.",
-    );
-
-    warnSpy.mockRestore();
-  });
-
-  it("warns when a relation has unsupported member roles or incomplete outer rings", () => {
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    const graph = new OsmGraph(unsupportedFixture);
-    const room = new IndoorRoom(graph, graph.getRelation(301)!);
-
-    expect(room.geometry).toBeUndefined();
-
-    expect(warnSpy.mock.calls.map(([message]) => message)).toEqual([
-      "[IndoorRoom] Ignoring 1 way member(s) in room relation relation/301: only outer and inner roles are supported.",
-      "[IndoorRoom] Ignoring incomplete outer ring in room relation relation/301: way chain way/301 does not close.",
-      "[IndoorRoom] Cannot render room relation relation/301: no complete outer ring was found.",
+    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.message)).toEqual([
+      "Cannot render room way/300: missing node(s) 999.",
     ]);
-
-    warnSpy.mockRestore();
   });
 
-  it("warns when relation inner rings cannot be assigned to an outer ring", () => {
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+  it("records diagnostics when a relation has unsupported member roles or incomplete outer rings", () => {
+    const diagnostics = new IndoorDiagnostics();
     const graph = new OsmGraph(unsupportedFixture);
-    const room = new IndoorRoom(graph, graph.getRelation(302)!);
+    const room = new IndoorRoom(graph, graph.getRelation(301)!, diagnostics);
+
+    expect(room.geometry).toBeUndefined();
+
+    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.message)).toEqual([
+      "Ignoring 1 way member(s) in room relation relation/301: only outer and inner roles are supported.",
+      "Ignoring incomplete outer ring in room relation relation/301: way chain way/301 does not close.",
+      "Cannot render room relation relation/301: no complete outer ring was found.",
+    ]);
+  });
+
+  it("records a diagnostic when relation inner rings cannot be assigned to an outer ring", () => {
+    const diagnostics = new IndoorDiagnostics();
+    const graph = new OsmGraph(unsupportedFixture);
+    const room = new IndoorRoom(graph, graph.getRelation(302)!, diagnostics);
 
     expect(room.geometry?.type).toBe("Polygon");
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[IndoorRoom] Ignoring inner ring in room relation relation/302: it is not contained by any outer ring.",
-    );
-
-    warnSpy.mockRestore();
+    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.message)).toEqual([
+      "Ignoring inner ring in room relation relation/302: it is not contained by any outer ring.",
+    ]);
   });
 });
 

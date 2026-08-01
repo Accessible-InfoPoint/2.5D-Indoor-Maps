@@ -1,4 +1,4 @@
-import { IndoorInfoPoint, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorInfoPoint, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorInfoPoint", () => {
   it("collects tactile map information nodes from the graph", () => {

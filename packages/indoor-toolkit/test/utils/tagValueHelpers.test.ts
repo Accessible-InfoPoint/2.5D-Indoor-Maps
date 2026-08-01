@@ -1,4 +1,4 @@
-import { parsePositiveMeters } from "../../src/utils/tagValueHelpers";
+import { parsePositiveMeters } from "../../src";
 
 describe("parsePositiveMeters", () => {
   it("parses positive numeric tag values", () => {

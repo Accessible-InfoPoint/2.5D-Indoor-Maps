@@ -11,7 +11,7 @@ import {
   IndoorVerticalConnection,
   VerticalSpan,
 } from "../../indoor";
-import { createIndoorElementRef } from "../../models/indoorElementRef";
+import { createIndoorElementRef } from "../../indoor";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import coordinateHelpers from "../../utils/coordinateHelpers";

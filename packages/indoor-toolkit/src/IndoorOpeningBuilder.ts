@@ -1,3 +1,4 @@
+import { IndoorDiagnostics } from "./diagnostics";
 import { OsmGraph } from "./overpass/OsmGraph";
 import { nodeToPosition } from "./utils/overpassJsonHelpers";
 import { IndoorDoor } from "./elements/IndoorDoor";
@@ -20,6 +21,7 @@ interface IndoorOpeningBuilderOptions {
   walls: IndoorWall[];
   doors: IndoorDoor[];
   verticalConnections: IndoorVerticalConnection[];
+  diagnostics?: IndoorDiagnostics;
 }
 
 interface OpenStaircaseOpeningNode {
@@ -90,6 +92,7 @@ function collectOpenStaircaseOpeningNodes(
             pathwayInstance,
             footprintNodeIds,
             connection.footprint,
+            options.diagnostics,
           ).forEach((opening) => {
             const key = `${opening.level}:${opening.footprint.id}:${opening.nodeId}`;
             const previous = openingsByKey.get(key);
@@ -117,12 +120,18 @@ function collectPathwayOpeningNodes(
   pathwayInstance: IndoorStairPathwayInstance,
   footprintNodeIds: Set<number>,
   footprint: IndoorRoom,
+  diagnostics: IndoorDiagnostics | undefined,
 ): OpenStaircaseOpeningNode[] {
   const geometry = pathwayInstance.source.geometry;
 
   if (geometry === undefined) {
-    console.warn(
-      `[IndoorOpeningBuilder] Cannot infer openings for stair pathway ${pathwayInstance.source.id}: pathway geometry is unavailable.`,
+    warnOpeningBuilderIssue(
+      diagnostics,
+      pathwayInstance.source.id,
+      pathwayInstance.source.tags,
+      pathwayInstance.source.levels,
+      "missing-pathway-geometry",
+      `Cannot infer openings for stair pathway ${pathwayInstance.source.id}: pathway geometry is unavailable.`,
     );
     return [];
   }
@@ -156,8 +165,13 @@ function buildInferredStaircaseOpening(
   const node = options.graph.getNode(opening.nodeId);
 
   if (node === undefined) {
-    console.warn(
-      `[IndoorOpeningBuilder] Cannot build inferred staircase opening for ${opening.footprint.id} at node/${opening.nodeId}: node is missing from the OSM graph.`,
+    warnOpeningBuilderIssue(
+      options.diagnostics,
+      opening.footprint.id,
+      opening.footprint.tags,
+      opening.footprint.levels,
+      "missing-opening-node",
+      `Cannot build inferred staircase opening for ${opening.footprint.id} at node/${opening.nodeId}: node is missing from the OSM graph.`,
     );
     return undefined;
   }
@@ -180,6 +194,7 @@ function buildInferredStaircaseOpening(
     connectedWalls: [],
     fallbackWidthMeters: opening.widthMeters,
     sources: [{ role: "pathway-node", element: node }, ...opening.sources],
+    diagnostics: options.diagnostics,
   });
 }
 
@@ -226,4 +241,28 @@ function mergeSources(
   );
 
   return Array.from(sourcesByKey.values());
+}
+
+function warnOpeningBuilderIssue(
+  diagnostics: IndoorDiagnostics | undefined,
+  id: string,
+  tags: Record<string, string>,
+  levels: number[],
+  code: string,
+  message: string,
+): void {
+  if (diagnostics === undefined) {
+    console.warn(`[IndoorOpeningBuilder] ${message}`);
+    return;
+  }
+
+  diagnostics.warn({
+    code: `IndoorOpeningBuilder.${code}`,
+    message,
+    elementRef: {
+      id,
+      tags,
+      levels,
+    },
+  });
 }

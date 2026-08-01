@@ -1,21 +1,23 @@
 import { OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { isRawIndoorTactilePavingElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorTactilePaving extends IndoorElement {
-  static collectFromGraph(graph: OsmGraph): IndoorTactilePaving[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorTactilePaving[] {
     return graph.elements
       .filter(isRawIndoorTactilePavingElement)
-      .map((way) => new IndoorTactilePaving(graph, way));
+      .map((way) => new IndoorTactilePaving(graph, way, diagnostics));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
+    diagnostics?: IndoorDiagnostics,
   ) {
-    super(graph, sourceElement);
+    super(graph, sourceElement, diagnostics);
   }
 
   get geometry(): GeoJSON.LineString | undefined {

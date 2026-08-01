@@ -40,19 +40,21 @@ describe("levelService", () => {
   describe("getCurrentLevelDescription", () => {
     it("uses raw indoor model tags for level accessibility info", () => {
       (BackendService.getIndoorModel as jest.Mock).mockReturnValue({
-        rooms: [
-          { tags: { amenity: "toilets", level: "1" }, hasLevel: (level: number) => level == 1 },
-          { tags: { amenity: "cafe", level: "2" }, hasLevel: (level: number) => level == 2 },
-        ],
-        pointFeatures: [
-          {
-            tags: { tactile_paving: "yes", level: "1" },
-            hasLevel: (level: number) => level == 1,
-          },
-        ],
-        infoPoints: [],
-        tactilePaving: [],
-        stairPathways: [],
+        elements: {
+          rooms: [
+            { tags: { amenity: "toilets", level: "1" }, hasLevel: (level: number) => level == 1 },
+            { tags: { amenity: "cafe", level: "2" }, hasLevel: (level: number) => level == 2 },
+          ],
+          pointFeatures: [
+            {
+              tags: { tactile_paving: "yes", level: "1" },
+              hasLevel: (level: number) => level == 1,
+            },
+          ],
+          infoPoints: [],
+          tactilePaving: [],
+          stairPathways: [],
+        },
       });
       (AccessibilityService.getForLevelTags as jest.Mock).mockReturnValue("raw accessibility");
 

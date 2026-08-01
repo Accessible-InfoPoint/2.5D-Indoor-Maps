@@ -1,13 +1,43 @@
 {
   "name": "@indoortoolkit/core",
   "version": "0.0.0",
+  "description": "Parser and domain model for Simple Indoor Tagging data from raw Overpass JSON.",
+  "keywords": [
+    "indoor",
+    "osm",
+    "openstreetmap",
+    "overpass",
+    "simple-indoor-tagging",
+    "routing",
+    "map-rendering"
+  ],
+  "license": "MIT",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "jest --config jest.config.cjs"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.17.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.12",
+    "typescript": "^6.0.3"
   }
 }

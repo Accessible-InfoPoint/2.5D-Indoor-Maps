@@ -6,7 +6,7 @@ import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import { indoorAccessibilityRules } from "../data/indoorAccessibilityRules";
-import { IndoorElementRef } from "../models/indoorElementRef";
+import { IndoorElementRef } from "../indoor";
 import { IndoorTags, isInfoPointTags, isRoomTags, isStaircaseTags, isToiletTags } from "../indoor";
 import ColorService from "./colorService";
 import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";

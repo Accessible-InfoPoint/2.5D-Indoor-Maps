@@ -1,4 +1,5 @@
 import { OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { extractLevels } from "../utils/extractLevels";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
@@ -10,17 +11,18 @@ import { IndoorElement } from "./IndoorElement";
 const DEFAULT_STAIR_PATHWAY_WIDTH_METERS = 1;
 
 export class IndoorStairPathway extends IndoorElement {
-  static collectFromGraph(graph: OsmGraph): IndoorStairPathway[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorStairPathway[] {
     return graph.elements
       .filter(isRawIndoorStairPathwayElement)
-      .map((way) => new IndoorStairPathway(graph, way));
+      .map((way) => new IndoorStairPathway(graph, way, diagnostics));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
+    diagnostics?: IndoorDiagnostics,
   ) {
-    super(graph, sourceElement);
+    super(graph, sourceElement, diagnostics);
   }
 
   get nodeIds(): number[] {

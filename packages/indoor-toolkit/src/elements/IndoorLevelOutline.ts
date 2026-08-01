@@ -1,20 +1,19 @@
 import { OverpassElement } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { isRawIndoorLevelElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorLevelOutline extends IndoorElement {
-  private static readonly emittedWarnings = new Set<string>();
-
-  static collectFromGraph(graph: OsmGraph): IndoorLevelOutline[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLevelOutline[] {
     return graph.elements
       .filter(isRawIndoorLevelElement)
-      .map((element) => new IndoorLevelOutline(graph, element));
+      .map((element) => new IndoorLevelOutline(graph, element, diagnostics));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement) {
-    super(graph, sourceElement);
+  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
+    super(graph, sourceElement, diagnostics);
   }
 
   get label(): string | undefined {
@@ -46,7 +45,10 @@ export class IndoorLevelOutline extends IndoorElement {
       elementId: this.id,
       elementKind: "level outline",
       warningPrefix: "IndoorLevelOutline",
-      emittedWarnings: IndoorLevelOutline.emittedWarnings,
+      emittedWarnings: this.emittedGeometryWarnings,
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
     };
   }
 }

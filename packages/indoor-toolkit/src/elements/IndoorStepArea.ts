@@ -1,4 +1,5 @@
 import { OverpassRelation, OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { getRawElementNodeIds } from "../rawElementNodeIds";
@@ -6,19 +7,18 @@ import { isRawIndoorStepAreaElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorStepArea extends IndoorElement {
-  private static readonly emittedWarnings = new Set<string>();
-
-  static collectFromGraph(graph: OsmGraph): IndoorStepArea[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorStepArea[] {
     return graph.elements
       .filter(isRawIndoorStepAreaElement)
-      .map((element) => new IndoorStepArea(graph, element));
+      .map((element) => new IndoorStepArea(graph, element, diagnostics));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay | OverpassRelation,
+    diagnostics?: IndoorDiagnostics,
   ) {
-    super(graph, sourceElement);
+    super(graph, sourceElement, diagnostics);
   }
 
   get nodeIds(): number[] {
@@ -44,7 +44,10 @@ export class IndoorStepArea extends IndoorElement {
       elementId: this.id,
       elementKind: "step area",
       warningPrefix: "IndoorStepArea",
-      emittedWarnings: IndoorStepArea.emittedWarnings,
+      emittedWarnings: this.emittedGeometryWarnings,
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
     };
   }
 }

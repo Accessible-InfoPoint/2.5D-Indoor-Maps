@@ -16,7 +16,7 @@ import {
 } from "../../markerCluster/markerClusterModel";
 import { AccessibilityMarkerRenderItem, IndoorLevelRenderModel } from "../indoorLevelRenderModel";
 import { IndoorLevelViewEvents } from "../indoorLevelView";
-import { IndoorElementRef } from "../../../models/indoorElementRef";
+import { IndoorElementRef } from "../../../indoor";
 import { getMarkerImageId } from "./maplibreIndoorLevelTypes";
 import { registerMarkerImage } from "./maplibreImageRegistry";
 import { getMotionDuration } from "../../../utils/motionPreferences";

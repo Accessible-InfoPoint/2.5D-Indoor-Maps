@@ -8,7 +8,7 @@ jest.mock("../../src/services/languageService", () => ({
 
 import BuildingService from "../../src/services/buildingService";
 import BackendService from "../../src/services/backendService";
-import { createIndoorElementRef } from "../../src/models/indoorElementRef";
+import { createIndoorElementRef } from "../../src/indoor";
 
 const CTX = { currentLevel: 0 };
 
@@ -328,9 +328,11 @@ interface SearchableElementStub {
 
 function setSearchableElements(elements: SearchableElementStub[]): void {
   (BackendService.getIndoorModel as jest.Mock).mockReturnValue({
-    rooms: elements.filter((element) => !element.id.startsWith("node/")),
-    pointFeatures: elements.filter((element) => element.id.startsWith("node/")),
-    infoPoints: [],
+    elements: {
+      rooms: elements.filter((element) => !element.id.startsWith("node/")),
+      pointFeatures: elements.filter((element) => element.id.startsWith("node/")),
+      infoPoints: [],
+    },
   });
 }
 

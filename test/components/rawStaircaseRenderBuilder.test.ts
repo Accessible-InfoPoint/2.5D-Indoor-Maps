@@ -11,7 +11,7 @@ import coordinateHelpers from "../../src/utils/coordinateHelpers";
 
 describe("raw staircase rendering", () => {
   it("builds 3D prism and edge cylinder render items for simple staircase footprints", () => {
-    const model = createIndoorModel(simpleStaircaseData);
+    const model = createIndoorModel(simpleStaircaseData.indoor);
 
     const level0 = buildIndoorLevelRenderModel({
       model,
@@ -40,7 +40,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("builds flat 2D surfaces and 3D span items for free-floating staircases", () => {
-    const model = createIndoorModel(freeFloatingStaircaseData);
+    const model = createIndoorModel(freeFloatingStaircaseData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -70,7 +70,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("samples area:highway=steps widths for free-floating staircases at diagonal corners", () => {
-    const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData);
+    const model = createIndoorModel(freeFloatingStaircaseWithStepAreaData.indoor);
 
     const level0RenderModel = buildIndoorLevelRenderModel({
       model,
@@ -107,7 +107,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
-    const model = createIndoorModel(staircaseWithPathwayHandrailsData);
+    const model = createIndoorModel(staircaseWithPathwayHandrailsData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -127,7 +127,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("orients raw footprint handrails in the upward direction", () => {
-    const model = createIndoorModel(staircaseWithFootprintHandrailData);
+    const model = createIndoorModel(staircaseWithFootprintHandrailData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -153,7 +153,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("uses explicit door nodes for open staircase openings with staircase width fallback", () => {
-    const model = createIndoorModel(staircaseWithDoorOpeningData);
+    const model = createIndoorModel(staircaseWithDoorOpeningData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -171,7 +171,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("renders explicit landing handrail ways in 3D", () => {
-    const model = createIndoorModel(staircaseWithLandingHandrailData);
+    const model = createIndoorModel(staircaseWithLandingHandrailData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -193,7 +193,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("uses node levels for raw staircase path altitudes and interpolates missing node levels", () => {
-    const model = createIndoorModel(staircaseWithNodeLevelsData);
+    const model = createIndoorModel(staircaseWithNodeLevelsData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -225,7 +225,7 @@ describe("raw staircase rendering", () => {
   });
 
   it("treats repeated closed staircase path endpoints as the top of the vertical span", () => {
-    const model = createIndoorModel(closedRepeatedStaircaseData);
+    const model = createIndoorModel(closedRepeatedStaircaseData.indoor);
 
     const level1 = buildIndoorLevelRenderModel({
       model,

@@ -1,7 +1,7 @@
 import BackendService from "./backendService";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
-import { createIndoorElementRef, IndoorElementRef } from "../models/indoorElementRef";
+import { createIndoorElementRef, IndoorElementRef } from "../indoor";
 
 export interface SearchSuggestion {
   id: string;
@@ -310,7 +310,7 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
   const model = BackendService.getIndoorModel();
 
   return [
-    ...model.rooms.map((room) => {
+    ...model.elements.rooms.map((room) => {
       return {
         elementRef: createIndoorElementRef({
           id: room.id,
@@ -320,7 +320,7 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
         }),
       };
     }),
-    ...model.pointFeatures.map((pointFeature) => {
+    ...model.elements.pointFeatures.map((pointFeature) => {
       return {
         elementRef: createIndoorElementRef({
           id: pointFeature.id,
@@ -330,7 +330,7 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
         }),
       };
     }),
-    ...model.infoPoints.map((infoPoint) => {
+    ...model.elements.infoPoints.map((infoPoint) => {
       return {
         elementRef: createIndoorElementRef({
           id: infoPoint.id,

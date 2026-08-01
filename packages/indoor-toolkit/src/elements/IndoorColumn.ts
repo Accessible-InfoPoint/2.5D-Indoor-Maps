@@ -1,4 +1,5 @@
 import { OverpassElement } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import CoordinateHelpers from "../utils/coordinateHelpers";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
@@ -11,16 +12,14 @@ const DEFAULT_COLUMN_DIAMETER_METERS = 0.5;
 const COLUMN_CIRCLE_SEGMENTS = 24;
 
 export class IndoorColumn extends IndoorElement {
-  private static readonly emittedWarnings = new Set<string>();
-
-  static collectFromGraph(graph: OsmGraph): IndoorColumn[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorColumn[] {
     return graph.elements
       .filter(isRawIndoorColumnElement)
-      .map((element) => new IndoorColumn(graph, element));
+      .map((element) => new IndoorColumn(graph, element, diagnostics));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement) {
-    super(graph, sourceElement);
+  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
+    super(graph, sourceElement, diagnostics);
   }
 
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
@@ -48,7 +47,10 @@ export class IndoorColumn extends IndoorElement {
       elementId: this.id,
       elementKind: "column",
       warningPrefix: "IndoorColumn",
-      emittedWarnings: IndoorColumn.emittedWarnings,
+      emittedWarnings: this.emittedGeometryWarnings,
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
     };
   }
 }

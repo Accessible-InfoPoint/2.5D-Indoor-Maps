@@ -1,4 +1,4 @@
-import { IndoorWall, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorWall, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorWall", () => {
   it("collects raw wall ways from the graph", () => {

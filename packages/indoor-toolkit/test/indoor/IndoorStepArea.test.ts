@@ -1,4 +1,4 @@
-import { IndoorStepArea, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorStepArea, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorStepArea", () => {
   it("collects area:highway=steps ways from the raw graph", () => {

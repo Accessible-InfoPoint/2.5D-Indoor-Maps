@@ -1,4 +1,5 @@
 import { OverpassRelation, OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { extractLevels } from "../utils/extractLevels";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
@@ -7,19 +8,18 @@ import { isRawIndoorLandingElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorLanding extends IndoorElement {
-  private static readonly emittedWarnings = new Set<string>();
-
-  static collectFromGraph(graph: OsmGraph): IndoorLanding[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLanding[] {
     return graph.elements
       .filter(isRawIndoorLandingElement)
-      .map((element) => new IndoorLanding(graph, element));
+      .map((element) => new IndoorLanding(graph, element, diagnostics));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay | OverpassRelation,
+    diagnostics?: IndoorDiagnostics,
   ) {
-    super(graph, sourceElement);
+    super(graph, sourceElement, diagnostics);
   }
 
   get nodeIds(): number[] {
@@ -57,7 +57,10 @@ export class IndoorLanding extends IndoorElement {
       elementId: this.id,
       elementKind: "landing",
       warningPrefix: "IndoorLanding",
-      emittedWarnings: IndoorLanding.emittedWarnings,
+      emittedWarnings: this.emittedGeometryWarnings,
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
     };
   }
 }

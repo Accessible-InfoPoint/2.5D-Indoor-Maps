@@ -1,4 +1,5 @@
 import { OverpassElement } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { isRawIndoorRoomElement } from "../rawIndoorElementFilters";
@@ -15,16 +16,14 @@ import { IndoorElement } from "./IndoorElement";
  * Styling of elements is done in indoorLevelRenderBuilder.ts
  */
 export class IndoorRoom extends IndoorElement {
-  private static readonly emittedWarnings = new Set<string>();
-
-  static collectFromGraph(graph: OsmGraph): IndoorRoom[] {
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorRoom[] {
     return graph.elements
       .filter(isRawIndoorRoomElement)
-      .map((element) => new IndoorRoom(graph, element));
+      .map((element) => new IndoorRoom(graph, element, diagnostics));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement) {
-    super(graph, sourceElement);
+  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
+    super(graph, sourceElement, diagnostics);
   }
 
   get indoorKind(): string | undefined {
@@ -56,7 +55,10 @@ export class IndoorRoom extends IndoorElement {
       elementId: this.id,
       elementKind: "room",
       warningPrefix: "IndoorRoom",
-      emittedWarnings: IndoorRoom.emittedWarnings,
+      emittedWarnings: this.emittedGeometryWarnings,
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
     };
   }
 }

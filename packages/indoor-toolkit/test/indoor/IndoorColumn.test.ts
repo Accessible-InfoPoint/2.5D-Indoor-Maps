@@ -1,4 +1,4 @@
-import { IndoorColumn, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorColumn, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorColumn", () => {
   it("collects node, way, and relation columns", () => {

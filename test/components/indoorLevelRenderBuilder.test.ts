@@ -9,7 +9,7 @@ import { buildIndoorLevelRenderModel } from "../../src/components/indoorLevel/in
 
 describe("buildIndoorLevelRenderModel", () => {
   it("renders raw way-backed rooms for the requested level", () => {
-    const model = createIndoorModel(rawOverpassData);
+    const model = createIndoorModel(rawOverpassData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -66,7 +66,7 @@ describe("buildIndoorLevelRenderModel", () => {
   });
 
   it("marks selected raw rooms using stable raw element ids", () => {
-    const model = createIndoorModel(rawOverpassData);
+    const model = createIndoorModel(rawOverpassData.indoor);
 
     const renderModel = buildIndoorLevelRenderModel({
       model,
@@ -82,7 +82,7 @@ describe("buildIndoorLevelRenderModel", () => {
   });
 
   it("uses indoor=level outlines for the raw 3D outline on matching levels", () => {
-    const model = createIndoorModel(levelOutlineOverpassData);
+    const model = createIndoorModel(levelOutlineOverpassData.indoor);
 
     const level0 = buildIndoorLevelRenderModel({
       model,

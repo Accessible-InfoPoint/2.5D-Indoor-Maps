@@ -4,7 +4,7 @@ import {
   IndoorStairPathway,
   OsmGraph,
   OverpassJson,
-} from "../../src/indoor";
+} from "../../src";
 
 describe("IndoorStairPathNetwork", () => {
   it("groups pathways connected end to end by raw node ids", () => {

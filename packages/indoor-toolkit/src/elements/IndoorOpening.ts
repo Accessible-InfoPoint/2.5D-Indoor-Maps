@@ -1,4 +1,6 @@
 import { OverpassElement, OverpassRelation, OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
+import { createIndoorElementRef } from "../models/indoorElementRef";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { parsePositiveMeters } from "../utils/tagValueHelpers";
@@ -49,10 +51,16 @@ export function buildIndoorOpeningForNode(options: {
   connectedWalls: IndoorWall[];
   sources: IndoorOpeningSource[];
   fallbackWidthMeters?: number;
+  diagnostics?: IndoorDiagnostics;
 }): IndoorOpening | undefined {
   if (options.connectedRooms.length == 0 && options.connectedWalls.length == 0) {
-    console.warn(
-      `[IndoorOpening] Cannot build ${options.kind} ${options.id} at node/${options.nodeId}: no connected room or wall was found.`,
+    warnOpeningIssue(
+      options.diagnostics,
+      options.id,
+      options.tags,
+      options.levels,
+      "no-connected-room-or-wall",
+      `Cannot build ${options.kind} ${options.id} at node/${options.nodeId}: no connected room or wall was found.`,
     );
     return undefined;
   }
@@ -103,6 +111,10 @@ function calculateOpeningOrientation(options: {
   connectedRooms: IndoorRoom[];
   connectedWalls: IndoorWall[];
   widthMeters: number;
+  diagnostics?: IndoorDiagnostics;
+  id: string;
+  tags: Record<string, string>;
+  levels: number[];
 }) {
   const wayContext = findWayContext(
     options.graph,
@@ -112,8 +124,13 @@ function calculateOpeningOrientation(options: {
   );
 
   if (wayContext === undefined) {
-    console.warn(
-      `[IndoorOpening] Cannot calculate orientation for opening at node/${options.nodeId}: no containing room or wall way was found.`,
+    warnOpeningIssue(
+      options.diagnostics,
+      options.id,
+      options.tags,
+      options.levels,
+      "missing-containing-way",
+      `Cannot calculate orientation for opening at node/${options.nodeId}: no containing room or wall way was found.`,
     );
     return undefined;
   }
@@ -122,8 +139,13 @@ function calculateOpeningOrientation(options: {
   const afterNode = options.graph.getNode(wayContext.afterNodeId);
 
   if (previousNode === undefined || afterNode === undefined) {
-    console.warn(
-      `[IndoorOpening] Cannot calculate orientation for opening at node/${options.nodeId}: surrounding room nodes are missing.`,
+    warnOpeningIssue(
+      options.diagnostics,
+      options.id,
+      options.tags,
+      options.levels,
+      "missing-surrounding-nodes",
+      `Cannot calculate orientation for opening at node/${options.nodeId}: surrounding room nodes are missing.`,
     );
     return undefined;
   }
@@ -133,6 +155,12 @@ function calculateOpeningOrientation(options: {
     nodeToPosition(previousNode),
     nodeToPosition(afterNode),
     options.widthMeters,
+    options.diagnostics,
+    createIndoorElementRef({
+      id: options.id,
+      tags: options.tags,
+      levels: options.levels,
+    }),
   );
 }
 
@@ -220,4 +248,28 @@ function findRelationWayContainingNode(
 
 function getOpeningWidth(tags: Record<string, string>, fallbackWidthMeters?: number): number {
   return parsePositiveMeters(tags.width) ?? fallbackWidthMeters ?? 1;
+}
+
+function warnOpeningIssue(
+  diagnostics: IndoorDiagnostics | undefined,
+  id: string,
+  tags: Record<string, string>,
+  levels: number[],
+  code: string,
+  message: string,
+): void {
+  if (diagnostics === undefined) {
+    console.warn(`[IndoorOpening] ${message}`);
+    return;
+  }
+
+  diagnostics.warn({
+    code: `IndoorOpening.${code}`,
+    message,
+    elementRef: createIndoorElementRef({
+      id,
+      tags,
+      levels,
+    }),
+  });
 }

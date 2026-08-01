@@ -1,5 +1,5 @@
 import { BuildingInterface } from "../models/buildingInterface";
-import { createIndoorModel, IndoorModel, RawOverpassGraphs } from "../indoor";
+import { createIndoorModel, IndoorModel, OsmGraph } from "../indoor";
 import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";
@@ -148,7 +148,7 @@ async function loadRawOverpassData(): Promise<LoadedBackendData> {
   return {
     kind: "rawOverpass",
     rawOverpassData: loadedRawOverpassData,
-    indoorModel: createIndoorModel(loadedRawOverpassData),
+    indoorModel: createIndoorModel(loadedRawOverpassData.indoor),
   };
 }
 
@@ -168,7 +168,7 @@ function buildRawBuildingConstants(
   model: IndoorModel,
   buildingDefinition: BuildingDefinition,
 ): BuildingConstants {
-  const standardBearing = calculateRawStandardBearing(model.graphs, buildingDefinition);
+  const standardBearing = calculateRawStandardBearing(model.graph, buildingDefinition);
 
   return buildBuildingConstantsFromStandardBearing(standardBearing, buildingDefinition);
 }
@@ -218,16 +218,16 @@ function getOptionalBuildingCenter(
 }
 
 function calculateRawStandardBearing(
-  graphs: RawOverpassGraphs,
+  graph: OsmGraph,
   buildingDefinition: BuildingDefinition,
 ): number {
   const p1 = getRawBearingCalculationNode(
-    graphs,
+    graph,
     buildingDefinition.BEARING_CALC_NODE1,
     "Bearing calculation node 1",
   );
   const p2 = getRawBearingCalculationNode(
-    graphs,
+    graph,
     buildingDefinition.BEARING_CALC_NODE2,
     "Bearing calculation node 2",
   );
@@ -243,11 +243,11 @@ function calculateRawStandardBearing(
 }
 
 function getRawBearingCalculationNode(
-  graphs: RawOverpassGraphs,
+  graph: OsmGraph,
   nodeId: number | string,
   label: string,
 ): GeoJSON.Position {
-  const node = getRequiredMatch(graphs.indoor.getNode(nodeId), label);
+  const node = getRequiredMatch(graph.getNode(nodeId), label);
 
   return [node.lon, node.lat];
 }
@@ -296,8 +296,8 @@ function getIndoorModel(): IndoorModel {
   return indoorModel;
 }
 
-function getRawOverpassGraphs(): RawOverpassGraphs {
-  return getIndoorModel().graphs;
+function getRawOverpassGraph(): OsmGraph {
+  return getIndoorModel().graph;
 }
 
 function getBuildingInterface(): BuildingInterface {
@@ -324,5 +324,5 @@ export default {
   getBackendConfig,
   getRawOverpassData,
   getIndoorModel,
-  getRawOverpassGraphs,
+  getRawOverpassGraph,
 };

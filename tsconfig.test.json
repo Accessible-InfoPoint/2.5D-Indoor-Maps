@@ -4,5 +4,5 @@
     "module": "CommonJS",
     "moduleResolution": "node"
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "packages"]
 }

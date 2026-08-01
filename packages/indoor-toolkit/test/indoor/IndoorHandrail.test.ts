@@ -1,4 +1,4 @@
-import { IndoorHandrail, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorHandrail, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorHandrail", () => {
   it("collects raw barrier=handrail ways from the graph", () => {

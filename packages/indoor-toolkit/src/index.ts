@@ -10,6 +10,7 @@ export type {
 } from "./models/overpassJson";
 
 export { default as CoordinateHelpers } from "./utils/coordinateHelpers";
+export { arrayRange } from "./utils/arrayRange";
 export { extractLevels } from "./utils/extractLevels";
 export type { LevelValue } from "./utils/extractLevels";
 export {
@@ -19,9 +20,22 @@ export {
   normalizeOverpassElementKey,
 } from "./utils/overpassJsonHelpers";
 export { parsePositiveMeters } from "./utils/tagValueHelpers";
+export { createIndoorElementRef, getLevelsFromTags } from "./models/indoorElementRef";
+export type { IndoorElementRef } from "./models/indoorElementRef";
+export { formatIndoorDiagnostic, IndoorDiagnostics } from "./diagnostics";
+export type {
+  IndoorDiagnostic,
+  IndoorDiagnosticHandler,
+  IndoorDiagnosticOptions,
+  IndoorDiagnosticSeverity,
+} from "./diagnostics";
 
 export { createIndoorModel } from "./IndoorModel";
-export type { IndoorModel, RawIndoorModelData, RawOverpassGraphs } from "./IndoorModel";
+export type { CreateIndoorModelOptions, IndoorModel } from "./IndoorModel";
+export { IndoorElementRegistry } from "./IndoorElementRegistry";
+export type { IndoorElementRegistryData, IndoorModelElement } from "./IndoorElementRegistry";
+export { IndoorTopology } from "./IndoorTopology";
+export type { IndoorRoomConnection } from "./IndoorTopology";
 export { buildIndoorOpenings } from "./IndoorOpeningBuilder";
 
 export { IndoorElement } from "./elements/IndoorElement";

@@ -1,4 +1,7 @@
 import { OverpassJson } from "./models/overpassJson";
+import { IndoorDiagnostic, IndoorDiagnosticOptions, IndoorDiagnostics } from "./diagnostics";
+import { IndoorElementRegistry } from "./IndoorElementRegistry";
+import { IndoorTopology } from "./IndoorTopology";
 import { OsmGraph } from "./overpass/OsmGraph";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
@@ -6,88 +9,58 @@ import { IndoorHandrail } from "./elements/IndoorHandrail";
 import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
-import { IndoorOpening } from "./elements/IndoorOpening";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorStepArea } from "./elements/IndoorStepArea";
 import { IndoorStairPathway } from "./elements/IndoorStairPathway";
 import { IndoorTactilePaving } from "./elements/IndoorTactilePaving";
 import { IndoorWall } from "./elements/IndoorWall";
-import {
-  buildIndoorVerticalConnections,
-  IndoorVerticalConnection,
-} from "./verticalConnections/IndoorVerticalConnection";
+import { buildIndoorVerticalConnections } from "./verticalConnections/IndoorVerticalConnection";
 import { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
 import { buildIndoorOpenings } from "./IndoorOpeningBuilder";
 
-export interface RawOverpassGraphs {
-  buildings: OsmGraph;
-  indoor: OsmGraph;
-}
-
-export interface RawIndoorModelData {
-  buildings: OverpassJson;
-  indoor: OverpassJson;
-}
+export type CreateIndoorModelOptions = IndoorDiagnosticOptions;
 
 export interface IndoorModel {
-  rawOverpassData: RawIndoorModelData;
-  graphs: RawOverpassGraphs;
+  rawIndoorData: OverpassJson;
+  graph: OsmGraph;
+  diagnostics: IndoorDiagnostic[];
+  elements: IndoorElementRegistry;
+  topology: IndoorTopology;
   levels: number[];
   levelLabels: Map<number, string>;
-  levelOutlines: IndoorLevelOutline[];
-  rooms: IndoorRoom[];
-  doors: IndoorDoor[];
-  openings: IndoorOpening[];
-  handrails: IndoorHandrail[];
-  columns: IndoorColumn[];
-  infoPoints: IndoorInfoPoint[];
-  pointFeatures: IndoorPointFeature[];
-  walls: IndoorWall[];
-  tactilePaving: IndoorTactilePaving[];
-  stepAreas: IndoorStepArea[];
-  stairPathways: IndoorStairPathway[];
-  stairLandings: IndoorLanding[];
   stairPathNetwork: IndoorStairPathNetwork;
-  verticalConnections: IndoorVerticalConnection[];
 }
 
-export function createIndoorModel(rawOverpassData: RawIndoorModelData): IndoorModel {
-  const graphs = {
-    buildings: new OsmGraph(rawOverpassData.buildings),
-    indoor: new OsmGraph(rawOverpassData.indoor),
-  };
-  const rooms = IndoorRoom.collectFromGraph(graphs.indoor);
-  const levelOutlines = IndoorLevelOutline.collectFromGraph(graphs.indoor);
-  const doors = IndoorDoor.collectFromGraph(graphs.indoor);
-  const handrails = IndoorHandrail.collectFromGraph(graphs.indoor);
-  const columns = IndoorColumn.collectFromGraph(graphs.indoor);
-  const infoPoints = IndoorInfoPoint.collectFromGraph(graphs.indoor);
-  const pointFeatures = IndoorPointFeature.collectFromGraph(graphs.indoor);
-  const walls = IndoorWall.collectFromGraph(graphs.indoor);
-  const tactilePaving = IndoorTactilePaving.collectFromGraph(graphs.indoor);
-  const stepAreas = IndoorStepArea.collectFromGraph(graphs.indoor);
-  const stairPathways = IndoorStairPathway.collectFromGraph(graphs.indoor);
-  const stairLandings = IndoorLanding.collectFromGraph(graphs.indoor);
+export function createIndoorModel(
+  rawIndoorData: OverpassJson,
+  options: CreateIndoorModelOptions = {},
+): IndoorModel {
+  const diagnostics = new IndoorDiagnostics(options);
+  const graph = new OsmGraph(rawIndoorData);
+  const rooms = IndoorRoom.collectFromGraph(graph, diagnostics);
+  const levelOutlines = IndoorLevelOutline.collectFromGraph(graph, diagnostics);
+  const doors = IndoorDoor.collectFromGraph(graph, diagnostics);
+  const handrails = IndoorHandrail.collectFromGraph(graph, diagnostics);
+  const columns = IndoorColumn.collectFromGraph(graph, diagnostics);
+  const infoPoints = IndoorInfoPoint.collectFromGraph(graph, diagnostics);
+  const pointFeatures = IndoorPointFeature.collectFromGraph(graph, diagnostics);
+  const walls = IndoorWall.collectFromGraph(graph, diagnostics);
+  const tactilePaving = IndoorTactilePaving.collectFromGraph(graph, diagnostics);
+  const stepAreas = IndoorStepArea.collectFromGraph(graph, diagnostics);
+  const stairPathways = IndoorStairPathway.collectFromGraph(graph, diagnostics);
+  const stairLandings = IndoorLanding.collectFromGraph(graph, diagnostics);
   const stairPathNetwork = new IndoorStairPathNetwork(stairPathways, stairLandings);
-  const verticalConnections = buildIndoorVerticalConnections(
-    graphs.indoor,
-    rooms,
-    stairPathNetwork,
-  );
+  const verticalConnections = buildIndoorVerticalConnections(graph, rooms, stairPathNetwork);
   const openings = buildIndoorOpenings({
-    graph: graphs.indoor,
+    graph,
     rooms,
     walls,
     doors,
     verticalConnections,
+    diagnostics,
   });
-
-  return {
-    rawOverpassData,
-    graphs,
-    levels: collectIndoorLevels(rooms, levelOutlines),
-    levelLabels: collectLevelLabels(levelOutlines),
+  const elements = new IndoorElementRegistry({
     levelOutlines,
     rooms,
     doors,
@@ -101,8 +74,19 @@ export function createIndoorModel(rawOverpassData: RawIndoorModelData): IndoorMo
     stepAreas,
     stairPathways,
     stairLandings,
-    stairPathNetwork,
     verticalConnections,
+  });
+  const topology = new IndoorTopology(graph, elements);
+
+  return {
+    rawIndoorData,
+    graph,
+    diagnostics: diagnostics.diagnostics,
+    elements,
+    topology,
+    levels: collectIndoorLevels(rooms, levelOutlines),
+    levelLabels: collectLevelLabels(levelOutlines),
+    stairPathNetwork,
   };
 }
 

@@ -1,4 +1,4 @@
-import { IndoorElementRef } from "../../models/indoorElementRef";
+import { IndoorElementRef } from "../../indoor";
 import { AccessibilityMarkerData } from "../../services/featureService";
 import { OpeningOrientationDebugData } from "../../indoor";
 

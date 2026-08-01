@@ -1,4 +1,4 @@
-import { IndoorPointFeature, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorPointFeature, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorPointFeature", () => {
   it("collects marker-relevant point features from the graph", () => {

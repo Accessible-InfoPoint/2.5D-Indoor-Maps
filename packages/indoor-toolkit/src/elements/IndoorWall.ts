@@ -1,19 +1,23 @@
 import { OverpassWay } from "../models/overpassJson";
+import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { isRawIndoorWallElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 export class IndoorWall extends IndoorElement {
-  static collectFromGraph(graph: OsmGraph): IndoorWall[] {
-    return graph.elements.filter(isRawIndoorWallElement).map((way) => new IndoorWall(graph, way));
+  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorWall[] {
+    return graph.elements
+      .filter(isRawIndoorWallElement)
+      .map((way) => new IndoorWall(graph, way, diagnostics));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
+    diagnostics?: IndoorDiagnostics,
   ) {
-    super(graph, sourceElement);
+    super(graph, sourceElement, diagnostics);
   }
 
   includesNode(nodeId: number): boolean {

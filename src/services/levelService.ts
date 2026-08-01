@@ -31,11 +31,11 @@ function getCurrentLevelDescription(currentLevel: number): string {
 function getRawLevelTags(level: number): IndoorTags[] {
   const model = BackendService.getIndoorModel();
   const elements: IndoorElement[] = [
-    ...model.rooms,
-    ...model.pointFeatures,
-    ...model.infoPoints,
-    ...model.tactilePaving,
-    ...model.stairPathways,
+    ...model.elements.rooms,
+    ...model.elements.pointFeatures,
+    ...model.elements.infoPoints,
+    ...model.elements.tactilePaving,
+    ...model.elements.stairPathways,
   ];
 
   return elements.filter((element) => element.hasLevel(level)).map((element) => element.tags);

@@ -1,4 +1,4 @@
-import { IndoorTactilePaving, OsmGraph, OverpassJson } from "../../src/indoor";
+import { IndoorTactilePaving, OsmGraph, OverpassJson } from "../../src";
 
 describe("IndoorTactilePaving", () => {
   it("collects tactile paving ways from the graph", () => {

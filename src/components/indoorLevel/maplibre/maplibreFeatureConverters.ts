@@ -1,4 +1,4 @@
-import { IndoorElementRef } from "../../../models/indoorElementRef";
+import { IndoorElementRef } from "../../../indoor";
 import {
   OpeningRenderItem,
   RoomRenderItem,

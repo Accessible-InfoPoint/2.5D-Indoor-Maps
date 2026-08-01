@@ -1,6 +1,6 @@
 import { getRequiredArrayValue } from "./requiredHelpers";
 
-class Vector2 {
+export class Vector2 {
   constructor(
     readonly x: number,
     readonly y: number,
