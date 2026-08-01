@@ -267,7 +267,7 @@ const levelOutlineOverpassData: RawOverpassDataResponse = {
           { type: "way", ref: 10, role: "outer" },
           { type: "way", ref: 12, role: "inner" },
         ],
-        tags: { indoor: "level", level: "0", "level:ref": "E" },
+        tags: { indoor: "level", level: "0", "level:ref": "E", type: "multipolygon" },
       },
       {
         type: "way",
