@@ -1,231 +1,209 @@
-# Indoor Tagging Guide
+# Indoor Rendering Guide
 
-This document describes how indoor OpenStreetMap data is interpreted by this renderer. It is meant as a mapper checklist for buildings that should work well in the raw indoor model pipeline.
+This document describes how the 2.5D Indoor Maps application renders parsed indoor OpenStreetMap data. Parser behavior, supported raw elements, level parsing, topology, and diagnostics are documented in the parser package guide:
 
-The application follows the Simple Indoor Tagging schema and interprets data through that lens: indoor spaces are level-bound areas, barriers and special features are separate elements, and vertical movement is described by stair or elevator footprints plus optional pathway geometry.
+[Indoor Toolkit Parser Guide](../packages/indoor-toolkit/docs/parser-guide.md)
 
-The renderer is not a general-purpose OSM renderer. Tags listed here are the ones currently used by the application. Additional OSM tags are preserved on features, but they only affect rendering, markers, search, or accessibility descriptions when listed below.
+The application follows the Simple Indoor Tagging schema through the parser, then applies renderer-specific styling, labels, markers, search behavior, and accessibility descriptions. Tags not mentioned here may still be preserved by the parser, but they do not affect this application's rendering unless the application explicitly uses them.
 
-## General Rules
+## Rendering Pipeline
 
-### Geometry
+The application loads raw Overpass JSON, creates an indoor model with `createIndoorModel`, and then builds render items from typed parser elements:
 
-- Rooms, corridors, areas, columns, level outlines, landings, and step areas may be closed ways or multipolygon-style relations.
-- Relations support `outer` and `inner` way members. Multiple outer rings and multiple holes are supported. Outer rings may be assembled from multiple ways that connect end to end.
-- Unsupported relation member roles are ignored with a console warning.
-- Ways do not have to repeat the first node at the end; the renderer closes area rings for rendering.
-- Missing nodes or incomplete relation rings prevent that element from being rendered and produce a console warning.
+- `model.elements.rooms` become room, corridor, area, toilet, elevator, and stair footprint surfaces.
+- `model.elements.levelOutlines` provide optional 3D floor outlines and level labels.
+- `model.elements.openings` become door or opening symbols.
+- `model.elements.walls`, `handrails`, and `columns` become barriers or solid objects.
+- `model.elements.tactilePaving` and `pointFeatures` become accessibility-oriented line and marker features.
+- `model.elements.verticalConnections`, `stairPathNetwork`, and `stepAreas` drive stair and elevator representations.
+
+GeoJSON is still used as a geometry interchange format for MapLibre and Three.js input, but selection, search, topology, and element identity are based on parser elements rather than GeoJSON features.
+
+## General Rendering Rules
 
 ### Levels
 
-Most elements are visible on levels from:
+The level selector uses `model.levels`, which the parser derives from room-like areas and explicit `indoor=level` outlines. Nodes without levels do not make elements appear on every level.
 
-- `level=*`
-- `repeat_on=*`
+If a level has an `indoor=level` outline with `level:ref=*`, the selector displays `level:ref` while keeping the numeric `level=*` value internally. For example, `level=0 + level:ref=E` displays `E`.
 
-Supported examples:
+### Geometry
+
+Area-like elements can render from polygons or multipolygons. The application should iterate all polygons in a multipolygon where a renderer expects polygon-only geometry.
+
+If parser geometry is missing, the element is skipped for the render item that needs that geometry. The data issue should appear in `model.diagnostics`.
+
+### Selection And Search
+
+Search results and clicked map elements refer to `IndoorElementRef` values. The application resolves them through `model.elements` and can switch to a level where the element exists.
+
+Selected elements are highlighted by rebuilding only the render layers affected by selection.
+
+### Accessibility
+
+The parser exposes point features and tags. The application decides which of those become accessibility markers for the active user profile. This is intentionally use-case-specific: for example, `information=tactile_map` is a regular parser point feature, while this application treats one tactile map per level as the primary information point and excludes it from the generic marker layer.
+
+## Rendered Elements
+
+Each section below follows the same structure:
+
+- Parser element: the parser element used by the application.
+- Expected parser tags: tags documented by the parser guide.
+- Rendering: how this application draws it.
+- Application notes: renderer-specific warnings, common mistakes, or mapping advice.
+
+### Rooms, Corridors, And Areas
+
+Parser element:
 
 ```text
-level=0
-level=0;1;2
-level=0-3
-level=0.5
-repeat_on=2;3
+IndoorRoom
 ```
 
-For ordinary elements, `level=0-3` expands to integer levels `0`, `1`, `2`, and `3`. Use explicit fractional values such as `level=0.5` when needed.
-
-Stair pathways are different: on `indoor=pathway`, `level=*` is interpreted as a vertical span and should use `from-to` syntax, for example `level=0-1` or `level=0-0.5`.
-
-### Level Selector and 3D Outline
-
-The level selector is based on drawable Simple Indoor Tagging areas and explicit level outlines:
-
-- `indoor=room`
-- `indoor=corridor`
-- `indoor=area`, except `landing=yes`
-- `indoor=level`
-
-Nodes do not contribute levels by themselves. Stair pathway levels are used for stair rendering, not for discovering the building's level list.
-
-If an `indoor=level` element exists for the current level, its full geometry is used as the 3D floor outline. Otherwise the building outline is used. If the level outline has `level:ref=*`, that value is used as the level selector label while the numeric `level=*` value remains the internal level number.
-
-## Supported Elements
-
-### Rooms, Corridors, and Areas
-
-Expected tags:
+Expected parser tags:
 
 ```text
 indoor=room|corridor|area
 level=*
 ```
 
-Optional useful tags:
-
-```text
-name=*
-ref=*
-amenity=toilets
-wheelchair=yes|designated|no
-stairs=yes
-highway=elevator|escalator
-repeat_on=*
-```
-
-Interpretation:
-
-- `indoor=room`, `indoor=corridor`, and `indoor=area` are all collected as indoor room-like areas.
-- `indoor=area + landing=yes` is not a normal room. It is treated as a stair landing.
-- `name=*` or `ref=*` labels are shown for ordinary `indoor=room` features. Toilet rooms, stair rooms, and other special rooms are not labeled this way.
-- `amenity=toilets` changes fill color and can create toilet markers.
-- `wheelchair=yes` adds wheelchair pattern fills for wheelchair-user profiles and contributes accessibility information.
-- `stairs=yes`, `highway=elevator`, or `highway=escalator` turns a room or area footprint into a vertical connection footprint.
-
 Rendering:
 
 - 2D: rendered as filled polygons.
 - 3D: corridors, areas, elevators, stair footprints, and selected rooms are rendered as raised surfaces.
-- `indoor=room + stairs=yes/highway=elevator/highway=escalator` is an enclosed or simple vertical connection footprint.
-- `indoor=area + stairs=yes/highway=elevator/highway=escalator` is an open vertical connection footprint.
+- `amenity=toilets` changes fill color and can create toilet markers.
+- `wheelchair=yes|designated` can add pattern fills for wheelchair-user profiles.
+- Ordinary rooms can show `name=*` or `ref=*` labels.
 
-Best practice:
+Application notes:
 
-- Use `indoor=room` for enclosed spaces.
-- Use `indoor=corridor` for corridors.
-- Use `indoor=area` for open circulation areas and open stair footprints.
-- Put doors on shared outline nodes when a wall or room boundary has a door.
+- `indoor=room` is best for enclosed spaces.
+- `indoor=corridor` is best for corridors.
+- `indoor=area` is best for open circulation areas and open stair footprints.
+- Corridor and area outlines may be suppressed or minimized in future renderer definitions because they do not imply enclosing walls.
 
 ### Level Outlines
 
-Expected tags:
+Parser element:
+
+```text
+IndoorLevelOutline
+```
+
+Expected parser tags:
 
 ```text
 indoor=level
 level=*
-```
-
-Optional useful tags:
-
-```text
 level:ref=*
 ```
 
-Interpretation and rendering:
+Rendering:
 
-- Defines the full outline geometry of a level.
-- The full polygon or multipolygon is used in 3D, including inner rings.
-- `level:ref=*` is displayed in the level selector. For example, `level=0` and `level:ref=E` displays `E` while still using numeric level `0` internally.
+- Used as the 3D floor outline when present for the current level.
+- Full polygon and multipolygon geometry is used, including inner rings.
+- `level:ref=*` is used as the visible level selector label.
 
-Best practice:
+Application notes:
 
-- Add one level outline per level when floor plates differ between levels.
-- Keep `level=*` numeric, even when the visible label is a letter or local floor name.
+- Add level outlines when floor plates differ between levels.
+- Keep `level=*` numeric and use `level:ref=*` for local names such as `E`, but keep them short. Use `name=*` for a longer name.
 
 ### Walls
 
-Expected tags:
+Parser element:
+
+```text
+IndoorWall
+```
+
+Expected parser tags:
 
 ```text
 indoor=wall
 level=*
-```
-
-Optional useful tags:
-
-```text
 area=yes
 ```
 
-Interpretation:
-
-- Wall ways are rendered as wall lines.
-- `area=yes` turns the wall into a filled wall polygon.
-- Area walls are renderable areas, not pass-through line barriers. Doors are not connected to `area=yes` walls and will produce a warning if they try to use one as their wall context.
-
 Rendering:
 
-- Line walls are rendered with the wall style.
-- Area walls are filled with the wall color and outlined.
+- Line walls render as wall lines.
+- `area=yes` walls render as filled wall polygons with an outline.
+- Area walls are not used as pass-through wall lines for door orientation or width.
 
-Best practice:
+Application notes:
 
-- Use line walls for walls that contain door nodes.
-- Use `area=yes` only for thick wall volumes that should be rendered as solid areas.
+- Use line walls when doors should be visually cut into that wall.
+- Use `area=yes` for thick wall volumes that should appear as solid shapes.
 
-### Doors and Openings
+### Doors And Openings
 
-Expected tags:
+Parser element:
+
+```text
+IndoorDoor
+IndoorOpening
+```
+
+Expected parser tags:
 
 ```text
 door=*
 level=*
-```
-
-Optional useful tags:
-
-```text
 width=*
 ```
 
-Interpretation:
-
-- Doors are node elements.
-- A door connects to rooms when its node is part of a room, corridor, or area way or relation member way.
-- A door connects to walls when its node is part of an `indoor=wall` line way.
-- If both rooms and walls are connected, wall geometry is preferred for orientation and line width.
-- Door orientation is derived from the previous and next nodes of the containing room or wall way.
-- `width=*` is interpreted in meters and controls the rendered opening width.
-
 Rendering:
 
-- Doors render as opening symbols in the wall or room boundary.
-- Door color comes from connected rooms. If a connected room is selected, the selected room color is used. If no room is connected, white is used.
-- Door line width comes from connected walls first, then connected rooms.
+- Explicit doors and inferred open staircase connections render as opening symbols.
+- The opening color comes from connected rooms, with white as fallback.
+- The opening line width comes from connected walls first, then connected rooms.
+- If an explicit stair door has no width, inferred staircase width can provide a fallback.
 
-Best practice:
+Application notes:
 
-- Put the door node directly into the boundary way of each connected room, or into the wall way when the door is in an explicit wall.
-- Use `width=*` when the default 1 m opening is not correct.
-- For corridor-to-corridor fire doors, use an explicit wall line containing the door node so the renderer can derive line width and orientation.
+- Put door nodes directly into room boundary ways or wall ways. Nearby coordinates are not enough.
+- Use explicit wall lines for corridor-to-corridor fire doors so the renderer has wall direction and width.
+- Open stair connections without physical doors can be rendered from inferred openings when the pathway shares nodes with the footprint.
 
 ### Columns
 
-Expected tags:
+Parser element:
+
+```text
+IndoorColumn
+```
+
+Expected parser tags:
 
 ```text
 indoor=column
 level=*
-```
-
-Optional useful tags:
-
-```text
 diameter=*
 width=*
 ```
 
-Interpretation:
-
-- Columns may be nodes, closed ways, or relations.
-- Node columns are approximated as circular polygons.
-- `diameter=*` is used for node columns when present.
-- `width=*` is used as a fallback diameter.
-- If neither is present, node columns use a default diameter of 0.5 m.
-
 Rendering:
 
 - Columns render with the wall color.
-- Columns do not get an additional outline.
+- Node columns are approximated as circular polygons.
+- Way and relation columns use their authored area geometry.
+- Columns do not receive an extra outline.
 
-Best practice:
+Application notes:
 
-- Use a node with `diameter=*` for round columns.
-- Use a closed way or relation when the actual footprint matters.
+- Use `diameter=*` for round node columns.
+- Use a way or relation when the actual footprint matters.
 
 ### Tactile Paving
 
-Expected tags:
+Parser element:
+
+```text
+IndoorTactilePaving
+```
+
+Expected parser tags:
 
 ```text
 indoor=yes
@@ -233,91 +211,92 @@ tactile_paving=yes
 level=*
 ```
 
-Interpretation:
-
-- Tactile paving is currently supported as ways only.
-- The way must have at least two nodes.
-
 Rendering:
 
-- Rendered as a dashed line with tactile paving line weight.
-- It only appears on explicitly tagged levels.
+- Rendered as a dashed tactile paving line.
+- Only visible on explicitly tagged levels.
 
-Best practice:
+Application notes:
 
-- Tag tactile guidance lines as their own ways.
-- Always add `level=*`; level-less tactile paving is not shown on every level.
+- Always add `level=*`; level-less tactile paving is not treated as visible everywhere.
 
 ### Information Point
 
-Expected tags:
+Parser element:
+
+```text
+IndoorPointFeature
+```
+
+Expected parser tags:
 
 ```text
 information=tactile_map
 level=*
 ```
 
-Interpretation:
-
-- The main information point is a node.
-- It is separate from generic information-board accessibility markers.
-
 Rendering:
 
-- Rendered as the application's info point marker.
-- Only the first info point found for the current level is used.
+- This application treats tactile map point features as primary information points.
+- Only the first matching info point for the current level is used as the application's info point marker.
+- The same parser element is excluded from the generic accessibility marker layer by application logic.
 
-Best practice:
+Application notes:
 
-- Use this for the building's tactile map or primary indoor information point.
-- Keep it distinct from other `information=board` or `information=map` nodes.
+- This is application behavior, not parser behavior. Other applications may treat `information=tactile_map` differently.
 
-### Accessibility and Category Point Features
+### Accessibility And Category Point Features
 
-Supported node tags:
+Parser element:
+
+```text
+IndoorPointFeature
+```
+
+Expected parser tags:
 
 ```text
 amenity=toilets
-amenity=toilets + wheelchair=yes|designated
-highway=elevator + wheelchair=yes|designated
+highway=elevator
 highway=steps
 stairs=yes
 entrance=yes|main|secondary
 entrance=exit|emergency
 exit=yes|emergency
-information=board|map
-information=tactile_model|braille|tactile_letters
+information=tactile_model|braille|tactile_letters|board|map
 speech_output=*
 speech_output:de=*
 speech_output:en=*
+wheelchair=yes|designated
 wheelchair:description:de=*
 wheelchair:description:en=*
 level=*
 ```
 
-Interpretation:
-
-- Marker-relevant nodes are collected separately from rooms.
-- `information=tactile_map` is reserved for the main info point and does not create a normal accessibility marker.
-- Accessibility marker visibility depends on the active user profile and enabled feature toggles.
-
 Rendering:
 
-- Rendered as point markers on the current level.
-- Rooms can also create accessibility markers from their tags, for example an `amenity=toilets` room.
+- Rendered as point markers when enabled for the current user profile.
+- Rooms can also create accessibility markers from their tags, for example `amenity=toilets`.
 
-Best practice:
+Application notes:
 
-- Use room tags when the feature occupies a room.
-- Use point tags when the feature is a point object, entrance, exit, board, or other localized feature.
+- Wheelchair profiles emphasize accessible toilets, wheelchair-accessible elevators, and wheelchair descriptions.
+- Blind profiles emphasize tactile information, tactile paving related information, stairs, speech output, entrances, and exits.
+- No-impairment profiles emphasize general toilets, entrances, exits, information boards, and stairs.
 
 ## Vertical Connections
 
-Vertical connections are the most renderer-specific part of the current model. The renderer supports three practical patterns.
+Vertical connections use parser semantics but have substantial renderer-specific behavior.
 
-### Enclosed Staircases and Elevators
+### Enclosed Staircases And Elevators
 
-Expected footprint tags:
+Parser element:
+
+```text
+IndoorVerticalConnection kind="simple"
+```
+
+Expected parser tags:
 
 ```text
 indoor=room
@@ -333,47 +312,39 @@ highway=elevator|escalator
 level=*
 ```
 
-Optional tags:
+Rendering:
 
-```text
-handrail=yes|no
-handrail:left=yes|no
-handrail:right=yes|no
-handrail:middle=yes|no
-wheelchair=yes|designated|no
-```
-
-Interpretation:
-
-- `indoor=room` plus `stairs=yes`, `highway=elevator`, or `highway=escalator` (elevators with `indoor=area` behave identically to `indoor=room`) creates a simple vertical connection footprint.
-- The footprint itself is rendered as a 2D room-like area.
+- The footprint renders as a normal 2D room-like area.
 - In 3D, the footprint becomes a vertical prism on all levels except the top level.
-- Optional `indoor=pathway` middle lines can be added for detailed stair geometry and handrails.
+- Staircase prisms get cylinders at the edges.
+- Optional stair pathways can add detailed sloped stair geometry.
 
-Best practice:
+Application notes:
 
 - Use `indoor=room` for enclosed stairwells and elevator shafts.
 - Put the footprint on all levels it connects, for example `level=0;1;2`.
-- Add a pathway if you want detailed sloped stair rendering.
 
 ### Open Staircases
 
-Expected footprint tags:
+Parser element:
+
+```text
+IndoorVerticalConnection kind="open"
+IndoorStairPathway
+```
+
+Expected parser tags:
 
 ```text
 indoor=area
 stairs=yes
 level=*
-```
 
-Expected pathway tags:
-
-```text
 indoor=pathway
 level=from-to
 ```
 
-Optional tags:
+Optional rendering tags:
 
 ```text
 width=*
@@ -383,40 +354,42 @@ handrail:right=yes|no
 handrail:middle=yes|no
 ```
 
-Interpretation:
-
-- `indoor=area + stairs=yes` creates an open vertical connection footprint.
-- Pathways that share nodes with the footprint are treated as the stair middle lines for that footprint.
-- The path `level=*` must be a vertical span such as `0-1`, not a semicolon list.
-- Node-level tags on the pathway nodes refine the 3D altitude. If intermediate nodes do not have levels, their altitudes are interpolated between nearest level anchors.
-
 Rendering:
 
-- The footprint is rendered as a 2D area.
+- The footprint renders as a 2D area.
 - If no handrail tags are present, the open staircase footprint outline is suppressed so open corridor connections do not look like walls.
 - In 3D, pathway middle lines create sloped stair surfaces.
-- If handrails are tagged on the footprint, left and right are interpreted in the upward direction.
-- If handrails are tagged on the pathway, left and right follow the pathway direction.
+- Handrail tags on the footprint orient left and right in the upward direction.
+- Handrail tags on a pathway orient left and right by pathway direction.
+- Shared nodes between footprint and pathway can become inferred openings when there is no explicit door.
 
-Best practice:
+Application notes:
 
-- Share nodes between the stair footprint and pathway where the stair connects to surrounding areas.
-- Add explicit door nodes when there is a real door.
-- If no door exists at an open connection, shared nodes between the footprint and pathway can generate an opening so the connection remains visible.
+- Share nodes between the footprint and pathway where people enter or leave the stair.
+- Use explicit doors only when there is a physical door.
 
 ### Free-Floating Stairs
 
-Expected pathway tags:
+Parser element:
+
+```text
+IndoorVerticalConnection kind="freeFloating"
+IndoorStairPathway
+IndoorStepArea
+```
+
+Expected parser tags:
 
 ```text
 indoor=pathway
 level=from-to
 ```
 
-Optional tags:
+Optional rendering tags:
 
 ```text
 width=*
+area:highway=steps
 repeat_on=*
 repeat_on_offset=*
 handrail=yes|no
@@ -425,31 +398,30 @@ handrail:right=yes|no
 handrail:middle=yes|no
 ```
 
-Interpretation:
-
-- A pathway component that is not claimed by a staircase or elevator footprint becomes a free-floating stair.
-- `level=from-to` describes the vertical span.
-- `repeat_on=*` is interpreted as repeated start levels. For example, `level=1-2 + repeat_on=2` creates a repeated span `2-3`.
-- `repeat_on_offset=*` is interpreted as an offset from the authored span.
-- Pathway components only connect directly when their vertical span matches. Components with different spans can be grouped through shared landing instances.
-- A `level=0-1` stair renders on both level `0` and level `1`. Fractional spans render on the integer levels they touch.
-
 Rendering:
 
 - 2D: rendered as a flat stair surface derived from the middle line and width.
 - 3D: rendered as sloped prism segments.
-- If no explicit width is present, the default pathway width is 1 m unless a compatible `area:highway=steps` area is available.
-- Free-floating stairs render side outlines. If a side has a handrail, the outline uses handrail styling; otherwise it uses a fallback wall-like outline.
+- If `width=*` is missing, the renderer can sample compatible `area:highway=steps` geometry.
+- If no width source is available, the default pathway width is used.
+- Side outlines use handrail styling where handrails exist, otherwise fallback outline styling.
+- A `level=0-1` stair is visible on both level `0` and level `1`.
 
-Best practice:
+Application notes:
 
 - Use one pathway per vertical span.
-- For split stairs with intermediate landings, model each ramp as its own pathway and model the landing separately.
-- Put `level=*` tags on endpoint nodes and important intermediate nodes when the slope is not uniform.
+- For split stairs, model each ramp separately and connect them with `landing=yes` areas.
+- Add node `level=*` tags to endpoints and important intermediate nodes when slope is not uniform.
 
 ### Stair Landings
 
-Expected tags:
+Parser element:
+
+```text
+IndoorLanding
+```
+
+Expected parser tags:
 
 ```text
 indoor=area
@@ -457,145 +429,103 @@ landing=yes
 level=*
 ```
 
-Optional tags:
-
-```text
-repeat_on=*
-repeat_on_offset=*
-```
-
-Interpretation:
-
-- Landings are stair components, not ordinary rooms.
-- They connect pathway components when their level lies on a pathway span boundary.
-- Repeated landings can be created with `repeat_on=*` or `repeat_on_offset=*`.
-
 Rendering:
 
 - 2D: rendered as flat stair surface areas for free-floating stair groups.
 - 3D: rendered as thin flat prisms at the landing altitude.
+- Landing handrails modeled as `barrier=handrail` ways are rendered only in 3D when attached to the landing.
 
-Best practice:
+Application notes:
 
-- Use landings to connect pathway spans like `0-0.5` and `0.5-1`.
+- Use landings for transitions such as `0-0.5` plus `0.5-1`.
 - Share nodes between the landing and adjacent pathways when possible.
 
-### Step Areas for Stair Width
+### Step Areas For Stair Width
 
-Expected tags:
+Parser element:
+
+```text
+IndoorStepArea
+```
+
+Expected parser tags:
 
 ```text
 area:highway=steps
 level=*
 ```
 
-Interpretation:
-
-- Step areas are not rendered directly.
-- They are used to estimate the varying width of free-floating stair pathway surfaces when the pathway has no explicit `width=*`.
-- Compatible areas are matched by level overlap with the pathway's vertical span.
-- Width is sampled by ray-casting through each pathway node. At corners, the ray direction is based on the summed perpendicular vectors of the adjacent path segments, so diagonal and corner widths follow the stair area geometry.
-
 Rendering:
 
-- The step area affects generated 2D and 3D stair surfaces.
-- If `width=*` exists on the pathway, it takes priority over the step area.
+- Step areas are not rendered directly.
+- They can determine varying width for free-floating stair surfaces when the pathway has no explicit `width=*`.
+- Width is sampled by ray casting through pathway nodes. At corners, the sampling direction uses the summed perpendicular vectors of adjacent path segments, so diagonal and corner widths follow the stair area geometry.
 
-Best practice:
+Application notes:
 
-- Use `area:highway=steps` around free-floating stairs with non-uniform width.
 - Extend the step area slightly beyond endpoint nodes so endpoint width sampling has room to hit both sides.
-- Keep `level=*` aligned with the pathway span it describes.
+- `width=*` on the pathway takes priority over step area sampling.
 
 ### Handrails
 
-There are two supported handrail mechanisms.
-
-Pathway or footprint tags:
+Parser element:
 
 ```text
+IndoorHandrail
+IndoorStairPathway handrail tags
+IndoorRoom footprint handrail tags
+```
+
+Expected parser tags:
+
+```text
+barrier=handrail
+level=*
+
 handrail=yes|no
 handrail:left=yes|no
 handrail:right=yes|no
 handrail:middle=yes|no
 ```
 
-Separate handrail ways:
-
-```text
-barrier=handrail
-level=*
-```
-
-Interpretation:
-
-- Generic `handrail=yes` is a fallback for left and right handrails.
-- `handrail:left=*` and `handrail:right=*` override the generic tag.
-- `handrail:middle=*` is independent and is not implied by `handrail=yes`.
-- On pathway tags, left and right follow the path direction.
-- On footprint tags, left and right are oriented in the upward direction.
-- `barrier=handrail` ways are normally rendered as wall-like handrail lines.
-- If a `barrier=handrail` way shares at least two nodes with a landing instance, it is treated as a landing handrail and rendered only in 3D with the stair.
-
 Rendering:
 
+- Standalone `barrier=handrail` ways render as wall-like handrail lines.
+- Handrail ways attached to stair landings render only in the 3D stair representation.
 - Tagged stair handrails render in 3D along stair path edges or the middle.
-- Free-floating stair side outlines use handrail styling on sides with handrails.
-- Standalone `barrier=handrail` ways render as 2D wall/handrail lines unless attached to a landing.
+- Generic `handrail=yes` is a fallback for left and right handrails.
+- `handrail:middle=*` is independent.
 
-Best practice:
+Application notes:
 
-- Use tags on the pathway for handrails that follow a sloped stair run.
-- Use `barrier=handrail` ways for standalone handrails in corridors or on landings.
+- Use pathway tags for handrails that follow a sloped stair run.
+- Use `barrier=handrail` ways for standalone corridor handrails or landing handrails.
 
-## Accessibility Tags
+## Search And Labels
 
-The renderer currently uses these tags for fill patterns, markers, and accessibility descriptions:
-
-```text
-wheelchair=yes|designated|no
-wheelchair:description:de=*
-wheelchair:description:en=*
-amenity=toilets
-male=*
-female=*
-speech_output=*
-speech_output:de=*
-speech_output:en=*
-information=tactile_map|tactile_model|braille|tactile_letters|board|map
-entrance=yes|main|secondary|exit|emergency
-exit=yes|emergency
-highway=elevator|steps
-stairs=yes
-```
-
-Accessibility marker visibility depends on the active user profile:
-
-- Wheelchair users: accessible toilets, wheelchair-accessible elevators, wheelchair information, wheelchair descriptions.
-- Blind users: tactile information, tactile paving related information, stairs, speech output, entrances/exits.
-- No impairment profile: general toilets, entrances/exits, information boards, stairs.
-
-## Search and Labels
-
-For best results:
+For best application search results:
 
 - Add `name=*` or `ref=*` to rooms.
 - Add category tags such as `amenity=toilets`, `highway=elevator`, `stairs=yes`, `shop=*`, `amenity=cafe`, or `amenity=restaurant` where applicable.
 - Keep level tags numeric and consistent.
 
-## Minimal Checklist
+Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stair rooms, and other special rooms may use category markers instead.
 
-For each building:
+## Common Rendering Mistakes
 
-- Add level-tagged `indoor=room`, `indoor=corridor`, and `indoor=area` polygons.
-- Add `indoor=level` outlines with `level:ref=*` if level labels or floor plates differ from the building outline.
+- Door nodes are close to a room boundary but not part of the boundary way. The parser keeps topology by OSM membership, not coordinate comparison.
+- Corridors are expected to have implicit walls. The renderer treats corridors and open areas as open circulation unless explicit walls or doors provide wall context.
+- `information=tactile_map` is expected to become both the main info point and a generic marker. This application intentionally chooses one primary info point per level.
+- Free-floating stairs are modeled as one long pathway with semicolon level lists. Use one pathway per vertical span and connect spans with landings.
+- Fractional levels use commas. Use decimal points, for example `level=0.5`.
+
+## Minimal Rendering Checklist
+
+Start with the parser checklist in [Indoor Toolkit Parser Guide](../packages/indoor-toolkit/docs/parser-guide.md#minimal-parser-checklist), then add renderer-specific detail:
+
+- Add `indoor=level` outlines with `level:ref=*` if floor plates or labels differ.
 - Put doors directly on room or wall way nodes.
-- Use explicit `indoor=wall` line ways where doors connect corridors or where no room boundary should provide wall width.
-- Tag columns as `indoor=column`, with `diameter=*` for node columns.
-- Tag tactile guidance ways with `indoor=yes + tactile_paving=yes + level=*`.
-- Tag the main info point with `information=tactile_map + level=*`.
-- For enclosed stairs/elevators, use `indoor=room` plus `stairs=yes` or `highway=elevator`.
-- For open stairs, use `indoor=area + stairs=yes` plus `indoor=pathway` middle lines.
-- For free-floating stairs, use `indoor=pathway + level=from-to`; add `width=*` or an `area:highway=steps` area.
-- Use `landing=yes` areas for intermediate landings.
-- Add handrail tags or `barrier=handrail` ways when handrails matter for the 2D/3D representation.
+- Use explicit `indoor=wall` line ways for corridor-to-corridor doors.
+- Tag the primary tactile map as `information=tactile_map + level=*`.
+- Add accessibility tags where marker profiles should react to them.
+- Add stair pathways, landings, step areas, and handrails when detailed 2D or 3D stair rendering matters.

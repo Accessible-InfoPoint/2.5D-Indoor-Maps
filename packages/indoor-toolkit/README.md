@@ -28,6 +28,8 @@ for (const opening of model.topology.getOpeningsForRoom("way/123")) {
 }
 ```
 
+For more complete parser examples, see [docs/parser-guide.md](docs/parser-guide.md).
+
 ## Input Data
 
 `createIndoorModel` expects already loaded raw indoor Overpass JSON:
@@ -171,7 +173,7 @@ The current parser collects:
 - Tactile paving from `indoor=yes` and `tactile_paving=yes`.
 - Vertical connections from staircase/elevator footprints, stair pathways, stair landings, and repeated level ranges.
 
-The detailed tagging guide is intentionally kept separate while the public API is being stabilized.
+The detailed parser behavior and tagging expectations are documented in [docs/parser-guide.md](docs/parser-guide.md).
 
 ## Warnings And Invalid Data
 

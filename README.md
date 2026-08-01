@@ -36,23 +36,17 @@ For local development, start the app with:
 npm run dev
 ```
 
-This builds the client and server once, starts the web server, and keeps
-watching the source files. When client files change, webpack rebuilds the
-browser bundles. When server files change, TypeScript recompiles the server and
-Node restarts the compiled server process.
+This builds the client and server once, starts the web server, and keeps watching the source files. When client files change, webpack rebuilds the browser bundles. When server files change, TypeScript recompiles the server and Node restarts the compiled server process.
 
 Afterwards, the app is accessible via your browser under the displayed URL.
 
-For production-like usage, run one command to build the client and server and
-start the application:
+For production-like usage, run one command to build the client and server and start the application:
 
 ```sh
 npm start
 ```
 
-Overpass requests identify the application with a default `User-Agent`. For a
-production deployment, set `OVERPASS_USER_AGENT` to an application identifier
-that also provides operator contact information:
+Overpass requests identify the application with a default `User-Agent`. For a production deployment, set `OVERPASS_USER_AGENT` to an application identifier that also provides operator contact information:
 
 ```sh
 OVERPASS_USER_AGENT="2.5D-Indoor-Maps/1.0 (contact@example.org)" npm start
@@ -74,30 +68,16 @@ npm run serve
 
 ## Development workflow
 
-Development uses a lightweight feature-branch workflow: keep `main` stable and
-do larger changes on branches such as `feature/...`, `fix/...`, or
-`migration/...`.
+Development uses a lightweight feature-branch workflow: keep `main` stable and do larger changes on branches such as `feature/...`, `fix/...`, or `migration/...`.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, branch naming, and
-release steps. Planned work and larger refactoring ideas are tracked in
-[ROADMAP.md](ROADMAP.md). Release notes are collected in
-[CHANGELOG.md](CHANGELOG.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, branch naming, and release steps. Planned work and larger refactoring ideas are tracked in [ROADMAP.md](ROADMAP.md). Release notes are collected in [CHANGELOG.md](CHANGELOG.md).
 
-Configuration fields in `public/strings/settings.json` and
-`public/strings/buildingConstants.json`, plus official Overpass building source
-definitions in `public/strings/buildingSources.json`, are documented in
-[docs/configuration.md](docs/configuration.md).
+Configuration fields in `public/strings/settings.json` and `public/strings/buildingConstants.json`, plus official Overpass building source definitions in `public/strings/buildingSources.json`, are documented in [docs/configuration.md](docs/configuration.md).
 
-The supported indoor OSM elements, expected Simple Indoor Tagging conventions,
-and renderer-specific mapping checklist are documented in
-[docs/indoor-tagging.md](docs/indoor-tagging.md).
+Parser behavior and expected Simple Indoor Tagging conventions are documented in [packages/indoor-toolkit/docs/parser-guide.md](packages/indoor-toolkit/docs/parser-guide.md).
+Application-specific rendering behavior is documented in [docs/indoor-tagging.md](docs/indoor-tagging.md).
 
-Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING`
-when the building exists in both `buildingConstants.json` and
-`buildingSources.json`. For local experiments with new buildings, use
-`npm run overpass:candidate -- ...` or
-`npm run overpass:list-buildings -- ...`; the full workflow is documented in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING` when the building exists in both `buildingConstants.json` and `buildingSources.json`. For local experiments with new buildings, use `npm run overpass:candidate -- ...` or `npm run overpass:list-buildings -- ...`; the full workflow is documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project structure
 

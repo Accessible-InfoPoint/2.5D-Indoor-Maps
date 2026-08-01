@@ -1,8 +1,6 @@
 # Configuration Reference
 
-The application reads runtime configuration from JSON files in `public/strings`.
-JSON does not support comments, so field descriptions live here instead of in the
-configuration files.
+The application reads runtime configuration from JSON files in `public/strings`. JSON does not support comments, so field descriptions live here instead of in the configuration files.
 
 ## `settings.json`
 
@@ -33,9 +31,7 @@ General application, rendering, backend, and UI settings.
 
 ## `buildingConstants.json`
 
-Per-building settings keyed by building id. The `CURRENT_BUILDING` setting must
-match one of these top-level keys. For cached Overpass data, the same building
-id must also exist in `buildingSources.json`.
+Per-building settings keyed by building id. The `CURRENT_BUILDING` setting must match one of these top-level keys. For cached Overpass data, the same building id must also exist in `buildingSources.json`.
 
 | Field                             | Unit / Type             | Description                                                                                                                         |
 | --------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -54,8 +50,7 @@ id must also exist in `buildingSources.json`.
 
 ## `buildingSources.json`
 
-Official Overpass source settings for buildings that can be loaded through the
-`cachedOverpass` backend.
+Official Overpass source settings for buildings that can be loaded through the `cachedOverpass` backend.
 
 | Field                                 | Unit / Type                       | Description                                                                     |
 | ------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------- |
@@ -67,26 +62,10 @@ Official Overpass source settings for buildings that can be loaded through the
 | `buildings.<buildingId>.source`       | source id string                  | Source id from `sources`.                                                       |
 | `buildings.<buildingId>.buildingTags` | object of OSM tag key/value pairs | Tags that must identify exactly one SIT building in the downloaded source data. |
 
-Every building id in `buildingSources.json/buildings` must have a matching
-entry in `buildingConstants.json`, and vice versa.
+Every building id in `buildingSources.json/buildings` must have a matching entry in `buildingConstants.json`, and vice versa.
 
 ## Local Overpass Candidates
 
-Use `npm run overpass:candidate -- --id <id> --area-name "<name>" --tag key=value`
-or `--bbox west,south,east,north` to download and validate a candidate building
-without changing official config. The script writes files under
-`tmp/overpass-candidates/<id>/`, including raw Overpass `buildings.json`,
-`indoor.json`, `report.json`, and a suggested `buildingSources` snippet.
-Quoted option values are supported for area names and tags with spaces.
+Use `npm run overpass:candidate -- --id <id> --area-name "<name>" --tag key=value` or `--bbox west,south,east,north` to download and validate a candidate building without changing official config. The script writes files under `tmp/overpass-candidates/<id>/`, including raw Overpass `buildings.json`, `indoor.json`, `report.json`, and a suggested `buildingSources` snippet. Quoted option values are supported for area names and tags with spaces.
 
-Use `npm run overpass:list-buildings -- --area-name "<name>"` or
-`--bbox west,south,east,north` to list SIT-conform buildings in an area before
-choosing a candidate. The command writes a compact
-`sit-buildings.elements.json` file with only raw element ids and tags, plus
-the Overpass query and an Overpass Turbo URL for visual inspection.
-
-## Documentation Options
-
-For human-readable notes, keep this Markdown file next to the source. For editor
-validation and inline hints, add JSON Schema files later and reference them from
-the JSON files with a `$schema` field.
+Use `npm run overpass:list-buildings -- --area-name "<name>"` or `--bbox west,south,east,north` to list SIT-conform buildings in an area before choosing a candidate. The command writes a compact `sit-buildings.elements.json` file with only raw element ids and tags, plus the Overpass query and an Overpass Turbo URL for visual inspection.
