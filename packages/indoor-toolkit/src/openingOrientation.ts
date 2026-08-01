@@ -2,22 +2,40 @@ import CoordinateHelpers from "./utils/coordinateHelpers";
 import { IndoorDiagnostics } from "./diagnostics";
 import { IndoorElementRef } from "./models/indoorElementRef";
 
+/** Debug data exposing the source and calculated coordinates used for an opening orientation. */
 export interface OpeningOrientationDebugData {
+  /** Coordinate before the opening in the containing wall or room boundary. */
   previous: GeoJSON.Position;
+  /** Opening coordinate. */
   opening: GeoJSON.Position;
+  /** Coordinate after the opening in the containing wall or room boundary. */
   after: GeoJSON.Position;
+  /** Distance from `previous` to `opening` in meters. */
   previousDistanceM: number;
+  /** Distance from `after` to `opening` in meters. */
   afterDistanceM: number;
+  /** Opening width used for the calculation, in meters. */
   widthM: number;
+  /** Calculated endpoint on the previous side of the opening symbol. */
   calculatedPrevious: GeoJSON.Position;
+  /** Calculated endpoint on the after side of the opening symbol. */
   calculatedAfter: GeoJSON.Position;
 }
 
+/** Geometry describing the line segment/orientation used for an opening symbol. */
 export interface OpeningOrientationGeometry {
+  /** Three coordinates: previous opening endpoint, opening node, after opening endpoint. */
   orientation: [GeoJSON.Position, GeoJSON.Position, GeoJSON.Position];
+  /** Calculation details useful for debugging renderers or data issues. */
   debug: OpeningOrientationDebugData;
 }
 
+/**
+ * Calculate opening orientation from a node and its neighboring boundary coordinates.
+ *
+ * Returns `undefined` if the opening is identical to a neighboring coordinate,
+ * because the direction cannot be derived.
+ */
 export function calculateOpeningOrientationGeometry(
   openingCoord: GeoJSON.Position,
   previous: GeoJSON.Position,

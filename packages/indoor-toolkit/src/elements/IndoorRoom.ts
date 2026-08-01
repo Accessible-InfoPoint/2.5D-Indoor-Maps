@@ -6,16 +6,15 @@ import { isRawIndoorRoomElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
 /**
- * Handles all rooms and areas:
- * - regular rooms
- * - corridor
- * - area (e.g. foyer)
- * - special rooms (toilets, staircases)
- * - this does not handle 3D visualizations of staircases and 2D stairs (which are different from staircases: LINK) # TODO
+ * Room-like indoor area parsed from `indoor=room`, `indoor=corridor`, or `indoor=area`.
  *
- * Styling of elements is done in indoorLevelRenderBuilder.ts
+ * The parser keeps rooms, corridors, open areas, toilets, and vertical
+ * connection footprints in this shared class because they all describe
+ * level-bound indoor areas. Callers can inspect `tags.indoor` and other tags to
+ * decide styling, search categories, walkability, or routing behavior.
  */
 export class IndoorRoom extends IndoorElement {
+  /** Collect all raw room-like ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorRoom[] {
     return graph.elements
       .filter(isRawIndoorRoomElement)
@@ -30,6 +29,7 @@ export class IndoorRoom extends IndoorElement {
     return this.tags.indoor;
   }
 
+  /** Polygon or multipolygon geometry for the room-like area, if the raw geometry is complete. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toGeometry();
   }

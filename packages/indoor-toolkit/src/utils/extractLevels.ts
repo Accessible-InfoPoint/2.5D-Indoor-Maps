@@ -5,16 +5,37 @@ import type { OverpassElement } from "../models/overpassJson";
 
 export type LevelValue = string | number | Array<string | number> | null | undefined;
 
+/**
+ * Context used to attach level parsing diagnostics to a source element or tag.
+ */
 export interface ExtractLevelsOptions {
+  /** Diagnostic collector compatible with `IndoorDiagnostics`. */
   diagnostics?: {
     warn: (diagnostic: Omit<IndoorDiagnostic, "severity">) => void;
     error: (diagnostic: Omit<IndoorDiagnostic, "severity">) => void;
   };
+  /** Parsed element reference associated with the level value. */
   elementRef?: IndoorElementRef;
+  /** Raw OSM element associated with the level value. */
   sourceElement?: OverpassElement;
+  /** Tag name used in diagnostic messages, for example `level` or `repeat_on`. */
   tagName?: string;
 }
 
+/**
+ * Parse a Simple Indoor Tagging level-list value into numeric levels.
+ *
+ * Supports single values, semicolon lists, integer ranges, inverted ranges, and
+ * fractional levels with decimal points. Duplicate values are removed. Commas
+ * are rejected with an error diagnostic because they are ambiguous as decimal
+ * separators or list separators.
+ *
+ * @example
+ * ```ts
+ * extractLevels("0;2-3;1.5"); // [0, 2, 3, 1.5]
+ * extractLevels("3-1"); // [3, 2, 1] plus warning when diagnostics are provided
+ * ```
+ */
 export function extractLevels(level: LevelValue, options: ExtractLevelsOptions = {}): number[] {
   return deduplicateLevels(extractLevelsWithDuplicates(level, options), level, options);
 }

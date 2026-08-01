@@ -6,6 +6,7 @@ import {
   OverpassWay,
 } from "../models/overpassJson";
 
+/** Return whether a value has the minimal raw Overpass JSON shape used by the parser. */
 export function isOverpassJson(value: unknown): value is OverpassJson {
   return (
     typeof value === "object" &&
@@ -15,14 +16,22 @@ export function isOverpassJson(value: unknown): value is OverpassJson {
   );
 }
 
+/** Build the normalized element key used throughout the parser, for example `way/123`. */
 export function getOverpassElementKey(element: OverpassElement): string {
   return `${element.type}/${element.id}`;
 }
 
+/** Convert an Overpass node to a GeoJSON position in `[longitude, latitude]` order. */
 export function nodeToPosition(node: OverpassNode): GeoJSON.Position {
   return [node.lon, node.lat];
 }
 
+/**
+ * Normalize a user-provided id into `node/id`, `way/id`, or `relation/id` format.
+ *
+ * Numeric ids require a `defaultType`. Already-normalized ids are returned as-is
+ * when their type is valid.
+ */
 export function normalizeOverpassElementKey(
   elementId: number | string,
   defaultType?: OverpassElement["type"],

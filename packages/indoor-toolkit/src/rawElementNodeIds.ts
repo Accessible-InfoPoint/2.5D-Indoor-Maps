@@ -1,6 +1,12 @@
 import { OverpassElement, OverpassRelation, OverpassWay } from "./models/overpassJson";
 import { OsmGraph } from "./overpass/OsmGraph";
 
+/**
+ * Return raw node ids associated with an OSM element.
+ *
+ * Nodes return their own id, ways return their ordered node list, and relations
+ * return the concatenated node ids of member ways that are available in `graph`.
+ */
 export function getRawElementNodeIds(graph: OsmGraph, element: OverpassElement): number[] {
   switch (element.type) {
     case "node":
@@ -12,6 +18,7 @@ export function getRawElementNodeIds(graph: OsmGraph, element: OverpassElement):
   }
 }
 
+/** Return raw node ids as a set for membership checks. */
 export function getRawElementNodeIdSet(graph: OsmGraph, element: OverpassElement): Set<number> {
   return new Set(getRawElementNodeIds(graph, element));
 }

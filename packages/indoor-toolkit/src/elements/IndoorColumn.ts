@@ -11,7 +11,14 @@ import { IndoorElement } from "./IndoorElement";
 const DEFAULT_COLUMN_DIAMETER_METERS = 0.5;
 const COLUMN_CIRCLE_SEGMENTS = 24;
 
+/**
+ * Indoor column parsed from `indoor=column`.
+ *
+ * Node columns are approximated as circular polygons. Way and relation columns
+ * use their authored area geometry.
+ */
 export class IndoorColumn extends IndoorElement {
+  /** Collect all raw column nodes, ways, and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorColumn[] {
     return graph.elements
       .filter(isRawIndoorColumnElement)
@@ -22,6 +29,7 @@ export class IndoorColumn extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** Polygon geometry for node/way columns or multipolygon geometry for relation columns. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toGeometry();
   }

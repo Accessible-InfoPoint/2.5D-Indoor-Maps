@@ -1,8 +1,18 @@
+/** Numeric vertical interval between two indoor levels. */
 export interface VerticalSpan {
+  /** Lower numeric level after normalization. */
   from: number;
+  /** Higher numeric level after normalization. */
   to: number;
 }
 
+/**
+ * Parse `level=from-to` syntax into a normalized vertical span.
+ *
+ * Returns `undefined` for missing values, non-span syntax, equal endpoints, or
+ * non-finite numbers. Inverted spans such as `2-1` are normalized to `{from: 1,
+ * to: 2}`.
+ */
 export function parseVerticalSpan(value: string | undefined): VerticalSpan | undefined {
   if (value === undefined) {
     return undefined;
@@ -24,10 +34,12 @@ export function parseVerticalSpan(value: string | undefined): VerticalSpan | und
   return from < to ? { from, to } : { from: to, to: from };
 }
 
+/** Return a stable string key such as `0-1` for a vertical span. */
 export function getVerticalSpanKey(span: VerticalSpan): string {
   return `${span.from}-${span.to}`;
 }
 
+/** Shift both span boundaries by a repeat offset. */
 export function shiftVerticalSpan(span: VerticalSpan, offset: number): VerticalSpan {
   return {
     from: span.from + offset,
@@ -35,6 +47,7 @@ export function shiftVerticalSpan(span: VerticalSpan, offset: number): VerticalS
   };
 }
 
+/** Return whether `level` is exactly one of the span boundaries. */
 export function isLevelOnVerticalSpanBoundary(level: number, span: VerticalSpan): boolean {
   return level == span.from || level == span.to;
 }

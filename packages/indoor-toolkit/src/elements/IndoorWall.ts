@@ -5,7 +5,15 @@ import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { isRawIndoorWallElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
+/**
+ * Indoor wall way parsed from `indoor=wall`.
+ *
+ * Line walls can provide opening orientation context. `area=yes` walls are
+ * exposed as solid polygon geometry and are deliberately not used as
+ * pass-through wall lines for doors.
+ */
 export class IndoorWall extends IndoorElement {
+  /** Collect all raw indoor wall ways from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorWall[] {
     return graph.elements
       .filter(isRawIndoorWallElement)
@@ -20,14 +28,17 @@ export class IndoorWall extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** Return whether the raw wall way contains a node id. */
   includesNode(nodeId: number): boolean {
     return this.sourceElement.nodes.includes(nodeId);
   }
 
+  /** `true` when this wall is mapped as a solid wall area with `area=yes`. */
   get isAreaWall(): boolean {
     return this.tags.area == "yes";
   }
 
+  /** Line geometry for normal walls or polygon geometry for `area=yes` walls. */
   get geometry(): GeoJSON.LineString | GeoJSON.Polygon | undefined {
     const missingNodeIds = this.graph.getMissingWayNodeIds(this.sourceElement);
 

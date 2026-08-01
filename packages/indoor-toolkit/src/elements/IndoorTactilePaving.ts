@@ -5,7 +5,11 @@ import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { isRawIndoorTactilePavingElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
+/**
+ * Tactile paving line parsed from `indoor=yes + tactile_paving=yes`.
+ */
 export class IndoorTactilePaving extends IndoorElement {
+  /** Collect all raw tactile paving ways from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorTactilePaving[] {
     return graph.elements
       .filter(isRawIndoorTactilePavingElement)
@@ -20,6 +24,7 @@ export class IndoorTactilePaving extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** LineString geometry for the tactile paving way, if all way nodes are available. */
   get geometry(): GeoJSON.LineString | undefined {
     const missingNodeIds = this.graph.getMissingWayNodeIds(this.sourceElement);
 

@@ -5,7 +5,14 @@ import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeo
 import { isRawIndoorLevelElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
+/**
+ * Explicit floor plate geometry parsed from `indoor=level`.
+ *
+ * Level outlines can provide full per-level geometry and display labels through
+ * `level:ref=*`, while keeping numeric `level=*` values for internal logic.
+ */
 export class IndoorLevelOutline extends IndoorElement {
+  /** Collect all raw level outline ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLevelOutline[] {
     return graph.elements
       .filter(isRawIndoorLevelElement)
@@ -16,10 +23,12 @@ export class IndoorLevelOutline extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** Optional level selector/display label from `level:ref=*`. */
   get label(): string | undefined {
     return this.tags["level:ref"];
   }
 
+  /** Polygon or multipolygon geometry for the level outline. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toGeometry();
   }

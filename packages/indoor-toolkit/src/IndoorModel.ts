@@ -18,19 +18,57 @@ import { buildIndoorVerticalConnections } from "./verticalConnections/IndoorVert
 import { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
 import { buildIndoorOpenings } from "./IndoorOpeningBuilder";
 
+/**
+ * Options for model creation.
+ *
+ * Diagnostics are collected silently by default. Pass `onDiagnostic` to stream
+ * warnings/errors into an editor or validator, or set `logDiagnostics` to also
+ * forward formatted diagnostics to `console.warn`.
+ */
 export type CreateIndoorModelOptions = IndoorDiagnosticOptions;
 
+/**
+ * Parsed representation of one raw indoor Overpass JSON dataset.
+ *
+ * The model keeps the raw graph available while exposing typed indoor elements,
+ * topology helpers, parsed levels, and diagnostics. It is renderer-independent:
+ * callers decide how to style, route through, validate, or serialize the data.
+ */
 export interface IndoorModel {
+  /** Original raw indoor Overpass JSON passed to `createIndoorModel`. */
   rawIndoorData: OverpassJson;
+  /** Indexed raw OSM graph with node, way, relation, and reverse-reference lookup. */
   graph: OsmGraph;
+  /** Parser warnings and errors collected during eager parsing and lazy geometry access. */
   diagnostics: IndoorDiagnostic[];
+  /** Typed collections of parsed indoor elements and lookup helpers. */
   elements: IndoorElementRegistry;
+  /** Derived factual relationships between parsed rooms, openings, walls, and stairs. */
   topology: IndoorTopology;
+  /** Numeric indoor levels derived from room-like elements and explicit level outlines. */
   levels: number[];
+  /** Optional display labels from `indoor=level + level:ref=*`, keyed by numeric level. */
   levelLabels: Map<number, string>;
+  /** Connected stair pathway and landing components used by vertical connections. */
   stairPathNetwork: IndoorStairPathNetwork;
 }
 
+/**
+ * Parse raw indoor Overpass JSON into the Indoor Toolkit domain model.
+ *
+ * The caller is responsible for loading and filtering the relevant Overpass
+ * data. This function does not fetch data, select buildings, or produce render
+ * items.
+ *
+ * @example
+ * ```ts
+ * const model = createIndoorModel(indoorData, {
+ *   onDiagnostic: (diagnostic) => console.warn(diagnostic.message),
+ * });
+ *
+ * const roomsOnLevel0 = model.elements.rooms.filter((room) => room.hasLevel(0));
+ * ```
+ */
 export function createIndoorModel(
   rawIndoorData: OverpassJson,
   options: CreateIndoorModelOptions = {},

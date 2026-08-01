@@ -6,13 +6,30 @@ import { IndoorStairPathNetwork, IndoorStairPathNetworkComponent } from "./Indoo
 
 export type IndoorVerticalConnectionKind = "simple" | "open" | "freeFloating";
 
+/**
+ * Vertical movement semantic assembled from stair/elevator footprints, pathway
+ * components, and landing components.
+ */
 export interface IndoorVerticalConnection {
+  /** Stable parser id. Footprint connections use the footprint id. */
   id: string;
+  /**
+   * `simple` for enclosed room footprints, `open` for open area footprints, and
+   * `freeFloating` for unclaimed pathway groups.
+   */
   kind: IndoorVerticalConnectionKind;
+  /** Optional room-like footprint for enclosed/open staircase or elevator areas. */
   footprint?: IndoorRoom;
+  /** Connected stair pathway/landing components belonging to this vertical connection. */
   pathComponents: IndoorStairPathNetworkComponent[];
 }
 
+/**
+ * Build vertical connections from room-like footprints and the stair path network.
+ *
+ * Footprints claim pathway components that share their raw nodes. Remaining
+ * pathway components are grouped into free-floating vertical connections.
+ */
 export function buildIndoorVerticalConnections(
   graph: OsmGraph,
   rooms: IndoorRoom[],

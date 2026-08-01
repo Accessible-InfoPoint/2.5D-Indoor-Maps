@@ -10,16 +10,30 @@ import { OsmGraph } from "./overpass/OsmGraph";
 import { nodeToPosition } from "./utils/overpassJsonHelpers";
 
 export interface IndoorAreaGeometryOptions {
+  /** Raw OSM graph used to resolve way nodes and relation members. */
   graph: OsmGraph;
+  /** Normalized id of the parsed element whose geometry is being built. */
   elementId: string;
+  /** Human-readable element kind used in diagnostic messages. */
   elementKind: string;
+  /** Prefix used for diagnostic codes. */
   warningPrefix: string;
+  /** Per-element warning keys already emitted for lazy geometry access. */
   emittedWarnings: Set<string>;
+  /** Optional diagnostic collector. Falls back to `console.warn` when absent. */
   diagnostics?: IndoorDiagnostics;
+  /** Parsed element reference attached to diagnostics. */
   elementRef?: IndoorElementRef;
+  /** Raw source element attached to diagnostics. */
   sourceElement?: OverpassElement;
 }
 
+/**
+ * Build polygon geometry for an area-like way.
+ *
+ * The ring is closed automatically when the first node is not repeated. Returns
+ * `undefined` and records diagnostics for missing or too-short geometry.
+ */
 export function getWayPolygonGeometry(
   way: OverpassWay,
   options: IndoorAreaGeometryOptions,
@@ -34,6 +48,12 @@ export function getWayPolygonGeometry(
       };
 }
 
+/**
+ * Build polygon or multipolygon geometry for an area-like relation.
+ *
+ * Supports `outer` and `inner` way members, multiple outer rings, multiple
+ * holes, and rings assembled from connected way chains.
+ */
 export function getRelationAreaGeometry(
   relation: OverpassRelation,
   options: IndoorAreaGeometryOptions,

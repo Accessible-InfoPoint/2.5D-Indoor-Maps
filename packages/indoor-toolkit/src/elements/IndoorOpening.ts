@@ -15,22 +15,43 @@ export type IndoorOpeningKind = "door" | "opening";
 
 export type IndoorOpeningSourceRole = "door" | "pathway-node" | "pathway" | "footprint" | "wall";
 
+/** Raw OSM source contributing to an `IndoorOpening`. */
 export interface IndoorOpeningSource {
+  /** Role the source element played in deriving the opening. */
   role: IndoorOpeningSourceRole;
+  /** Raw OSM element used as evidence for the opening. */
   element: OverpassElement;
 }
 
+/**
+ * Pass-through connection at a node.
+ *
+ * Openings can come from explicit door nodes or be inferred from open staircase
+ * pathway/footprint topology. They carry connected room and wall context so
+ * renderers and routing tools can decide how to represent the connection.
+ */
 export interface IndoorOpening {
+  /** Stable opening id. Explicit doors reuse the door id. */
   id: string;
+  /** `door` for explicit door nodes, `opening` for inferred pass-through connections. */
   kind: IndoorOpeningKind;
+  /** OSM node id where the opening is located. */
   nodeId: number;
+  /** Opening coordinate as `[lon, lat]`. */
   coordinate: GeoJSON.Position;
+  /** Source tags from the explicit door, or empty tags for inferred openings. */
   tags: Record<string, string>;
+  /** Levels where this opening is usable. */
   levels: number[];
+  /** Opening width in meters. */
   widthMeters: number;
+  /** Room-like areas connected by this opening. */
   connectedRooms: IndoorRoom[];
+  /** Line walls that provide wall context for this opening. */
   connectedWalls: IndoorWall[];
+  /** Raw OSM source elements used to derive this opening. */
   sources: IndoorOpeningSource[];
+  /** Geometry derived from surrounding wall or room nodes for rendering orientation. */
   orientationGeometry: OpeningOrientationGeometry;
 }
 
@@ -39,6 +60,12 @@ interface DoorWayContext {
   afterNodeId: number;
 }
 
+/**
+ * Build an opening from a node and already resolved room/wall context.
+ *
+ * Returns `undefined` and records a diagnostic when no usable context or
+ * orientation can be derived.
+ */
 export function buildIndoorOpeningForNode(options: {
   id: string;
   kind: IndoorOpeningKind;
@@ -96,6 +123,7 @@ export function buildIndoorOpeningForNode(options: {
   };
 }
 
+/** Return rooms whose raw boundary contains the given node id. */
 export function getRoomsContainingNode(
   graph: OsmGraph,
   rooms: IndoorRoom[],

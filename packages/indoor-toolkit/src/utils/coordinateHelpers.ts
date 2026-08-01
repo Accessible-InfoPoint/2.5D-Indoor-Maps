@@ -1,5 +1,6 @@
 import { getRequiredArrayValue } from "./requiredHelpers";
 
+/** Minimal immutable 2D vector used by parser geometry helpers. */
 export class Vector2 {
   constructor(
     readonly x: number,
@@ -306,6 +307,10 @@ function createCoordinateCirclePolygon(
   };
 }
 
+/**
+ * Geometry helpers used by parser elements and applications that need matching
+ * coordinate math.
+ */
 export default {
   getDistanceBetweenCoordinatesInM,
   lat2y,

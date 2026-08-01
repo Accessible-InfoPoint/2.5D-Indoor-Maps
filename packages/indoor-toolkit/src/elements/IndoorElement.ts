@@ -4,10 +4,18 @@ import { OsmGraph } from "../overpass/OsmGraph";
 import { extractLevels } from "../utils/extractLevels";
 import { IndoorDiagnostics } from "../diagnostics";
 
+/**
+ * Base class for parsed indoor elements backed by one raw OSM element.
+ *
+ * Subclasses expose parser-level geometry and semantics. They intentionally do
+ * not expose renderer-specific styling or render items.
+ */
 export abstract class IndoorElement {
   protected readonly emittedGeometryWarnings = new Set<string>();
 
+  /** Stable normalized id, for example `way/123` or `node/456`. */
   readonly id: string;
+  /** Shallow copy of the source element tags. */
   readonly tags: Record<string, string>;
 
   protected constructor(
@@ -25,10 +33,12 @@ export abstract class IndoorElement {
     );
   }
 
+  /** Return whether this element is present on the given numeric indoor level. */
   hasLevel(level: number): boolean {
     return this.levels.includes(level);
   }
 
+  /** Lightweight reference suitable for search, selection, diagnostics, and lookup. */
   get ref(): IndoorElementRef {
     return createIndoorElementRef({
       id: this.id,

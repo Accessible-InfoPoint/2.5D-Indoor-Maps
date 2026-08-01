@@ -1,5 +1,12 @@
 import { IndoorStairPathwayInstance } from "./IndoorStairPathNetwork";
 
+/**
+ * Interpolate per-coordinate levels for a stair pathway instance.
+ *
+ * Explicit node `level=*` tags act as anchors. Missing node levels are linearly
+ * interpolated between the nearest anchors, falling back to the instance span
+ * boundaries at the endpoints.
+ */
 export function getInterpolatedPathLevels(
   coordinates: GeoJSON.Position[],
   instance: IndoorStairPathwayInstance,

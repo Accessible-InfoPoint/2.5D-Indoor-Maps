@@ -6,7 +6,14 @@ import { getRawElementNodeIds } from "../rawElementNodeIds";
 import { isRawIndoorLandingElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
+/**
+ * Stair landing area parsed from `indoor=area + landing=yes`.
+ *
+ * Landings are stair components rather than normal rooms. They can connect stair
+ * pathway instances when their level lies on a pathway span boundary.
+ */
 export class IndoorLanding extends IndoorElement {
+  /** Collect all raw stair landing ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLanding[] {
     return graph.elements
       .filter(isRawIndoorLandingElement)
@@ -21,26 +28,32 @@ export class IndoorLanding extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** Node ids that make up the landing geometry, resolved through ways or relation members. */
   get nodeIds(): number[] {
     return getRawElementNodeIds(this.graph, this.sourceElement);
   }
 
+  /** Levels authored directly on `level=*`. */
   get authoredLevels(): number[] {
     return this.extractLevelsFromTag("level");
   }
 
+  /** Repeated landing levels from `repeat_on=*`. */
   get repeatLevels(): number[] {
     return this.extractLevelsFromTag("repeat_on");
   }
 
+  /** Direct repeat offsets from `repeat_on_offset=*`. */
   get repeatOffsetValues(): number[] {
     return this.extractLevelsFromTag("repeat_on_offset");
   }
 
+  /** Polygon or multipolygon geometry for the landing area. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toAreaGeometry();
   }
 
+  /** Build landing area geometry from a way or relation. */
   toAreaGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     switch (this.sourceElement.type) {
       case "way":

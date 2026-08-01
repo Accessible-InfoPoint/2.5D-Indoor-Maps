@@ -6,7 +6,14 @@ import { getRawElementNodeIds } from "../rawElementNodeIds";
 import { isRawIndoorStepAreaElement } from "../rawIndoorElementFilters";
 import { IndoorElement } from "./IndoorElement";
 
+/**
+ * `area:highway=steps` area used by downstream stair tooling.
+ *
+ * Step areas are not rooms or vertical connections by themselves. Renderers or
+ * routing tools can use their geometry to infer stair width or footprint shape.
+ */
 export class IndoorStepArea extends IndoorElement {
+  /** Collect all raw step area ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorStepArea[] {
     return graph.elements
       .filter(isRawIndoorStepAreaElement)
@@ -21,14 +28,17 @@ export class IndoorStepArea extends IndoorElement {
     super(graph, sourceElement, diagnostics);
   }
 
+  /** Node ids that make up the step area geometry, resolved through ways or relation members. */
   get nodeIds(): number[] {
     return getRawElementNodeIds(this.graph, this.sourceElement);
   }
 
+  /** Polygon or multipolygon geometry for the step area. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toAreaGeometry();
   }
 
+  /** Build step area geometry from a way or relation. */
   toAreaGeometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     switch (this.sourceElement.type) {
       case "way":
