@@ -61,7 +61,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.62.0",
     "@types/bootstrap": "^5.2.11",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.6",
