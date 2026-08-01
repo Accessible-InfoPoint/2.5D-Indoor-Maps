@@ -291,6 +291,7 @@ Parser interpretation:
 
 - Creates `IndoorRoom` objects for rooms, corridors, and indoor areas.
 - `indoor=area + landing=yes` is excluded from rooms and becomes a stair landing.
+- Untagged `indoor=area` elements that connect only to stair pathways are also excluded from rooms and inferred as stair landings.
 - `indoor=yes + tourism=artwork` is currently collected as a room-like area for legacy data support.
 - Room-like elements contribute to `model.levels`.
 - Tags are preserved for downstream labels, search, rendering, accessibility logic, and routing choices.
@@ -667,20 +668,19 @@ Collected from:
 ```text
 way|relation
 indoor=area
-landing=yes
 ```
 
 Expected tags:
 
 ```text
 indoor=area
-landing=yes
 level=*
 ```
 
 Optional useful tags:
 
 ```text
+landing=yes
 repeat_on=*
 repeat_on_offset=*
 ```
@@ -689,12 +689,17 @@ Parser interpretation:
 
 - Creates `IndoorLanding`.
 - Landings are stair components, not ordinary rooms.
+- `landing=yes` explicitly marks a stair landing.
+- Without `landing=yes`, an `indoor=area` is inferred as a landing when its shared-node connections are only stair pathways.
+- Inferred landings should connect at least two stair pathways.
 - Landing instances connect pathway instances when their level is exactly on a pathway span boundary.
 - `repeat_on=*` creates landing instances at the listed levels.
 - `repeat_on_offset=*` creates landing instances by offsetting authored landing levels.
 
 Diagnostics and common mistakes:
 
+- An inferred landing connected to only one stair pathway is still collected as a landing but emits `IndoorLanding.single-connected-stair-path`.
+- An `indoor=area` connected to non-stair room/corridor/area geometry is treated as a normal room-like area unless `landing=yes` is explicit.
 - A landing at `0.5` connects `0-0.5` and `0.5-1`, but it does not connect unrelated spans.
 - Landings need shared nodes with adjacent pathways to participate in the stair path network.
 - Missing area geometry leaves the landing without usable geometry.
@@ -744,5 +749,6 @@ For best parser results:
 - Share nodes to express real topology: doors on room or wall boundaries, stair pathways sharing nodes with footprints and landings.
 - Use `indoor=room`, `indoor=corridor`, and `indoor=area` deliberately; the parser collects them together but preserves the tags.
 - Model stair pathways as one way per vertical span.
+- Use `landing=yes` for clarity, or ensure untagged stair landing areas connect only to stair pathways.
 - Use `repeat_on=*` for repeated start levels and `repeat_on_offset=*` for offsets.
 - Inspect `model.diagnostics` during development and data import.

@@ -31,6 +31,18 @@ describe("IndoorStairPathNetwork", () => {
     expect(network.components[0].landings.map((landing) => landing.id)).toEqual(["way/20"]);
   });
 
+  it("infers untagged indoor areas as landings when they only connect stair pathways", () => {
+    const graph = new OsmGraph(inferredLandingBridgeFixture);
+    const network = new IndoorStairPathNetwork(
+      IndoorStairPathway.collectFromGraph(graph),
+      IndoorLanding.collectFromGraph(graph),
+    );
+
+    expect(network.components).toHaveLength(1);
+    expect(network.components[0].pathways.map((path) => path.id)).toEqual(["way/10", "way/11"]);
+    expect(network.components[0].landings.map((landing) => landing.id)).toEqual(["way/20"]);
+  });
+
   it("keeps touching pathways with different level spans in separate components", () => {
     const graph = new OsmGraph(levelAwareFixture);
     const network = new IndoorStairPathNetwork(
@@ -195,6 +207,23 @@ const landingBridgeFixture: OverpassJson = {
       id: 20,
       nodes: [2, 3, 4, 1, 2],
       tags: { indoor: "area", landing: "yes", level: "1" },
+    },
+  ],
+};
+
+const inferredLandingBridgeFixture: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    { type: "node", id: 4, lat: 1, lon: 0 },
+    { type: "way", id: 10, nodes: [1, 2], tags: { indoor: "pathway", level: "0-1" } },
+    { type: "way", id: 11, nodes: [3, 4], tags: { indoor: "pathway", level: "0-1" } },
+    {
+      type: "way",
+      id: 20,
+      nodes: [2, 3, 4, 1, 2],
+      tags: { indoor: "area", level: "1" },
     },
   ],
 };

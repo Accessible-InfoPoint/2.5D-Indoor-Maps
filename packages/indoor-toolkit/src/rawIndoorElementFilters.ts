@@ -16,10 +16,11 @@ export function isRawIndoorLevelElement(
 }
 
 /**
- * Return whether a raw element is collected as an `IndoorRoom`.
+ * Return whether a raw element is a tag-level room candidate.
  *
  * This includes `indoor=room`, `indoor=corridor`, and `indoor=area`, excluding
- * `landing=yes` stair landings.
+ * explicit `landing=yes` stair landings. `IndoorRoom.collectFromGraph` applies
+ * the graph-aware landing classifier as an additional exclusion.
  */
 export function isRawIndoorRoomElement(
   element: OverpassElement,
@@ -75,7 +76,7 @@ export function isRawIndoorStairPathwayElement(element: OverpassElement): elemen
   return element.type == "way" && element.tags?.indoor == "pathway";
 }
 
-/** Return whether a raw way or relation is a stair landing area. */
+/** Return whether a raw way or relation is explicitly tagged as a stair landing area. */
 export function isRawIndoorLandingElement(
   element: OverpassElement,
 ): element is OverpassWay | OverpassRelation {

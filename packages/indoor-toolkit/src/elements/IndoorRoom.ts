@@ -3,6 +3,7 @@ import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { isRawIndoorRoomElement } from "../rawIndoorElementFilters";
+import { isIndoorLandingElement } from "../stairLandingClassification";
 import { IndoorElement } from "./IndoorElement";
 
 /**
@@ -10,14 +11,18 @@ import { IndoorElement } from "./IndoorElement";
  *
  * The parser keeps rooms, corridors, open areas, toilets, and vertical
  * connection footprints in this shared class because they all describe
- * level-bound indoor areas. Callers can inspect `tags.indoor` and other tags to
- * decide styling, search categories, walkability, or routing behavior.
+ * level-bound indoor areas. Stair landing areas are excluded, including
+ * untagged `indoor=area` elements inferred as landings from stair path
+ * topology. Callers can inspect `tags.indoor` and other tags to decide styling,
+ * search categories, walkability, or routing behavior.
  */
 export class IndoorRoom extends IndoorElement {
   /** Collect all raw room-like ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorRoom[] {
     return graph.elements
-      .filter(isRawIndoorRoomElement)
+      .filter(
+        (element) => isRawIndoorRoomElement(element) && !isIndoorLandingElement(graph, element),
+      )
       .map((element) => new IndoorRoom(graph, element, diagnostics));
   }
 

@@ -109,6 +109,37 @@ describe("IndoorModel public API", () => {
       "way/20",
     ]);
   });
+
+  it("collects inferred stair landings as landings only", () => {
+    const model = createIndoorModel(inferredLandingData);
+
+    expect(model.elements.rooms.map((room) => room.id)).toEqual(["way/30"]);
+    expect(model.elements.stairLandings.map((landing) => landing.id)).toEqual(["way/20"]);
+    expect(model.elements.getById("way/20")).toBe(model.elements.stairLandings[0]);
+    expect(model.diagnostics).toEqual([]);
+  });
+
+  it("can infer relation stair landings", () => {
+    const model = createIndoorModel(inferredRelationLandingData);
+
+    expect(model.elements.rooms).toEqual([]);
+    expect(model.elements.stairLandings.map((landing) => landing.id)).toEqual(["relation/20"]);
+    expect(model.diagnostics).toEqual([]);
+  });
+
+  it("reports inferred landing areas that only connect one stair pathway", () => {
+    const model = createIndoorModel(singlePathLandingData);
+
+    expect(model.elements.rooms).toEqual([]);
+    expect(model.elements.stairLandings.map((landing) => landing.id)).toEqual(["way/20"]);
+    expect(model.diagnostics).toMatchObject([
+      {
+        severity: "error",
+        code: "IndoorLanding.single-connected-stair-path",
+        elementRef: { id: "way/20" },
+      },
+    ]);
+  });
 });
 
 const connectionData: OverpassJson = {
@@ -182,6 +213,66 @@ const levelDiagnosticData: OverpassJson = {
       id: 20,
       nodes: [1, 2, 3, 1],
       tags: { indoor: "room", level: "1,5" },
+    },
+  ],
+};
+
+const inferredLandingData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    { type: "node", id: 4, lat: 1, lon: 0 },
+    { type: "node", id: 5, lat: 2, lon: 0 },
+    { type: "node", id: 6, lat: 2, lon: 1 },
+    { type: "node", id: 7, lat: 3, lon: 0 },
+    { type: "way", id: 10, nodes: [1, 2], tags: { indoor: "pathway", level: "0-1" } },
+    { type: "way", id: 11, nodes: [3, 4], tags: { indoor: "pathway", level: "0-1" } },
+    {
+      type: "way",
+      id: 20,
+      nodes: [2, 3, 4, 1, 2],
+      tags: { indoor: "area", level: "1" },
+    },
+    {
+      type: "way",
+      id: 30,
+      nodes: [5, 6, 7, 5],
+      tags: { indoor: "area", level: "1" },
+    },
+  ],
+};
+
+const inferredRelationLandingData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    { type: "node", id: 4, lat: 1, lon: 0 },
+    { type: "way", id: 10, nodes: [1, 2], tags: { indoor: "pathway", level: "0-1" } },
+    { type: "way", id: 11, nodes: [3, 4], tags: { indoor: "pathway", level: "0-1" } },
+    { type: "way", id: 21, nodes: [2, 3, 4, 1, 2] },
+    {
+      type: "relation",
+      id: 20,
+      members: [{ type: "way", ref: 21, role: "outer" }],
+      tags: { type: "multipolygon", indoor: "area", level: "1" },
+    },
+  ],
+};
+
+const singlePathLandingData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    { type: "node", id: 4, lat: 1, lon: 0 },
+    { type: "way", id: 10, nodes: [1, 2], tags: { indoor: "pathway", level: "0-1" } },
+    {
+      type: "way",
+      id: 20,
+      nodes: [2, 3, 4, 1, 2],
+      tags: { indoor: "area", level: "1" },
     },
   ],
 };

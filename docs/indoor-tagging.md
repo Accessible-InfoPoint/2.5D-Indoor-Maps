@@ -425,7 +425,6 @@ Expected parser tags:
 
 ```text
 indoor=area
-landing=yes
 level=*
 ```
 
@@ -437,6 +436,7 @@ Rendering:
 
 Application notes:
 
+- `landing=yes` is recommended for clarity, but the parser can infer an `indoor=area` landing when it connects only to stair pathways.
 - Use landings for transitions such as `0-0.5` plus `0.5-1`.
 - Share nodes between the landing and adjacent pathways when possible.
 

@@ -3,11 +3,12 @@ import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { getRawElementNodeIds } from "../rawElementNodeIds";
-import { isRawIndoorLandingElement } from "../rawIndoorElementFilters";
+import { isIndoorLandingElement } from "../stairLandingClassification";
 import { IndoorElement } from "./IndoorElement";
 
 /**
- * Stair landing area parsed from `indoor=area + landing=yes`.
+ * Stair landing area parsed from explicit `landing=yes` tags or inferred from
+ * an `indoor=area` that connects only to stair pathways.
  *
  * Landings are stair components rather than normal rooms. They can connect stair
  * pathway instances when their level lies on a pathway span boundary.
@@ -16,7 +17,7 @@ export class IndoorLanding extends IndoorElement {
   /** Collect all raw stair landing ways and relations from a graph. */
   static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLanding[] {
     return graph.elements
-      .filter(isRawIndoorLandingElement)
+      .filter((element) => isIndoorLandingElement(graph, element, diagnostics))
       .map((element) => new IndoorLanding(graph, element, diagnostics));
   }
 

@@ -62,6 +62,7 @@ export { getRelationAreaGeometry, getWayPolygonGeometry } from "./indoorAreaGeom
 export type { IndoorAreaGeometryOptions } from "./indoorAreaGeometry";
 export * from "./indoorTagFilters";
 export * from "./rawIndoorElementFilters";
+export { isIndoorLandingElement } from "./stairLandingClassification";
 export { getRawElementNodeIds, getRawElementNodeIdSet } from "./rawElementNodeIds";
 
 export { calculateOpeningOrientationGeometry } from "./openingOrientation";
