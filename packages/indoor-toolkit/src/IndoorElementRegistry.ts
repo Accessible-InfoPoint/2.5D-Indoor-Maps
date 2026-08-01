@@ -2,7 +2,6 @@ import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorElement } from "./elements/IndoorElement";
 import { IndoorHandrail } from "./elements/IndoorHandrail";
-import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
 import { IndoorOpening } from "./elements/IndoorOpening";
@@ -24,7 +23,6 @@ export interface IndoorElementRegistryData {
   openings: IndoorOpening[];
   handrails: IndoorHandrail[];
   columns: IndoorColumn[];
-  infoPoints: IndoorInfoPoint[];
   pointFeatures: IndoorPointFeature[];
   walls: IndoorWall[];
   tactilePaving: IndoorTactilePaving[];
@@ -43,7 +41,6 @@ export class IndoorElementRegistry implements IndoorElementRegistryData {
   readonly openings: IndoorOpening[];
   readonly handrails: IndoorHandrail[];
   readonly columns: IndoorColumn[];
-  readonly infoPoints: IndoorInfoPoint[];
   readonly pointFeatures: IndoorPointFeature[];
   readonly walls: IndoorWall[];
   readonly tactilePaving: IndoorTactilePaving[];
@@ -61,7 +58,6 @@ export class IndoorElementRegistry implements IndoorElementRegistryData {
     this.openings = data.openings;
     this.handrails = data.handrails;
     this.columns = data.columns;
-    this.infoPoints = data.infoPoints;
     this.pointFeatures = data.pointFeatures;
     this.walls = data.walls;
     this.tactilePaving = data.tactilePaving;
@@ -76,7 +72,6 @@ export class IndoorElementRegistry implements IndoorElementRegistryData {
       ...this.openings,
       ...this.handrails,
       ...this.columns,
-      ...this.infoPoints,
       ...this.pointFeatures,
       ...this.walls,
       ...this.tactilePaving,

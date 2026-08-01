@@ -33,7 +33,6 @@ function getRawLevelTags(level: number): IndoorTags[] {
   const elements: IndoorElement[] = [
     ...model.elements.rooms,
     ...model.elements.pointFeatures,
-    ...model.elements.infoPoints,
     ...model.elements.tactilePaving,
     ...model.elements.stairPathways,
   ];

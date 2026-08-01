@@ -92,7 +92,7 @@ export function hasWheelchairDescriptionTags(tags: IndoorTags, language: "de" | 
 
 export function hasPotentialAccessibilityMarkerTags(tags: IndoorTags): boolean {
   return (
-    (!isInfoPointTags(tags) && isTactileInformationTags(tags)) ||
+    isTactileInformationTags(tags) ||
     isAccessibleToiletTags(tags) ||
     isWheelchairAccessibleElevatorTags(tags) ||
     isGeneralToiletTags(tags) ||

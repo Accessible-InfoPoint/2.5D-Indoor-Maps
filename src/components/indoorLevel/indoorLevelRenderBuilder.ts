@@ -1,13 +1,13 @@
 import {
   IndoorColumn,
   IndoorHandrail,
-  IndoorInfoPoint,
   IndoorModel,
   IndoorOpening,
   IndoorPointFeature,
   IndoorRoom,
   IndoorTactilePaving,
   IndoorWall,
+  isInfoPointTags,
   isNeutralDoorColorRoomTags,
   isRoomLabelEligibleTags,
 } from "../../indoor";
@@ -149,8 +149,8 @@ function buildAccessibilityMarkerRenderItem(
 function buildInfoPointRenderItem(
   options: IndoorLevelRenderBuilderOptions,
 ): InfoPointRenderItem | undefined {
-  const infoPoint = options.model.elements.infoPoints.find((candidate) =>
-    candidate.hasLevel(options.level),
+  const infoPoint = options.model.elements.pointFeatures.find(
+    (candidate) => isInfoPointTags(candidate.tags) && candidate.hasLevel(options.level),
   );
 
   if (infoPoint === undefined) {
@@ -161,7 +161,7 @@ function buildInfoPointRenderItem(
 }
 
 function buildInfoPointRenderItemFromElement(
-  infoPoint: IndoorInfoPoint,
+  infoPoint: IndoorPointFeature,
 ): InfoPointRenderItem | undefined {
   const feature = buildElementFeature(infoPoint, infoPoint.geometry);
 

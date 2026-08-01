@@ -76,7 +76,6 @@ const levelElements = model.elements.getByLevel(0);
 - `walls`: wall ways and wall areas.
 - `handrails`: `barrier=handrail` ways.
 - `columns`: indoor columns from nodes, ways, or relations.
-- `infoPoints`: primary information points.
 - `pointFeatures`: point-like accessibility and information features.
 - `tactilePaving`: tactile guidance ways.
 - `stepAreas`: `area:highway=steps` areas.
@@ -102,7 +101,7 @@ The base class intentionally does not define renderer-specific output. Subclasse
 
 - `IndoorRoom` exposes room/corridor/area geometry and room-like tags.
 - `IndoorWall`, `IndoorHandrail`, `IndoorTactilePaving`, and `IndoorStairPathway` expose line or area geometry.
-- `IndoorColumn`, `IndoorInfoPoint`, and `IndoorPointFeature` expose point or area geometry depending on their OSM element type.
+- `IndoorColumn` and `IndoorPointFeature` expose point or area geometry depending on their OSM element type.
 - `IndoorDoor` represents explicit door nodes.
 - `IndoorOpening` represents pass-through openings derived from doors or inferred staircase connections.
 - `IndoorVerticalConnection` groups footprints, stair paths, and landings into reusable vertical connection semantics.

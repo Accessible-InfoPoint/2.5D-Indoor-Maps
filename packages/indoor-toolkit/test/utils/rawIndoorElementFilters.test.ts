@@ -2,6 +2,7 @@ import { OverpassElement } from "../../src";
 import {
   contributesToIndoorLevels,
   isRawIndoorHandrailElement,
+  isRawIndoorPointFeatureElement,
   isRawIndoorStepAreaElement,
 } from "../../src";
 
@@ -95,6 +96,20 @@ describe("isRawIndoorHandrailElement", () => {
         tags: { barrier: "handrail" },
       }),
     ).toBe(false);
+  });
+});
+
+describe("isRawIndoorPointFeatureElement", () => {
+  it("treats tactile maps as generic point features", () => {
+    expect(
+      isRawIndoorPointFeatureElement({
+        type: "node",
+        id: 1,
+        lat: 0,
+        lon: 0,
+        tags: { information: "tactile_map", level: "0" },
+      }),
+    ).toBe(true);
   });
 });
 

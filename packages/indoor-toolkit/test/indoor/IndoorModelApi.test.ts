@@ -16,6 +16,7 @@ describe("IndoorModel public API", () => {
     expect(model.elements.rooms.map((element) => element.id)).toEqual(["way/10", "way/20"]);
     expect(model.elements.doors.map((element) => element.id)).toEqual(["node/2"]);
     expect(model.elements.openings.map((element) => element.id)).toEqual(["node/2"]);
+    expect(model.elements.pointFeatures.map((element) => element.id)).toEqual(["node/5"]);
     expect(model.elements.getById("way/10")).toBe(room);
     expect(model.elements.getByRef(createIndoorElementRef({ id: "way/10" }))).toBe(room);
     expect(model.elements.getByLevel(0).map((element) => element.id)).toEqual([
@@ -23,6 +24,7 @@ describe("IndoorModel public API", () => {
       "way/20",
       "node/2",
       "node/2",
+      "node/5",
     ]);
   });
 
@@ -99,6 +101,7 @@ const connectionData: OverpassJson = {
     { type: "node", id: 2, lat: 0, lon: 1, tags: { door: "yes", level: "0" } },
     { type: "node", id: 3, lat: 1, lon: 1 },
     { type: "node", id: 4, lat: 1, lon: 0 },
+    { type: "node", id: 5, lat: 0.5, lon: 0.5, tags: { information: "tactile_map", level: "0" } },
     {
       type: "way",
       id: 10,

@@ -330,16 +330,6 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
         }),
       };
     }),
-    ...model.elements.infoPoints.map((infoPoint) => {
-      return {
-        elementRef: createIndoorElementRef({
-          id: infoPoint.id,
-          tags: infoPoint.tags,
-          levels: infoPoint.levels,
-          geometry: infoPoint.geometry,
-        }),
-      };
-    }),
   ];
 }
 

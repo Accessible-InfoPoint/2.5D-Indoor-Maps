@@ -6,7 +6,6 @@ import { OsmGraph } from "./overpass/OsmGraph";
 import { IndoorColumn } from "./elements/IndoorColumn";
 import { IndoorDoor } from "./elements/IndoorDoor";
 import { IndoorHandrail } from "./elements/IndoorHandrail";
-import { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 import { IndoorLanding } from "./elements/IndoorLanding";
 import { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
 import { IndoorPointFeature } from "./elements/IndoorPointFeature";
@@ -43,7 +42,6 @@ export function createIndoorModel(
   const doors = IndoorDoor.collectFromGraph(graph, diagnostics);
   const handrails = IndoorHandrail.collectFromGraph(graph, diagnostics);
   const columns = IndoorColumn.collectFromGraph(graph, diagnostics);
-  const infoPoints = IndoorInfoPoint.collectFromGraph(graph, diagnostics);
   const pointFeatures = IndoorPointFeature.collectFromGraph(graph, diagnostics);
   const walls = IndoorWall.collectFromGraph(graph, diagnostics);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graph, diagnostics);
@@ -67,7 +65,6 @@ export function createIndoorModel(
     openings,
     handrails,
     columns,
-    infoPoints,
     pointFeatures,
     walls,
     tactilePaving,

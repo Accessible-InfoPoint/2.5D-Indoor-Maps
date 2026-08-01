@@ -42,10 +42,6 @@ export function isRawIndoorColumnElement(element: OverpassElement): element is O
   return element.tags?.indoor == "column";
 }
 
-export function isRawIndoorInfoPointElement(element: OverpassElement): element is OverpassNode {
-  return element.type == "node" && element.tags?.information == "tactile_map";
-}
-
 export function isRawIndoorPointFeatureElement(element: OverpassElement): element is OverpassNode {
   return (
     element.type == "node" &&

@@ -51,7 +51,6 @@ describe("levelService", () => {
               hasLevel: (level: number) => level == 1,
             },
           ],
-          infoPoints: [],
           tactilePaving: [],
           stairPathways: [],
         },

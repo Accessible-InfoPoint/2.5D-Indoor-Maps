@@ -331,7 +331,6 @@ function setSearchableElements(elements: SearchableElementStub[]): void {
     elements: {
       rooms: elements.filter((element) => !element.id.startsWith("node/")),
       pointFeatures: elements.filter((element) => element.id.startsWith("node/")),
-      infoPoints: [],
     },
   });
 }

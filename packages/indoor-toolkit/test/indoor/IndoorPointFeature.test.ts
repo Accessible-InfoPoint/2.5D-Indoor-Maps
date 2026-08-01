@@ -6,7 +6,7 @@ describe("IndoorPointFeature", () => {
 
     expect(
       IndoorPointFeature.collectFromGraph(graph).map((pointFeature) => pointFeature.id),
-    ).toEqual(["node/10"]);
+    ).toEqual(["node/10", "node/12"]);
   });
 
   it("creates point geometry from a point node", () => {

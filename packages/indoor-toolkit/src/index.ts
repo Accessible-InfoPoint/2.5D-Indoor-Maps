@@ -42,7 +42,6 @@ export { IndoorElement } from "./elements/IndoorElement";
 export { IndoorColumn } from "./elements/IndoorColumn";
 export { IndoorDoor } from "./elements/IndoorDoor";
 export { IndoorHandrail } from "./elements/IndoorHandrail";
-export { IndoorInfoPoint } from "./elements/IndoorInfoPoint";
 export { IndoorLanding } from "./elements/IndoorLanding";
 export { IndoorLevelOutline } from "./elements/IndoorLevelOutline";
 export { IndoorPointFeature } from "./elements/IndoorPointFeature";
