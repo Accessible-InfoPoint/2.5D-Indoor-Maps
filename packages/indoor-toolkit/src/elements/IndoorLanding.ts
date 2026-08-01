@@ -1,7 +1,6 @@
 import { OverpassRelation, OverpassWay } from "../models/overpassJson";
 import { IndoorDiagnostics } from "../diagnostics";
 import { OsmGraph } from "../overpass/OsmGraph";
-import { extractLevels } from "../utils/extractLevels";
 import { getRelationAreaGeometry, getWayPolygonGeometry } from "../indoorAreaGeometry";
 import { getRawElementNodeIds } from "../rawElementNodeIds";
 import { isRawIndoorLandingElement } from "../rawIndoorElementFilters";
@@ -27,15 +26,15 @@ export class IndoorLanding extends IndoorElement {
   }
 
   get authoredLevels(): number[] {
-    return extractLevels(this.tags.level);
+    return this.extractLevelsFromTag("level");
   }
 
   get repeatLevels(): number[] {
-    return extractLevels(this.tags.repeat_on);
+    return this.extractLevelsFromTag("repeat_on");
   }
 
   get repeatOffsetValues(): number[] {
-    return extractLevels(this.tags.repeat_on_offset);
+    return this.extractLevelsFromTag("repeat_on_offset");
   }
 
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {

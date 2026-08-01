@@ -12,7 +12,7 @@ export type {
 export { default as CoordinateHelpers } from "./utils/coordinateHelpers";
 export { arrayRange } from "./utils/arrayRange";
 export { extractLevels } from "./utils/extractLevels";
-export type { LevelValue } from "./utils/extractLevels";
+export type { ExtractLevelsOptions, LevelValue } from "./utils/extractLevels";
 export {
   getOverpassElementKey,
   isOverpassJson,

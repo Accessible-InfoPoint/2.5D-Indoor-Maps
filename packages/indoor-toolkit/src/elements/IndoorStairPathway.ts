@@ -1,5 +1,6 @@
-import { OverpassWay } from "../models/overpassJson";
+import { OverpassNode, OverpassWay } from "../models/overpassJson";
 import { IndoorDiagnostics } from "../diagnostics";
+import { createIndoorElementRef } from "../models/indoorElementRef";
 import { OsmGraph } from "../overpass/OsmGraph";
 import { extractLevels } from "../utils/extractLevels";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
@@ -33,7 +34,7 @@ export class IndoorStairPathway extends IndoorElement {
     return this.sourceElement.nodes.map((nodeId) => {
       const node = this.graph.getNode(nodeId);
 
-      return node === undefined ? undefined : extractLevels(node.tags?.level)[0];
+      return node === undefined ? undefined : this.extractNodeLevels(node)[0];
     });
   }
 
@@ -59,8 +60,8 @@ export class IndoorStairPathway extends IndoorElement {
     return Array.from(
       new Set([
         0,
-        ...extractLevels(this.tags.repeat_on).map((repeatStart) => repeatStart - span.from),
-        ...extractLevels(this.tags.repeat_on_offset),
+        ...this.extractLevelsFromTag("repeat_on").map((repeatStart) => repeatStart - span.from),
+        ...this.extractLevelsFromTag("repeat_on_offset"),
       ]),
     );
   }
@@ -94,5 +95,18 @@ export class IndoorStairPathway extends IndoorElement {
       type: "LineString",
       coordinates,
     };
+  }
+
+  private extractNodeLevels(node: OverpassNode): number[] {
+    return extractLevels(node.tags?.level, {
+      diagnostics: this.diagnostics,
+      elementRef: createIndoorElementRef({
+        id: this.graph.keyOf(node),
+        tags: node.tags ?? {},
+        levels: [],
+      }),
+      sourceElement: node,
+      tagName: "level",
+    });
   }
 }

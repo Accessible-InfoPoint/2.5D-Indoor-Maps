@@ -93,6 +93,22 @@ describe("IndoorModel public API", () => {
 
     warn.mockRestore();
   });
+
+  it("collects level parsing diagnostics while building the model", () => {
+    const model = createIndoorModel(levelDiagnosticData);
+
+    expect(model.levels).toEqual([3, 2, 1]);
+    expect(model.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "ExtractLevels.inverted-level-range",
+      "ExtractLevels.duplicate-level-values",
+      "ExtractLevels.comma-separated-levels",
+    ]);
+    expect(model.diagnostics.map((diagnostic) => diagnostic.elementRef?.id)).toEqual([
+      "way/10",
+      "way/10",
+      "way/20",
+    ]);
+  });
 });
 
 const connectionData: OverpassJson = {
@@ -146,6 +162,26 @@ const invalidGeometryData: OverpassJson = {
       id: 10,
       nodes: [1, 2, 3, 1],
       tags: { indoor: "room", level: "0" },
+    },
+  ],
+};
+
+const levelDiagnosticData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    {
+      type: "way",
+      id: 10,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "room", level: "3-1", repeat_on: "2;2" },
+    },
+    {
+      type: "way",
+      id: 20,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "room", level: "1,5" },
     },
   ],
 };

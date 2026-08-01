@@ -1,5 +1,10 @@
-import { OverpassElement, OverpassJson, OverpassNode } from "../indoor";
-import { getOverpassElementKey, normalizeOverpassElementKey } from "./overpassJsonHelpers";
+import {
+  getOverpassElementKey,
+  normalizeOverpassElementKey,
+  OverpassElement,
+  OverpassJson,
+  OverpassNode,
+} from "../indoor";
 
 export interface FilterOverpassByBoundsOptions {
   bearingNodeIds?: Array<number | string>;

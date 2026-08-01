@@ -1,4 +1,4 @@
-import { extractLevels } from "../../src";
+import { extractLevels, IndoorDiagnostics } from "../../src";
 
 describe("extractLevels", () => {
   it("returns empty array for empty string", () => {
@@ -29,6 +29,10 @@ describe("extractLevels", () => {
     expect(extractLevels("-3--1")).toEqual([-3, -2, -1]);
   });
 
+  it("allows inverted ranges and parses them in descending order", () => {
+    expect(extractLevels("3-1")).toEqual([3, 2, 1]);
+  });
+
   it("handles semicolon-separated values", () => {
     expect(extractLevels("1;3-5")).toEqual([1, 3, 4, 5]);
   });
@@ -55,5 +59,45 @@ describe("extractLevels", () => {
 
   it("handles mixed level arrays", () => {
     expect(extractLevels([1, "3-4"])).toEqual([1, 3, 4]);
+  });
+
+  it("deduplicates repeated levels", () => {
+    expect(extractLevels("1;2;1")).toEqual([1, 2]);
+  });
+
+  it("reports a warning for inverted ranges", () => {
+    const diagnostics = new IndoorDiagnostics();
+
+    expect(extractLevels("3-1", { diagnostics, tagName: "level" })).toEqual([3, 2, 1]);
+    expect(diagnostics.diagnostics).toMatchObject([
+      {
+        severity: "warning",
+        code: "ExtractLevels.inverted-level-range",
+      },
+    ]);
+  });
+
+  it("reports a warning when duplicate levels are removed", () => {
+    const diagnostics = new IndoorDiagnostics();
+
+    expect(extractLevels("1;2;1", { diagnostics, tagName: "repeat_on" })).toEqual([1, 2]);
+    expect(diagnostics.diagnostics).toMatchObject([
+      {
+        severity: "warning",
+        code: "ExtractLevels.duplicate-level-values",
+      },
+    ]);
+  });
+
+  it("reports an error for comma-separated levels", () => {
+    const diagnostics = new IndoorDiagnostics();
+
+    expect(extractLevels("1,2", { diagnostics, tagName: "level" })).toEqual([]);
+    expect(diagnostics.diagnostics).toMatchObject([
+      {
+        severity: "error",
+        code: "ExtractLevels.comma-separated-levels",
+      },
+    ]);
   });
 });

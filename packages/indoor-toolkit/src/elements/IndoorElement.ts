@@ -21,7 +21,7 @@ export abstract class IndoorElement {
 
   get levels(): number[] {
     return Array.from(
-      new Set([...extractLevels(this.tags.level), ...extractLevels(this.tags.repeat_on)]),
+      new Set([...this.extractLevelsFromTag("level"), ...this.extractLevelsFromTag("repeat_on")]),
     );
   }
 
@@ -43,6 +43,19 @@ export abstract class IndoorElement {
       message,
       elementRef: this.ref,
       sourceElement: this.sourceElement,
+    });
+  }
+
+  protected extractLevelsFromTag(tagName: string): number[] {
+    return extractLevels(this.tags[tagName], {
+      diagnostics: this.diagnostics,
+      elementRef: createIndoorElementRef({
+        id: this.id,
+        tags: this.tags,
+        levels: [],
+      }),
+      sourceElement: this.sourceElement,
+      tagName,
     });
   }
 }
