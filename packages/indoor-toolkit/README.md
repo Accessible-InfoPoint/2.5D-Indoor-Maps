@@ -42,6 +42,14 @@ The input uses the normal Overpass JSON shape with an `elements` array. The pars
 
 The package assumes the caller already queried and filtered the relevant indoor data. Query generation, cache validation, building selection, building outlines, bounding boxes, and building metadata should live outside this package.
 
+Building-level metadata that affects parsing can be passed as options. For example, if a building declares intentionally missing floors through `non_existent_levels=*`, parse that tag in the application and pass it to the model:
+
+```ts
+const model = createIndoorModel(indoor, {
+  nonExistentLevels: [13],
+});
+```
+
 ## Indoor Model
 
 The main output is `IndoorModel`:

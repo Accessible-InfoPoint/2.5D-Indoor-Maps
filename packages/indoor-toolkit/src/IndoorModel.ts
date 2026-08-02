@@ -17,6 +17,7 @@ import { IndoorWall } from "./elements/IndoorWall";
 import { buildIndoorVerticalConnections } from "./verticalConnections/IndoorVerticalConnection";
 import { IndoorStairPathNetwork } from "./verticalConnections/IndoorStairPathNetwork";
 import { buildIndoorOpenings } from "./IndoorOpeningBuilder";
+import { extractLevels, LevelValue } from "./utils/extractLevels";
 
 /**
  * Options for model creation.
@@ -25,7 +26,16 @@ import { buildIndoorOpenings } from "./IndoorOpeningBuilder";
  * warnings/errors into an editor or validator, or set `logDiagnostics` to also
  * forward formatted diagnostics to `console.warn`.
  */
-export type CreateIndoorModelOptions = IndoorDiagnosticOptions;
+export interface CreateIndoorModelOptions extends IndoorDiagnosticOptions {
+  /**
+   * Numeric levels that intentionally do not exist in this building.
+   *
+   * Stair pathway spans may use semicolon-separated level lists. Missing levels
+   * listed here do not count as breaks, so `level=1;3` is accepted when `2` is
+   * non-existent.
+   */
+  nonExistentLevels?: LevelValue;
+}
 
 /**
  * Parsed representation of one raw indoor Overpass JSON dataset.
@@ -74,6 +84,10 @@ export function createIndoorModel(
   options: CreateIndoorModelOptions = {},
 ): IndoorModel {
   const diagnostics = new IndoorDiagnostics(options);
+  const nonExistentLevels = extractLevels(options.nonExistentLevels, {
+    diagnostics,
+    tagName: "non_existent_levels",
+  });
   const graph = new OsmGraph(rawIndoorData);
   const rooms = IndoorRoom.collectFromGraph(graph, diagnostics);
   const levelOutlines = IndoorLevelOutline.collectFromGraph(graph, diagnostics);
@@ -84,7 +98,7 @@ export function createIndoorModel(
   const walls = IndoorWall.collectFromGraph(graph, diagnostics);
   const tactilePaving = IndoorTactilePaving.collectFromGraph(graph, diagnostics);
   const stepAreas = IndoorStepArea.collectFromGraph(graph, diagnostics);
-  const stairPathways = IndoorStairPathway.collectFromGraph(graph, diagnostics);
+  const stairPathways = IndoorStairPathway.collectFromGraph(graph, diagnostics, nonExistentLevels);
   const stairLandings = IndoorLanding.collectFromGraph(graph, diagnostics);
   const stairPathNetwork = new IndoorStairPathNetwork(stairPathways, stairLandings);
   const verticalConnections = buildIndoorVerticalConnections(graph, rooms, stairPathNetwork);

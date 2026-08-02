@@ -74,6 +74,29 @@ describe("IndoorVerticalConnection", () => {
       ],
     ]);
   });
+
+  it("uses configured non-existent levels when parsing semicolon pathway spans", () => {
+    const model = createIndoorModel(nonExistentLevelSpanData, { nonExistentLevels: [2] });
+
+    expect(model.elements.verticalConnections).toHaveLength(1);
+    expect(
+      model.elements.verticalConnections[0].pathComponents.map((component) => component.span),
+    ).toEqual([{ from: 1, to: 3 }]);
+    expect(model.diagnostics).toEqual([]);
+  });
+
+  it("reports discontinuous semicolon pathway spans", () => {
+    const model = createIndoorModel(nonExistentLevelSpanData);
+
+    expect(model.elements.verticalConnections).toEqual([]);
+    expect(model.diagnostics).toMatchObject([
+      {
+        severity: "error",
+        code: "VerticalSpan.discontinuous-level-list",
+        elementRef: { id: "way/100" },
+      },
+    ]);
+  });
 });
 
 const rawOverpassData: OverpassJson = {
@@ -127,6 +150,19 @@ const repeatedFreeFloatingOverpassData: OverpassJson = {
       id: 200,
       nodes: [2, 3, 4, 1, 2],
       tags: { indoor: "area", landing: "yes", level: "0.5", repeat_on: "1.5" },
+    },
+  ],
+};
+
+const nonExistentLevelSpanData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    {
+      type: "way",
+      id: 100,
+      nodes: [1, 2],
+      tags: { indoor: "pathway", level: "1;3" },
     },
   ],
 };

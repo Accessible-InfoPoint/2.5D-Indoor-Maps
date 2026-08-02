@@ -1,5 +1,5 @@
 import { BuildingInterface } from "../models/buildingInterface";
-import { createIndoorModel, IndoorModel, OsmGraph } from "../indoor";
+import { createIndoorModel, extractLevels, IndoorModel, LevelValue, OsmGraph } from "../indoor";
 import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";
@@ -144,12 +144,49 @@ async function loadBackendData(config: BackendConfig): Promise<LoadedBackendData
 
 async function loadRawOverpassData(): Promise<LoadedBackendData> {
   const loadedRawOverpassData = await HttpService.fetchRawOverpassData(backendConfig.building);
+  const nonExistentLevels = parseBuildingNonExistentLevels(loadedRawOverpassData.buildingInterface);
 
   return {
     kind: "rawOverpass",
     rawOverpassData: loadedRawOverpassData,
-    indoorModel: createIndoorModel(loadedRawOverpassData.indoor),
+    indoorModel: createIndoorModel(loadedRawOverpassData.indoor, {
+      nonExistentLevels,
+    }),
   };
+}
+
+function parseBuildingNonExistentLevels(currentBuildingInterface: BuildingInterface): number[] {
+  const nonExistentLevels = currentBuildingInterface.tags.non_existent_levels;
+
+  if (nonExistentLevels == null) {
+    return [];
+  }
+
+  if (!isLevelValue(nonExistentLevels)) {
+    console.warn(
+      `Ignoring non_existent_levels tag for building "${currentBuildingInterface.id}": expected a level string, number, or list of level strings/numbers.`,
+    );
+    return [];
+  }
+
+  return extractLevels(nonExistentLevels, {
+    tagName: "non_existent_levels",
+    diagnostics: {
+      warn: (diagnostic) => console.warn(diagnostic.message),
+      error: (diagnostic) => console.warn(diagnostic.message),
+    },
+  });
+}
+
+function isLevelValue(value: unknown): value is LevelValue {
+  if (typeof value == "string" || typeof value == "number") {
+    return true;
+  }
+
+  return (
+    Array.isArray(value) &&
+    value.every((entry) => typeof entry == "string" || typeof entry == "number")
+  );
 }
 
 function buildBuildingDescription(currentBuildingInterface: BuildingInterface): string {

@@ -516,7 +516,7 @@ Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stai
 - Door nodes are close to a room boundary but not part of the boundary way. The parser keeps topology by OSM membership, not coordinate comparison.
 - Corridors are expected to have implicit walls. The renderer treats corridors and open areas as open circulation unless explicit walls or doors provide wall context.
 - `information=tactile_map` is expected to become both the main info point and a generic marker. This application intentionally chooses one primary info point per level.
-- Free-floating stairs are modeled as one long pathway with semicolon level lists. Use one pathway per vertical span and connect spans with landings.
+- Free-floating stairs are modeled as one long pathway with discontinuous semicolon level lists. Prefer `from-to` spans; semicolon lists are only accepted when they do not skip existing levels, or when skipped levels are configured as non-existent.
 - Fractional levels use commas. Use decimal points, for example `level=0.5`.
 
 ## Minimal Rendering Checklist

@@ -85,4 +85,4 @@ export {
   parseVerticalSpan,
   shiftVerticalSpan,
 } from "./verticalConnections/VerticalSpan";
-export type { VerticalSpan } from "./verticalConnections/VerticalSpan";
+export type { ParseVerticalSpanOptions, VerticalSpan } from "./verticalConnections/VerticalSpan";

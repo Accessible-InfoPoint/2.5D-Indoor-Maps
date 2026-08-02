@@ -74,7 +74,17 @@ Repeated values are deduplicated while keeping the first occurrence. `level=1;2;
 
 Commas are not accepted in `level=*`, `repeat_on=*`, or other parser level-list fields. `level=1,5` is ambiguous because a comma can mean either a decimal separator or a list separator, so it emits an error diagnostic and parses no levels for that value. Use decimal points and semicolons instead, for example `level=1.5` or `level=1;5`.
 
-Stair pathways are special: on `indoor=pathway`, `level=*` is a vertical span and should use `from-to` syntax, for example `level=0-1` or `level=0-0.5`. Pathways that use semicolon lists are not usable as stair spans.
+Stair pathways are special: on `indoor=pathway`, `level=*` is a vertical span. Prefer `from-to` syntax, for example `level=0-1` or `level=0-0.5`. As a tolerant fallback, semicolon-separated lists are accepted when they do not skip existing levels: `level=1;2;3` becomes the span `1-3`.
+
+Buildings can declare intentionally missing floors with `non_existent_levels=*`. The parser does not derive that from a building object itself; applications should parse the building tag and pass it as `nonExistentLevels`:
+
+```ts
+const model = createIndoorModel(indoorData, {
+  nonExistentLevels: [13],
+});
+```
+
+With `nonExistentLevels: [2]`, a pathway `level=1;3` is accepted as the span `1-3`. Without that configuration, `level=1;3` emits an error diagnostic because level `2` is an existing intermediate level that is missing from the list.
 
 ## Geometry
 
@@ -652,6 +662,7 @@ Parser interpretation:
 
 - Creates `IndoorStairPathway`.
 - `level=*` is parsed as a vertical span. The parser normalizes inverted spans, so `level=2-1` and `level=1-2` describe the same span.
+- Semicolon-separated pathway levels can also form a span when they are contiguous after excluding configured `nonExistentLevels`. For example, `level=1;2;3` becomes `1-3`; `level=1;3` requires `nonExistentLevels: [2]`.
 - `repeat_on=*` is interpreted as repeated start levels. For example, `level=1-2 + repeat_on=2` creates a repeated span `2-3`.
 - `repeat_on_offset=*` is interpreted as an offset from the authored span.
 - Pathway instances connect directly only when their normalized vertical span matches exactly.
@@ -661,7 +672,7 @@ Parser interpretation:
 
 Diagnostics and common mistakes:
 
-- Semicolon level lists are not valid vertical spans for stair pathways.
+- Semicolon pathway levels with missing existing intermediate levels emit `VerticalSpan.discontinuous-level-list` and are not used as a span.
 - Use one pathway per vertical span. For `0-0.5`, landing at `0.5`, and `0.5-1`, model two pathway ways and one landing area.
 - Repeated stair components should use `repeat_on=*` for repeated start levels and `repeat_on_offset=*` for explicit offsets.
 

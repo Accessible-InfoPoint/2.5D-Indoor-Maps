@@ -19,17 +19,27 @@ const DEFAULT_STAIR_PATHWAY_WIDTH_METERS = 1;
  * network.
  */
 export class IndoorStairPathway extends IndoorElement {
-  /** Collect all raw stair pathway ways from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorStairPathway[] {
+  /**
+   * Collect all raw stair pathway ways from a graph.
+   *
+   * `nonExistentLevels` are used when parsing semicolon-separated pathway
+   * levels as vertical spans.
+   */
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorStairPathway[] {
     return graph.elements
       .filter(isRawIndoorStairPathwayElement)
-      .map((way) => new IndoorStairPathway(graph, way, diagnostics));
+      .map((way) => new IndoorStairPathway(graph, way, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
     diagnostics?: IndoorDiagnostics,
+    private readonly nonExistentLevels: number[] = [],
   ) {
     super(graph, sourceElement, diagnostics);
   }
@@ -60,7 +70,13 @@ export class IndoorStairPathway extends IndoorElement {
 
   /** Vertical span parsed from pathway `level=from-to`. */
   get verticalSpan(): VerticalSpan | undefined {
-    return parseVerticalSpan(this.tags.level);
+    return parseVerticalSpan(this.tags.level, {
+      diagnostics: this.diagnostics,
+      elementRef: this.ref,
+      sourceElement: this.sourceElement,
+      tagName: "level",
+      nonExistentLevels: this.nonExistentLevels,
+    });
   }
 
   /**
