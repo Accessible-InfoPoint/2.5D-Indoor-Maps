@@ -3,7 +3,12 @@ import coordinateHelpers from "../../utils/coordinateHelpers";
 import { getRequiredArrayValue } from "../../utils/requiredHelpers";
 import { StaircaseRenderItem } from "../indoorLevel/indoorLevelRenderModel";
 
-export type StaircasePathWidth = number | number[];
+export interface StaircasePathSideOffsets {
+  left: number | number[];
+  right: number | number[];
+}
+
+export type StaircasePathWidth = number | number[] | StaircasePathSideOffsets;
 export type StaircasePath = [coordinates: GeoJSON.Position[], width: StaircasePathWidth];
 export interface StaircaseHandrailOptions {
   left: boolean;
@@ -52,8 +57,8 @@ export function buildStaircasePathRenderItems(
   altitude: number,
   handrails: StaircaseHandrailOptions = LEGACY_STAIRCASE_HANDRAILS,
 ): StaircaseRenderItem[] {
-  const rightEdgeLine = offsetPathByWidth(lineString, width, 0.5);
-  const leftEdgeLine = offsetPathByWidth(lineString, width, -0.5);
+  const rightEdgeLine = offsetStaircasePathSide(lineString, width, "right");
+  const leftEdgeLine = offsetStaircasePathSide(lineString, width, "left");
   const renderItems: StaircaseRenderItem[] = buildStaircaseFloorRenderItems(
     leftEdgeLine,
     rightEdgeLine,
@@ -64,7 +69,7 @@ export function buildStaircasePathRenderItems(
   if (handrails.left) {
     renderItems.push(
       ...buildHandrailLineRenderItems(
-        offsetPathByWidth(lineString, width, -0.5, COMPLEX_STAIRCASE_THICKNESS / 2),
+        offsetStaircasePathSide(lineString, width, "left", COMPLEX_STAIRCASE_THICKNESS / 2),
         altitudes,
         altitude,
       ),
@@ -74,7 +79,7 @@ export function buildStaircasePathRenderItems(
   if (handrails.right) {
     renderItems.push(
       ...buildHandrailLineRenderItems(
-        offsetPathByWidth(lineString, width, 0.5, -COMPLEX_STAIRCASE_THICKNESS / 2),
+        offsetStaircasePathSide(lineString, width, "right", -COMPLEX_STAIRCASE_THICKNESS / 2),
         altitudes,
         altitude,
       ),
@@ -88,18 +93,35 @@ export function buildStaircasePathRenderItems(
   return renderItems;
 }
 
-function offsetPathByWidth(
+export function offsetStaircasePathSide(
   lineString: GeoJSON.Position[],
   width: StaircasePathWidth,
-  factor: number,
+  side: "left" | "right",
   inset = 0,
 ): GeoJSON.Position[] {
+  const sign = side == "left" ? -1 : 1;
+
+  if (isStaircasePathSideOffsets(width)) {
+    const sideOffset = width[side];
+
+    return Array.isArray(sideOffset)
+      ? coordinateHelpers.offsetCoordinateLineByOffsets(
+          lineString,
+          sideOffset.map((value) => value * sign + inset),
+        )
+      : coordinateHelpers.offsetCoordinateLine(lineString, sideOffset * sign + inset);
+  }
+
   return Array.isArray(width)
     ? coordinateHelpers.offsetCoordinateLineByOffsets(
         lineString,
-        width.map((value) => value * factor + inset),
+        width.map((value) => value * 0.5 * sign + inset),
       )
-    : coordinateHelpers.offsetCoordinateLine(lineString, width * factor + inset);
+    : coordinateHelpers.offsetCoordinateLine(lineString, width * 0.5 * sign + inset);
+}
+
+function isStaircasePathSideOffsets(width: StaircasePathWidth): width is StaircasePathSideOffsets {
+  return typeof width == "object" && !Array.isArray(width);
 }
 
 function buildStaircaseFloorRenderItems(

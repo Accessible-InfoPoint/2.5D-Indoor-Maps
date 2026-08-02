@@ -14,7 +14,6 @@ import {
 import { createIndoorElementRef } from "../../indoor";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
-import coordinateHelpers from "../../utils/coordinateHelpers";
 import {
   RoomRenderItem,
   StaircaseRenderItem,
@@ -26,6 +25,8 @@ import {
   buildSimpleStaircaseRenderItems,
   buildStaircasePathRenderItems,
   COMPLEX_STAIRCASE_THICKNESS,
+  offsetStaircasePathSide,
+  StaircasePathSideOffsets,
   StaircasePathWidth,
   StaircaseHandrailOptions,
 } from "./staircaseRenderBuilder";
@@ -306,22 +307,27 @@ function estimatePathWidthsFromStepAreas(
   instance: IndoorStairPathwayInstance,
   coordinates: GeoJSON.Position[],
   stepAreas: IndoorStepArea[],
-): number[] | undefined {
+): StaircasePathSideOffsets | undefined {
   const compatibleAreas = stepAreas.filter((area) => isCompatibleStepArea(area, instance));
 
   if (compatibleAreas.length == 0 || coordinates.length < 2) {
     return undefined;
   }
 
-  const sampledWidths = coordinates.map((coordinate, index) =>
+  const sampledOffsets = coordinates.map((coordinate, index) =>
     estimatePathWidthAtCoordinate(coordinate, coordinates, index, compatibleAreas),
   );
 
-  if (sampledWidths.every((width) => width === undefined)) {
+  if (sampledOffsets.every((offsets) => offsets === undefined)) {
     return undefined;
   }
 
-  return sampledWidths.map((width) => width ?? instance.source.widthMeters);
+  const fallbackSideOffset = instance.source.widthMeters / 2;
+
+  return {
+    left: sampledOffsets.map((offsets) => offsets?.left ?? fallbackSideOffset),
+    right: sampledOffsets.map((offsets) => offsets?.right ?? fallbackSideOffset),
+  };
 }
 
 function isCompatibleStepArea(
@@ -342,7 +348,7 @@ function estimatePathWidthAtCoordinate(
   pathCoordinates: GeoJSON.Position[],
   index: number,
   stepAreas: IndoorStepArea[],
-): number | undefined {
+): StepAreaWidthSample | undefined {
   const origin = pathCoordinates[0];
   const projection = createLocalProjection(origin);
   const point = toLocalPoint(coordinate, projection);
@@ -355,8 +361,8 @@ function estimatePathWidthAtCoordinate(
   return stepAreas
     .flatMap((area) => getStepAreaPolygons(area))
     .map((polygon) => estimateWidthInPolygon(point, ray, polygon, projection))
-    .filter((width): width is number => width !== undefined)
-    .sort((a, b) => b - a)[0];
+    .filter((offsets): offsets is StepAreaWidthSample => offsets !== undefined)
+    .sort((a, b) => getTotalWidth(b) - getTotalWidth(a))[0];
 }
 
 function getPathHandrailDefinition(
@@ -479,11 +485,7 @@ function buildPathSideOutlineRenderItem(
     return undefined;
   }
 
-  const coordinates = offsetPathByWidth(
-    options.coordinates,
-    options.width,
-    side == "left" ? -0.5 : 0.5,
-  );
+  const coordinates = offsetStaircasePathSide(options.coordinates, options.width, side);
 
   return {
     feature: {
@@ -580,6 +582,11 @@ interface PathWidthRay {
   direction: LocalPoint;
 }
 
+interface StepAreaWidthSample {
+  left: number;
+  right: number;
+}
+
 function getStepAreaPolygons(stepArea: IndoorStepArea): GeoJSON.Position[][][] {
   const geometry = stepArea.toAreaGeometry();
 
@@ -595,7 +602,7 @@ function estimateWidthInPolygon(
   ray: PathWidthRay,
   polygon: GeoJSON.Position[][],
   projection: LocalProjection,
-): number | undefined {
+): StepAreaWidthSample | undefined {
   const localRings = polygon.map((ring) =>
     ring.map((coordinate) => toLocalPoint(coordinate, projection)),
   );
@@ -618,7 +625,14 @@ function estimateWidthInPolygon(
 
   return positiveDistance === undefined || negativeDistance === undefined
     ? undefined
-    : positiveDistance + negativeDistance;
+    : {
+        left: negativeDistance,
+        right: positiveDistance,
+      };
+}
+
+function getTotalWidth(width: StepAreaWidthSample): number {
+  return width.left + width.right;
 }
 
 function getNearestRayBoundaryDistance(
@@ -812,27 +826,14 @@ function buildFlatStairPathPolygon(
     return undefined;
   }
 
-  const left = offsetPathByWidth(coordinates, width, 0.5);
-  const right = offsetPathByWidth(coordinates, width, -0.5);
+  const left = offsetStaircasePathSide(coordinates, width, "left");
+  const right = offsetStaircasePathSide(coordinates, width, "right");
   const ring = [...left, ...right.reverse(), left[0]];
 
   return {
     type: "Polygon",
     coordinates: [ring],
   };
-}
-
-function offsetPathByWidth(
-  coordinates: GeoJSON.Position[],
-  width: StaircasePathWidth,
-  factor: number,
-): GeoJSON.Position[] {
-  return Array.isArray(width)
-    ? coordinateHelpers.offsetCoordinateLineByOffsets(
-        coordinates,
-        width.map((value) => value * factor),
-      )
-    : coordinateHelpers.offsetCoordinateLine(coordinates, width * factor);
 }
 
 function buildLandingSurfaceRenderInputs(

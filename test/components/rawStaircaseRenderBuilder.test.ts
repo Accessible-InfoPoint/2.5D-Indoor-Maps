@@ -106,6 +106,34 @@ describe("raw staircase rendering", () => {
     expect(renderedCornerWidth).toBeLessThan(7);
   });
 
+  it("samples independent left and right step area offsets for off-center stair paths", () => {
+    const model = createIndoorModel(offCenterFreeFloatingStaircaseWithStepAreaData.indoor);
+
+    const renderModel = buildIndoorLevelRenderModel({
+      model,
+      buildingOutlineGeometry: buildingFeature.geometry,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    const floorPrisms = getStaircaseFloorPrisms(renderModel.staircase);
+    const pathStart = metersToGeoJsonPosition(0, 0);
+    const leftStart = floorPrisms[0].coordinates[0];
+    const rightStart = floorPrisms[0].coordinates[3];
+
+    expect(floorPrisms).toHaveLength(1);
+    expect(coordinateHelpers.getDistanceBetweenCoordinatesInM(pathStart, leftStart)).toBeCloseTo(
+      3,
+      0,
+    );
+    expect(coordinateHelpers.getDistanceBetweenCoordinatesInM(pathStart, rightStart)).toBeCloseTo(
+      1,
+      0,
+    );
+  });
+
   it("renders raw staircase pathway handrails only when explicit handrail tags are present", () => {
     const model = createIndoorModel(staircaseWithPathwayHandrailsData.indoor);
 
@@ -388,6 +416,33 @@ const freeFloatingStaircaseWithStepAreaData: RawOverpassDataResponse = {
   },
 };
 
+const offCenterFreeFloatingStaircaseWithStepAreaData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: { elements: [] },
+  indoor: {
+    elements: [
+      { type: "node", id: 1, ...metersToOverpassPosition(0, 0) },
+      { type: "node", id: 2, ...metersToOverpassPosition(10, 0) },
+      { type: "node", id: 10, ...metersToOverpassPosition(-1, -1) },
+      { type: "node", id: 11, ...metersToOverpassPosition(11, -1) },
+      { type: "node", id: 12, ...metersToOverpassPosition(11, 3) },
+      { type: "node", id: 13, ...metersToOverpassPosition(-1, 3) },
+      {
+        type: "way",
+        id: 100,
+        nodes: [1, 2],
+        tags: { indoor: "pathway", level: "0-1" },
+      },
+      {
+        type: "way",
+        id: 200,
+        nodes: [10, 11, 12, 13, 10],
+        tags: { "area:highway": "steps", level: "0-1" },
+      },
+    ],
+  },
+};
+
 const staircaseWithNodeLevelsData: RawOverpassDataResponse = {
   buildingInterface,
   buildings: { elements: [] },
@@ -533,4 +588,10 @@ function metersToOverpassPosition(x: number, y: number): { lat: number; lon: num
     lon: x / metersPerDegree,
     lat: y / metersPerDegree,
   };
+}
+
+function metersToGeoJsonPosition(x: number, y: number): GeoJSON.Position {
+  const position = metersToOverpassPosition(x, y);
+
+  return [position.lon, position.lat];
 }

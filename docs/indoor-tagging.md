@@ -421,6 +421,7 @@ Rendering:
 - 2D: rendered as a flat stair surface derived from the middle line and width.
 - 3D: rendered as sloped prism segments.
 - If `width=*` is missing, the renderer can sample compatible `area:highway=steps` geometry.
+- Sampled step areas provide independent left and right offsets from the pathway, so the pathway does not need to be perfectly centered in the stair area.
 - If no width source is available, the default pathway width is used.
 - Side outlines use handrail styling where handrails exist, otherwise fallback outline styling.
 - A `level=0-1` stair is visible on both level `0` and level `1`.
@@ -477,7 +478,8 @@ Rendering:
 
 - Step areas are not rendered directly.
 - They can determine varying width for free-floating stair surfaces when the pathway has no explicit `width=*`.
-- Width is sampled by ray casting through pathway nodes. At corners, the sampling direction uses the summed perpendicular vectors of adjacent path segments, so diagonal and corner widths follow the stair area geometry.
+- Width is sampled by ray casting through pathway nodes. The renderer keeps separate left and right distances from the pathway, so off-center middle lines still produce the authored stair footprint.
+- At corners, the sampling direction uses the summed perpendicular vectors of adjacent path segments, so diagonal and corner widths follow the stair area geometry.
 
 Application notes:
 
