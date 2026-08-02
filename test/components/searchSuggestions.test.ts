@@ -13,7 +13,7 @@ jest.mock("../../src/services/featureService", () => ({
   getCategoryIconFromTags: jest.fn(),
 }));
 
-import type { SearchSuggestion } from "../../src/services/buildingService";
+import type { SearchSuggestion } from "../../src/services/searchService";
 
 function suggestion(overrides: Partial<SearchSuggestion> = {}): SearchSuggestion {
   return {

@@ -6,13 +6,13 @@ jest.mock("../../src/services/languageService", () => ({
   lang: { searchSuggestionLevel: "Level " },
 }));
 
-import BuildingService from "../../src/services/buildingService";
+import SearchService from "../../src/services/searchService";
 import BackendService from "../../src/services/backendService";
 import { createIndoorElementRef } from "../../src/indoor";
 
 const CTX = { currentLevel: 0 };
 
-describe("BuildingService.searchSuggestions", () => {
+describe("SearchService.searchSuggestions", () => {
   beforeEach(() => {
     setSearchableElements([
       roomElement("way/1", { name: "Meeting Room", level: "1", indoor: "room" }, [1]),
@@ -27,7 +27,7 @@ describe("BuildingService.searchSuggestions", () => {
   });
 
   it("returns empty array for empty search string", () => {
-    expect(BuildingService.searchSuggestions("", CTX)).toEqual([]);
+    expect(SearchService.searchSuggestions("", CTX)).toEqual([]);
   });
 
   it("returns suggestions from raw indoor model selections", () => {
@@ -35,7 +35,7 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/100", { name: "Raw Meeting Room", level: "0", indoor: "room" }, [0]),
     ]);
 
-    const results = BuildingService.searchSuggestions("meeting", CTX);
+    const results = SearchService.searchSuggestions("meeting", CTX);
 
     expect(results.map((result) => result.elementRef)).toEqual([
       expect.objectContaining({
@@ -51,13 +51,13 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/1", { name: "Raw Room", level: "0", indoor: "room" }, [0]),
     ]);
 
-    expect(BuildingService.getSearchElementRefById("way/1")).toEqual(
+    expect(SearchService.getSearchElementRefById("way/1")).toEqual(
       expect.objectContaining({ id: "way/1", levels: [0] }),
     );
   });
 
   it("matches by name using substring and uses name as displayName", () => {
-    const results = BuildingService.searchSuggestions("meeting", CTX);
+    const results = SearchService.searchSuggestions("meeting", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("way/1");
@@ -66,7 +66,7 @@ describe("BuildingService.searchSuggestions", () => {
   });
 
   it("matches by ref and falls back displayName to ref", () => {
-    const results = BuildingService.searchSuggestions("B3", CTX);
+    const results = SearchService.searchSuggestions("B3", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("way/2");
@@ -76,7 +76,7 @@ describe("BuildingService.searchSuggestions", () => {
   });
 
   it("matches by amenity and sets type from amenity", () => {
-    const results = BuildingService.searchSuggestions("toilet", CTX);
+    const results = SearchService.searchSuggestions("toilet", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("way/3");
@@ -88,7 +88,7 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/5", { indoor: "room", room: "classroom", level: "0" }, [0]),
     ]);
 
-    const results = BuildingService.searchSuggestions("classroom", CTX);
+    const results = SearchService.searchSuggestions("classroom", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("way/5");
@@ -101,7 +101,7 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/6", { indoor: "room", room: "classroom", level: "0" }, [0]),
     ]);
 
-    const results = BuildingService.searchSuggestions("seminar", CTX);
+    const results = SearchService.searchSuggestions("seminar", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("way/6");
@@ -113,10 +113,10 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/8", { indoor: "room", room: "office", level: "0" }, [0]),
     ]);
 
-    expect(BuildingService.searchSuggestions("hörsaal", CTX).map((result) => result.id)).toEqual([
+    expect(SearchService.searchSuggestions("hörsaal", CTX).map((result) => result.id)).toEqual([
       "way/7",
     ]);
-    expect(BuildingService.searchSuggestions("büro", CTX).map((result) => result.id)).toEqual([
+    expect(SearchService.searchSuggestions("büro", CTX).map((result) => result.id)).toEqual([
       "way/8",
     ]);
   });
@@ -128,13 +128,13 @@ describe("BuildingService.searchSuggestions", () => {
       pointElement("node/11", { amenity: "toilets", level: "0" }, [0]),
     ]);
 
-    expect(
-      BuildingService.searchSuggestions("geldautomat", CTX).map((result) => result.id),
-    ).toEqual(["node/9"]);
-    expect(
-      BuildingService.searchSuggestions("postfiliale", CTX).map((result) => result.id),
-    ).toEqual(["node/10"]);
-    expect(BuildingService.searchSuggestions("wc", CTX).map((result) => result.id)).toEqual([
+    expect(SearchService.searchSuggestions("geldautomat", CTX).map((result) => result.id)).toEqual([
+      "node/9",
+    ]);
+    expect(SearchService.searchSuggestions("postfiliale", CTX).map((result) => result.id)).toEqual([
+      "node/10",
+    ]);
+    expect(SearchService.searchSuggestions("wc", CTX).map((result) => result.id)).toEqual([
       "node/11",
     ]);
   });
@@ -142,7 +142,7 @@ describe("BuildingService.searchSuggestions", () => {
   it("type is undefined when neither amenity nor indoor is set", () => {
     setSearchableElements([roomElement("way/5", { name: "Mystery Space", level: "0" }, [0])]);
 
-    const results = BuildingService.searchSuggestions("mystery", CTX);
+    const results = SearchService.searchSuggestions("mystery", CTX);
 
     expect(results[0].type).toBeUndefined();
   });
@@ -153,13 +153,13 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/7", { name: "Lobby", ref: "L1" }, []),
     ]);
 
-    expect(BuildingService.searchSuggestions("yes", CTX)).toHaveLength(0);
-    expect(BuildingService.searchSuggestions("waste", CTX)).toHaveLength(0);
-    expect(BuildingService.searchSuggestions("lobby", CTX)).toHaveLength(0);
+    expect(SearchService.searchSuggestions("yes", CTX)).toHaveLength(0);
+    expect(SearchService.searchSuggestions("waste", CTX)).toHaveLength(0);
+    expect(SearchService.searchSuggestions("lobby", CTX)).toHaveLength(0);
   });
 
   it("does not match elements by indoor type alone", () => {
-    const results = BuildingService.searchSuggestions("pathway", CTX);
+    const results = SearchService.searchSuggestions("pathway", CTX);
 
     expect(results).toHaveLength(0);
   });
@@ -169,14 +169,14 @@ describe("BuildingService.searchSuggestions", () => {
       roomElement("way/9", { name: "Repeated Room", level: "0", repeat_on: "1-2" }, [0, 1, 2]),
     ]);
 
-    const results = BuildingService.searchSuggestions("repeated", CTX);
+    const results = SearchService.searchSuggestions("repeated", CTX);
 
     expect(results).toHaveLength(1);
     expect(results[0].levels).toEqual([0, 1, 2]);
   });
 
   it("returns empty array when no elements match", () => {
-    expect(BuildingService.searchSuggestions("xyzzy", CTX)).toHaveLength(0);
+    expect(SearchService.searchSuggestions("xyzzy", CTX)).toHaveLength(0);
   });
 
   describe("sort order", () => {
@@ -187,7 +187,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/10", { name: "room", level: "0" }, [0]),
       ]);
 
-      const results = BuildingService.searchSuggestions("room", CTX);
+      const results = SearchService.searchSuggestions("room", CTX);
 
       expect(results.map((result) => result.id)).toEqual(["way/10", "way/11", "way/12"]);
     });
@@ -198,7 +198,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/21", { name: "room B", level: "0" }, [0]),
       ]);
 
-      const results = BuildingService.searchSuggestions("room", { currentLevel: 0 });
+      const results = SearchService.searchSuggestions("room", { currentLevel: 0 });
 
       expect(results.map((result) => result.id)).toEqual(["way/21", "way/20"]);
     });
@@ -209,7 +209,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/22", { name: "room repeated", level: "0", repeat_on: "2" }, [0, 2]),
       ]);
 
-      const results = BuildingService.searchSuggestions("room", { currentLevel: 2 });
+      const results = SearchService.searchSuggestions("room", { currentLevel: 2 });
 
       expect(results.map((result) => result.id)).toEqual(["way/22", "way/23"]);
     });
@@ -220,7 +220,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/30", { name: "room C", level: "0" }, [0], polygonAt(0, 0)),
       ]);
 
-      const results = BuildingService.searchSuggestions("room", {
+      const results = SearchService.searchSuggestions("room", {
         currentLevel: 0,
         selectedElementRef: elementRef("way/99", { level: "0" }, [0], polygonAt(0, 0)),
       });
@@ -234,7 +234,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/62", { name: "room G", level: "0" }, [0], polygonAt(0, 0)),
       ]);
 
-      const results = BuildingService.searchSuggestions("room", {
+      const results = SearchService.searchSuggestions("room", {
         currentLevel: 0,
         infoPointElementRef: elementRef("node/98", { level: "0" }, [0], {
           type: "Point",
@@ -251,7 +251,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/50", { ref: "toiletA", level: "0" }, [0]),
       ]);
 
-      const results = BuildingService.searchSuggestions("toilet", CTX);
+      const results = SearchService.searchSuggestions("toilet", CTX);
 
       expect(results.map((result) => result.id)).toEqual(["way/50", "way/51"]);
     });
@@ -262,7 +262,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/53", { name: "Room Z12 Wing", level: "0" }, [0]),
       ]);
 
-      const results = BuildingService.searchSuggestions("z12", CTX);
+      const results = SearchService.searchSuggestions("z12", CTX);
 
       expect(results.map((result) => result.id)).toEqual(["way/53", "way/52"]);
     });
@@ -278,7 +278,7 @@ describe("BuildingService.searchSuggestions", () => {
         ),
       ]);
 
-      const results = BuildingService.searchSuggestions("toilet", {
+      const results = SearchService.searchSuggestions("toilet", {
         currentLevel: 0,
         selectedElementRef: elementRef("way/99", { level: "0" }, [0], polygonAt(0, 0)),
         wheelchairMode: true,
@@ -298,7 +298,7 @@ describe("BuildingService.searchSuggestions", () => {
         roomElement("way/41", { amenity: "toilets", level: "0" }, [0], polygonAt(0, 0)),
       ]);
 
-      const results = BuildingService.searchSuggestions("toilet", {
+      const results = SearchService.searchSuggestions("toilet", {
         currentLevel: 0,
         selectedElementRef: elementRef("way/99", { level: "0" }, [0], polygonAt(0, 0)),
       });
@@ -325,7 +325,7 @@ describe("BuildingService.searchSuggestions", () => {
     ]);
 
     try {
-      BuildingService.searchSuggestions("room", {
+      SearchService.searchSuggestions("room", {
         currentLevel: 0,
         selectedElementRef: elementRef("way/72", { level: "0" }, [0], polygonAt(0, 0)),
         infoPointElementRef: elementRef("way/72", { level: "0" }, [0], polygonAt(0, 0)),

@@ -373,12 +373,7 @@ function getSearchableElementRefs(): Array<{ elementRef: IndoorElementRef }> {
   ];
 }
 
-function getBuildingDescription(): string {
-  return BackendService.getBuildingDescription();
-}
-
 export default {
-  getBuildingDescription,
   searchSuggestions,
   getSearchElementRefById,
 };

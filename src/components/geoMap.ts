@@ -9,7 +9,6 @@ import {
 } from "../../public/strings/settings.json";
 import LevelControl from "./ui/levelControl";
 import DescriptionArea from "./ui/descriptionArea";
-import BuildingService from "../services/buildingService";
 import { IndoorLevel } from "./indoorLevel";
 import AccessibilityService from "../services/accessibilityService";
 import LevelService from "../services/levelService";
@@ -145,7 +144,7 @@ export class GeoMap {
 
     AccessibilityService.reset();
 
-    const message = BuildingService.getBuildingDescription();
+    const message = BackendService.getBuildingDescription();
     DescriptionArea.update(message, "selectedBuilding");
   }
 

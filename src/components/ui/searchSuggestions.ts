@@ -1,4 +1,4 @@
-import type { SearchSuggestion } from "../../services/buildingService";
+import type { SearchSuggestion } from "../../services/searchService";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { getCategoryIconFromTags } from "../../services/featureService";

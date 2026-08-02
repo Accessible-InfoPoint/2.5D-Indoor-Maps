@@ -11,7 +11,7 @@ jest.mock("../../src/services/languageService", () => ({
     clearSearchError: "Dismiss search error",
   },
 }));
-jest.mock("../../src/services/buildingService", () => ({
+jest.mock("../../src/services/searchService", () => ({
   __esModule: true,
   default: {
     getSearchElementRefById: jest.fn(),
@@ -32,12 +32,12 @@ jest.mock("../../src/services/userService", () => ({
 }));
 
 import type { GeoMap } from "../../src/components/geoMap";
-import type BuildingServiceType from "../../src/services/buildingService";
+import type SearchServiceType from "../../src/services/searchService";
 import type SearchSuggestionsType from "../../src/components/ui/searchSuggestions";
 
 describe("searchForm", () => {
   let SearchForm: typeof import("../../src/components/ui/searchForm").default;
-  let BuildingService: typeof BuildingServiceType;
+  let SearchService: typeof SearchServiceType;
   let SearchSuggestions: typeof SearchSuggestionsType;
   let input: HTMLInputElement;
   let submitButton: HTMLButtonElement;
@@ -59,8 +59,8 @@ describe("searchForm", () => {
         <button id="searchErrorClear"></button>
       </div>
     `;
-    BuildingService = jest.requireMock("../../src/services/buildingService")
-      .default as typeof BuildingServiceType;
+    SearchService = jest.requireMock("../../src/services/searchService")
+      .default as typeof SearchServiceType;
     SearchSuggestions = jest.requireMock("../../src/components/ui/searchSuggestions")
       .default as typeof SearchSuggestionsType;
     SearchForm = jest.requireActual("../../src/components/ui/searchForm")
@@ -90,7 +90,7 @@ describe("searchForm", () => {
     pressEnter();
     expect(errorText.textContent).toBe("Please enter a search term!");
     expect(errorMessage.classList.contains("visible")).toBe(true);
-    expect(BuildingService.searchSuggestions).not.toHaveBeenCalled();
+    expect(SearchService.searchSuggestions).not.toHaveBeenCalled();
   });
 
   it("selects the first search result when Enter is pressed", () => {
@@ -108,7 +108,7 @@ describe("searchForm", () => {
       type: "room",
       elementRef,
     };
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
     SearchForm.render(geoMap);
     input.value = "room";
@@ -151,7 +151,7 @@ describe("searchForm", () => {
       type: "room",
       elementRef: currentElementRef,
     };
-    (BuildingService.searchSuggestions as jest.Mock)
+    (SearchService.searchSuggestions as jest.Mock)
       .mockReturnValueOnce([staleSuggestion])
       .mockReturnValueOnce([currentSuggestion]);
 
@@ -161,7 +161,7 @@ describe("searchForm", () => {
     pressEnter();
 
     expect(SearchSuggestions.update).toHaveBeenCalledWith([staleSuggestion]);
-    expect(BuildingService.searchSuggestions).toHaveBeenCalledTimes(2);
+    expect(SearchService.searchSuggestions).toHaveBeenCalledTimes(2);
     expect(geoMap.selectIndoorElementRef).toHaveBeenCalledWith(currentElementRef, {
       switchLevel: true,
     });
@@ -169,7 +169,7 @@ describe("searchForm", () => {
   });
 
   it("shows a not-found error when Enter is pressed with no matches", () => {
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([]);
 
     SearchForm.render(geoMap);
     input.value = "xyzzy";
@@ -181,7 +181,7 @@ describe("searchForm", () => {
   });
 
   it("clears a shown error as soon as the user types again", () => {
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([]);
     SearchForm.render(geoMap);
     input.value = "xyzzy";
     pressEnter();
@@ -209,7 +209,7 @@ describe("searchForm", () => {
       type: "room",
       elementRef,
     };
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([suggestion]);
 
     SearchForm.render(geoMap);
     input.value = "room b";
@@ -219,7 +219,7 @@ describe("searchForm", () => {
   });
 
   it("clears the input, suggestions, and visible error when the clear search button is clicked", () => {
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([]);
     SearchForm.render(geoMap);
     input.value = "xyzzy";
     pressEnter();
@@ -234,7 +234,7 @@ describe("searchForm", () => {
   });
 
   it("clears a visible search error when the error dismiss button is clicked", () => {
-    (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+    (SearchService.searchSuggestions as jest.Mock).mockReturnValue([]);
     SearchForm.render(geoMap);
     input.value = "xyzzy";
     pressEnter();

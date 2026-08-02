@@ -1,10 +1,10 @@
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
-import BuildingService, {
+import SearchService, {
   type SearchSuggestion,
   type SuggestionSortContext,
-} from "../../services/buildingService";
+} from "../../services/searchService";
 import SearchSuggestions from "./searchSuggestions";
 import UserService from "../../services/userService";
 import { UserGroupEnum } from "../../models/userGroupEnum";
@@ -38,7 +38,7 @@ function buildSortContext(geoMap: GeoMap): SuggestionSortContext {
   return {
     currentLevel: geoMap.currentLevel,
     selectedElementRef:
-      geoMap.selectedElementRef ?? BuildingService.getSearchElementRefById(selectedId),
+      geoMap.selectedElementRef ?? SearchService.getSearchElementRefById(selectedId),
     infoPointElementRef: geoMap.infoPointElementRef,
     wheelchairMode: UserService.getCurrentProfile() === UserGroupEnum.wheelchairUsers,
   };
@@ -55,7 +55,7 @@ function submitSearch(
     return;
   }
 
-  const results = BuildingService.searchSuggestions(query, buildSortContext(geoMap));
+  const results = SearchService.searchSuggestions(query, buildSortContext(geoMap));
   SearchSuggestions.clear();
 
   const best = results[0];
@@ -79,7 +79,7 @@ function render(geoMap: GeoMap): void {
     clearSearchError();
     const query = indoorSearchInput.value.trim();
     if (query.length >= 1) {
-      SearchSuggestions.update(BuildingService.searchSuggestions(query, buildSortContext(geoMap)));
+      SearchSuggestions.update(SearchService.searchSuggestions(query, buildSortContext(geoMap)));
     } else {
       SearchSuggestions.clear();
     }
