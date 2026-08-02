@@ -524,9 +524,12 @@ Application notes:
 For best application search results:
 
 - Add `name=*` or `ref=*` to rooms.
+- Add `room=*` where the room type matters for discovery, for example `room=classroom`.
 - Add category tags such as `amenity=toilets`, `highway=elevator`, `stairs=yes`, `shop=*`, `amenity=cafe`, or `amenity=restaurant` where applicable.
 - Keep level tags numeric and consistent.
 - If the building intentionally skips floor numbers, tag the building with `non_existent_levels=*`; those levels are omitted from expanded ranges and from the level selector.
+
+Search matches `name=*`, `ref=*`, `amenity=*`, and `room=*`. Application aliases can expand tag values for search without changing OSM tags; these are grouped in `src/data/searchTagAliases.ts` and intentionally focus on room and amenity values likely in public buildings. For example, `room=classroom` also matches seminar-room style queries, and `amenity=atm` also matches German search terms such as `Geldautomat`.
 
 Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stair rooms, and other special rooms may use category markers instead.
 

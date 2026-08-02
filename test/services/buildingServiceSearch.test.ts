@@ -83,6 +83,62 @@ describe("BuildingService.searchSuggestions", () => {
     expect(results[0].type).toBe("toilets");
   });
 
+  it("matches by room tag and uses room as fallback display type", () => {
+    setSearchableElements([
+      roomElement("way/5", { indoor: "room", room: "classroom", level: "0" }, [0]),
+    ]);
+
+    const results = BuildingService.searchSuggestions("classroom", CTX);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("way/5");
+    expect(results[0].displayName).toBe("classroom");
+    expect(results[0].type).toBe("classroom");
+  });
+
+  it("matches configured room tag aliases", () => {
+    setSearchableElements([
+      roomElement("way/6", { indoor: "room", room: "classroom", level: "0" }, [0]),
+    ]);
+
+    const results = BuildingService.searchSuggestions("seminar", CTX);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("way/6");
+  });
+
+  it("matches configured German room tag aliases", () => {
+    setSearchableElements([
+      roomElement("way/7", { indoor: "room", room: "lecture", level: "0" }, [0]),
+      roomElement("way/8", { indoor: "room", room: "office", level: "0" }, [0]),
+    ]);
+
+    expect(BuildingService.searchSuggestions("hörsaal", CTX).map((result) => result.id)).toEqual([
+      "way/7",
+    ]);
+    expect(BuildingService.searchSuggestions("büro", CTX).map((result) => result.id)).toEqual([
+      "way/8",
+    ]);
+  });
+
+  it("matches configured amenity tag aliases", () => {
+    setSearchableElements([
+      pointElement("node/9", { amenity: "atm", level: "0" }, [0]),
+      pointElement("node/10", { amenity: "post_office", level: "0" }, [0]),
+      pointElement("node/11", { amenity: "toilets", level: "0" }, [0]),
+    ]);
+
+    expect(
+      BuildingService.searchSuggestions("geldautomat", CTX).map((result) => result.id),
+    ).toEqual(["node/9"]);
+    expect(
+      BuildingService.searchSuggestions("postfiliale", CTX).map((result) => result.id),
+    ).toEqual(["node/10"]);
+    expect(BuildingService.searchSuggestions("wc", CTX).map((result) => result.id)).toEqual([
+      "node/11",
+    ]);
+  });
+
   it("type is undefined when neither amenity nor indoor is set", () => {
     setSearchableElements([roomElement("way/5", { name: "Mystery Space", level: "0" }, [0])]);
 

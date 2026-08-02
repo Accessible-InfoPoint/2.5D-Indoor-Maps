@@ -2,6 +2,7 @@ import BackendService from "./backendService";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
 import { createIndoorElementRef, IndoorElementRef } from "../indoor";
+import { searchTagAliases } from "../data/searchTagAliases";
 
 export interface SearchSuggestion {
   id: string;
@@ -21,6 +22,7 @@ export interface SuggestionSortContext {
 const OSM_NAME_ARTIFACTS = new Set([]);
 const EXCLUDED_AMENITIES = new Set(["waste_basket"]);
 const SEARCH_SUGGESTIONS_DEBUG_KEY = "debugSearchSuggestions";
+type SearchField = "name" | "ref" | "amenity" | "room";
 
 function getValidName(p: Record<string, unknown>): string | undefined {
   const name = p.name;
@@ -33,11 +35,7 @@ function filterForSuggestions(elementRef: IndoorElementRef, searchString: string
   if (elementRef.levels.length === 0) return false;
   if (p.amenity && EXCLUDED_AMENITIES.has(String(p.amenity))) return false;
   const s = searchString.toLowerCase();
-  return !!(
-    getValidName(p)?.toLowerCase().includes(s) ||
-    getStringTag(p.ref)?.toLowerCase().includes(s) ||
-    getStringTag(p.amenity)?.toLowerCase().includes(s)
-  );
+  return getSearchFieldValues(p, getValidName(p)).some((value) => value.toLowerCase().includes(s));
 }
 
 function getStringTag(value: unknown): string | undefined {
@@ -73,10 +71,11 @@ function getElementRefCentroid(
   return undefined;
 }
 
-const FIELD_PRIORITY: Record<"name" | "ref" | "amenity", number> = {
+const FIELD_PRIORITY: Record<SearchField, number> = {
   name: 0,
   ref: 1,
   amenity: 2,
+  room: 3,
 };
 const QUALITY_TIER_COUNT = 3; // exact, prefix, substring
 
@@ -89,9 +88,54 @@ function matchQuality(value: string | undefined, query: string): number | undefi
   return undefined;
 }
 
+function bestMatchQuality(values: string[], query: string): number | undefined {
+  const qualities = values
+    .map((value) => matchQuality(value, query))
+    .filter((quality): quality is number => quality !== undefined);
+
+  return qualities.length == 0 ? undefined : Math.min(...qualities);
+}
+
+function getSearchFieldValues(
+  tags: Record<string, unknown>,
+  validName: string | undefined,
+): string[] {
+  return getSearchFields(tags, validName).flatMap(([, values]) => values);
+}
+
+function getSearchFields(
+  tags: Record<string, unknown>,
+  validName: string | undefined,
+): Array<[SearchField, string[]]> {
+  return [
+    ["name", getOptionalSearchValues(validName)],
+    ["ref", getOptionalSearchValues(getStringTag(tags.ref))],
+    ["amenity", getTagSearchValues("amenity", tags.amenity)],
+    ["room", getTagSearchValues("room", tags.room)],
+  ];
+}
+
+function getOptionalSearchValues(value: string | undefined): string[] {
+  return value === undefined ? [] : [value];
+}
+
+function getTagSearchValues(tagName: string, value: unknown): string[] {
+  const tagValue = getStringTag(value);
+
+  if (tagValue === undefined) {
+    return [];
+  }
+
+  return [tagValue, ...getTagValueAliases(tagName, tagValue)];
+}
+
+function getTagValueAliases(tagName: string, value: string): string[] {
+  return searchTagAliases[tagName]?.[value.toLowerCase()] ?? [];
+}
+
 /**
- * Scores a feature's relevance to a search query across its name, ref and
- * amenity fields, then combines them so a better match on a lower-priority
+ * Scores a feature's relevance to a search query across its searchable tag
+ * fields, then combines them so a better match on a lower-priority
  * field still ranks close to a worse match on a higher-priority field
  * (e.g. an exact ref match ranks just behind a substring name match).
  * Lower is better. Reorder FIELD_PRIORITY to change field precedence.
@@ -102,15 +146,11 @@ function matchScore(
   searchString: string,
 ): number {
   const query = searchString.toLowerCase();
-  const fieldValues: Array<[keyof typeof FIELD_PRIORITY, string | undefined]> = [
-    ["name", validName],
-    ["ref", getStringTag(p.ref)],
-    ["amenity", getStringTag(p.amenity)],
-  ];
+  const fieldValues = getSearchFields(p, validName);
 
   const scores = fieldValues
-    .map(([field, value]) => {
-      const quality = matchQuality(value, query);
+    .map(([field, values]) => {
+      const quality = bestMatchQuality(values, query);
       return quality === undefined
         ? undefined
         : FIELD_PRIORITY[field] * QUALITY_TIER_COUNT + quality;
@@ -151,9 +191,9 @@ function searchSuggestions(
 
       return {
         id: elementRef.id,
-        displayName: (validName ?? p.ref ?? p.indoor ?? p.amenity ?? "?") as string,
+        displayName: (validName ?? p.ref ?? p.amenity ?? p.room ?? p.indoor ?? "?") as string,
         levels: elementRef.levels,
-        type: (p.amenity ?? p.indoor) as string | undefined,
+        type: (p.amenity ?? p.room ?? p.indoor) as string | undefined,
         elementRef,
       };
     });
