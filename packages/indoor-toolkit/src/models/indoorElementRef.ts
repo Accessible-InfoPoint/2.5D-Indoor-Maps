@@ -34,7 +34,7 @@ export function createIndoorElementRef(options: {
 }): IndoorElementRef {
   return {
     id: options.id,
-    tags: { ...(options.tags ?? {}) },
+    tags: { ...options.tags },
     levels:
       options.levels ??
       getLevelsFromTags(options.tags ?? {}, { excludedLevels: options.excludedLevels }),

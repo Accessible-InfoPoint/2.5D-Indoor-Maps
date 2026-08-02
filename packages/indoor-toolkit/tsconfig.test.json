@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "types": ["geojson", "node", "jest"]
-  },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
-}

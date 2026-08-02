@@ -29,7 +29,7 @@ export abstract class IndoorElement {
     private readonly options: IndoorElementOptions = {},
   ) {
     this.id = graph.keyOf(sourceElement);
-    this.tags = { ...(sourceElement.tags ?? {}) };
+    this.tags = { ...sourceElement.tags };
   }
 
   get levels(): number[] {

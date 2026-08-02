@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+import { vi } from "vitest";
 import {
   createIndoorElementRef,
   createIndoorModel,
@@ -82,7 +80,7 @@ describe("IndoorModel public API", () => {
   });
 
   it("can forward diagnostics to console.warn", () => {
-    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const model = createIndoorModel(invalidGeometryData, { logDiagnostics: true });
 
     expect(model.elements.rooms[0].geometry).toBeUndefined();

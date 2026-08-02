@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { createIndoorModel, OverpassJson } from "../../src";
 
 describe("IndoorVerticalConnection", () => {

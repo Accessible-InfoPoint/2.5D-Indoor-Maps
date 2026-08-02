@@ -27,18 +27,24 @@
   "files": [
     "dist",
     "docs",
+    "LICENSE",
     "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "jest --config jest.config.cjs"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest --run",
+    "format": "prettier . --write",
+    "check:format": "prettier . --check",
+    "lint": "oxlint --ignore-path .prettierignore --deny-warnings .",
+    "check": "npm run check:format && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^24.17.0",
-    "jest": "^30.4.2",
-    "ts-jest": "^29.4.12",
-    "typescript": "^6.0.3"
+    "@types/node": "^26.1.2",
+    "oxlint": "^1.76.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
   }
 }
