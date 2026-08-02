@@ -14,6 +14,7 @@ General application, rendering, backend, and UI settings.
 | `STAIRCASE_OUTLINE_OPACITY`    | ratio, `0` to `1`        | Opacity for staircase outlines.                                                                                        |
 | `OPACITY_TRANSLUCENT_LAYER`    | ratio, `0` to `1`        | Opacity used for neighboring translucent levels in 2.5D mode.                                                          |
 | `WALL_WEIGHT`                  | pixels                   | Base line width for walls.                                                                                             |
+| `OPEN_AREA_WALL_WEIGHT`        | pixels                   | Base line width for room-like open circulation boundaries such as `indoor=corridor` and `indoor=area`.                 |
 | `WALL_WEIGHT_PAVING`           | pixels                   | Base line width for tactile paving.                                                                                    |
 | `LEVEL_HEIGHT`                 | render units             | Vertical distance between levels in 2.5D mode.                                                                         |
 | `STAIRCASE_HANDRAIL_HEIGHT`    | render units             | Height used when rendering staircase handrails.                                                                        |

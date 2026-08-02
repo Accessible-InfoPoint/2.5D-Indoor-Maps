@@ -3,9 +3,12 @@
  */
 import {
   getCategoryIconFromTags,
+  getFeatureStyleFromTags,
   getIndoorFillStyleFromTags,
+  getLineWidthFromTags,
 } from "../../src/services/featureService";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
+import { OPEN_AREA_WALL_WEIGHT } from "../../public/strings/settings.json";
 import * as defaultColors from "../../public/strings/colorProfiles/default.json";
 
 describe("getCategoryIconFromTags", () => {
@@ -70,5 +73,32 @@ describe("getIndoorFillStyleFromTags", () => {
     expect(getIndoorFillStyleFromTags({ indoor: "area", room: "corridor" }).polygonFill).toBe(
       "#fff",
     );
+  });
+});
+
+describe("getLineWidthFromTags", () => {
+  it("does not render implicit walls for corridors and open areas", () => {
+    expect(getLineWidthFromTags({ indoor: "corridor" })).toBe(OPEN_AREA_WALL_WEIGHT);
+    expect(getLineWidthFromTags({ indoor: "area" })).toBe(OPEN_AREA_WALL_WEIGHT);
+  });
+
+  it("keeps implicit walls for indoor rooms independent of room tag values", () => {
+    expect(getLineWidthFromTags({ indoor: "room", room: "corridor" })).toBeGreaterThan(
+      OPEN_AREA_WALL_WEIGHT,
+    );
+    expect(getLineWidthFromTags({ indoor: "room", room: "entrance" })).toBeGreaterThan(
+      OPEN_AREA_WALL_WEIGHT,
+    );
+  });
+
+  it("lets open staircase outlines be handled by the room render builder override", () => {
+    expect(getLineWidthFromTags({ indoor: "area", stairs: "yes" })).toBeGreaterThan(
+      OPEN_AREA_WALL_WEIGHT,
+    );
+  });
+
+  it("uses the same corridor and area width through full feature styles", () => {
+    expect(getFeatureStyleFromTags({ indoor: "corridor" }).lineWidth).toBe(OPEN_AREA_WALL_WEIGHT);
+    expect(getFeatureStyleFromTags({ indoor: "area" }).lineWidth).toBe(OPEN_AREA_WALL_WEIGHT);
   });
 });

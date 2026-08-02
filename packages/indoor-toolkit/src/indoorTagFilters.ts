@@ -47,7 +47,10 @@ export function isCorridorOrAreaTags(tags: IndoorTags): boolean {
 
 /** Return whether an area should be treated as a neutral room for door coloring. */
 export function isNeutralDoorColorRoomTags(tags: IndoorTags): boolean {
-  return isCorridorOrAreaTags(tags) && tags.stairs !== "yes";
+  return (
+    (isCorridorOrAreaTags(tags) || ["entrance", "corridor"].includes(tags.room as string)) &&
+    tags.stairs !== "yes"
+  );
 }
 
 /** Return whether a room is eligible for ordinary room labels. */

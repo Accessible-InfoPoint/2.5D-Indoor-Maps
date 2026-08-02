@@ -338,7 +338,10 @@ function getOpeningLineWidth(connectedWalls: IndoorWall[], connectedRooms: Indoo
   }
 
   if (connectedRooms.length > 0) {
-    return FeatureService.getLineWidthFromTags(connectedRooms[0].tags);
+    const implicitWallRoom =
+      connectedRooms.find((room) => room.tags.indoor == "room") ?? connectedRooms[0];
+
+    return FeatureService.getLineWidthFromTags(implicitWallRoom.tags);
   }
 
   return 1;

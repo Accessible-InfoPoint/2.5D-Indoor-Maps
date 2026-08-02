@@ -67,20 +67,36 @@ indoor=room|corridor|area
 level=*
 ```
 
+Optional rendering tags:
+
+```text
+room=*
+amenity=toilets
+stairs=yes
+wheelchair=yes|designated
+```
+
 Rendering:
 
 - 2D: rendered as filled polygons.
 - 3D: corridors, areas, elevators, stair footprints, and selected rooms are rendered as raised surfaces.
 - `amenity=toilets` changes fill color and can create toilet markers.
+- `stairs=yes` changes fill color to the staircase color and can create stair markers.
+- `indoor=room` uses the room fill color unless `room=entrance` or `room=corridor` marks it as neutral circulation.
+- `indoor=area + room=*` uses the room fill color unless `room=entrance` or `room=corridor` marks it as neutral circulation.
+- Fill color and implicit wall rendering are separate: `room=*` affects fill style, while `indoor=*` decides whether an implicit wall outline exists.
 - `wheelchair=yes|designated` can add pattern fills for wheelchair-user profiles.
 - Ordinary rooms can show `name=*` or `ref=*` labels.
+- `indoor=room` has implicit wall outlines, including when `room=entrance` or `room=corridor` is present.
+- `indoor=corridor` and `indoor=area` do not have implicit wall outlines; use explicit `indoor=wall` ways or `barrier=handrail` where a physical barrier should be visible.
 
 Application notes:
 
 - `indoor=room` is best for enclosed spaces.
 - `indoor=corridor` is best for corridors.
 - `indoor=area` is best for open circulation areas and open stair footprints.
-- Corridor and area outlines may be suppressed or minimized in future renderer definitions because they do not imply enclosing walls.
+- Use `room=entrance` or `room=corridor` on `indoor=room` only when the space is still an enclosed room-like footprint but should use neutral fill styling.
+- Do not rely on corridor or area boundaries to create visible walls. Model physical walls separately.
 
 ### Level Outlines
 
@@ -157,7 +173,8 @@ Rendering:
 
 - Explicit doors and inferred open staircase connections render as opening symbols.
 - The opening color comes from connected rooms, with white as fallback.
-- The opening line width comes from connected walls first, then connected rooms.
+- The opening line width comes from connected walls first, then connected `indoor=room` footprints.
+- Openings between corridors or open areas need explicit wall lines when they should have a visible width.
 - If an explicit stair door has no width, inferred staircase width can provide a fallback.
 
 Application notes:
@@ -358,6 +375,7 @@ Rendering:
 
 - The footprint renders as a 2D area.
 - If no handrail tags are present, the open staircase footprint outline is suppressed so open corridor connections do not look like walls.
+- If handrail tags are present, the footprint can keep an outline even though ordinary `indoor=area` elements do not have implicit walls.
 - In 3D, pathway middle lines create sloped stair surfaces.
 - Handrail tags on the footprint orient left and right in the upward direction.
 - Handrail tags on a pathway orient left and right by pathway direction.
@@ -515,7 +533,8 @@ Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stai
 ## Common Rendering Mistakes
 
 - Door nodes are close to a room boundary but not part of the boundary way. The parser keeps topology by OSM membership, not coordinate comparison.
-- Corridors are expected to have implicit walls. The renderer treats corridors and open areas as open circulation unless explicit walls or doors provide wall context.
+- Expecting corridor or area boundaries to render as walls. The renderer treats `indoor=corridor` and `indoor=area` as open circulation unless explicit walls, handrails, or stair handrails provide visible barriers.
+- Expecting `room=corridor` on an `indoor=room` to remove implicit walls. Wall width depends on `indoor=*`, so `indoor=room + room=corridor` still has implicit walls but uses neutral fill styling.
 - `information=tactile_map` is expected to become both the main info point and a generic marker. This application intentionally chooses one primary info point per level.
 - Free-floating stairs are modeled as one long pathway with discontinuous semicolon level lists. Prefer `from-to` spans; semicolon lists are only accepted when they do not skip existing levels, or when skipped levels are configured as non-existent.
 - Fractional levels use commas. Use decimal points, for example `level=0.5`.

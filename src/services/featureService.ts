@@ -1,13 +1,25 @@
 import UserService from "../services/userService";
 import { lang } from "./languageService";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
-import { FILL_OPACITY, WALL_WEIGHT, WALL_WEIGHT_PAVING } from "../../public/strings/settings.json";
+import {
+  FILL_OPACITY,
+  OPEN_AREA_WALL_WEIGHT,
+  WALL_WEIGHT,
+  WALL_WEIGHT_PAVING,
+} from "../../public/strings/settings.json";
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import { indoorAccessibilityRules } from "../data/indoorAccessibilityRules";
 import { IndoorElementRef } from "../indoor";
-import { IndoorTags, isInfoPointTags, isRoomTags, isStaircaseTags, isToiletTags } from "../indoor";
+import {
+  IndoorTags,
+  isCorridorOrAreaTags,
+  isInfoPointTags,
+  isRoomTags,
+  isStaircaseTags,
+  isToiletTags,
+} from "../indoor";
 import ColorService from "./colorService";
 import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";
 
@@ -278,7 +290,9 @@ export function getLineWidthFromTags(
   tags: IndoorTags,
   geometryType?: GeoJSON.Geometry["type"],
 ): number {
-  return getWallWeightFromTags(tags, geometryType) + ColorService.getLineThickness() / 20;
+  const wallWeight = getWallWeightFromTags(tags, geometryType);
+
+  return wallWeight == 0 ? 0 : wallWeight + ColorService.getLineThickness() / 20;
 }
 
 export function getWallWeightFromTags(
@@ -287,9 +301,23 @@ export function getWallWeightFromTags(
 ): number {
   //highlight tactile paving lines
   //decides wall weight based on the user profile and feature
-  return geometryType === "LineString" && tags.tactile_paving === "yes"
-    ? WALL_WEIGHT_PAVING
-    : WALL_WEIGHT;
+  if (geometryType === "LineString" && tags.tactile_paving === "yes") {
+    // TODO: push for man_made: tactile_paving
+    return WALL_WEIGHT_PAVING;
+  }
+
+  if (hasNoImplicitWallTags(tags)) {
+    return OPEN_AREA_WALL_WEIGHT;
+  }
+
+  return WALL_WEIGHT;
+}
+
+function hasNoImplicitWallTags(tags: IndoorTags): boolean {
+  // Open staircase footprints are tagged `indoor=area + stairs=yes`. They keep
+  // the normal area/corridor default here; buildRoomStyle suppresses their
+  // outline later only when no handrail should make that outline visible.
+  return isCorridorOrAreaTags(tags) && !isStaircaseTags(tags);
 }
 
 function getPatternSize(lineWidth: number): "small" | "medium" | "large" {
