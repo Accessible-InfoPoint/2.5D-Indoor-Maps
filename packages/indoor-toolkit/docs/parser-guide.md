@@ -86,6 +86,8 @@ const model = createIndoorModel(indoorData, {
 
 With `nonExistentLevels: [2]`, a pathway `level=1;3` is accepted as the span `1-3`. Without that configuration, `level=1;3` emits an error diagnostic because level `2` is an existing intermediate level that is missing from the list.
 
+The same building-level configuration is also applied to ordinary element levels. If `nonExistentLevels: [2]` is configured, a room or level outline tagged `level=1-3` is interpreted as levels `1` and `3`; level `2` is not included in `element.levels`, `model.levels`, or `model.levelLabels`.
+
 ## Geometry
 
 Area-like parser elements may be closed ways or multipolygon-style relations:

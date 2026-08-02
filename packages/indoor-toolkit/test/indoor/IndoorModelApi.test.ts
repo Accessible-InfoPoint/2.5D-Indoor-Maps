@@ -110,6 +110,21 @@ describe("IndoorModel public API", () => {
     ]);
   });
 
+  it("omits non-existent building levels from element levels and model levels", () => {
+    const model = createIndoorModel(nonExistentLevelsData, { nonExistentLevels: [2] });
+
+    expect(model.levels).toEqual([3, 1]);
+    expect(model.elements.rooms[0].levels).toEqual([1, 3]);
+    expect(model.elements.levelOutlines[0].levels).toEqual([1, 3]);
+    expect(model.levelLabels).toEqual(
+      new Map([
+        [1, "shared"],
+        [3, "shared"],
+      ]),
+    );
+    expect(model.elements.getByLevel(2)).toEqual([]);
+  });
+
   it("collects inferred stair landings as landings only", () => {
     const model = createIndoorModel(inferredLandingData);
 
@@ -213,6 +228,26 @@ const levelDiagnosticData: OverpassJson = {
       id: 20,
       nodes: [1, 2, 3, 1],
       tags: { indoor: "room", level: "1,5" },
+    },
+  ],
+};
+
+const nonExistentLevelsData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    {
+      type: "way",
+      id: 10,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "room", level: "1-3" },
+    },
+    {
+      type: "way",
+      id: 20,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "level", level: "1-3", "level:ref": "shared" },
     },
   ],
 };

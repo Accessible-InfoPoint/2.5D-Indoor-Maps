@@ -30,21 +30,32 @@ export function createIndoorElementRef(options: {
   tags?: Record<string, unknown>;
   levels?: number[];
   geometry?: GeoJSON.Geometry;
+  excludedLevels?: number[];
 }): IndoorElementRef {
   return {
     id: options.id,
     tags: { ...(options.tags ?? {}) },
-    levels: options.levels ?? getLevelsFromTags(options.tags ?? {}),
+    levels:
+      options.levels ??
+      getLevelsFromTags(options.tags ?? {}, { excludedLevels: options.excludedLevels }),
     geometry: options.geometry,
   };
 }
 
+export interface GetLevelsFromTagsOptions {
+  /** Numeric levels that should be omitted from expanded `level=*` and `repeat_on=*` values. */
+  excludedLevels?: number[];
+}
+
 /** Derive numeric levels from an arbitrary tag object. */
-export function getLevelsFromTags(tags: Record<string, unknown>): number[] {
+export function getLevelsFromTags(
+  tags: Record<string, unknown>,
+  options: GetLevelsFromTagsOptions = {},
+): number[] {
   return Array.from(
     new Set([
-      ...extractLevels(tags.level as LevelValue),
-      ...extractLevels(tags.repeat_on as LevelValue),
+      ...extractLevels(tags.level as LevelValue, { excludedLevels: options.excludedLevels }),
+      ...extractLevels(tags.repeat_on as LevelValue, { excludedLevels: options.excludedLevels }),
     ]),
   );
 }

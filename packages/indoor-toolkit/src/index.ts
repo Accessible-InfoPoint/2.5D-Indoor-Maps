@@ -21,7 +21,7 @@ export {
 } from "./utils/overpassJsonHelpers";
 export { parsePositiveMeters } from "./utils/tagValueHelpers";
 export { createIndoorElementRef, getLevelsFromTags } from "./models/indoorElementRef";
-export type { IndoorElementRef } from "./models/indoorElementRef";
+export type { GetLevelsFromTagsOptions, IndoorElementRef } from "./models/indoorElementRef";
 export { formatIndoorDiagnostic, IndoorDiagnostics } from "./diagnostics";
 export type {
   IndoorDiagnostic,

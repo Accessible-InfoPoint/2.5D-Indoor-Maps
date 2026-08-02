@@ -41,7 +41,7 @@ export class IndoorStairPathway extends IndoorElement {
     diagnostics?: IndoorDiagnostics,
     private readonly nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Raw node ids of the pathway way in authored order. */
@@ -144,6 +144,7 @@ export class IndoorStairPathway extends IndoorElement {
       }),
       sourceElement: node,
       tagName: "level",
+      excludedLevels: this.nonExistentLevels,
     });
   }
 }

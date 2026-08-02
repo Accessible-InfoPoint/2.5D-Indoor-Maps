@@ -30,9 +30,9 @@ export interface CreateIndoorModelOptions extends IndoorDiagnosticOptions {
   /**
    * Numeric levels that intentionally do not exist in this building.
    *
-   * Stair pathway spans may use semicolon-separated level lists. Missing levels
-   * listed here do not count as breaks, so `level=1;3` is accepted when `2` is
-   * non-existent.
+   * These levels are omitted from ordinary element level ranges. Stair pathway
+   * spans may also use semicolon-separated level lists across missing levels,
+   * so `level=1;3` is accepted when `2` is non-existent.
    */
   nonExistentLevels?: LevelValue;
 }
@@ -89,17 +89,17 @@ export function createIndoorModel(
     tagName: "non_existent_levels",
   });
   const graph = new OsmGraph(rawIndoorData);
-  const rooms = IndoorRoom.collectFromGraph(graph, diagnostics);
-  const levelOutlines = IndoorLevelOutline.collectFromGraph(graph, diagnostics);
-  const doors = IndoorDoor.collectFromGraph(graph, diagnostics);
-  const handrails = IndoorHandrail.collectFromGraph(graph, diagnostics);
-  const columns = IndoorColumn.collectFromGraph(graph, diagnostics);
-  const pointFeatures = IndoorPointFeature.collectFromGraph(graph, diagnostics);
-  const walls = IndoorWall.collectFromGraph(graph, diagnostics);
-  const tactilePaving = IndoorTactilePaving.collectFromGraph(graph, diagnostics);
-  const stepAreas = IndoorStepArea.collectFromGraph(graph, diagnostics);
+  const rooms = IndoorRoom.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const levelOutlines = IndoorLevelOutline.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const doors = IndoorDoor.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const handrails = IndoorHandrail.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const columns = IndoorColumn.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const pointFeatures = IndoorPointFeature.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const walls = IndoorWall.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const tactilePaving = IndoorTactilePaving.collectFromGraph(graph, diagnostics, nonExistentLevels);
+  const stepAreas = IndoorStepArea.collectFromGraph(graph, diagnostics, nonExistentLevels);
   const stairPathways = IndoorStairPathway.collectFromGraph(graph, diagnostics, nonExistentLevels);
-  const stairLandings = IndoorLanding.collectFromGraph(graph, diagnostics);
+  const stairLandings = IndoorLanding.collectFromGraph(graph, diagnostics, nonExistentLevels);
   const stairPathNetwork = new IndoorStairPathNetwork(stairPathways, stairLandings);
   const verticalConnections = buildIndoorVerticalConnections(graph, rooms, stairPathNetwork);
   const openings = buildIndoorOpenings({

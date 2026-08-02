@@ -14,18 +14,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorWall extends IndoorElement {
   /** Collect all raw indoor wall ways from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorWall[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorWall[] {
     return graph.elements
       .filter(isRawIndoorWallElement)
-      .map((way) => new IndoorWall(graph, way, diagnostics));
+      .map((way) => new IndoorWall(graph, way, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Return whether the raw wall way contains a node id. */

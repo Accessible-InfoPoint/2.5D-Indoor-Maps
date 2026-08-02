@@ -21,18 +21,23 @@ import {
  */
 export class IndoorDoor extends IndoorElement {
   /** Collect all raw door nodes from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorDoor[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorDoor[] {
     return graph.elements
       .filter(isRawIndoorDoorElement)
-      .map((node) => new IndoorDoor(graph, node, diagnostics));
+      .map((node) => new IndoorDoor(graph, node, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassNode,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   get coordinate(): GeoJSON.Position {

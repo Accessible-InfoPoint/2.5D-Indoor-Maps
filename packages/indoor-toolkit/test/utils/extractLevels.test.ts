@@ -57,6 +57,10 @@ describe("extractLevels", () => {
     expect(extractLevels([0, 1, 2])).toEqual([0, 1, 2]);
   });
 
+  it("omits excluded levels from expanded level values", () => {
+    expect(extractLevels("1-4;6", { excludedLevels: [2, 4] })).toEqual([1, 3, 6]);
+  });
+
   it("handles mixed level arrays", () => {
     expect(extractLevels([1, "3-4"])).toEqual([1, 3, 4]);
   });

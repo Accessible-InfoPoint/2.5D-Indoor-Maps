@@ -50,6 +50,8 @@ const model = createIndoorModel(indoor, {
 });
 ```
 
+Those levels are omitted when ordinary element level ranges are expanded, so `level=12-14` becomes levels `12` and `14` when level `13` is configured as non-existent. The same option also lets stair pathway spans use semicolon lists across intentionally skipped levels.
+
 ## Indoor Model
 
 The main output is `IndoorModel`:

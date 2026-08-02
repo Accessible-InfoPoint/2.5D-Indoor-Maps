@@ -19,14 +19,23 @@ const COLUMN_CIRCLE_SEGMENTS = 24;
  */
 export class IndoorColumn extends IndoorElement {
   /** Collect all raw column nodes, ways, and relations from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorColumn[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorColumn[] {
     return graph.elements
       .filter(isRawIndoorColumnElement)
-      .map((element) => new IndoorColumn(graph, element, diagnostics));
+      .map((element) => new IndoorColumn(graph, element, diagnostics, nonExistentLevels));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
-    super(graph, sourceElement, diagnostics);
+  constructor(
+    graph: OsmGraph,
+    sourceElement: OverpassElement,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ) {
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Polygon geometry for node/way columns or multipolygon geometry for relation columns. */

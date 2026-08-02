@@ -13,18 +13,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorHandrail extends IndoorElement {
   /** Collect all raw handrail ways from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorHandrail[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorHandrail[] {
     return graph.elements
       .filter(isRawIndoorHandrailElement)
-      .map((way) => new IndoorHandrail(graph, way, diagnostics));
+      .map((way) => new IndoorHandrail(graph, way, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Raw node ids of the handrail way in authored order. */

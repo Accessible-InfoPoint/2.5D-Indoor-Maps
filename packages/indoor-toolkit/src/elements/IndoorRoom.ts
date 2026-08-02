@@ -18,16 +18,25 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorRoom extends IndoorElement {
   /** Collect all raw room-like ways and relations from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorRoom[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorRoom[] {
     return graph.elements
       .filter(
         (element) => isRawIndoorRoomElement(element) && !isIndoorLandingElement(graph, element),
       )
-      .map((element) => new IndoorRoom(graph, element, diagnostics));
+      .map((element) => new IndoorRoom(graph, element, diagnostics, nonExistentLevels));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
-    super(graph, sourceElement, diagnostics);
+  constructor(
+    graph: OsmGraph,
+    sourceElement: OverpassElement,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ) {
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   get indoorKind(): string | undefined {

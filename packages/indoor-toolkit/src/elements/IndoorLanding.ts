@@ -15,18 +15,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorLanding extends IndoorElement {
   /** Collect all raw stair landing ways and relations from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLanding[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorLanding[] {
     return graph.elements
       .filter((element) => isIndoorLandingElement(graph, element, diagnostics))
-      .map((element) => new IndoorLanding(graph, element, diagnostics));
+      .map((element) => new IndoorLanding(graph, element, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay | OverpassRelation,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Node ids that make up the landing geometry, resolved through ways or relation members. */

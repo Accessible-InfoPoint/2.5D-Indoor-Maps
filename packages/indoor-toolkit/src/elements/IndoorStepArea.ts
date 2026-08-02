@@ -14,18 +14,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorStepArea extends IndoorElement {
   /** Collect all raw step area ways and relations from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorStepArea[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorStepArea[] {
     return graph.elements
       .filter(isRawIndoorStepAreaElement)
-      .map((element) => new IndoorStepArea(graph, element, diagnostics));
+      .map((element) => new IndoorStepArea(graph, element, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay | OverpassRelation,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Node ids that make up the step area geometry, resolved through ways or relation members. */

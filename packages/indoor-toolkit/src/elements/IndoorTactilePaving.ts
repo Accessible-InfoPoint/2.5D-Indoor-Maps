@@ -10,18 +10,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorTactilePaving extends IndoorElement {
   /** Collect all raw tactile paving ways from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorTactilePaving[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorTactilePaving[] {
     return graph.elements
       .filter(isRawIndoorTactilePavingElement)
-      .map((way) => new IndoorTactilePaving(graph, way, diagnostics));
+      .map((way) => new IndoorTactilePaving(graph, way, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassWay,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** LineString geometry for the tactile paving way, if all way nodes are available. */

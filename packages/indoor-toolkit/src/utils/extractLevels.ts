@@ -20,6 +20,8 @@ export interface ExtractLevelsOptions {
   sourceElement?: OverpassElement;
   /** Tag name used in diagnostic messages, for example `level` or `repeat_on`. */
   tagName?: string;
+  /** Numeric levels that should be omitted from expanded level values. */
+  excludedLevels?: number[];
 }
 
 /**
@@ -37,7 +39,10 @@ export interface ExtractLevelsOptions {
  * ```
  */
 export function extractLevels(level: LevelValue, options: ExtractLevelsOptions = {}): number[] {
-  return deduplicateLevels(extractLevelsWithDuplicates(level, options), level, options);
+  return excludeLevels(
+    deduplicateLevels(extractLevelsWithDuplicates(level, options), level, options),
+    options.excludedLevels,
+  );
 }
 
 function extractLevelsWithDuplicates(level: LevelValue, options: ExtractLevelsOptions): number[] {
@@ -148,4 +153,14 @@ function reportExtractLevelsError(
 
 function getTagLabel(options: ExtractLevelsOptions): string {
   return options.tagName === undefined ? "level" : options.tagName;
+}
+
+function excludeLevels(levels: number[], excludedLevels: number[] | undefined): number[] {
+  if (excludedLevels === undefined || excludedLevels.length === 0) {
+    return levels;
+  }
+
+  const excluded = new Set(excludedLevels);
+
+  return levels.filter((level) => !excluded.has(level));
 }

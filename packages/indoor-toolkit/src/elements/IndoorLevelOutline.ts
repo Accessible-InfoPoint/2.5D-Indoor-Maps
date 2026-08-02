@@ -13,14 +13,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorLevelOutline extends IndoorElement {
   /** Collect all raw level outline ways and relations from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorLevelOutline[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorLevelOutline[] {
     return graph.elements
       .filter(isRawIndoorLevelElement)
-      .map((element) => new IndoorLevelOutline(graph, element, diagnostics));
+      .map((element) => new IndoorLevelOutline(graph, element, diagnostics, nonExistentLevels));
   }
 
-  constructor(graph: OsmGraph, sourceElement: OverpassElement, diagnostics?: IndoorDiagnostics) {
-    super(graph, sourceElement, diagnostics);
+  constructor(
+    graph: OsmGraph,
+    sourceElement: OverpassElement,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ) {
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   /** Optional level selector/display label from `level:ref=*`. */

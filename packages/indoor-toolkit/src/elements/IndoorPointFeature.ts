@@ -13,18 +13,23 @@ import { IndoorElement } from "./IndoorElement";
  */
 export class IndoorPointFeature extends IndoorElement {
   /** Collect all raw point feature nodes from a graph. */
-  static collectFromGraph(graph: OsmGraph, diagnostics?: IndoorDiagnostics): IndoorPointFeature[] {
+  static collectFromGraph(
+    graph: OsmGraph,
+    diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
+  ): IndoorPointFeature[] {
     return graph.elements
       .filter(isRawIndoorPointFeatureElement)
-      .map((node) => new IndoorPointFeature(graph, node, diagnostics));
+      .map((node) => new IndoorPointFeature(graph, node, diagnostics, nonExistentLevels));
   }
 
   constructor(
     graph: OsmGraph,
     readonly sourceElement: OverpassNode,
     diagnostics?: IndoorDiagnostics,
+    nonExistentLevels: number[] = [],
   ) {
-    super(graph, sourceElement, diagnostics);
+    super(graph, sourceElement, diagnostics, { nonExistentLevels });
   }
 
   get coordinate(): GeoJSON.Position {

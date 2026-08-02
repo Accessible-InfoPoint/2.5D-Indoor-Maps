@@ -508,6 +508,7 @@ For best application search results:
 - Add `name=*` or `ref=*` to rooms.
 - Add category tags such as `amenity=toilets`, `highway=elevator`, `stairs=yes`, `shop=*`, `amenity=cafe`, or `amenity=restaurant` where applicable.
 - Keep level tags numeric and consistent.
+- If the building intentionally skips floor numbers, tag the building with `non_existent_levels=*`; those levels are omitted from expanded ranges and from the level selector.
 
 Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stair rooms, and other special rooms may use category markers instead.
 

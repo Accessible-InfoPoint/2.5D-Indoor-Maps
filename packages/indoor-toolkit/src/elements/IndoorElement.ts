@@ -4,6 +4,10 @@ import { OsmGraph } from "../overpass/OsmGraph";
 import { extractLevels } from "../utils/extractLevels";
 import { IndoorDiagnostics } from "../diagnostics";
 
+export interface IndoorElementOptions {
+  nonExistentLevels?: number[];
+}
+
 /**
  * Base class for parsed indoor elements backed by one raw OSM element.
  *
@@ -22,6 +26,7 @@ export abstract class IndoorElement {
     protected readonly graph: OsmGraph,
     readonly sourceElement: OverpassElement,
     protected readonly diagnostics: IndoorDiagnostics = new IndoorDiagnostics(),
+    private readonly options: IndoorElementOptions = {},
   ) {
     this.id = graph.keyOf(sourceElement);
     this.tags = { ...(sourceElement.tags ?? {}) };
@@ -66,6 +71,7 @@ export abstract class IndoorElement {
       }),
       sourceElement: this.sourceElement,
       tagName,
+      excludedLevels: this.options.nonExistentLevels,
     });
   }
 }
