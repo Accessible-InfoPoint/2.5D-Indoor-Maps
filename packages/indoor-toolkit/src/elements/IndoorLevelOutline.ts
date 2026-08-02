@@ -37,6 +37,17 @@ export class IndoorLevelOutline extends IndoorElement {
     return this.tags["level:ref"];
   }
 
+  /**
+   * Numeric levels described by this explicit floor plate.
+   *
+   * Unlike repeated room-like elements, a level outline is literal geometry for
+   * the tagged `level=*`; `repeat_on=*` would imply copying floor-plate geometry
+   * and labels across levels, which is not meaningful for `indoor=level`.
+   */
+  override get levels(): number[] {
+    return this.extractLevelsFromTag("level");
+  }
+
   /** Polygon or multipolygon geometry for the level outline. */
   get geometry(): GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined {
     return this.toGeometry();

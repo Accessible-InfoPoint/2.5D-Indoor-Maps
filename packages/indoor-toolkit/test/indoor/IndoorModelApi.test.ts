@@ -125,6 +125,16 @@ describe("IndoorModel public API", () => {
     expect(model.elements.getByLevel(2)).toEqual([]);
   });
 
+  it("does not repeat level outlines or labels with repeat_on", () => {
+    const model = createIndoorModel(repeatedLevelOutlineData);
+
+    expect(model.levels).toEqual([1, 0]);
+    expect(model.elements.rooms[0].levels).toEqual([0, 1]);
+    expect(model.elements.levelOutlines[0].levels).toEqual([0]);
+    expect(model.elements.levelOutlines[0].hasLevel(1)).toBe(false);
+    expect(model.levelLabels).toEqual(new Map([[0, "E"]]));
+  });
+
   it("collects inferred stair landings as landings only", () => {
     const model = createIndoorModel(inferredLandingData);
 
@@ -248,6 +258,26 @@ const nonExistentLevelsData: OverpassJson = {
       id: 20,
       nodes: [1, 2, 3, 1],
       tags: { indoor: "level", level: "1-3", "level:ref": "shared" },
+    },
+  ],
+};
+
+const repeatedLevelOutlineData: OverpassJson = {
+  elements: [
+    { type: "node", id: 1, lat: 0, lon: 0 },
+    { type: "node", id: 2, lat: 0, lon: 1 },
+    { type: "node", id: 3, lat: 1, lon: 1 },
+    {
+      type: "way",
+      id: 10,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "room", level: "0", repeat_on: "1" },
+    },
+    {
+      type: "way",
+      id: 20,
+      nodes: [1, 2, 3, 1],
+      tags: { indoor: "level", level: "0", repeat_on: "1", "level:ref": "E" },
     },
   ],
 };

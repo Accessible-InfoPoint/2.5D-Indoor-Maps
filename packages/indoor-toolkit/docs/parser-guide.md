@@ -57,6 +57,10 @@ level=*
 repeat_on=*
 ```
 
+`indoor=level` outlines are the exception: they derive membership and labels from
+`level=*` only. `repeat_on=*` is ignored for level outlines because explicit
+floor-plate geometry should not be copied across levels implicitly.
+
 Supported level values:
 
 ```text
@@ -256,7 +260,6 @@ Optional useful tags:
 
 ```text
 level:ref=*
-repeat_on=*
 ```
 
 Parser interpretation:
@@ -265,6 +268,7 @@ Parser interpretation:
 - Provides area geometry for the full level footprint.
 - Contributes to `model.levels`.
 - `level:ref=*` contributes labels to `model.levelLabels`; numeric `level=*` remains the internal level id.
+- `repeat_on=*` is ignored for level outlines.
 - Relations may contain multiple outer rings and inner holes.
 
 Diagnostics and common mistakes:

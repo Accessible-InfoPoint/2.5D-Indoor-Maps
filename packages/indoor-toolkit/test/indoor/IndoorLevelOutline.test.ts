@@ -11,6 +11,15 @@ describe("IndoorLevelOutline", () => {
     expect(outlines[0].label).toBe("E");
   });
 
+  it("does not use repeat_on for level membership", () => {
+    const graph = new OsmGraph(levelOutlineFixture);
+    const outline = IndoorLevelOutline.collectFromGraph(graph)[0];
+
+    expect(outline.levels).toEqual([0]);
+    expect(outline.hasLevel(0)).toBe(true);
+    expect(outline.hasLevel(1)).toBe(false);
+  });
+
   it("returns the full outline geometry for rendering", () => {
     const graph = new OsmGraph(levelOutlineFixture);
     const outline = IndoorLevelOutline.collectFromGraph(graph)[0];
@@ -38,7 +47,7 @@ const levelOutlineFixture: OverpassJson = {
       type: "way",
       id: 10,
       nodes: [1, 2, 3, 1],
-      tags: { indoor: "level", level: "0", "level:ref": "E" },
+      tags: { indoor: "level", level: "0", repeat_on: "1", "level:ref": "E" },
     },
     {
       type: "way",
