@@ -1,8 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { getCategoryIconFromTags } from "../../src/services/featureService";
+import {
+  getCategoryIconFromTags,
+  getIndoorFillStyleFromTags,
+} from "../../src/services/featureService";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
+import * as defaultColors from "../../public/strings/colorProfiles/default.json";
 
 describe("getCategoryIconFromTags", () => {
   it("returns the wheelchair-accessible toilet icon for accessible toilets", () => {
@@ -37,5 +41,34 @@ describe("getCategoryIconFromTags", () => {
 
   it("returns no icon for unrecognized rooms", () => {
     expect(getCategoryIconFromTags({ indoor: "room" })).toBeUndefined();
+  });
+});
+
+describe("getIndoorFillStyleFromTags", () => {
+  it("renders ordinary rooms with the room fill color", () => {
+    expect(getIndoorFillStyleFromTags({ indoor: "room" }).polygonFill).toBe(
+      defaultColors.roomColor,
+    );
+  });
+
+  it("renders indoor rooms tagged as entrances or corridors with the neutral fill color", () => {
+    expect(getIndoorFillStyleFromTags({ indoor: "room", room: "entrance" }).polygonFill).toBe(
+      "#fff",
+    );
+    expect(getIndoorFillStyleFromTags({ indoor: "room", room: "corridor" }).polygonFill).toBe(
+      "#fff",
+    );
+  });
+
+  it("renders indoor areas with room tags as rooms unless the room value is neutral", () => {
+    expect(getIndoorFillStyleFromTags({ indoor: "area", room: "office" }).polygonFill).toBe(
+      defaultColors.roomColor,
+    );
+    expect(getIndoorFillStyleFromTags({ indoor: "area", room: "entrance" }).polygonFill).toBe(
+      "#fff",
+    );
+    expect(getIndoorFillStyleFromTags({ indoor: "area", room: "corridor" }).polygonFill).toBe(
+      "#fff",
+    );
   });
 });

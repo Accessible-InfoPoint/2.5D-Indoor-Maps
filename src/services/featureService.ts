@@ -200,7 +200,7 @@ export function getIndoorFillStyleFromTags(
     };
   }
 
-  if (isRoomTags(tags)) {
+  if (hasRoomFillTags(tags)) {
     return {
       polygonFill: colors.roomColor,
       polygonPatternFile: getWheelchairPatternFile(tags, size, "roomColor"),
@@ -211,6 +211,18 @@ export function getIndoorFillStyleFromTags(
     polygonFill: "#fff",
     polygonPatternFile: null,
   };
+}
+
+function hasRoomFillTags(tags: IndoorTags): boolean {
+  if (isNeutralRoomValue(tags.room)) {
+    return false;
+  }
+
+  return isRoomTags(tags) || (tags.indoor === "area" && tags.room !== undefined);
+}
+
+function isNeutralRoomValue(value: unknown): boolean {
+  return ["entrance", "corridor"].includes(value as string);
 }
 
 export function getSelectedRoomStyleFromTags(
