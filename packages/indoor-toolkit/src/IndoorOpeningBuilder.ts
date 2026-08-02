@@ -11,7 +11,10 @@ import {
 import { IndoorRoom } from "./elements/IndoorRoom";
 import { IndoorWall } from "./elements/IndoorWall";
 import { getRawElementNodeIds } from "./rawElementNodeIds";
-import { IndoorStairPathwayInstance } from "./verticalConnections/IndoorStairPathNetwork";
+import {
+  IndoorLandingInstance,
+  IndoorStairPathwayInstance,
+} from "./verticalConnections/IndoorStairPathNetwork";
 import { IndoorVerticalConnection } from "./verticalConnections/IndoorVerticalConnection";
 import { getInterpolatedPathLevels } from "./verticalConnections/pathLevelInterpolation";
 
@@ -67,8 +70,9 @@ export function buildIndoorOpenings(options: IndoorOpeningBuilderOptions): Indoo
     )
     .map((opening): IndoorOpening | undefined => buildInferredStaircaseOpening(options, opening))
     .filter((opening): opening is IndoorOpening => opening !== undefined);
+  const pathwayLandingOpenings = buildPathwayLandingOpenings(options);
 
-  return [...doorOpenings, ...inferredOpenings];
+  return [...doorOpenings, ...inferredOpenings, ...pathwayLandingOpenings];
 }
 
 function collectOpenStaircaseOpeningNodes(
@@ -215,6 +219,98 @@ function groupStaircaseOpeningNodesByLevelAndNode(
   });
 
   return openingsByKey;
+}
+
+function buildPathwayLandingOpenings(options: IndoorOpeningBuilderOptions): IndoorOpening[] {
+  const openingsById = new Map<string, IndoorOpening>();
+
+  options.verticalConnections.forEach((connection) =>
+    connection.pathComponents.forEach((component) =>
+      component.pathwayInstances.forEach((pathwayInstance) =>
+        component.landingInstances.forEach((landingInstance) =>
+          collectPathwayLandingOpenings(options, pathwayInstance, landingInstance).forEach(
+            (opening) => openingsById.set(opening.id, opening),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  return Array.from(openingsById.values());
+}
+
+function collectPathwayLandingOpenings(
+  options: IndoorOpeningBuilderOptions,
+  pathwayInstance: IndoorStairPathwayInstance,
+  landingInstance: IndoorLandingInstance,
+): IndoorOpening[] {
+  const geometry = pathwayInstance.source.geometry;
+
+  if (geometry === undefined) {
+    warnOpeningBuilderIssue(
+      options.diagnostics,
+      pathwayInstance.source.id,
+      pathwayInstance.source.tags,
+      pathwayInstance.source.levels,
+      "missing-pathway-geometry",
+      `Cannot infer pathway/landing openings for stair pathway ${pathwayInstance.source.id}: pathway geometry is unavailable.`,
+    );
+    return [];
+  }
+
+  const landingNodeIds = new Set(landingInstance.nodeIds);
+  const pathLevels = getInterpolatedPathLevels(geometry.coordinates, pathwayInstance);
+
+  return pathwayInstance.nodeIds
+    .map((nodeId, index): IndoorOpening | undefined =>
+      landingNodeIds.has(nodeId) &&
+      pathLevels[index] !== undefined &&
+      Math.abs(pathLevels[index] - landingInstance.level) < 0.000001
+        ? buildPathwayLandingOpening(options, pathwayInstance, landingInstance, nodeId)
+        : undefined,
+    )
+    .filter((opening): opening is IndoorOpening => opening !== undefined);
+}
+
+function buildPathwayLandingOpening(
+  options: IndoorOpeningBuilderOptions,
+  pathwayInstance: IndoorStairPathwayInstance,
+  landingInstance: IndoorLandingInstance,
+  nodeId: number,
+): IndoorOpening | undefined {
+  const node = options.graph.getNode(nodeId);
+  const id = `pathway-landing-opening/${pathwayInstance.id}/${landingInstance.id}/node/${nodeId}`;
+
+  if (node === undefined) {
+    warnOpeningBuilderIssue(
+      options.diagnostics,
+      id,
+      {},
+      [landingInstance.level],
+      "missing-opening-node",
+      `Cannot build pathway/landing opening ${id}: node/${nodeId} is missing from the OSM graph.`,
+    );
+    return undefined;
+  }
+
+  return {
+    id,
+    kind: "pathway-landing",
+    nodeId,
+    coordinate: nodeToPosition(node),
+    tags: {},
+    levels: [landingInstance.level],
+    widthMeters: pathwayInstance.source.widthMeters,
+    connectedRooms: [],
+    connectedWalls: [],
+    connectedPathwayInstances: [pathwayInstance],
+    connectedLandingInstances: [landingInstance],
+    sources: [
+      { role: "pathway-node", element: node },
+      { role: "pathway", element: pathwayInstance.source.sourceElement },
+      { role: "landing", element: landingInstance.source.sourceElement },
+    ],
+  };
 }
 
 function findMatchingFootprintLevel(

@@ -294,11 +294,21 @@ function shouldRenderHandrailAsWall(
 function buildOpeningRenderItems(options: IndoorLevelRenderBuilderOptions): OpeningRenderItem[] {
   return options.model.elements.openings
     .filter((opening) => opening.levels.includes(options.level))
+    .filter(isRenderableOpening)
     .flatMap((opening) => openingToRenderItems(opening, options));
 }
 
+type RenderableIndoorOpening = IndoorOpening & {
+  kind: "door" | "opening";
+  orientationGeometry: NonNullable<IndoorOpening["orientationGeometry"]>;
+};
+
+function isRenderableOpening(opening: IndoorOpening): opening is RenderableIndoorOpening {
+  return opening.kind != "pathway-landing" && opening.orientationGeometry !== undefined;
+}
+
 function openingToRenderItems(
-  opening: IndoorOpening,
+  opening: RenderableIndoorOpening,
   options: IndoorLevelRenderBuilderOptions,
 ): OpeningRenderItem[] {
   const connectedRooms = opening.connectedRooms.filter((room) => room.hasLevel(options.level));

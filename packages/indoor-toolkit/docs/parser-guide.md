@@ -474,6 +474,7 @@ Collected from:
 
 ```text
 shared node between an open stair footprint and one of its stair pathway instances
+shared node between a stair landing instance and one of its stair pathway instances
 ```
 
 Expected tags:
@@ -485,6 +486,10 @@ level=*
 
 indoor=pathway
 level=from-to
+
+indoor=area
+landing=yes
+level=*
 ```
 
 Optional useful tags:
@@ -497,14 +502,17 @@ door=*
 Parser interpretation:
 
 - Creates `IndoorOpening` with `kind="opening"` when an open staircase pathway shares a connection node with its open staircase footprint and no explicit door already claims that node on that level.
-- If an explicit door exists on the same node and level, the door opening is used instead.
-- Inferred openings keep source references to the pathway node, pathway, and footprint.
+- Creates `IndoorOpening` with `kind="pathway-landing"` when a stair pathway shares a node with a compatible landing instance at the landing level.
+- For footprint openings, if an explicit door exists on the same node and level, the door opening is used instead.
+- Inferred openings keep source references to the pathway node, pathway, footprint, or landing.
+- Pathway/landing openings keep connected pathway and landing instances in `connectedPathwayInstances` and `connectedLandingInstances`.
+- Footprint openings have orientation geometry for renderers. Pathway/landing openings intentionally do not; they are topology-only facts for routing graphs and similar tools.
 - These openings are semantic pass-through connections, not OSM door elements.
 
 Diagnostics and common mistakes:
 
 - The pathway must have usable geometry and matching interpolated node levels.
-- The shared node must actually be part of the footprint boundary.
+- The shared node must actually be part of the footprint boundary or landing boundary.
 - Use an explicit door node when there is a real physical door.
 
 ### Point Features

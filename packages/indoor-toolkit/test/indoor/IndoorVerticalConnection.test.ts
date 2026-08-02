@@ -73,6 +73,71 @@ describe("IndoorVerticalConnection", () => {
         { span: { from: 1.5, to: 2 }, pathways: ["way/101"], landings: ["way/200@1.5"] },
       ],
     ]);
+    expect(
+      model.elements.openings.map((opening) => ({
+        id: opening.id,
+        kind: opening.kind,
+        nodeId: opening.nodeId,
+        levels: opening.levels,
+        pathwayInstances: opening.connectedPathwayInstances.map((instance) => instance.id),
+        landingInstances: opening.connectedLandingInstances.map((instance) => instance.id),
+        hasOrientationGeometry: opening.orientationGeometry !== undefined,
+        sources: opening.sources.map((source) => source.role),
+      })),
+    ).toEqual([
+      {
+        id: "pathway-landing-opening/way/100@0-0.5/way/200@0.5/node/2",
+        kind: "pathway-landing",
+        nodeId: 2,
+        levels: [0.5],
+        pathwayInstances: ["way/100@0-0.5"],
+        landingInstances: ["way/200@0.5"],
+        hasOrientationGeometry: false,
+        sources: ["pathway-node", "pathway", "landing"],
+      },
+      {
+        id: "pathway-landing-opening/way/101@0.5-1/way/200@0.5/node/3",
+        kind: "pathway-landing",
+        nodeId: 3,
+        levels: [0.5],
+        pathwayInstances: ["way/101@0.5-1"],
+        landingInstances: ["way/200@0.5"],
+        hasOrientationGeometry: false,
+        sources: ["pathway-node", "pathway", "landing"],
+      },
+      {
+        id: "pathway-landing-opening/way/100@1-1.5/way/200@1.5/node/2",
+        kind: "pathway-landing",
+        nodeId: 2,
+        levels: [1.5],
+        pathwayInstances: ["way/100@1-1.5"],
+        landingInstances: ["way/200@1.5"],
+        hasOrientationGeometry: false,
+        sources: ["pathway-node", "pathway", "landing"],
+      },
+      {
+        id: "pathway-landing-opening/way/101@1.5-2/way/200@1.5/node/3",
+        kind: "pathway-landing",
+        nodeId: 3,
+        levels: [1.5],
+        pathwayInstances: ["way/101@1.5-2"],
+        landingInstances: ["way/200@1.5"],
+        hasOrientationGeometry: false,
+        sources: ["pathway-node", "pathway", "landing"],
+      },
+    ]);
+    expect(
+      model.topology.getOpeningsForStairPathway("way/100").map((opening) => opening.id),
+    ).toEqual([
+      "pathway-landing-opening/way/100@0-0.5/way/200@0.5/node/2",
+      "pathway-landing-opening/way/100@1-1.5/way/200@1.5/node/2",
+    ]);
+    expect(
+      model.topology.getOpeningsForStairLanding("way/200@0.5").map((opening) => opening.id),
+    ).toEqual([
+      "pathway-landing-opening/way/100@0-0.5/way/200@0.5/node/2",
+      "pathway-landing-opening/way/101@0.5-1/way/200@0.5/node/3",
+    ]);
   });
 
   it("uses configured non-existent levels when parsing semicolon pathway spans", () => {

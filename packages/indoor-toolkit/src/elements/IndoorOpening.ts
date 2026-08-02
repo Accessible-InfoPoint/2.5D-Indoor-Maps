@@ -5,15 +5,20 @@ import { OsmGraph } from "../overpass/OsmGraph";
 import { nodeToPosition } from "../utils/overpassJsonHelpers";
 import { parsePositiveMeters } from "../utils/tagValueHelpers";
 import {
+  IndoorLandingInstance,
+  IndoorStairPathwayInstance,
+} from "../verticalConnections/IndoorStairPathNetwork";
+import {
   calculateOpeningOrientationGeometry,
   OpeningOrientationGeometry,
 } from "../openingOrientation";
 import { IndoorRoom } from "./IndoorRoom";
 import { IndoorWall } from "./IndoorWall";
 
-export type IndoorOpeningKind = "door" | "opening";
+export type IndoorOpeningKind = "door" | "opening" | "pathway-landing";
 
-export type IndoorOpeningSourceRole = "door" | "pathway-node" | "pathway" | "footprint" | "wall";
+export type IndoorOpeningSourceRole =
+  "door" | "pathway-node" | "pathway" | "footprint" | "landing" | "wall";
 
 /** Raw OSM source contributing to an `IndoorOpening`. */
 export interface IndoorOpeningSource {
@@ -26,14 +31,15 @@ export interface IndoorOpeningSource {
 /**
  * Pass-through connection at a node.
  *
- * Openings can come from explicit door nodes or be inferred from open staircase
- * pathway/footprint topology. They carry connected room and wall context so
- * renderers and routing tools can decide how to represent the connection.
+ * Openings can come from explicit door nodes or be inferred from stair topology.
+ * Door and footprint openings carry room and wall context for rendering.
+ * Pathway/landing openings are non-rendered topology facts for routing and
+ * similar downstream tools.
  */
 export interface IndoorOpening {
   /** Stable opening id. Explicit doors reuse the door id. */
   id: string;
-  /** `door` for explicit door nodes, `opening` for inferred pass-through connections. */
+  /** `door` for explicit door nodes, `opening` or `pathway-landing` for inferred pass-through connections. */
   kind: IndoorOpeningKind;
   /** OSM node id where the opening is located. */
   nodeId: number;
@@ -49,10 +55,14 @@ export interface IndoorOpening {
   connectedRooms: IndoorRoom[];
   /** Line walls that provide wall context for this opening. */
   connectedWalls: IndoorWall[];
+  /** Stair pathway instances connected by this opening, when it is stair-topology-only. */
+  connectedPathwayInstances: IndoorStairPathwayInstance[];
+  /** Stair landing instances connected by this opening, when it is stair-topology-only. */
+  connectedLandingInstances: IndoorLandingInstance[];
   /** Raw OSM source elements used to derive this opening. */
   sources: IndoorOpeningSource[];
-  /** Geometry derived from surrounding wall or room nodes for rendering orientation. */
-  orientationGeometry: OpeningOrientationGeometry;
+  /** Geometry derived from surrounding wall or room nodes for renderable openings. */
+  orientationGeometry?: OpeningOrientationGeometry;
 }
 
 interface DoorWayContext {
@@ -112,6 +122,8 @@ export function buildIndoorOpeningForNode(options: {
     widthMeters,
     connectedRooms: options.connectedRooms,
     connectedWalls: options.connectedWalls,
+    connectedPathwayInstances: [],
+    connectedLandingInstances: [],
     sources: [
       ...options.sources,
       ...options.connectedWalls.map((wall): IndoorOpeningSource => ({

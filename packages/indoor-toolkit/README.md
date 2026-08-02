@@ -84,7 +84,7 @@ const levelElements = model.elements.getByLevel(0);
 - `levelOutlines`: `indoor=level` geometries.
 - `rooms`: rooms, corridors, and indoor areas.
 - `doors`: explicit door nodes.
-- `openings`: explicit doors and inferred open staircase connections.
+- `openings`: explicit doors, inferred open staircase footprint connections, and topology-only pathway/landing connections.
 - `walls`: wall ways and wall areas.
 - `handrails`: `barrier=handrail` ways.
 - `columns`: indoor columns from nodes, ways, or relations.
@@ -115,7 +115,7 @@ The base class intentionally does not define renderer-specific output. Subclasse
 - `IndoorWall`, `IndoorHandrail`, `IndoorTactilePaving`, and `IndoorStairPathway` expose line or area geometry.
 - `IndoorColumn` and `IndoorPointFeature` expose point or area geometry depending on their OSM element type.
 - `IndoorDoor` represents explicit door nodes.
-- `IndoorOpening` represents pass-through openings derived from doors or inferred staircase connections.
+- `IndoorOpening` represents pass-through openings derived from doors or inferred staircase connections. Some openings have render orientation geometry; pathway/landing openings are topology-only.
 - `IndoorVerticalConnection` groups footprints, stair paths, and landings into reusable vertical connection semantics.
 
 Renderers, routing tools, and validators should consume these element objects and then build their own output model. For example, a MapLibre renderer might turn an `IndoorRoom` into a fill layer feature, while a routing graph may turn an `IndoorOpening` into an edge or node.
@@ -147,6 +147,8 @@ const connectedRooms = model.topology.getConnectedRooms("way/10");
 const roomPairs = model.topology.getConnectedRoomPairs();
 const roomsAtNode = model.topology.getRoomsAtNode(2, 0);
 const wallsAtNode = model.topology.getWallsAtNode(2, 0);
+const pathwayOpenings = model.topology.getOpeningsForStairPathway("way/100");
+const landingOpenings = model.topology.getOpeningsForStairLanding("way/200@0.5");
 const verticalConnections = model.topology.getVerticalConnectionsForLevel(0);
 const directConnections = model.topology.getVerticalConnectionsBetweenLevels(0, 1);
 ```
@@ -176,7 +178,7 @@ The current parser collects:
 - Level outlines from `indoor=level`.
 - Rooms, corridors, and areas from `indoor=room`, `indoor=corridor`, and `indoor=area`.
 - Doors from door nodes.
-- Openings from explicit doors and inferred open staircase connections.
+- Openings from explicit doors, inferred open staircase footprint connections, and topology-only pathway/landing connections.
 - Walls from `indoor=wall` and handrails from `barrier=handrail`.
 - Columns from `indoor=column`.
 - Information points and accessibility point features.

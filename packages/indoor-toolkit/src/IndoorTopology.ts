@@ -80,6 +80,34 @@ export class IndoorTopology {
     );
   }
 
+  /**
+   * Return openings connected to a stair pathway.
+   *
+   * `pathwayId` may be an authored pathway id such as `way/100` or a repeated
+   * pathway instance id such as `way/100@0-1`.
+   */
+  getOpeningsForStairPathway(pathwayId: string): IndoorOpening[] {
+    return this.elements.openings.filter((opening) =>
+      opening.connectedPathwayInstances.some(
+        (pathway) => pathway.id == pathwayId || pathway.source.id == pathwayId,
+      ),
+    );
+  }
+
+  /**
+   * Return openings connected to a stair landing.
+   *
+   * `landingId` may be an authored landing id such as `way/200` or a repeated
+   * landing instance id such as `way/200@0.5`.
+   */
+  getOpeningsForStairLanding(landingId: string): IndoorOpening[] {
+    return this.elements.openings.filter((opening) =>
+      opening.connectedLandingInstances.some(
+        (landing) => landing.id == landingId || landing.source.id == landingId,
+      ),
+    );
+  }
+
   /** Return vertical connections touching a level, optionally restricted to one connection kind. */
   getVerticalConnectionsForLevel(
     level: number,
