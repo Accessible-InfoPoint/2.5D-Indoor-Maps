@@ -1,7 +1,7 @@
 import BackendService from "./backendService";
 import { chainComparators } from "../utils/compareChain";
 import { getRequiredMapValue } from "../utils/requiredHelpers";
-import { createIndoorElementRef, IndoorElementRef } from "../indoor";
+import { createIndoorElementRef, IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 import { searchTagAliases } from "../data/searchTagAliases";
 
 export interface SearchSuggestion {

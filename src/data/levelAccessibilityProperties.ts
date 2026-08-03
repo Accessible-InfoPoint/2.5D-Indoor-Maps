@@ -1,6 +1,6 @@
 import { UserGroupEnum } from "../models/userGroupEnum";
 import { lang } from "../services/languageService";
-import { IndoorTags, hasSpeechOutputTags } from "../indoor";
+import { IndoorTags, hasSpeechOutputTags } from "@indoortoolkit/indoor-osm-parser";
 
 interface LevelAccessibilityProperty {
   hasCorrectTags: (tags: IndoorTags) => boolean;

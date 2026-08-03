@@ -1,4 +1,4 @@
-import { IndoorElementRef } from "../../../indoor";
+import { IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 import {
   OpeningRenderItem,
   RoomRenderItem,

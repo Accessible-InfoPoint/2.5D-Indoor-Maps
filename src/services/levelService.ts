@@ -1,7 +1,7 @@
 import AccessibilityService from "./accessibilityService";
 import { lang } from "./languageService";
 import BackendService from "./backendService";
-import { IndoorElement, IndoorTags } from "../indoor";
+import { IndoorElement, IndoorTags } from "@indoortoolkit/indoor-osm-parser";
 
 export interface LevelOption {
   level: number;

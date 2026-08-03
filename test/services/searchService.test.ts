@@ -8,7 +8,7 @@ jest.mock("../../src/services/languageService", () => ({
 
 import SearchService from "../../src/services/searchService";
 import BackendService from "../../src/services/backendService";
-import { createIndoorElementRef } from "../../src/indoor";
+import { createIndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 
 const CTX = { currentLevel: 0 };
 

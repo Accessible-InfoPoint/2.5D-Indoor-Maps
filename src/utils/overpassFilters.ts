@@ -4,7 +4,7 @@ import {
   OverpassElement,
   OverpassJson,
   OverpassNode,
-} from "../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 
 export interface FilterOverpassByBoundsOptions {
   bearingNodeIds?: Array<number | string>;

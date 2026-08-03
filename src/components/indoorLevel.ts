@@ -1,6 +1,6 @@
 import BackendService from "../services/backendService";
 import UserService from "../services/userService";
-import { IndoorElementRef } from "../indoor";
+import { IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 import { IndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderModel";
 import { IndoorLevelView } from "./indoorLevel/indoorLevelView";
 import { buildIndoorLevelRenderModel } from "./indoorLevel/indoorLevelRenderBuilder";

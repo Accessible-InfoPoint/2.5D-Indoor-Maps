@@ -11,15 +11,15 @@ import { UserGroupEnum } from "../models/userGroupEnum";
 import { UserFeatureEnum } from "../models/userFeatureEnum";
 import { UserFeatureSelection } from "../data/userFeatureSelection";
 import { indoorAccessibilityRules } from "../data/indoorAccessibilityRules";
-import { IndoorElementRef } from "../indoor";
 import {
+  IndoorElementRef,
   IndoorTags,
   isCorridorOrAreaTags,
   isInfoPointTags,
   isRoomTags,
   isStaircaseTags,
   isToiletTags,
-} from "../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 import ColorService from "./colorService";
 import { accessibilityDescriptionFromTags } from "../utils/accessibilityDescriptionHelper";
 

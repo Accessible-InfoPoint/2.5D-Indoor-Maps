@@ -1,5 +1,6 @@
 import { LEVEL_HEIGHT } from "../../../public/strings/settings.json";
 import {
+  createIndoorElementRef,
   getInterpolatedPathLevels,
   IndoorHandrail,
   IndoorLanding,
@@ -10,8 +11,7 @@ import {
   IndoorStepArea,
   IndoorVerticalConnection,
   VerticalSpan,
-} from "../../indoor";
-import { createIndoorElementRef } from "../../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";
 import {

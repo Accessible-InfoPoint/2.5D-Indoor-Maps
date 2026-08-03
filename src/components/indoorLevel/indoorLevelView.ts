@@ -1,5 +1,5 @@
 import { IndoorLevelRenderModel } from "./indoorLevelRenderModel";
-import { IndoorElementRef } from "../../indoor";
+import { IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 
 export interface IndoorLevelViewEvents {
   onIndoorElementSelected: (elementRef: IndoorElementRef) => void;

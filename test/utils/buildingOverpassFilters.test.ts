@@ -1,5 +1,5 @@
 import { findBuildingInOverpassBySearchString } from "../../src/utils/buildingOverpassFilters";
-import { OverpassJson } from "../../src/indoor";
+import { OverpassJson } from "@indoortoolkit/indoor-osm-parser";
 
 describe("buildingOverpassFilters", () => {
   it("finds a building way by name", () => {

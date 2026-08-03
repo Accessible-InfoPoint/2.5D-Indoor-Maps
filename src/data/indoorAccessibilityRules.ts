@@ -16,7 +16,7 @@ import {
   isStepsTags,
   isTactileInformationTags,
   isWheelchairAccessibleElevatorTags,
-} from "../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 
 export type IndoorAccessibilityRuleMessage =
   string | ((tags: IndoorTags) => string | null | undefined);

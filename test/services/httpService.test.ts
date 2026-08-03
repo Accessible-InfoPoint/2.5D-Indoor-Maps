@@ -6,7 +6,7 @@ jest.mock("../../src/services/languageService", () => ({
 
 import HttpService, { HttpRequestError } from "../../src/services/httpService";
 import { BuildingInterface } from "../../src/models/buildingInterface";
-import { OverpassJson } from "../../src/indoor";
+import { OverpassJson } from "@indoortoolkit/indoor-osm-parser";
 
 describe("httpService", () => {
   const originalXMLHttpRequest = globalThis.XMLHttpRequest;

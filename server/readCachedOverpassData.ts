@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { isOverpassJson, OverpassJson } from "../src/indoor";
+import { isOverpassJson, OverpassJson } from "@indoortoolkit/indoor-osm-parser";
 import { resolveProjectPath } from "./paths";
 
 export async function readCachedOverpassJson(cachePath: string): Promise<OverpassJson> {

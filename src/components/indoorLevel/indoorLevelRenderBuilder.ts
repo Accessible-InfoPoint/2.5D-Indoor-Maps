@@ -1,4 +1,5 @@
 import {
+  createIndoorElementRef,
   IndoorColumn,
   IndoorHandrail,
   IndoorModel,
@@ -10,8 +11,7 @@ import {
   isInfoPointTags,
   isNeutralDoorColorRoomTags,
   isRoomLabelEligibleTags,
-} from "../../indoor";
-import { createIndoorElementRef } from "../../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 import { UserGroupEnum } from "../../models/userGroupEnum";
 import ColorService from "../../services/colorService";
 import FeatureService from "../../services/featureService";

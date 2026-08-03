@@ -5,7 +5,7 @@ import {
   OsmGraph,
   OverpassElement,
   OverpassJson,
-} from "../indoor";
+} from "@indoortoolkit/indoor-osm-parser";
 import { BuildingInterface } from "../models/buildingInterface";
 
 export function findBuildingInOverpassBySearchString(

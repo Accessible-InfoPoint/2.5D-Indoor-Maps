@@ -1,5 +1,5 @@
 import * as BuildingConstantsDefinition from "../public/strings/buildingConstants.json";
-import { OsmGraph, OverpassElement } from "../src/indoor";
+import { OsmGraph, OverpassElement } from "@indoortoolkit/indoor-osm-parser";
 import { getBuildingInterfaceFromOverpassElement } from "../src/utils/buildingOverpassFilters";
 import { filterOverpassByBounds } from "../src/utils/overpassFilters";
 import { getBuildingSourceDefinition, matchesBuildingTags } from "./buildingSources";

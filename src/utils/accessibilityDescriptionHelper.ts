@@ -2,7 +2,7 @@ import {
   IndoorAccessibilityRule,
   indoorAccessibilityRules,
 } from "../data/indoorAccessibilityRules";
-import { IndoorTags } from "../indoor";
+import { IndoorTags } from "@indoortoolkit/indoor-osm-parser";
 import UserService from "../services/userService";
 
 export function accessibilityDescriptionFromTags(

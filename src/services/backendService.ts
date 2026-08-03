@@ -1,5 +1,11 @@
 import { BuildingInterface } from "../models/buildingInterface";
-import { createIndoorModel, extractLevels, IndoorModel, LevelValue, OsmGraph } from "../indoor";
+import {
+  createIndoorModel,
+  extractLevels,
+  IndoorModel,
+  LevelValue,
+  OsmGraph,
+} from "@indoortoolkit/indoor-osm-parser";
 import HttpService, { RawOverpassDataResponse } from "./httpService";
 import * as BuildingConstantsDefinition from "../../public/strings/buildingConstants.json";
 import CoordinateHelpers from "../utils/coordinateHelpers";

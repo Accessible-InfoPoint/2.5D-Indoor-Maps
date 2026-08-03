@@ -4,7 +4,7 @@ import type {
   Map as MapLibreMap,
   MapLayerMouseEvent,
 } from "maplibre-gl";
-import { IndoorElementRef } from "../../indoor";
+import { IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 import {
   IndoorLevelOutlineGeometry,
   InfoPointRenderItem,

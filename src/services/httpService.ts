@@ -1,5 +1,5 @@
 import { BuildingInterface } from "../models/buildingInterface";
-import { OverpassJson } from "../indoor";
+import { OverpassJson } from "@indoortoolkit/indoor-osm-parser";
 import { lang } from "./languageService";
 
 export interface RawOverpassDataResponse {

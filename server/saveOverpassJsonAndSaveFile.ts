@@ -1,6 +1,6 @@
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
-import { isOverpassJson } from "../src/indoor";
+import { isOverpassJson } from "@indoortoolkit/indoor-osm-parser";
 import { OverpassCacheWriteError, previewResponse } from "./overpassErrors";
 import { resolveProjectPath } from "./paths";
 

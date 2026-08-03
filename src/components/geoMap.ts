@@ -16,7 +16,7 @@ import ColorService from "../services/colorService";
 import { lang } from "../services/languageService";
 import FeatureService from "../services/featureService";
 import BackendService, { type BuildingCenter } from "../services/backendService";
-import { createIndoorElementRef, IndoorElementRef } from "../indoor";
+import { createIndoorElementRef, IndoorElementRef } from "@indoortoolkit/indoor-osm-parser";
 import { MapCamera } from "./map/mapCamera";
 import { MapBounds, MapCenterConstraint, MapView } from "./map/mapView";
 import { MapLibreMapView } from "./map/maplibreMapView";
