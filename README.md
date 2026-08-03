@@ -74,7 +74,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, branch naming, and rel
 
 Configuration fields in `public/strings/settings.json` and `public/strings/buildingConstants.json`, plus official Overpass building source definitions in `public/strings/buildingSources.json`, are documented in [docs/configuration.md](docs/configuration.md).
 
-Parser behavior and expected Simple Indoor Tagging conventions are documented in [packages/indoor-toolkit/docs/parser-guide.md](packages/indoor-toolkit/docs/parser-guide.md).
+Parser behavior and expected Simple Indoor Tagging conventions are documented by [`@indoortoolkit/indoor-osm-parser`](https://github.com/IndoorToolkit/indoor-osm-parser).
 Application-specific rendering behavior is documented in [docs/indoor-tagging.md](docs/indoor-tagging.md).
 
 Official `cachedOverpass` buildings can be switched through `CURRENT_BUILDING` when the building exists in both `buildingConstants.json` and `buildingSources.json`. For local experiments with new buildings, use `npm run overpass:candidate -- ...` or `npm run overpass:list-buildings -- ...`; the full workflow is documented in [CONTRIBUTING.md](CONTRIBUTING.md).

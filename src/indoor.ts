@@ -1,1 +1,1 @@
-export * from "../packages/indoor-toolkit/src";
+export * from "@indoortoolkit/indoor-osm-parser";

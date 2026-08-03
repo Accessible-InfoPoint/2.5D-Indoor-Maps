@@ -1,8 +1,6 @@
 # Indoor Rendering Guide
 
-This document describes how the 2.5D Indoor Maps application renders parsed indoor OpenStreetMap data. Parser behavior, supported raw elements, level parsing, topology, and diagnostics are documented in the parser package guide:
-
-[Indoor Toolkit Parser Guide](../packages/indoor-toolkit/docs/parser-guide.md)
+This document describes how the 2.5D Indoor Maps application renders parsed indoor OpenStreetMap data. Parser behavior, supported raw elements, level parsing, topology, and diagnostics are documented by the [`@indoortoolkit/indoor-osm-parser`](https://github.com/IndoorToolkit/indoor-osm-parser) package.
 
 The application follows the Simple Indoor Tagging schema through the parser, then applies renderer-specific styling, labels, markers, search behavior, and accessibility descriptions. Tags not mentioned here may still be preserved by the parser, but they do not affect this application's rendering unless the application explicitly uses them.
 
@@ -546,7 +544,7 @@ Room labels are shown for ordinary named or referenced rooms. Toilet rooms, stai
 
 ## Minimal Rendering Checklist
 
-Start with the parser checklist in [Indoor Toolkit Parser Guide](../packages/indoor-toolkit/docs/parser-guide.md#minimal-parser-checklist), then add renderer-specific detail:
+Start with the parser checklist from [`@indoortoolkit/indoor-osm-parser`](https://github.com/IndoorToolkit/indoor-osm-parser), then add renderer-specific detail:
 
 - Add `indoor=level` outlines with `level:ref=*` if floor plates or labels differ.
 - Put doors directly on room or wall way nodes.
