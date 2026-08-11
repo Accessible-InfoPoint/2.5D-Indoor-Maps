@@ -103,7 +103,7 @@ function setup(geoMap: GeoMap): void {
           pitchEnd: 0,
           zoomStart: currentCameraPosition.zoom,
           // zoomEnd: wheelchair mode ? geoMap.standardZoomWheelchairMode : geoMap.standardZoom
-          zoomEnd: geoMap.standardZoom,
+          zoomEnd: geoMap.getFitZoom(geoMap.standardBearing, 0, geoMap.standardZoom),
         },
         animationDuration,
       );
@@ -176,7 +176,11 @@ function setup(geoMap: GeoMap): void {
           pitchStart: currentCameraPosition.pitch,
           pitchEnd: geoMap.standardPitch3DMode,
           zoomStart: currentCameraPosition.zoom,
-          zoomEnd: geoMap.standardZoom3DMode,
+          zoomEnd: geoMap.getFitZoom(
+            geoMap.standardBearing3DMode,
+            geoMap.standardPitch3DMode,
+            geoMap.standardZoom3DMode,
+          ),
         },
         animationDuration,
       ).then(() => {
