@@ -3,6 +3,8 @@
   "compilerOptions": {
     "outDir": "dist/server",
     "rootDir": ".",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "noEmit": false,
     "declaration": false,
     "sourceMap": true,
