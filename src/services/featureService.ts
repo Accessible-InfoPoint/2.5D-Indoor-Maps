@@ -225,6 +225,10 @@ export function getIndoorFillStyleFromTags(
   };
 }
 
+export function hasNeutralIndoorFillTags(tags: IndoorTags): boolean {
+  return !isToiletTags(tags) && !isStaircaseTags(tags) && !hasRoomFillTags(tags);
+}
+
 function hasRoomFillTags(tags: IndoorTags): boolean {
   if (isNeutralRoomValue(tags.room)) {
     return false;
@@ -373,6 +377,7 @@ export default {
   getMarkerCoordinatesFromGeometry,
   getFeatureStyleFromTags,
   getIndoorFillStyleFromTags,
+  hasNeutralIndoorFillTags,
   getSelectedRoomStyleFromTags,
   getWallStyleFromTags,
   getColumnStyleFromTags,

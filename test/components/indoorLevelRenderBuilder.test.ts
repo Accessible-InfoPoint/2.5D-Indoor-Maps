@@ -81,6 +81,25 @@ describe("buildIndoorLevelRenderModel", () => {
     expect(renderModel.rooms[0].selectedPositionMarker?.label).toBe("0");
   });
 
+  it("uses neutral fill semantics for ordinary 3D room visibility", () => {
+    const model = createIndoorModel(roomTag3DVisibilityOverpassData.indoor);
+
+    const renderModel = buildIndoorLevelRenderModel({
+      model,
+      buildingOutlineGeometry: buildingFeature.geometry,
+      level: 0,
+      selectedFeatureIds: [],
+      infoPointLevel: 0,
+      userProfile: UserGroupEnum.noImpairments,
+    });
+
+    expect(getRoomRenderItem(renderModel, "way/20").isVisibleIn3D).toBe(true);
+    expect(getRoomRenderItem(renderModel, "way/21").isVisibleIn3D).toBe(false);
+    expect(getRoomRenderItem(renderModel, "way/22").isVisibleIn3D).toBe(true);
+    expect(getRoomRenderItem(renderModel, "way/23").isVisibleIn3D).toBe(true);
+    expect(getRoomRenderItem(renderModel, "way/24").isVisibleIn3D).toBe(false);
+  });
+
   it("uses indoor=level outlines for the raw 3D outline on matching levels", () => {
     const model = createIndoorModel(levelOutlineOverpassData.indoor);
 
@@ -121,6 +140,19 @@ describe("buildIndoorLevelRenderModel", () => {
     expect(level1.outlineGeometry).toEqual(buildingFeature.geometry);
   });
 });
+
+function getRoomRenderItem(
+  renderModel: ReturnType<typeof buildIndoorLevelRenderModel>,
+  id: string,
+) {
+  const room = renderModel.rooms.find((candidate) => candidate.feature.id == id);
+
+  if (room === undefined) {
+    throw new Error(`Expected room render item "${id}".`);
+  }
+
+  return room;
+}
 
 const buildingFeature: GeoJSON.Feature<GeoJSON.Polygon> = {
   type: "Feature",
@@ -273,6 +305,67 @@ const levelOutlineOverpassData: RawOverpassDataResponse = {
         type: "way",
         id: 11,
         nodes: [1, 2, 3, 1],
+        tags: { indoor: "room", level: "0" },
+      },
+    ],
+  },
+};
+
+const roomTag3DVisibilityOverpassData: RawOverpassDataResponse = {
+  buildingInterface,
+  buildings: {
+    elements: [],
+  },
+  indoor: {
+    elements: [
+      { type: "node", id: 20, lat: 51, lon: 13 },
+      { type: "node", id: 21, lat: 51, lon: 13.01 },
+      { type: "node", id: 22, lat: 51.01, lon: 13.01 },
+      { type: "node", id: 23, lat: 51.01, lon: 13 },
+      { type: "node", id: 24, lat: 51.02, lon: 13 },
+      { type: "node", id: 25, lat: 51.02, lon: 13.01 },
+      { type: "node", id: 26, lat: 51.03, lon: 13.01 },
+      { type: "node", id: 27, lat: 51.03, lon: 13 },
+      { type: "node", id: 28, lat: 51.04, lon: 13 },
+      { type: "node", id: 29, lat: 51.04, lon: 13.01 },
+      { type: "node", id: 30, lat: 51.05, lon: 13.01 },
+      { type: "node", id: 31, lat: 51.05, lon: 13 },
+      { type: "node", id: 32, lat: 51.06, lon: 13 },
+      { type: "node", id: 33, lat: 51.06, lon: 13.01 },
+      { type: "node", id: 34, lat: 51.07, lon: 13.01 },
+      { type: "node", id: 35, lat: 51.07, lon: 13 },
+      { type: "node", id: 36, lat: 51.08, lon: 13 },
+      { type: "node", id: 37, lat: 51.08, lon: 13.01 },
+      { type: "node", id: 38, lat: 51.09, lon: 13.01 },
+      { type: "node", id: 39, lat: 51.09, lon: 13 },
+      {
+        type: "way",
+        id: 20,
+        nodes: [20, 21, 22, 20],
+        tags: { indoor: "area", level: "0" },
+      },
+      {
+        type: "way",
+        id: 21,
+        nodes: [24, 25, 26, 24],
+        tags: { indoor: "area", room: "office", level: "0" },
+      },
+      {
+        type: "way",
+        id: 22,
+        nodes: [28, 29, 30, 28],
+        tags: { indoor: "room", room: "corridor", level: "0" },
+      },
+      {
+        type: "way",
+        id: 23,
+        nodes: [32, 33, 34, 32],
+        tags: { indoor: "room", room: "entrance", level: "0" },
+      },
+      {
+        type: "way",
+        id: 24,
+        nodes: [36, 37, 38, 36],
         tags: { indoor: "room", level: "0" },
       },
     ],

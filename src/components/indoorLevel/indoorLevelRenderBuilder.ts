@@ -454,8 +454,7 @@ function buildSelectedPositionMarker(
 
 function isVisibleIn3DMode(room: IndoorRoom, selectedFeatureIds: string[] = []): boolean {
   return (
-    room.tags.indoor == "corridor" ||
-    room.tags.indoor == "area" ||
+    FeatureService.hasNeutralIndoorFillTags(room.tags) ||
     room.tags.highway == "elevator" ||
     room.tags.stairs == "yes" ||
     selectedFeatureIds.includes(room.id)

@@ -6,6 +6,7 @@ import {
   getFeatureStyleFromTags,
   getIndoorFillStyleFromTags,
   getLineWidthFromTags,
+  hasNeutralIndoorFillTags,
 } from "../../src/services/featureService";
 import { MARKERS_IMG_DIR, ICONS } from "../../public/strings/constants.json";
 import { OPEN_AREA_WALL_WEIGHT } from "../../public/strings/settings.json";
@@ -73,6 +74,19 @@ describe("getIndoorFillStyleFromTags", () => {
     expect(getIndoorFillStyleFromTags({ indoor: "area", room: "corridor" }).polygonFill).toBe(
       "#fff",
     );
+  });
+});
+
+describe("hasNeutralIndoorFillTags", () => {
+  it("matches the tags that use the neutral indoor fill", () => {
+    expect(hasNeutralIndoorFillTags({ indoor: "area" })).toBe(true);
+    expect(hasNeutralIndoorFillTags({ indoor: "corridor" })).toBe(true);
+    expect(hasNeutralIndoorFillTags({ indoor: "room", room: "entrance" })).toBe(true);
+    expect(hasNeutralIndoorFillTags({ indoor: "room", room: "corridor" })).toBe(true);
+    expect(hasNeutralIndoorFillTags({ indoor: "area", room: "office" })).toBe(false);
+    expect(hasNeutralIndoorFillTags({ indoor: "room" })).toBe(false);
+    expect(hasNeutralIndoorFillTags({ indoor: "area", stairs: "yes" })).toBe(false);
+    expect(hasNeutralIndoorFillTags({ indoor: "room", amenity: "toilets" })).toBe(false);
   });
 });
 
