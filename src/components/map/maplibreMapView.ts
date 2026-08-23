@@ -1,4 +1,6 @@
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import maplibreSharedWorkerUrl from "maplibre-gl/dist/maplibre-gl-shared.mjs?worker-url";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker-url";
 import type {
   LngLat,
   Map as MapLibreMap,
@@ -20,6 +22,12 @@ const DEFAULT_MIN_ZOOM = -2;
 const DEFAULT_MAX_ZOOM = 22;
 const { CARTO_ATTRIBUTION, CARTO_TILE_SERVER, CARTO_TILE_SUBDOMAINS, MAPLIBRE_ATTRIBUTION } =
   constants;
+
+if (!maplibreSharedWorkerUrl.endsWith("maplibre-gl-shared.mjs")) {
+  console.warn("Unexpected MapLibre shared worker asset URL.", maplibreSharedWorkerUrl);
+}
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 interface MapLibreMapViewOptions {
   configMode: boolean;
