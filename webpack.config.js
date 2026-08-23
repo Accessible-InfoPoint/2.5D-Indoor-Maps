@@ -23,6 +23,7 @@ module.exports = (_env, argv) => {
     output: {
       path: path.resolve(__dirname, "./public/dist"),
       filename: "[name].js",
+      clean: true,
     },
     resolve: {
       extensions: [".tsx", ".ts", ".js"],
