@@ -51,6 +51,13 @@ module.exports = (_env, argv) => {
           },
         },
         {
+          resourceQuery: /worker-url/,
+          type: "asset/resource",
+          generator: {
+            filename: "[name][ext]",
+          },
+        },
+        {
           test: /\.(svg|png|jpe?g|gif)$/i,
           use: [
             {

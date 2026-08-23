@@ -54,6 +54,8 @@ import { getInfoPointStyle } from "./infoPointStyle";
 const SHOW_DOOR_ORIENTATION_DEBUG = false;
 
 type ThreeIndoorLayerModule = typeof import("./maplibre/maplibreThreeIndoorLayer.js");
+type MapLibrePaintProperty = Parameters<MapLibreMap["setPaintProperty"]>[1];
+type MapLibrePaintPropertyValue = Parameters<MapLibreMap["setPaintProperty"]>[2];
 
 let threeIndoorLayerModulePromise: Promise<ThreeIndoorLayerModule> | undefined;
 
@@ -636,7 +638,11 @@ export class MapLibreIndoorLevelView implements IndoorLevelView {
     this.accessibilityMarkerRenderer.applyOpacity(this.opacity);
   }
 
-  private setPaintProperty(layerId: string, property: string, value: unknown): void {
+  private setPaintProperty(
+    layerId: string,
+    property: MapLibrePaintProperty,
+    value: MapLibrePaintPropertyValue,
+  ): void {
     if (this.map.getLayer(layerId)) {
       this.map.setPaintProperty(layerId, property, value);
     }
