@@ -5,10 +5,12 @@ import ZoomControl from "./components/ui/zoomControl";
 import WheelchairModeControl from "./components/ui/wheelchairModeControl";
 import Switch2DControl from "./components/ui/switch2DControl";
 import Legend from "./components/ui/legend";
+import MobileLayoutControl from "./components/ui/mobileLayoutControl";
 import { translate } from "./utils/translate";
 
 export function applyStoredUiLayout(): void {
   WheelchairModeControl.applyStoredLayout();
+  MobileLayoutControl.applyStoredLayout();
 }
 
 export function setupUi(geoMap: GeoMap): void {
@@ -19,6 +21,7 @@ export function setupUi(geoMap: GeoMap): void {
     UserProfileModal.render(refreshSettings);
     translate();
     geoMap.refreshMapViewportConstraints(true);
+    MobileLayoutControl.refresh(geoMap);
   };
 
   SearchForm.render(geoMap);
@@ -26,5 +29,6 @@ export function setupUi(geoMap: GeoMap): void {
   ZoomControl.setup(geoMap);
   WheelchairModeControl.setup(refreshSettings, () => geoMap.refreshMapViewportConstraints(true));
   Switch2DControl.setup(geoMap);
+  MobileLayoutControl.setup(geoMap);
   geoMap.refreshMapViewportConstraints(true);
 }
