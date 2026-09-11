@@ -26,6 +26,9 @@ jest.mock("../../src/services/languageService", () => ({
     showNextLevels: "Show next levels",
     saveButton: "Save",
     closeButton: "Close",
+    mobileLegendButton: "Legend",
+    mobileProfileButton: "Profile",
+    mobileSettingsButton: "Settings",
   },
 }));
 
@@ -43,11 +46,18 @@ describe("translate()", () => {
       <button id="centeringButton"><span aria-hidden="true"></span></button>
       <button id="levelShiftUp"></button>
       <button id="levelShiftDown"></button>
+      <button id="levelControlToggle"><span id="levelControlToggleLabel">1</span></button>
       <ul id="levelControl">
         <li><button>1</button></li>
       </ul>
       <button class="saveButton"></button>
       <button class="closeButton"></button>
+      <button id="mobileLegendTrigger"></button>
+      <button id="mobileProfileTrigger"></button>
+      <button id="mobileSettingsTrigger"></button>
+      <button id="shortLegendTrigger"></button>
+      <button id="shortProfileTrigger"></button>
+      <button id="shortSettingsTrigger"></button>
     `;
   });
 
@@ -62,7 +72,11 @@ describe("translate()", () => {
     const switch2D = getRequiredElement("switch2D");
     const zoomControlIn = getRequiredElement("zoomControlIn");
     const centeringButton = getRequiredElement("centeringButton");
+    const mobileLegendTrigger = getRequiredElement("mobileLegendTrigger");
+    const mobileProfileTrigger = getRequiredElement("mobileProfileTrigger");
+    const mobileSettingsTrigger = getRequiredElement("mobileSettingsTrigger");
     const levelShiftUp = getRequiredElement("levelShiftUp");
+    const levelControlToggle = getRequiredElement("levelControlToggle");
     const levelButton = getRequiredElement("levelControl").children[0]
       .firstElementChild as HTMLElement;
 
@@ -73,8 +87,16 @@ describe("translate()", () => {
     expect(zoomControlIn.ariaLabel).toBe("Zoom in");
     expect(centeringButton.title).toBe("Center map");
     expect(centeringButton.ariaLabel).toBe("Center map");
+    expect(mobileLegendTrigger.title).toBe("Legend");
+    expect(mobileLegendTrigger.ariaLabel).toBe("Legend");
+    expect(mobileProfileTrigger.title).toBe("Profile");
+    expect(mobileProfileTrigger.ariaLabel).toBe("Profile");
+    expect(mobileSettingsTrigger.title).toBe("Settings");
+    expect(mobileSettingsTrigger.ariaLabel).toBe("Settings");
     expect(levelShiftUp.title).toBe("Show previous levels");
     expect(levelShiftUp.ariaLabel).toBe("Show previous levels");
+    expect(levelControlToggle.title).toBe("Change to level 1");
+    expect(levelControlToggle.ariaLabel).toBe("Change to level 1");
     expect(levelButton.title).toBe("Change to level 1");
     expect(levelButton.ariaLabel).toBe("Change to level 1");
   });

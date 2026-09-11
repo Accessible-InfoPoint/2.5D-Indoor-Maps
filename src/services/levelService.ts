@@ -45,10 +45,15 @@ function getCurrentLevelDescription(currentLevel: number): string {
   return lang.currentLevel + currentLevel + " " + levelAccessibilityInformation;
 }
 
+function getCurrentLevelAccessibilityBody(currentLevel: number): string {
+  return AccessibilityService.getForLevel(currentLevel, getCurrentLevelGeoJSON(currentLevel));
+}
+
 export default {
   getCurrentLevelGeoJSON,
   getLevelGeoJSON,
   getLevelNames,
   getCurrentLevelDescription,
+  getCurrentLevelAccessibilityBody,
   clearData,
 };

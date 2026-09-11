@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
       geoMap.showBuilding();
       Legend.create();
       LevelControl.setupControlShifter();
+      LevelControl.setupCollapseToggle();
       CenterBtn.setup(geoMap);
       setupUi(geoMap);
       translate();

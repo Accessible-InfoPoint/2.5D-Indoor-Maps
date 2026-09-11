@@ -9,3 +9,6 @@ tmp
 playwright-report
 test-results
 debug.log
+.superpowers
+.remember
+.playwright-mcp

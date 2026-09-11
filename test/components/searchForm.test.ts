@@ -33,6 +33,9 @@ jest.mock("../../src/services/userService", () => ({
   __esModule: true,
   default: { getCurrentProfile: jest.fn(() => 2) }, // UserGroupEnum.noImpairments
 }));
+jest.mock("../../src/utils/motionPreferences", () => ({
+  prefersReducedMotion: jest.fn(() => false),
+}));
 
 import type { GeoMap } from "../../src/components/geoMap";
 import type BuildingServiceType from "../../src/services/buildingService";
@@ -57,6 +60,7 @@ describe("searchForm", () => {
       <input id="indoorSearchInput" />
       <button id="indoorSearchClear"></button>
       <button id="indoorSearchSubmit"></button>
+      <div id="searchOverlayBackdrop"></div>
       <div id="searchErrorMessage">
         <span id="searchErrorText"></span>
         <button id="searchErrorClear"></button>
@@ -228,5 +232,60 @@ describe("searchForm", () => {
     expect(input.value).toBe("xyzzy");
     expect(errorText.textContent).toBe("");
     expect(errorMessage.classList.contains("visible")).toBe(false);
+  });
+
+  it("auto-dismisses the search error after 5 seconds, canceling any prior pending timer", () => {
+    jest.useFakeTimers();
+    try {
+      (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+      SearchForm.render(geoMap);
+
+      input.value = "xyzzy";
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // Re-triggering before the first timer fires should cancel it.
+      jest.advanceTimersByTime(4000);
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // First timer's 5s deadline has passed but was canceled; still visible.
+      jest.advanceTimersByTime(1500);
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // Second timer's 5s deadline, counted from the re-trigger, fires now.
+      jest.advanceTimersByTime(3500);
+      expect(errorMessage.classList.contains("visible")).toBe(false);
+      expect(errorText.textContent).toBe("");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("still auto-dismisses the search error at the full duration when the user prefers reduced motion", () => {
+    const { prefersReducedMotion } = jest.requireMock("../../src/utils/motionPreferences") as {
+      prefersReducedMotion: jest.Mock;
+    };
+    prefersReducedMotion.mockReturnValueOnce(true);
+
+    jest.useFakeTimers();
+    try {
+      (BuildingService.searchSuggestions as jest.Mock).mockReturnValue([]);
+      SearchForm.render(geoMap);
+
+      input.value = "xyzzy";
+      pressEnter();
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      // Timer duration isn't gated by prefers-reduced-motion (only the CSS fade is).
+      jest.advanceTimersByTime(4999);
+      expect(errorMessage.classList.contains("visible")).toBe(true);
+
+      jest.advanceTimersByTime(1);
+      expect(errorMessage.classList.contains("visible")).toBe(false);
+      expect(errorText.textContent).toBe("");
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

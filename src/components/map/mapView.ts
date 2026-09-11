@@ -1,6 +1,14 @@
 import { IndoorLevelView, IndoorLevelViewEvents } from "../indoorLevel/indoorLevelView";
 import { MapCamera, MapCenter } from "./mapCamera";
 
+export type AttributionCorner = "top-right" | "top-left" | "bottom-left" | "bottom-right";
+
+export interface AttributionOffset {
+  left: number;
+  right: number;
+  bottom: number;
+}
+
 export interface MapBounds {
   west: number;
   south: number;
@@ -32,5 +40,14 @@ export interface MapView {
   setViewportPadding(padding: MapViewportPadding): void;
   setBaseLayerOpacity(opacity: number): void;
   setSaturation(saturation: number): void;
+  setAttributionCorner(corner: AttributionCorner): void;
+  setAttributionOffset(offset: AttributionOffset | null): void;
+  getFitZoom(bounds: MapBounds, options: FitZoomOptions): number;
   onceIdle(callback: () => void): void;
+}
+
+export interface FitZoomOptions {
+  bearing: number;
+  pitch: number;
+  maxZoom: number;
 }

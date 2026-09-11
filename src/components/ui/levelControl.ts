@@ -7,6 +7,8 @@ import LevelService from "../../services/levelService";
 import type { GeoMap } from "../geoMap";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
+import OverlayExclusivityService from "../../services/overlayExclusivityService";
+import LayoutObstacles from "../../utils/layoutObstacles";
 
 let offset = 1;
 const minOffset = 0;
@@ -57,6 +59,8 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
         }
       }
       updateLevelButtonState(levelBtn, true);
+      updateToggleLabel(level);
+      collapseLevelControl();
     });
 
     levelLi.appendChild(levelBtn);
@@ -64,6 +68,7 @@ function render(allLevelNamesParam: string[], geoMap: GeoMap): void {
   });
 
   setWindow();
+  updateToggleLabel(INDOOR_LEVEL.toString());
 
   const index = allLevelNames.findIndex((level) => level == INDOOR_LEVEL.toString());
   offset = index - START_LEVEL_CONTROL_POSITION; // current should be second to last in visible
@@ -91,8 +96,22 @@ function setWindow(): void {
   const levelShiftUp = getRequiredElement("levelShiftUp");
   const levelShiftDown = getRequiredElement("levelShiftDown");
   const levelControlWindow = getRequiredElement("levelControlWindow");
-  const shownLevels = Math.min(VISIBLE_LEVEL_CONTROLS, numLevels);
-  if (numLevels <= VISIBLE_LEVEL_CONTROLS) {
+  const levelControlWrapper = getRequiredElement("levelControlWrapper");
+
+  const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
+  const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
+
+  let shownLevels = Math.min(VISIBLE_LEVEL_CONTROLS, numLevels);
+  applyWindowSize(levelControlWindow, shownLevels, size, gap);
+
+  if (levelControlWrapper.classList.contains("expanded")) {
+    while (shownLevels > 1 && collidesWithOtherUi(levelControlWrapper)) {
+      shownLevels -= 1;
+      applyWindowSize(levelControlWindow, shownLevels, size, gap);
+    }
+  }
+
+  if (numLevels <= shownLevels) {
     levelShiftUp.style.display = "none";
     levelShiftDown.style.display = "none";
   } else {
@@ -100,10 +119,16 @@ function setWindow(): void {
     levelShiftDown.style.display = "inline-block";
   }
 
-  const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
-  const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
+  updateShiftIcons();
+}
 
-  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
+function applyWindowSize(
+  levelControlWindow: HTMLElement,
+  shownLevels: number,
+  size: number,
+  gap: number,
+): void {
+  if (isHorizontalLevelLayout()) {
     levelControlWindow.style.width = shownLevels * size + (shownLevels - 1) * gap + "px";
     levelControlWindow.style.height = "auto";
   } else {
@@ -112,10 +137,41 @@ function setWindow(): void {
   }
 }
 
+// Measures the wrapper's OWN current rendered rect (rather than modeling
+// which edge it grows from) so this works regardless of whether the control
+// is left- or right-anchored, on mobile or desktop, handed or not — the
+// browser has already resolved the anchor direction by the time this reads
+// getBoundingClientRect().
+function collidesWithOtherUi(levelControlWrapper: HTMLElement): boolean {
+  const rect = levelControlWrapper.getBoundingClientRect();
+  const obstacles = LayoutObstacles.getObstacleRects(["levelControlWrapper"]);
+  return (
+    !LayoutObstacles.isWithinViewport(rect) ||
+    obstacles.some((obstacle) => LayoutObstacles.rectsOverlap(rect, obstacle.rect))
+  );
+}
+
+// The paging icons must point along whichever axis the control currently
+// pages on. isHorizontalLevelLayout() can flip on a live viewport resize
+// (shortMode/lowHeightMode) with no explicit user action, so this runs
+// everywhere setWindow() does, not only on the wheelchair toggle.
+function updateShiftIcons(): void {
+  const levelShiftUpLabel = getRequiredElement("levelShiftUpLabel");
+  const levelShiftDownLabel = getRequiredElement("levelShiftDownLabel");
+
+  if (isHorizontalLevelLayout()) {
+    levelShiftUpLabel.textContent = "chevron_left";
+    levelShiftDownLabel.textContent = "navigate_next";
+  } else {
+    levelShiftUpLabel.textContent = "expand_less";
+    levelShiftDownLabel.textContent = "expand_more";
+  }
+}
+
 function setMargin(): void {
   const levelControl = getRequiredElement("levelControl");
 
-  if (getRequiredElement("uiWrapper").classList.contains("wheelchairMode")) {
+  if (isHorizontalLevelLayout()) {
     const size = parseInt(getComputedStyle(levelControl).getPropertyValue("--button-size"));
     const gap = parseInt(getComputedStyle(levelControl).getPropertyValue("--level-control-gap"));
     levelControl.style.marginLeft = -1 * (size + gap) * offset + "px";
@@ -166,6 +222,8 @@ function focusOnLevel(selectedLevel: number): void {
     }
   }
 
+  updateToggleLabel(selectedLevel.toString());
+
   const index = allLevelNames.findIndex((level) => level == selectedLevel.toString());
   if (index < offset) {
     // level is above in height what is currently visible
@@ -202,10 +260,54 @@ function updateLevelButtonState(button: HTMLButtonElement, active: boolean): voi
   }
 }
 
+function setupCollapseToggle(): void {
+  const toggle = getRequiredElement("levelControlToggle");
+  const wrapper = getRequiredElement("levelControlWrapper");
+
+  OverlayExclusivityService.registerOverlay("levelControlWrapper", collapseLevelControl);
+
+  toggle.addEventListener("click", () => {
+    const expanded = wrapper.classList.toggle("expanded");
+    toggle.setAttribute("aria-expanded", expanded.toString());
+    if (expanded) {
+      OverlayExclusivityService.notifyOpened("levelControlWrapper");
+    }
+    setWindow();
+  });
+}
+
+function collapseLevelControl(): void {
+  getRequiredElement("levelControlWrapper").classList.remove("expanded");
+  getRequiredElement("levelControlToggle").setAttribute("aria-expanded", "false");
+}
+
+function updateToggleLabel(level: string): void {
+  getRequiredElement("levelControlToggleLabel").textContent = level;
+}
+
+function isHorizontalLevelLayout(): boolean {
+  const uiWrapper = getRequiredElement("uiWrapper");
+  if (uiWrapper.classList.contains("lowHeightMode")) return true;
+
+  // At mobile width, only the tighter lowHeightMode threshold (600px, above)
+  // collapses the level control — mobile's own moderate-height portrait
+  // viewports (e.g. 375x667) commonly fall under shortMode's more lenient
+  // 767.98px threshold and must keep the full vertical list. Desktop width
+  // collapses as soon as the rest of the compact layout does (shortMode).
+  if (uiWrapper.classList.contains("shortMode") && !uiWrapper.classList.contains("mobileMode")) {
+    return true;
+  }
+
+  return (
+    uiWrapper.classList.contains("wheelchairMode") && !uiWrapper.classList.contains("mobileMode")
+  );
+}
+
 export default {
   handleChange: handleLoad,
   focusOnLevel,
   setupControlShifter,
+  setupCollapseToggle,
   setMargin,
   setWindow,
   setLevelSelectionDisabled,
