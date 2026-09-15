@@ -46,16 +46,16 @@
     "ajv": "^8.20.0",
     "bbox-fns": "^0.20.2",
     "bootstrap": "^5.3.8",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "express": "^5.2.1",
     "geojson-bounds": "^1.0.4",
     "geojson-polygon-center": "^0.0.0",
     "jimp": "^1.6.1",
-    "maplibre-gl": "^6.7.0",
+    "maplibre-gl": "^6.9.0",
     "osm2geojson-ultra": "^4.0.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "three": "^0.185.1"
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -67,7 +67,7 @@
     "@types/express": "^5.0.6",
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
-    "@types/three": "^0.185.4",
+    "@types/three": "^0.186.0",
     "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.65.0",
     "concurrently": "^10.0.5",
