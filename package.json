@@ -68,7 +68,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
     "@types/three": "^0.185.4",
-    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.65.0",
     "concurrently": "^10.0.5",
     "css-loader": "^7.1.5",
@@ -80,13 +80,13 @@
     "jest-environment-jsdom": "^30.5.1",
     "mini-css-extract-plugin": "^2.10.2",
     "prettier": "^3.9.6",
-    "sass-embedded": "^1.104.0",
+    "sass-embedded": "^1.104.1",
     "sass-loader": "^17.0.1",
     "ts-jest": "^29.4.12",
     "ts-loader": "^9.6.2",
     "typescript": "^6.0.3",
     "webpack": "^5.110.3",
-    "webpack-bundle-analyzer": "^5.3.2",
+    "webpack-bundle-analyzer": "^5.3.3",
     "webpack-cli": "^7.2.3"
   }
 }
