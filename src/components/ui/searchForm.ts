@@ -16,12 +16,27 @@ const searchErrorMessage = getRequiredElement<HTMLDivElement>("searchErrorMessag
 const searchErrorText = getRequiredElement<HTMLSpanElement>("searchErrorText");
 const searchErrorClear = getRequiredElement<HTMLButtonElement>("searchErrorClear");
 
+let searchErrorDismissTimer: ReturnType<typeof setTimeout> | undefined;
+
+const SEARCH_ERROR_AUTO_DISMISS_MS = 5000;
+
 function showSearchError(message: string): void {
   searchErrorText.textContent = message;
   searchErrorMessage.classList.add("visible");
+
+  if (searchErrorDismissTimer) {
+    clearTimeout(searchErrorDismissTimer);
+  }
+
+  searchErrorDismissTimer = setTimeout(clearSearchError, SEARCH_ERROR_AUTO_DISMISS_MS);
 }
 
 function clearSearchError(): void {
+  if (searchErrorDismissTimer) {
+    clearTimeout(searchErrorDismissTimer);
+    searchErrorDismissTimer = undefined;
+  }
+
   searchErrorText.textContent = "";
   searchErrorMessage.classList.remove("visible");
 }
@@ -98,6 +113,10 @@ function render(geoMap: GeoMap): void {
 
   searchErrorClear.addEventListener("click", () => {
     clearSearchError();
+  });
+
+  getRequiredElement("searchOverlayBackdrop").addEventListener("click", () => {
+    SearchSuggestions.hide();
   });
 
   indoorSearchInput.addEventListener("keydown", (e) => {

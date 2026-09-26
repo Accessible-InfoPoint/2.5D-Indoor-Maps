@@ -18,7 +18,17 @@ export function translate(): void {
   setButtonLabel(getRequiredElement("zoomControlOut"), lang.zoomOutButton);
   setButtonLabel(getRequiredElement("levelShiftUp"), lang.showPreviousLevels);
   setButtonLabel(getRequiredElement("levelShiftDown"), lang.showNextLevels);
+  const toggleLevel = getRequiredElement("levelControlToggleLabel").textContent;
+  if (toggleLevel) {
+    setButtonLabel(getRequiredElement("levelControlToggle"), lang.changeLevel + toggleLevel);
+  }
   setButtonLabel(getRequiredElement("centeringButton"), lang.centeringButton);
+  setButtonLabel(getRequiredElement("mobileLegendTrigger"), lang.mobileLegendButton);
+  setButtonLabel(getRequiredElement("mobileProfileTrigger"), lang.mobileProfileButton);
+  setButtonLabel(getRequiredElement("mobileSettingsTrigger"), lang.mobileSettingsButton);
+  setButtonLabel(getRequiredElement("shortLegendTrigger"), lang.mobileLegendButton);
+  setButtonLabel(getRequiredElement("shortProfileTrigger"), lang.mobileProfileButton);
+  setButtonLabel(getRequiredElement("shortSettingsTrigger"), lang.mobileSettingsButton);
 
   for (const element of getRequiredElement("levelControl").children) {
     const levelButton = element.firstElementChild;

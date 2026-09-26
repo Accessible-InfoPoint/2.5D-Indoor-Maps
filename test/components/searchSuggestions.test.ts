@@ -212,4 +212,33 @@ describe("SearchSuggestions", () => {
       "2 search suggestions available.",
     );
   });
+
+  it("registers itself with overlayExclusivityService and hides when another overlay opens", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+
+    SearchSuggestions.update([suggestion()]);
+    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(
+      true,
+    );
+
+    OverlayExclusivityService.notifyOpened("someOtherOverlay");
+
+    expect(document.getElementById("searchSuggestionsList")?.classList.contains("visible")).toBe(
+      false,
+    );
+  });
+
+  it("notifies overlayExclusivityService when suggestions become visible", () => {
+    const OverlayExclusivityService = jest.requireActual(
+      "../../src/services/overlayExclusivityService",
+    ).default as typeof import("../../src/services/overlayExclusivityService").default;
+    const closeFakeOverlay = jest.fn();
+    OverlayExclusivityService.registerOverlay("fakeOverlay", closeFakeOverlay);
+
+    SearchSuggestions.update([suggestion()]);
+
+    expect(closeFakeOverlay).toHaveBeenCalledTimes(1);
+  });
 });

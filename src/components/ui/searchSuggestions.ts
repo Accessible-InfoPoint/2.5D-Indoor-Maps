@@ -2,10 +2,13 @@ import type { SearchSuggestion } from "../../services/buildingService";
 import { lang } from "../../services/languageService";
 import { getRequiredElement } from "../../utils/domHelpers";
 import { getCategoryIcon } from "../../services/featureService";
+import OverlayExclusivityService from "../../services/overlayExclusivityService";
 
 const suggestionsList = getRequiredElement<HTMLUListElement>("searchSuggestionsList");
 const searchAnnouncement = getRequiredElement<HTMLDivElement>("searchAnnouncement");
 const ANNOUNCEMENT_DELAY_MS = 250;
+
+OverlayExclusivityService.registerOverlay("searchSuggestionsList", hide);
 
 let currentSuggestions: SearchSuggestion[] = [];
 let activeIndex = -1;
@@ -166,6 +169,7 @@ function update(suggestions: SearchSuggestion[]): void {
   });
 
   suggestionsList.classList.add("visible");
+  OverlayExclusivityService.notifyOpened("searchSuggestionsList");
   syncInputState();
   announceSuggestionCount(suggestions.length);
 }
@@ -185,6 +189,7 @@ function open(): void {
 
   isPopupOpen = true;
   suggestionsList.classList.add("visible");
+  OverlayExclusivityService.notifyOpened("searchSuggestionsList");
   syncInputState();
 }
 
@@ -240,4 +245,4 @@ function clearAnnouncement(): void {
   searchAnnouncement.textContent = "";
 }
 
-export default { render, update, clear };
+export default { render, update, clear, hide };
